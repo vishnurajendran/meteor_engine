@@ -41,7 +41,7 @@ public:
 
     // Move constructor
     MObjectPtr(MObjectPtr &&other) noexcept: ptr(other.ptr) {
-        reset();
+        other.ptr = nullptr;  // Ensure the source pointer is nullified
     }
 
     // Copy assignment operator
@@ -73,6 +73,7 @@ public:
             }
 
             ptr = other.ptr;
+            other.ptr = nullptr;  // Nullify the source pointer
         }
 
         return *this;

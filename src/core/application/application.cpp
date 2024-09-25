@@ -4,22 +4,3 @@
 
 #include "application.h"
 
-MApplication::MApplication() : MObject(){
-    name = TEXT("Application");
-}
-
-bool MApplication::isRunning() const {
-    {return appRunning;}
-}
-
-void MApplication::initialise() {
-
-}
-
-void MApplication::run() {
-
-}
-
-void MApplication::cleanup() {
-
-}

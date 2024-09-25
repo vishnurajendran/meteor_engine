@@ -4,12 +4,8 @@
 
 #pragma once
 
-#include "utils/sstring.h"
-#include "utils/guid.h"
-
-#include "object/object.h"
-#include "object/objectpointer.h"
-#include "object/gc.h"
+#include "meteor_core_minimal.h"
 
 #include "core/application/application.h"
-#include "core/utils/logger.h"
+#include "core/window/simple/windowing.h"
+#include "core/window/windowmanager.h"

@@ -5,17 +5,15 @@
 #pragma once
 #ifndef METEOR_ENGINE_APPLICATION_H
 #define METEOR_ENGINE_APPLICATION_H
-#include "core/meteor_core.h"
+#include "core/meteor_core_minimal.h"
 
 class MApplication : public MObject {
 protected:
-    bool appRunning;
 public:
-    MApplication();
-    bool isRunning() const;
-    virtual void initialise();
-    virtual void run();
-    virtual void cleanup();
+    virtual bool isRunning() const = 0;
+    virtual void initialise() = 0;
+    virtual void run() = 0;
+    virtual void cleanup() = 0;
 };
 
 #endif //METEOR_ENGINE_APPLICATION_H

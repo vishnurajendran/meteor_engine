@@ -23,14 +23,26 @@ add_executable(meteor_engine
         src/core/meteor_core.h
         src/core/application/application.cpp
         src/core/application/application.h
-        src/editor/editorapplication.cpp
-        src/editor/editorapplication.h
+        src/editor/app/editorapplication.cpp
+        src/editor/app/editorapplication.h
         src/core/utils/logger.cpp
         src/core/utils/logger.h
-        src/core/window/windowing.cpp
-        src/core/window/windowing.h
-        src/player/playerapplication.cpp
-        src/player/playerapplication.h
+        src/core/window/simple/windowing.cpp
+        src/core/window/simple/windowing.h
+        src/player/app/playerapplication.cpp
+        src/player/app/playerapplication.h
+        src/core/window/windowmanager.cpp
+        src/core/window/windowmanager.h
+        src/core/window/imgui/imguiwindow.cpp
+        src/core/window/imgui/imguiwindow.h
+        src/core/window/imgui/imguisubwindow.cpp
+        src/core/window/imgui/imguisubwindow.h
+        src/core/window/imgui/imguisubwindowmanager.cpp
+        src/core/window/imgui/imguisubwindowmanager.h
+        src/editor/editorwindows/console/editorconsolewindow.cpp
+        src/editor/editorwindows/console/editorconsolewindow.h
+        src/editor/meteorite.h
+        src/core/window/imgui/imguiwindowconstants.h
 )
 
 # FetchContent for dependencies

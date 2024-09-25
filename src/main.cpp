@@ -27,9 +27,9 @@ int main(){
     return 0;
 }
 
-/*int main() {
+int main1() {
     sf::RenderWindow window(sf::VideoMode(3024,1964), "ImGui + SFML = <3", sf::Style::Default);
-    window.setFramerateLimit(0);
+   /* window.setFramerateLimit(0);
     ImGui::SFML::Init(window);
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.FontGlobalScale = 2.0f;
@@ -47,20 +47,19 @@ int main(){
     }
 
     sf::CircleShape shape(100.f);
-    shape.setFillColor(sf::Color::Green);
-
+    shape.setFillColor(sf::Color::Green);*/
     sf::Clock deltaClock;
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            ImGui::SFML::ProcessEvent(window, event);
+            //ImGui::SFML::ProcessEvent(window, event);
 
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
         }
 
-        ImGui::SFML::Update(window, deltaClock.restart());
+        /*ImGui::SFML::Update(window, deltaClock.restart());
 
         ImGui::ShowDemoWindow();
 
@@ -72,9 +71,9 @@ int main(){
         window.clear();
         rt.clear();
         rt.draw(shape);
-        ImGui::SFML::Render(window);
+        ImGui::SFML::Render(window);*/
         window.display();
     }
 
-    ImGui::SFML::Shutdown();
-}*/
+    //ImGui::SFML::Shutdown();
+}
