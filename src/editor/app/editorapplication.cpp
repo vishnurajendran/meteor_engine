@@ -25,11 +25,19 @@ void MEditorApplication::cleanup() {
 void MEditorApplication::initialise() {
     //appRunning = true;
     MLOG(TEXT("Initialising Editor"));
-    window = MWindowManager::getImGuiWindow(TEXT("Meteorite Editor"));
-    if(!window->isOpen())
+    window = (MImGuiWindow*)MWindowManager::getImGuiWindow(TEXT("Meteorite Editor"));
+    if(window == nullptr){
+        MERROR(TEXT("Invalid Window Type"));
+        return;
+    }
+    if(!window->isOpen()) {
         MERROR(TEXT("Failed to open window"));
-
+        return;
+    }
     subWindows.push_back(new MEditorConsoleWindow());
+    subWindows.push_back(new MEditorHierarchyWindow());
+    subWindows.push_back(new MEditorInspectorWindow());
+    subWindows.push_back(new MEditorSceneViewWindow());
     MLOG(TEXT("Loaded Editor Windows"));
 }
 

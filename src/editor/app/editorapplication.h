@@ -9,7 +9,7 @@
 
 class MEditorApplication : public MApplication {
 private:
-    MObjectPtr<MWindow> window;
+    MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
 public:
     MEditorApplication();

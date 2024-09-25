@@ -25,7 +25,7 @@ void MPlayerApplication::cleanup() {
 void MPlayerApplication::initialise() {
     //appRunning = true;
     MLOG(TEXT("Initialising Editor"));
-    window = MWindowManager::getSimpleWindow(TEXT("Meteorite Editor"));
+    window = MWindowManager::getSimpleWindow(TEXT("Meteorite Player"));
     if(!window->isOpen())
         MERROR(TEXT("Failed to open window"));
 }

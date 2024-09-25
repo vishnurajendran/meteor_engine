@@ -28,7 +28,7 @@ void MEditorConsoleWindow::onGui() {
     }
 
     ImVec2 availableSpace = ImGui::GetContentRegionAvail();
-   if(ImGui::BeginListBox("##logs", availableSpace)){
+    if(ImGui::BeginListBox("##logs", availableSpace)){
        for(const auto& log : logs){
            ImGui::PushID(&log);  // Use the item's memory address as a unique ID
            ImGui::Selectable(log.c_str());

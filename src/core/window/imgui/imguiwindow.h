@@ -18,6 +18,9 @@ public:
     void drawImGuiSubWindows();
     void showDockSpace();
     void drawMenuBar();
+
+    //Todo:: move to asset manager
+    void loadFontFile(const SString& pathToFile, float pointSize);
 };
 
 

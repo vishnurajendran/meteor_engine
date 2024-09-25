@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
+# Set the directory where executables will be placed
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+
 project(meteor_engine)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -43,6 +46,12 @@ add_executable(meteor_engine
         src/editor/editorwindows/console/editorconsolewindow.h
         src/editor/meteorite.h
         src/core/window/imgui/imguiwindowconstants.h
+        src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
+        src/editor/editorwindows/hierarchy/editorhierarchywindow.h
+        src/editor/editorwindows/inspector/editorinspectorwindow.cpp
+        src/editor/editorwindows/inspector/editorinspectorwindow.h
+        src/editor/editorwindows/scene/editorsceneviewwindow.cpp
+        src/editor/editorwindows/scene/editorsceneviewwindow.cpp
 )
 
 # FetchContent for dependencies

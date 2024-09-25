@@ -6,4 +6,6 @@
 
 #include "imgui.h"
 #include "core/meteor_core.h"
+
+#include "core/window/imgui/imguiwindow.h"
 #include "core/window/imgui/imguisubwindow.h"
