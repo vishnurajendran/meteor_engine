@@ -1,0 +1,157 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"sfml_export_targets"
+		],
+		"files" : 
+		[
+			"cmake-build-player_debug/_deps/sfml-src/CMakeLists.txt",
+			"cmake-build-player_debug/_deps/sfml-src/cmake/Macros.cmake"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 301,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 401,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 402,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 434,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 512,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 1,
+				"line" : 336,
+				"parent" : 5
+			},
+			{
+				"command" : 0,
+				"file" : 1,
+				"line" : 340,
+				"parent" : 5
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "devel",
+			"destination" : ".",
+			"paths" : 
+			[
+				"cmake-build-player_debug/_deps/sfml-src/include"
+			],
+			"type" : "directory"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "/usr/local/share/SFML",
+			"paths" : 
+			[
+				"cmake-build-player_debug/_deps/sfml-src/license.md"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 3,
+			"component" : "Unspecified",
+			"destination" : "/usr/local/share/SFML",
+			"paths" : 
+			[
+				"cmake-build-player_debug/_deps/sfml-src/readme.md"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "/Library/Frameworks",
+			"paths" : 
+			[
+				"cmake-build-player_debug/_deps/sfml-src/extlibs/libs-osx/Frameworks/freetype.framework"
+			],
+			"type" : "directory"
+		},
+		{
+			"backtrace" : 6,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/SFML",
+			"exportName" : "SFMLConfigExport",
+			"exportTargets" : 
+			[
+				{
+					"id" : "sfml-system::@8cb1db2982443611e568",
+					"index" : 3
+				},
+				{
+					"id" : "sfml-window::@5730451e331e3690ae65",
+					"index" : 4
+				},
+				{
+					"id" : "OpenGL::@5730451e331e3690ae65",
+					"index" : 0
+				},
+				{
+					"id" : "sfml-graphics::@98af38147d5fa7e70f61",
+					"index" : 2
+				},
+				{
+					"id" : "Freetype::@98af38147d5fa7e70f61",
+					"index" : 0
+				}
+			],
+			"paths" : 
+			[
+				"_deps/sfml-build/CMakeFiles/Export/3937c6824958577f216dad0a66bc6149/SFMLSharedTargets.cmake"
+			],
+			"type" : "export"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "devel",
+			"destination" : "lib/cmake/SFML",
+			"paths" : 
+			[
+				"cmake-build-player_debug/_deps/sfml-build/SFMLConfig.cmake",
+				"cmake-build-player_debug/_deps/sfml-build/SFMLConfigDependencies.cmake",
+				"cmake-build-player_debug/_deps/sfml-build/SFMLConfigVersion.cmake"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "_deps/sfml-build",
+		"source" : "cmake-build-player_debug/_deps/sfml-src"
+	}
+}

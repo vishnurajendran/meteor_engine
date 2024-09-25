@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/CMakeFiles/imgui-sfml-populate"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/CMakeFiles/imgui-sfml-populate.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/CMakeFiles/imgui-sfml-populate-complete.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-build.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-configure.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-download.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-install.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-mkdir.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-patch.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-test.rule"
+		},
+		{
+			"file" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-sfml-subbuild/imgui-sfml-populate-prefix/src/imgui-sfml-populate-stamp/imgui-sfml-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"imgui-sfml-populate"
+		],
+		"name" : "imgui-sfml-populate"
+	}
+}

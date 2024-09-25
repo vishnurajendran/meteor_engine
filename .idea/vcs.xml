@@ -2,5 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-editor_debug/_deps/imgui-sfml-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-editor_debug/_deps/imgui-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-editor_debug/_deps/spdlog-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-player_debug/_deps/imgui-sfml-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-player_debug/_deps/imgui-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-player_debug/_deps/spdlog-src" vcs="Git" />
   </component>
 </project>

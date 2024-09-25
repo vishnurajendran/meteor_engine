@@ -3,56 +3,99 @@ project(meteor_engine)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(meteor_engine main.cpp)
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
+# Define build options for Editor and Player modes
+option(BUILD_EDITOR "Build the editor application" OFF)
+option(BUILD_PLAYER "Build the player application" OFF)
+
+# Add the executable and its source files
+add_executable(meteor_engine
+        src/main.cpp
+        src/core/object/object.cpp
+        src/core/object/object.h
+        src/core/object/gc.cpp
+        src/core/object/gc.h
+        src/core/utils/sstring.h
+        src/core/utils/guid.cpp
+        src/core/utils/guid.h
+        src/core/object/objectpointer.h
+        src/core/meteor_core.h
+        src/core/application/application.cpp
+        src/core/application/application.h
+        src/editor/editorapplication.cpp
+        src/editor/editorapplication.h
+        src/core/utils/logger.cpp
+        src/core/utils/logger.h
+        src/core/window/windowing.cpp
+        src/core/window/windowing.h
+        src/player/playerapplication.cpp
+        src/player/playerapplication.h
+)
+
+# FetchContent for dependencies
 include(FetchContent)
 
 set(SFML_VERSION 2.5.1)
 set(IMGUI_VERSION 1.90.9)
-# set(IMGUI_SFML_VERSION 2.3)
 
-# It's nice to get stripped-down release zips instead of cloning
-# a repo and checking out a tag
+# Fetch SFML
 FetchContent_Declare(
         SFML
         URL "https://github.com/SFML/SFML/archive/${SFML_VERSION}.zip"
 )
 
+# Fetch Dear ImGui
 FetchContent_Declare(
         imgui
         GIT_REPOSITORY "https://github.com/ocornut/imgui.git"
         GIT_TAG "docking"
 )
 
-# Or by tag...
+# Fetch ImGui-SFML binding
 FetchContent_Declare(
         imgui-sfml
         GIT_REPOSITORY https://github.com/SFML/imgui-sfml.git
         GIT_TAG        2.6.x
-        # GIT_COMMIT 5f54b69b6aee18db846c81633f86f78c2586dded
-        # ^ or like this - sometimes it's better because FetchContent won't look
-        # into remote to see if branch head was updated or not - good for stable
-        # tags like 'vX.X' corresponding to releases
 )
 
-## finally, let's build
+# Fetch spdlog
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG        v1.12.0
+)
 
-# SFML
+# Build SFML
 option(SFML_BUILD_AUDIO "Build audio" OFF)
 option(SFML_BUILD_NETWORK "Build network" OFF)
-FetchContent_MakeAvailable(sfml)
+FetchContent_MakeAvailable(SFML)
 
-# Dear ImGui
+# Build Dear ImGui
 FetchContent_MakeAvailable(imgui)
 
-# ImGui-SFML
+# Build ImGui-SFML
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
 option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
 option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
-
 FetchContent_MakeAvailable(imgui-sfml)
 
-target_link_libraries(meteor_engine
+# Build spdlog
+FetchContent_MakeAvailable(spdlog)
+
+# Link libraries
+target_link_libraries(
+        meteor_engine
         PUBLIC
         ImGui-SFML::ImGui-SFML
+        spdlog::spdlog
 )
+
+# Set preprocessor definitions based on CMake options
+if(BUILD_EDITOR)
+    add_definitions(-DEDITOR_APPLICATION)
+endif()
+
+if(BUILD_PLAYER)
+    add_definitions(-DPLAYER_APPLICATION)
+endif()

@@ -1,0 +1,926 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "_deps/sfml-build/lib/libsfml-window-d.dylib"
+		}
+	],
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"sfml_add_library",
+			"install",
+			"target_link_libraries",
+			"sfml_set_stdlib",
+			"target_compile_options",
+			"include_directories",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"cmake-build-player_debug/_deps/sfml-src/cmake/Macros.cmake",
+			"cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/CMakeLists.txt",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 228,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 46,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 161,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 87,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 25,
+				"parent" : 4
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 230,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 283,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 24,
+				"parent" : 4
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 6,
+				"file" : 2,
+				"line" : 6,
+				"parent" : 9
+			},
+			{
+				"command" : 7,
+				"file" : 0,
+				"line" : 168,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 258,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -std=gnu++20 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk -fPIC -fcolor-diagnostics"
+				},
+				{
+					"fragment" : "-fvisibility=hidden"
+				},
+				{
+					"backtrace" : 8,
+					"fragment" : "-stdlib=libc++"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "SFML_WINDOW_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 10,
+					"path" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/src"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/sfml-src/include"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/sfml-src/src"
+				},
+				{
+					"backtrace" : 12,
+					"path" : "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/System/Library/Frameworks/OpenGL.framework"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					2
+				],
+				"standard" : "20"
+			},
+			"sourceIndexes" : 
+			[
+				1,
+				3,
+				5,
+				9,
+				11,
+				17,
+				19,
+				22,
+				24,
+				26,
+				28,
+				30,
+				32,
+				35,
+				38,
+				42,
+				44,
+				46,
+				48,
+				49,
+				52,
+				54,
+				55,
+				58,
+				60,
+				67,
+				69,
+				71,
+				72,
+				74,
+				81,
+				83,
+				84,
+				86,
+				89
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk -fPIC -fcolor-diagnostics"
+				},
+				{
+					"fragment" : "-fvisibility=hidden"
+				},
+				{
+					"backtrace" : 8,
+					"fragment" : "-stdlib=libc++"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"define" : "SFML_WINDOW_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 10,
+					"path" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/src"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/sfml-src/include"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/sfml-src/src"
+				},
+				{
+					"backtrace" : 12,
+					"path" : "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/System/Library/Frameworks/OpenGL.framework"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				63,
+				65,
+				77,
+				79
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 6,
+			"id" : "sfml-system::@8cb1db2982443611e568"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "SFML"
+	},
+	"id" : "sfml-window::@5730451e331e3690ae65",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 3,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/sfml-build/lib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "-stdlib=libc++",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 6,
+				"fragment" : "_deps/sfml-build/lib/libsfml-system-d.2.5.1.dylib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-framework Foundation",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-framework AppKit",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-framework IOKit",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 7,
+				"fragment" : "-framework Carbon",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-Xlinker -framework -Xlinker OpenGL",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "sfml-window",
+	"nameOnDisk" : "libsfml-window-d.dylib",
+	"paths" : 
+	{
+		"build" : "_deps/sfml-build/src/SFML/Window",
+		"source" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40
+			]
+		},
+		{
+			"name" : "mac",
+			"sourceIndexes" : 
+			[
+				41,
+				42,
+				43,
+				44,
+				45,
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				64,
+				65,
+				66,
+				67,
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77,
+				78,
+				79,
+				80,
+				81,
+				82,
+				83,
+				84,
+				85,
+				86,
+				87,
+				88,
+				89
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Clipboard.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Clipboard.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/ClipboardImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Context.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Context.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Cursor.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Cursor.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/CursorImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Export.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/GlContext.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/GlContext.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/GlResource.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/GlResource.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/ContextSettings.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Event.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/InputImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Joystick.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Joystick.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/JoystickImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/JoystickManager.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/JoystickManager.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Keyboard.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Keyboard.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Mouse.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Mouse.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Touch.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Touch.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Sensor.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Sensor.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/SensorImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/SensorManager.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/SensorManager.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/VideoMode.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/VideoMode.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/VideoModeImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/Window.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/Window.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/WindowHandle.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/WindowImpl.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/WindowImpl.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/include/SFML/Window/WindowStyle.hpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/cpp_objc_conversion.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/cpp_objc_conversion.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/cg_sf_conversion.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/cg_sf_conversion.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/CursorImpl.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/CursorImpl.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/ClipboardImpl.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/ClipboardImpl.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/InputImpl.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/InputImpl.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/HIDInputManager.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/HIDInputManager.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/HIDJoystickManager.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/HIDJoystickManager.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/JoystickImpl.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/JoystickImpl.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/NSImage+raw.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/NSImage+raw.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/Scaling.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SensorImpl.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SensorImpl.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFApplication.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 1,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFApplication.m",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFApplicationDelegate.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 1,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFApplicationDelegate.m",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFContext.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFContext.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFKeyboardModifiersHelper.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFKeyboardModifiersHelper.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFOpenGLView.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFOpenGLView.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFOpenGLView+keyboard.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFOpenGLView+keyboard_priv.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFOpenGLView+mouse.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFOpenGLView+mouse_priv.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFSilentResponder.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 1,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFSilentResponder.m",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFWindow.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 1,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFWindow.m",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFWindowController.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFWindowController.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFViewController.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/SFViewController.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/VideoModeImpl.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/WindowImplCocoa.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/WindowImplCocoa.mm",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/WindowImplDelegateProtocol.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/AutoreleasePoolWrapper.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-player_debug/_deps/sfml-src/src/SFML/Window/OSX/AutoreleasePoolWrapper.mm",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

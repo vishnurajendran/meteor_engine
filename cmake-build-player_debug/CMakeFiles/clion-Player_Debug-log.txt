@@ -1,0 +1,7 @@
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Applications/CLion.app/Contents/bin/ninja/mac/ninja -DBUILD_PLAYER=ON -G Ninja -S /Users/vishnurajendran/Documents/GitHub/meteor_engine -B /Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug
+-- Found ImGui v1.91.3 WIP in /Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug/_deps/imgui-src
+-- Build spdlog: 1.12.0
+-- Build type: Debug
+-- Configuring done (1.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /Users/vishnurajendran/Documents/GitHub/meteor_engine/cmake-build-player_debug
