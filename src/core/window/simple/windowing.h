@@ -10,6 +10,7 @@
 
 class MWindow : public MObject {
 protected:
+    sf::ContextSettings settings;
     SString title;
     sf::Event event;
     sf::RenderWindow coreWindow;

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
+
 # Set the directory where executables will be placed
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
@@ -52,6 +53,18 @@ add_executable(meteor_engine
         src/editor/editorwindows/inspector/editorinspectorwindow.h
         src/editor/editorwindows/scene/editorsceneviewwindow.cpp
         src/editor/editorwindows/scene/editorsceneviewwindow.cpp
+        src/core/window/imgui/imguistyles.h
+        src/core/utils/color.cpp
+        src/core/utils/color.h
+        src/core/utils/dpihelper.h
+        src/core/graphics/core/graphicsrenderer.cpp
+        src/core/graphics/core/graphicsrenderer.h
+        src/core/graphics/core/sfmldrawcall.cpp
+        src/core/graphics/core/sfmldrawcall.h
+        src/core/graphics/core/drawcall.cpp
+        src/core/graphics/core/drawcall.h
+        src/core/graphics/core/opengldrawcall.cpp
+        src/core/graphics/core/opengldrawcall.h
 )
 
 # FetchContent for dependencies
@@ -111,6 +124,19 @@ target_link_libraries(
         ImGui-SFML::ImGui-SFML
         spdlog::spdlog
 )
+
+# Set platform-specific libraries
+if (APPLE)
+    # macOS requires CoreGraphics for DPI detection
+    find_library(COREGRAPHICS_LIBRARY CoreGraphics)
+    target_link_libraries(meteor_engine PRIVATE ${COREGRAPHICS_LIBRARY})
+endif()
+
+if (UNIX AND NOT APPLE)
+    # Linux requires X11 for DPI detection
+    find_package(X11 REQUIRED)
+    target_link_libraries(meteor_engine PRIVATE X11)
+endif()
 
 # Set preprocessor definitions based on CMake options
 if(BUILD_EDITOR)

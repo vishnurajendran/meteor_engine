@@ -13,6 +13,8 @@ MWindow::MWindow(const SString& title, int sizeX, int sizeY, int fps) : MObject(
     name = TEXT("Window - ") + title;
     coreWindow.create(sf::VideoMode(sizeX, sizeY), title.str(), sf::Style::Default);
     coreWindow.setFramerateLimit(fps);
+
+    MGraphicsRenderer::initialise(&coreWindow);
 }
 
 void MWindow::close() {
@@ -34,5 +36,7 @@ void MWindow::update() {
         }
     }
 
+    coreWindow.clear();
+    MGraphicsRenderer::draw();
     coreWindow.display();
 }

@@ -18,9 +18,6 @@ void MEditorHierarchyWindow::onGui() {
     ImGui::BeginChild("TreeRegion", size, true, ImGuiWindowFlags_HorizontalScrollbar);
     // Root node
     if (ImGui::TreeNode("Root")) {
-
-        ImGui::Text("📁");
-        ImGui::SameLine();
         // First child node
         if (ImGui::TreeNode("Child Node 1")) {
             ImGui::Text("This is Child Node 1");

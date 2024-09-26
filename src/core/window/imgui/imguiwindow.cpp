@@ -7,6 +7,8 @@
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
+#include "imguistyles.h"
+#include "imgui_internal.h"
 
 MImGuiWindow::MImGuiWindow(const SString &title) : MWindow(title) {
 
@@ -17,13 +19,19 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
     ImGui::SFML::Init(coreWindow);
     ImGuiIO& io = ImGui::GetIO();
 
-    io.FontGlobalScale = 2.5f;
+    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
+
+    io.FontGlobalScale = 1;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    setupImGuiDarkTheme();
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size
     ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+
+    MGraphicsRenderer::initialise(&coreWindow);
 }
 
 void MImGuiWindow::clear() {
@@ -40,12 +48,14 @@ void MImGuiWindow::update() {
     }
 
     ImGui::SFML::Update(coreWindow, deltaClock.restart());
+    coreWindow.clear();
+    MGraphicsRenderer::draw();
 
     drawMenuBar();
     showDockSpace();
     drawImGuiSubWindows();
-    coreWindow.clear();
     ImGui::SFML::Render(coreWindow);
+
     coreWindow.display();
 }
 
@@ -76,8 +86,9 @@ void MImGuiWindow::showDockSpace() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 40.0f));
-    ImGui::Begin(MAIN_DOCKSPACE_ID.c_str(), nullptr, windowFlags);
-    ImGui::PopStyleVar(3);
+
+   ImGui::Begin(MAIN_DOCKSPACE_ID.c_str(), nullptr, windowFlags);
+   ImGui::PopStyleVar(3);
 
     // Create the dock space
     ImGuiID dockspaceID = ImGui::GetID(MAIN_DOCKSPACE_ID.c_str());
@@ -91,7 +102,9 @@ void MImGuiWindow::drawMenuBar(){
         //Todo: Add Menu Items here
         if(ImGui::BeginMenu("File")){
             if(ImGui::MenuItem("Log")){
-                MLOG(TEXT("Log Clicked"));
+                MLOG(TEXT("Log Message looks like this"));
+                MWARN(TEXT("Warnings look like this"));
+                MERROR(TEXT("Errors look like this"));
             }
            ImGui::EndMenu();
         }

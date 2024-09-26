@@ -30,10 +30,34 @@ void MEditorConsoleWindow::onGui() {
     ImVec2 availableSpace = ImGui::GetContentRegionAvail();
     if(ImGui::BeginListBox("##logs", availableSpace)){
        for(const auto& log : logs){
-           ImGui::PushID(&log);  // Use the item's memory address as a unique ID
-           ImGui::Selectable(log.c_str());
+           auto hidden= TEXT("##") + log;
+           auto tag = log.substring(0, 3);
+           auto msg = log.substring(5, log.length());
+
+           ImGui::PushID(&log);
+           if(ImGui::Selectable(hidden.c_str(), selectedIndx == &log)){
+               selectedIndx = &log;
+           }
            ImGui::PopID();
+
+           auto color = getLabelColor(tag);
+           ImGui::SameLine();
+           ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
+           ImGui::Text("[%s]:", tag.c_str());
+           ImGui::PopStyleColor();
+           ImGui::SameLine();
+           ImGui::Text("%s", msg.c_str());
+
        }
        ImGui::EndListBox();
     }
+}
+
+SColor MEditorConsoleWindow::getLabelColor(SString label) {
+    if(label == "LOG")
+        return SColor::skyBlue();
+    else if(label == "WRN")
+        return SColor::yellow();
+    else if(label == "ERR")
+        return SColor::red();
 }

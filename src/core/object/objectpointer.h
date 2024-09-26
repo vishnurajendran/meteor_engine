@@ -111,6 +111,10 @@ public:
     void reset(){
         ptr = nullptr;
     }
+
+    T* obj(){
+        return ptr;
+    }
 };
 
 #endif //METEOR_ENGINE_OBJECTPOINTER_H

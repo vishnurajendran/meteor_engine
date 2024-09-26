@@ -1,11 +1,7 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "SFML/Graphics/RenderTexture.hpp"
-
+#include "SFML/OpenGL.hpp"
 #include "SFML/Graphics/CircleShape.hpp"
-#include "SFML/Graphics/RenderWindow.hpp"
-#include "SFML/System/Clock.hpp"
-#include "SFML/Window/Event.hpp"
 
 #include "core/meteor_core.h"
 
@@ -20,7 +16,19 @@ int main(){
     }
 
     appInst->initialise();
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+
     while(appInst->isRunning()){
+
+        sf::CircleShape circleShape;
+        circleShape.setRadius(100);
+        circleShape.setPosition(100,100);
+        circleShape.setFillColor(sf::Color::Blue);
+
+        auto drawCall = new MSFMLDrawCall(&circleShape);
+        MGraphicsRenderer::submit(drawCall);
+        MGraphicsRenderer::submit(new MOpenGlDrawCall());
         appInst->run();
     }
     appInst->cleanup();

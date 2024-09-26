@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "imgui-SFML.h"
 #include "imgui.h"
 #include "core/meteor_core.h"
 

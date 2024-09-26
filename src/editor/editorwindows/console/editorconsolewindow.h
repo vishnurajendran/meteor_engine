@@ -10,6 +10,7 @@
 
 class MEditorConsoleWindow : public MImGuiSubWindow {
 private:
+    const SString* selectedIndx;
     std::vector<SString> logs;
     void onLogRecieved(SString log);
     int subscriptionId;
@@ -18,6 +19,7 @@ public:
     ~MEditorConsoleWindow();
     MEditorConsoleWindow(int x, int y);
     void onGui() override;
+    SColor getLabelColor(SString label);
 };
 
 
