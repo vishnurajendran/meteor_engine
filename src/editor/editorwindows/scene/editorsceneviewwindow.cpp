@@ -32,7 +32,7 @@ void MEditorSceneViewWindow::onGui() {
                     currentItm = i;
                     auto res = resolutionsData[currentItm];
                     renderTexture.create(std::get<0>(res), std::get<1>(res));
-                    MLOG(TEXT("Scene Window Resolution Updated"));
+                    MLOG(STR("Scene Window Resolution Updated"));
                 }
             }
             ImGui::EndCombo();

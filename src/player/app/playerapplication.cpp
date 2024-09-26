@@ -5,7 +5,7 @@
 #include "playerapplication.h"
 
 MPlayerApplication::MPlayerApplication() : MApplication(){
-    name = TEXT("MeteorPlayer");
+    name = STR("MeteorPlayer");
 }
 
 void MPlayerApplication::run() {
@@ -17,17 +17,17 @@ void MPlayerApplication::run() {
 }
 
 void MPlayerApplication::cleanup() {
-    MLOG(TEXT("Cleanup"));
+    MLOG(STR("Cleanup"));
     window->close();
     window = nullptr;
 }
 
 void MPlayerApplication::initialise() {
     //appRunning = true;
-    MLOG(TEXT("Initialising Editor"));
-    window = MWindowManager::getSimpleWindow(TEXT("Meteor Player"));
+    MLOG(STR("Initialising Editor"));
+    window = MWindowManager::getSimpleWindow(STR("Meteor Player"));
     if(!window->isOpen())
-        MERROR(TEXT("Failed to open window"));
+        MERROR(STR("Failed to open window"));
 }
 
 bool MPlayerApplication::isRunning() const {

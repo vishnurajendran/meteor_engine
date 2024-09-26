@@ -12,7 +12,7 @@ std::vector<MDrawCall*> MGraphicsRenderer::openGlDrawCalls;
 
 void MGraphicsRenderer::submit(MDrawCall* drawCall) {
     if(!renderTarget) {
-        MERROR(TEXT("Graphics Render Target NULL, Submission omitted"));
+        MERROR(STR("Graphics Render Target NULL, Submission omitted"));
         return;
     }
 
@@ -25,7 +25,7 @@ void MGraphicsRenderer::submit(MDrawCall* drawCall) {
             sfmlDrawCalls.push_back(drawCall);
     }
     else
-        MERROR(TEXT("drawCall NULL, ignored"));
+        MERROR(STR("drawCall NULL, ignored"));
 }
 
 void MGraphicsRenderer::initialise(sf::RenderTarget *target) {
@@ -35,7 +35,7 @@ void MGraphicsRenderer::initialise(sf::RenderTarget *target) {
 void MGraphicsRenderer::draw() {
 
     if(!renderTarget) {
-        MERROR(TEXT("Graphics Render Target NULL, Draw cancelled"));
+        MERROR(STR("Graphics Render Target NULL, Draw cancelled"));
         return;
     }
 
@@ -47,7 +47,7 @@ void MGraphicsRenderer::draw() {
             drawCall->draw(renderTarget);
         }
         else
-            MERROR(TEXT("Draw Call NULL, ignored"));
+            MERROR(STR("Draw Call NULL, ignored"));
     }
 
     renderTarget->pushGLStates();
@@ -56,7 +56,7 @@ void MGraphicsRenderer::draw() {
             drawCall->draw(renderTarget);
         }
         else
-            MERROR(TEXT("Draw Call NULL, ignored"));
+            MERROR(STR("Draw Call NULL, ignored"));
     }
     renderTarget->popGLStates();
 }

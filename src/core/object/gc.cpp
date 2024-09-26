@@ -12,7 +12,7 @@ void MGarbageCollector::reference(MObject* obj) {
     if(obj == nullptr)
         return;
 
-    //MLOG(TEXT("Referencing... ") + obj->toString());
+    //MLOG(STR("Referencing... ") + obj->toString());
     auto guid = obj->getGUID();
     if(!objReferenceMap.contains(guid)){
         objReferenceMap[guid] = 1;
@@ -29,7 +29,7 @@ void MGarbageCollector::dereference(MObject* obj) {
     }
 
     auto guid = obj->getGUID();
-    //MLOG(TEXT("De-Referencing...") + obj->toString());
+    //MLOG(STR("De-Referencing...") + obj->toString());
     if(!objReferenceMap.contains(guid)) {
         return;
     }
@@ -37,7 +37,7 @@ void MGarbageCollector::dereference(MObject* obj) {
     auto cnt = objReferenceMap[guid] - 1;
     if(cnt <= 0){
         delete obj;
-        //MLOG(TEXT("Instance killed"));
+        //MLOG(STR("Instance killed"));
         objReferenceMap.erase(guid);
         return;
     }

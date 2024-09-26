@@ -5,7 +5,7 @@
 #include "editorapplication.h"
 
 MEditorApplication::MEditorApplication() : MApplication(){
-    name = TEXT("MeteoriteEditor");
+    name = STR("MeteoriteEditor");
 }
 
 void MEditorApplication::run() {
@@ -17,28 +17,28 @@ void MEditorApplication::run() {
 }
 
 void MEditorApplication::cleanup() {
-    MLOG(TEXT("Cleanup"));
+    MLOG(STR("Cleanup"));
     window->close();
     window = nullptr;
 }
 
 void MEditorApplication::initialise() {
     //appRunning = true;
-    MLOG(TEXT("Initialising Editor"));
-    window = (MImGuiWindow*)MWindowManager::getImGuiWindow(TEXT("Meteorite Editor"));
+    MLOG(STR("Initialising Editor"));
+    window = (MImGuiWindow*)MWindowManager::getImGuiWindow(STR("Meteorite Editor"));
     if(window == nullptr){
-        MERROR(TEXT("Invalid Window Type"));
+        MERROR(STR("Invalid Window Type"));
         return;
     }
     if(!window->isOpen()) {
-        MERROR(TEXT("Failed to open window"));
+        MERROR(STR("Failed to open window"));
         return;
     }
     subWindows.push_back(new MEditorConsoleWindow());
     subWindows.push_back(new MEditorHierarchyWindow());
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
-    MLOG(TEXT("Loaded Editor Windows"));
+    MLOG(STR("Loaded Editor Windows"));
 }
 
 bool MEditorApplication::isRunning() const {

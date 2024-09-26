@@ -9,7 +9,7 @@
 #include <string>
 #include <algorithm>
 
-#define TEXT(...) SString(__VA_ARGS__)
+#define STR(...) SString(__VA_ARGS__)
 
 struct SString {
 private:

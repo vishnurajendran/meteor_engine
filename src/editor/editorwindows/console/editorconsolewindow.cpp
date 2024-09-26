@@ -30,7 +30,7 @@ void MEditorConsoleWindow::onGui() {
     ImVec2 availableSpace = ImGui::GetContentRegionAvail();
     if(ImGui::BeginListBox("##logs", availableSpace)){
        for(const auto& log : logs){
-           auto hidden= TEXT("##") + log;
+           auto hidden= STR("##") + log;
            auto tag = log.substring(0, 3);
            auto msg = log.substring(5, log.length());
 

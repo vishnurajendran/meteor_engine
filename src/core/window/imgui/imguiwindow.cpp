@@ -47,16 +47,18 @@ void MImGuiWindow::update() {
         }
     }
 
-    ImGui::SFML::Update(coreWindow, deltaClock.restart());
-    coreWindow.clear();
-    MGraphicsRenderer::draw();
+    if(coreWindow.hasFocus()) {
+        ImGui::SFML::Update(coreWindow, deltaClock.restart());
+        coreWindow.clear();
+        MGraphicsRenderer::draw();
 
-    drawMenuBar();
-    showDockSpace();
-    drawImGuiSubWindows();
-    ImGui::SFML::Render(coreWindow);
-
+        drawMenuBar();
+        showDockSpace();
+        drawImGuiSubWindows();
+        ImGui::SFML::Render(coreWindow);
+    }
     coreWindow.display();
+
 }
 
 void MImGuiWindow::close() {
@@ -102,9 +104,9 @@ void MImGuiWindow::drawMenuBar(){
         //Todo: Add Menu Items here
         if(ImGui::BeginMenu("File")){
             if(ImGui::MenuItem("Log")){
-                MLOG(TEXT("Log Message looks like this"));
-                MWARN(TEXT("Warnings look like this"));
-                MERROR(TEXT("Errors look like this"));
+                MLOG(STR("Log Message looks like this"));
+                MWARN(STR("Warnings look like this"));
+                MERROR(STR("Errors look like this"));
             }
            ImGui::EndMenu();
         }
@@ -124,7 +126,7 @@ void MImGuiWindow::drawMenuBar(){
 void MImGuiWindow::loadFontFile(const SString &pathToFile, float pointSize) {
     ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(pathToFile.c_str(), pointSize);
     if (!font) {
-        MERROR(TEXT("Unable to load font : ")+pathToFile);
+        MERROR(STR("Unable to load font : ") + pathToFile);
         return;
     }
     ImGui::SFML::UpdateFontTexture();

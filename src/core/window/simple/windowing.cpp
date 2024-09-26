@@ -10,7 +10,7 @@ MWindow::MWindow(const SString& title) : MWindow(title, 800, 600, 0) {
 
 MWindow::MWindow(const SString& title, int sizeX, int sizeY, int fps) : MObject() {
     this->title =  title;
-    name = TEXT("Window - ") + title;
+    name = STR("Window - ") + title;
     coreWindow.create(sf::VideoMode(sizeX, sizeY), title.str(), sf::Style::Default);
     coreWindow.setFramerateLimit(fps);
 

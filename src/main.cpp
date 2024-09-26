@@ -11,7 +11,7 @@ int main(){
     MObjectPtr appInst = getAppInstance();
     if(appInst == nullptr)
     {
-        MERROR(TEXT("Application Creation Error!!!"));
+        MERROR(STR("Application Creation Error!!!"));
         return 0;
     }
 

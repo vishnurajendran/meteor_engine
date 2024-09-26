@@ -65,6 +65,7 @@ add_executable(meteor_engine
         src/core/graphics/core/drawcall.h
         src/core/graphics/core/opengldrawcall.cpp
         src/core/graphics/core/opengldrawcall.h
+        src/core/utils/glmtypdefs.h
 )
 
 # FetchContent for dependencies
@@ -100,6 +101,14 @@ FetchContent_Declare(
         GIT_TAG        v1.12.0
 )
 
+# Fetch GLM
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY	https://github.com/g-truc/glm.git
+        GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
+)
+
+
 # Build SFML
 option(SFML_BUILD_AUDIO "Build audio" OFF)
 option(SFML_BUILD_NETWORK "Build network" OFF)
@@ -112,17 +121,18 @@ FetchContent_MakeAvailable(imgui)
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
 option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
 option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
+
 FetchContent_MakeAvailable(imgui-sfml)
-
-# Build spdlog
 FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(glm)
 
-# Link libraries
+
 target_link_libraries(
         meteor_engine
         PUBLIC
         ImGui-SFML::ImGui-SFML
         spdlog::spdlog
+        glm::glm
 )
 
 # Set platform-specific libraries

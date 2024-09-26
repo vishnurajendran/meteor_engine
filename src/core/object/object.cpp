@@ -12,7 +12,7 @@ MObject::MObject() {
 }
 
 SString MObject::toString() {
-    return name+TEXT(" (GUID: ")+guid + TEXT(")");
+    return name + STR(" (GUID: ") + guid + STR(")");
 }
 
 bool MObject::equals(MObject *obj) {
