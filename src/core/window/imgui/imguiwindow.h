@@ -9,6 +9,9 @@
 #include "core/window/simple/windowing.h"
 
 class MImGuiWindow : public MWindow {
+private:
+    int targetFPS;
+    void drawGUI();
 public:
     MImGuiWindow(const SString& title);
     MImGuiWindow(const SString& title, int sizeX, int sizeY, int fps);

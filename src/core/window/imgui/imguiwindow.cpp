@@ -15,10 +15,12 @@ MImGuiWindow::MImGuiWindow(const SString &title) : MWindow(title) {
 }
 
 MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) : MWindow(title, sizeX, sizeY, fps) {
+    this->targetFPS = fps;
     coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default);
+    coreWindow.setFramerateLimit(fps);
+
     ImGui::SFML::Init(coreWindow);
     ImGuiIO& io = ImGui::GetIO();
-
     loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
 
     io.FontGlobalScale = 1;
@@ -39,26 +41,34 @@ void MImGuiWindow::clear() {
 }
 
 void MImGuiWindow::update() {
+    const sf::Time frameTime = sf::seconds(1.f / targetFPS);
+    sf::Clock clock;
+
     while (coreWindow.pollEvent(event)) {
         ImGui::SFML::ProcessEvent(coreWindow, event);
-
         if (event.type == sf::Event::Closed) {
             coreWindow.close();
         }
     }
 
-    if(coreWindow.hasFocus()) {
-        ImGui::SFML::Update(coreWindow, deltaClock.restart());
-        coreWindow.clear();
-        MGraphicsRenderer::draw();
+    ImGui::SFML::Update(coreWindow, deltaClock.restart());
+    drawGUI();
 
-        drawMenuBar();
-        showDockSpace();
-        drawImGuiSubWindows();
-        ImGui::SFML::Render(coreWindow);
+    sf::Time elapsed = clock.getElapsedTime();
+    sf::Time sleepTime = frameTime - elapsed;
+    if (sleepTime > sf::Time::Zero) {
+        sf::sleep(sleepTime);  // Sleep to limit the framerate
     }
-    coreWindow.display();
+    clock.restart();
+}
 
+void MImGuiWindow::drawGUI() {
+    drawMenuBar();
+    showDockSpace();
+    drawImGuiSubWindows();
+    MGraphicsRenderer::draw();
+    ImGui::SFML::Render(coreWindow);
+    coreWindow.display();
 }
 
 void MImGuiWindow::close() {

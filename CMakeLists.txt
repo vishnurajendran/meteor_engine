@@ -108,6 +108,13 @@ FetchContent_Declare(
         GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
 )
 
+# Fetch Assimp
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY	https://github.com/assimp/assimp.git
+        GIT_TAG 	    v5.2.5
+)
+
 
 # Build SFML
 option(SFML_BUILD_AUDIO "Build audio" OFF)
@@ -125,6 +132,7 @@ option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
 FetchContent_MakeAvailable(imgui-sfml)
 FetchContent_MakeAvailable(spdlog)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(assimp)
 
 
 target_link_libraries(
@@ -133,6 +141,7 @@ target_link_libraries(
         ImGui-SFML::ImGui-SFML
         spdlog::spdlog
         glm::glm
+        assimp
 )
 
 # Set platform-specific libraries
