@@ -11,6 +11,7 @@
 class MImGuiWindow : public MWindow {
 private:
     int targetFPS;
+    sf::Clock clock;
     void drawGUI();
 public:
     MImGuiWindow(const SString& title);

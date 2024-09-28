@@ -4,48 +4,92 @@
 
 #include "editorhierarchywindow.h"
 
+#include "editor/app/editorapplication.h"
+
 MEditorHierarchyWindow::MEditorHierarchyWindow(): MEditorHierarchyWindow(700, 300) {
 
 }
 
 MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x, y) {
     title = "Hierarchy";
+    sceneTex.loadFromFile("meteor_assets/icons/scene.png");
+    entityTex.loadFromFile("meteor_assets/icons/spatial.png");
 }
 
 void MEditorHierarchyWindow::onGui() {
     // Create a child window with a specific size and enable scrolling
     auto size = ImGui::GetContentRegionAvail();
-    ImGui::BeginChild("TreeRegion", size, true, ImGuiWindowFlags_HorizontalScrollbar);
+
+    auto scene = MSceneManager::getActiveScene();
+
+    if(!scene)
+        return;
+    SString hidden = "##" + scene->getName().str();
+    ImGui::BeginChild(getGUID().c_str(), size, true, ImGuiWindowFlags_HorizontalScrollbar);
     // Root node
-    if (ImGui::TreeNode("Root")) {
-        // First child node
-        if (ImGui::TreeNode("Child Node 1")) {
-            ImGui::Text("This is Child Node 1");
-            ImGui::TreePop();
-        }
 
-        // Second child node
-        if (ImGui::TreeNode("Child Node 2")) {
-            ImGui::Text("This is Child Node 2");
-            ImGui::TreePop();
+    ImGui::PushID(scene->getGUID().c_str());
+    bool open = ImGui::TreeNodeEx(hidden.c_str(),  ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen);
+    ImGui::SameLine();
+    ImGui::Image(sceneTex);
+    ImGui::SameLine();
+    ImGui::Text(scene->getName().c_str());
+    if (open) {
+        for(auto rootObjs : *scene->getRootEntities()) {
+            drawRecursiveSceneTree(rootObjs, 1);
         }
-
-        // Third child node
-        if (ImGui::TreeNode("Child Node 3")) {
-            ImGui::Text("This is Child Node 3");
-            ImGui::TreePop();
-        }
-
-        // Add more nodes to test scrolling
-        for (int i = 4; i <= 20; ++i) {
-            if (ImGui::TreeNode(("Child Node " + std::to_string(i)).c_str())) {
-                ImGui::Text("This is Child Node %d", i);
-                ImGui::TreePop();
-            }
-        }
-
-        ImGui::TreePop();  // Close root node
+        ImGui::TreePop();
     }
-
+    ImGui::PopID();
     ImGui::EndChild();
 }
+
+void MEditorHierarchyWindow::drawRecursiveSceneTree(MSpatialEntity* spatial, int depth) {
+    if(!spatial)
+        return;
+
+    //draw leaf
+    if(spatial->getChildren() == nullptr || spatial->getChildren()->empty()) {
+        drawLeaf(spatial);
+        return;
+    }
+
+    //draw current node
+    ImGui::PushID(spatial->getGUID().c_str());
+    auto hidden = STR("##"+spatial->getGUID().str());
+
+    bool open = ImGui::TreeNodeEx(hidden.c_str());
+    ImGui::SameLine();
+    ImGui::Image(entityTex);
+    ImGui::SameLine();
+    if(ImGui::Selectable(spatial->getName().c_str(), MEditorApplication::Selected == spatial)) {
+        MEditorApplication::Selected = spatial;
+    }
+
+    if (open) {
+        for(auto child : *spatial->getChildren()) {
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 3*depth);
+            drawRecursiveSceneTree(child, depth+1);
+        }
+        ImGui::TreePop();
+    }
+    ImGui::PopID();
+}
+
+void MEditorHierarchyWindow::drawLeaf(MSpatialEntity *spatial) {
+
+    if(!spatial)
+        return;
+
+    auto hidden = "##"+spatial->getGUID().str();
+    ImGui::PushID(spatial->getGUID().c_str());
+    if(ImGui::Selectable( hidden.c_str(), MEditorApplication::Selected == spatial)) {
+        MEditorApplication::Selected = spatial;
+    }
+    ImGui::SameLine();
+    ImGui::Image(entityTex);
+    ImGui::SameLine();
+    ImGui::Text("%s", spatial->getName().c_str());
+    ImGui::PopID();
+}
+

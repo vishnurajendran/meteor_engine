@@ -1,0 +1,11 @@
+<mscene name = "test_scene">
+    <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+    <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+    <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+    <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+    <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)">
+        <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+        <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+        <mspatial name="Test1" localPosition="(960,540,0)" localScale="(1,1,1)" localRotation="(1,1,1,0)"/>
+    </mspatial>
+</mscene>

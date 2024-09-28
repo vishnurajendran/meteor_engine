@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
 
 # Set the directory where executables will be placed
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
@@ -12,6 +13,91 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 # Define build options for Editor and Player modes
 option(BUILD_EDITOR "Build the editor application" OFF)
 option(BUILD_PLAYER "Build the player application" OFF)
+
+# FetchContent for dependencies
+include(FetchContent)
+
+set(SFML_VERSION 2.5.1)
+set(IMGUI_VERSION 1.90.9)
+
+# Fetch SFML
+FetchContent_Declare(
+        SFML
+        URL "https://github.com/SFML/SFML/archive/${SFML_VERSION}.zip"
+)
+
+# Build SFML
+option(SFML_BUILD_AUDIO "Build audio" OFF)
+option(SFML_BUILD_NETWORK "Build network" OFF)
+FetchContent_MakeAvailable(SFML)
+
+########### IMGUI ###############
+# Fetch Dear ImGui
+FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY "https://github.com/ocornut/imgui.git"
+        GIT_TAG "docking"
+)
+# Build Dear ImGui
+FetchContent_MakeAvailable(imgui)
+
+##################################
+
+########## IMGUI_SFML #############
+# Fetch ImGui-SFML binding
+FetchContent_Declare(
+        imgui-sfml
+        GIT_REPOSITORY https://github.com/SFML/imgui-sfml.git
+        GIT_TAG        2.6.x
+)
+# Build ImGui-SFML
+set(IMGUI_DIR ${imgui_SOURCE_DIR})
+option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
+option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
+FetchContent_MakeAvailable(imgui-sfml)
+
+#####################################
+
+############## SPDLOG ###############
+# Fetch spdlog
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG        v1.12.0
+)
+FetchContent_MakeAvailable(spdlog)
+#####################################
+
+
+############## GLM ##################
+# Fetch GLM
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY	https://github.com/g-truc/glm.git
+        GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e
+)
+FetchContent_MakeAvailable(glm)
+#####################################
+
+
+############# ASSIMP ################
+
+include_directories(C:/msys64/mingw64/include)
+find_package(assimp REQUIRED)
+
+#####################################
+
+############# PUGIXML ################
+# Fetch Pugixml
+FetchContent_Declare(
+        pugixml
+        GIT_REPOSITORY	https://github.com/zeux/pugixml.git
+        GIT_TAG 	    master
+)
+FetchContent_MakeAvailable(pugixml)
+#####################################
+
+############# TARGETS ################
 
 # Add the executable and its source files
 add_executable(meteor_engine
@@ -66,83 +152,54 @@ add_executable(meteor_engine
         src/core/graphics/core/opengldrawcall.cpp
         src/core/graphics/core/opengldrawcall.h
         src/core/utils/glmtypdefs.h
+        src/core/engine/entities/spatial/spatial.cpp
+        src/core/engine/entities/spatial/spatial.h
+        src/core/engine/scene/scene.cpp
+        src/core/engine/scene/scene.h
+        src/core/engine/scene/serialisation/xmlserialisable.h
+        src/core/engine/scene/serialisation/sceneentitytypemap.cpp
+        src/core/engine/scene/serialisation/sceneentitytypemap.h
+        src/core/engine/scene/serialisation/sceneentitytypedeserializer.cpp
+        src/core/engine/scene/serialisation/sceneentitytypedeserializer.h
+        src/core/utils/str_extensions.h
+        src/core/utils/serialisation_utils.h
+        src/core/engine/scene/scenemanager.cpp
+        src/core/engine/scene/scenemanager.h
+        src/core/engine/assetmanagement/assetmanager/assetmanager.cpp
+        src/core/engine/assetmanagement/assetmanager/assetmanager.h
+        src/core/engine/assetmanagement/asset/asset.cpp
+        src/core/engine/assetmanagement/asset/asset.h
+        src/core/engine/assetmanagement/textasset/textasset.cpp
+        src/core/engine/assetmanagement/textasset/textasset.h
+        src/core/engine/scene/sceneasset.cpp
+        src/core/engine/scene/sceneasset.h
+        src/core/utils/fileio.h
+        src/core/utils/fileio.cpp
+        src/core/utils/serialisation_utils.cpp
+        src/core/engine/entities/spatial/spatialdeserialiser.cpp
+        src/core/engine/entities/spatial/spatialdeserialiser.h
+        src/core/engine/texture/textureasset.cpp
+        src/core/engine/texture/textureasset.h
+        src/core/engine/assetmanagement/assetmanager/assetimporter.h
+        src/core/engine/assetmanagement/assetmanager/assetimporter.cpp
+        src/core/engine/assetmanagement/textasset/textassetimporter.cpp
+        src/core/engine/assetmanagement/textasset/textassetimporter.h
+        src/core/engine/scene/sceneassetimporter.cpp
+        src/core/engine/scene/sceneassetimporter.h
 )
 
-# FetchContent for dependencies
-include(FetchContent)
-
-set(SFML_VERSION 2.5.1)
-set(IMGUI_VERSION 1.90.9)
-
-# Fetch SFML
-FetchContent_Declare(
-        SFML
-        URL "https://github.com/SFML/SFML/archive/${SFML_VERSION}.zip"
-)
-
-# Fetch Dear ImGui
-FetchContent_Declare(
-        imgui
-        GIT_REPOSITORY "https://github.com/ocornut/imgui.git"
-        GIT_TAG "docking"
-)
-
-# Fetch ImGui-SFML binding
-FetchContent_Declare(
-        imgui-sfml
-        GIT_REPOSITORY https://github.com/SFML/imgui-sfml.git
-        GIT_TAG        2.6.x
-)
-
-# Fetch spdlog
-FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG        v1.12.0
-)
-
-# Fetch GLM
-FetchContent_Declare(
-        glm
-        GIT_REPOSITORY	https://github.com/g-truc/glm.git
-        GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
-)
-
-# Fetch Assimp
-FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY	https://github.com/assimp/assimp.git
-        GIT_TAG 	    v5.2.5
-)
-
-
-# Build SFML
-option(SFML_BUILD_AUDIO "Build audio" OFF)
-option(SFML_BUILD_NETWORK "Build network" OFF)
-FetchContent_MakeAvailable(SFML)
-
-# Build Dear ImGui
-FetchContent_MakeAvailable(imgui)
-
-# Build ImGui-SFML
-set(IMGUI_DIR ${imgui_SOURCE_DIR})
-option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
-option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
-
-FetchContent_MakeAvailable(imgui-sfml)
-FetchContent_MakeAvailable(spdlog)
-FetchContent_MakeAvailable(glm)
-FetchContent_MakeAvailable(assimp)
-
-
+############# LINK LIBRARIES ################
 target_link_libraries(
         meteor_engine
         PUBLIC
         ImGui-SFML::ImGui-SFML
         spdlog::spdlog
         glm::glm
-        assimp
+        pugixml
+        assimp::assimp
 )
+
+############# PLATFORM-SPECIFIC CONFIGURATIONS #############
 
 # Set platform-specific libraries
 if (APPLE)
@@ -157,6 +214,7 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(meteor_engine PRIVATE X11)
 endif()
 
+############# PREPROCESSOR DEFINITIONS ################
 # Set preprocessor definitions based on CMake options
 if(BUILD_EDITOR)
     add_definitions(-DEDITOR_APPLICATION)

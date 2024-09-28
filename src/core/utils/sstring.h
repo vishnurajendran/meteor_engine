@@ -1,6 +1,3 @@
-//
-// Created by Vishnu Rajendran on 2024-09-18.
-//
 #pragma once
 
 #ifndef METEOR_ENGINE_SSTRING_H
@@ -153,7 +150,31 @@ public:
         is >> str.coreStr;
         return is;
     }
-};
 
+    // Contains method (checks if the string contains a substring)
+    bool contains(const SString& substring) const {
+        return coreStr.find(substring.coreStr) != std::string::npos;
+    }
+
+    // StartsWith method (checks if the string starts with a given prefix)
+    bool startsWith(const SString& prefix) const {
+        return coreStr.rfind(prefix.coreStr, 0) == 0;
+    }
+
+    // EndsWith method (checks if the string ends with a given suffix)
+    bool endsWith(const SString& suffix) const {
+        if (suffix.length() > coreStr.length()) return false;
+        return coreStr.compare(coreStr.length() - suffix.length(), suffix.length(), suffix.coreStr) == 0;
+    }
+
+    // Replace method (replaces all occurrences of a substring with another substring)
+    void replace(const SString& target, const SString& replacement) {
+        size_t pos = 0;
+        while ((pos = coreStr.find(target.coreStr, pos)) != std::string::npos) {
+            coreStr.replace(pos, target.coreStr.length(), replacement.coreStr);
+            pos += replacement.coreStr.length(); // Move past the replacement
+        }
+    }
+};
 
 #endif //METEOR_ENGINE_SSTRING_H

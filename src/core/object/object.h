@@ -16,9 +16,10 @@ public:
     MObject();
     virtual ~MObject() = default;
     SString getGUID();
-    SString toString();
-    bool equals(MObject* obj);
+    virtual SString toString();
+    void setName(const SString& name) { this->name = name; }
+    SString getName() const { return name;}
+    virtual bool equals(MObject* obj);
 };
-
 
 #endif //METEOR_ENGINE_OBJECT_H

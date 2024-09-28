@@ -12,6 +12,8 @@ private:
     MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
 public:
+    static MSpatialEntity* Selected;
+public:
     MEditorApplication();
     void initialise() override;
     void run() override;

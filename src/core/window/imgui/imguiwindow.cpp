@@ -42,8 +42,6 @@ void MImGuiWindow::clear() {
 
 void MImGuiWindow::update() {
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
-    sf::Clock clock;
-
     while (coreWindow.pollEvent(event)) {
         ImGui::SFML::ProcessEvent(coreWindow, event);
         if (event.type == sf::Event::Closed) {
@@ -63,10 +61,10 @@ void MImGuiWindow::update() {
 }
 
 void MImGuiWindow::drawGUI() {
+    MGraphicsRenderer::draw();
     drawMenuBar();
     showDockSpace();
     drawImGuiSubWindows();
-    MGraphicsRenderer::draw();
     ImGui::SFML::Render(coreWindow);
     coreWindow.display();
 }

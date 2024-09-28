@@ -7,10 +7,15 @@
 #include "editor/meteorite_minimal.h"
 
 class MEditorHierarchyWindow : public MImGuiSubWindow{
+private:
+    sf::Texture sceneTex;
+    sf::Texture entityTex;
 public:
     MEditorHierarchyWindow();
     MEditorHierarchyWindow(int x, int y);
     void onGui() override;
+    void drawRecursiveSceneTree(MSpatialEntity* spatial, int depth);
+    void drawLeaf(MSpatialEntity* spatial);
 };
 
 

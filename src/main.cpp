@@ -8,6 +8,7 @@
 extern MApplication* getAppInstance();
 
 int main(){
+    MAssetManager::getInstance()->refresh();
     MObjectPtr appInst = getAppInstance();
     if(appInst == nullptr)
     {
@@ -20,7 +21,6 @@ int main(){
     glEnable(GL_TEXTURE_2D);
 
     while(appInst->isRunning()){
-
         sf::CircleShape circleShape;
         circleShape.setRadius(100);
         circleShape.setPosition(100,100);
