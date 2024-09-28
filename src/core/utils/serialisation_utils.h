@@ -6,7 +6,7 @@
 #ifndef VECTORUTILS_H
 #define VECTORUTILS_H
 
-#include <core/utils/glmtypdefs.h>
+#include <core/utils/glmhelper.h>
 #include "sstring.h"
 
 SString serializeVector (SVector3 vector);

@@ -151,7 +151,8 @@ add_executable(meteor_engine
         src/core/graphics/core/drawcall.h
         src/core/graphics/core/opengldrawcall.cpp
         src/core/graphics/core/opengldrawcall.h
-        src/core/utils/glmtypdefs.h
+        src/core/utils/glmhelper.h
+        src/core/utils/glmhelper.cpp
         src/core/engine/entities/spatial/spatial.cpp
         src/core/engine/entities/spatial/spatial.h
         src/core/engine/scene/scene.cpp
@@ -186,6 +187,12 @@ add_executable(meteor_engine
         src/core/engine/assetmanagement/textasset/textassetimporter.h
         src/core/engine/scene/sceneassetimporter.cpp
         src/core/engine/scene/sceneassetimporter.h
+        src/editor/editorwindows/inspectordrawer/inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h
+        src/core/utils/glmhelper.cpp
+        src/core/utils/glmhelper.h
 )
 
 ############# LINK LIBRARIES ################

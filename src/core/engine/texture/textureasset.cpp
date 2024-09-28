@@ -6,7 +6,7 @@
 
 #include "../../../../cmake-build-player_debug/_deps/sfml-src/include/SFML/Graphics/Texture.hpp"
 #include "core/object/object.h"
-#include "core/utils/glmtypdefs.h"
+#include "core/utils/glmhelper.h"
 
 bool MTextureAsset::loadFromPath(const SString &path) {
     valid = false;

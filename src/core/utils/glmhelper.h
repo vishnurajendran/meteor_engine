@@ -1,10 +1,9 @@
 //
-// Created by Vishnu Rajendran on 2024-09-26.
+// Created by Vishnu Rajendran on 2024-09-28.
 //
 
-#pragma once
-#ifndef METEOR_ENGINE_GLMTYPDEFS_H
-#define METEOR_ENGINE_GLMTYPDEFS_H
+#ifndef METEOR_ENGINE_GLMHELPER_H
+#define METEOR_ENGINE_GLMHELPER_H
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -21,4 +20,6 @@ typedef glm::mat4 SMatrix4;
 
 typedef glm::quat SQuaternion;
 
-#endif //METEOR_ENGINE_GLMTYPDEFS_H
+SVector3 quaternionToEuler(const SQuaternion& q) ;
+glm::quat eulerToQuaternion(const glm::vec3& eulerAngles);
+#endif //METEOR_ENGINE_GLMHELPER_H
