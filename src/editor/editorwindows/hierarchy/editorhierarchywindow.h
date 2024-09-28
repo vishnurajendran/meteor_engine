@@ -10,6 +10,9 @@ class MEditorHierarchyWindow : public MImGuiSubWindow{
 private:
     sf::Texture sceneTex;
     sf::Texture entityTex;
+    sf::Vector2f sceneTexSize;
+    sf::Vector2f entityTexSize;
+
 public:
     MEditorHierarchyWindow();
     MEditorHierarchyWindow(int x, int y);

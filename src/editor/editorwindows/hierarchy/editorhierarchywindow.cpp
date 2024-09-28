@@ -14,6 +14,10 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
     title = "Hierarchy";
     sceneTex.loadFromFile("meteor_assets/icons/scene.png");
     entityTex.loadFromFile("meteor_assets/icons/spatial.png");
+
+    auto dpi = DPIHelper::GetDPIScaleFactor();
+    sceneTexSize = sf::Vector2f(sceneTex.getSize().x * dpi,sceneTex.getSize().y * dpi);
+    entityTexSize = sf::Vector2f(entityTex.getSize().x * dpi,entityTex.getSize().y * dpi);
 }
 
 void MEditorHierarchyWindow::onGui() {
@@ -31,7 +35,7 @@ void MEditorHierarchyWindow::onGui() {
     ImGui::PushID(scene->getGUID().c_str());
     bool open = ImGui::TreeNodeEx(hidden.c_str(),  ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_DefaultOpen);
     ImGui::SameLine();
-    ImGui::Image(sceneTex);
+    ImGui::Image(sceneTex, sceneTexSize);
     ImGui::SameLine();
     ImGui::Text(scene->getName().c_str());
     if (open) {
@@ -60,7 +64,7 @@ void MEditorHierarchyWindow::drawRecursiveSceneTree(MSpatialEntity* spatial, int
 
     bool open = ImGui::TreeNodeEx(hidden.c_str());
     ImGui::SameLine();
-    ImGui::Image(entityTex);
+    ImGui::Image(entityTex, entityTexSize);
     ImGui::SameLine();
     if(ImGui::Selectable(spatial->getName().c_str(), MEditorApplication::Selected == spatial)) {
         MEditorApplication::Selected = spatial;
@@ -87,7 +91,7 @@ void MEditorHierarchyWindow::drawLeaf(MSpatialEntity *spatial) {
         MEditorApplication::Selected = spatial;
     }
     ImGui::SameLine();
-    ImGui::Image(entityTex);
+    ImGui::Image(entityTex, entityTexSize);
     ImGui::SameLine();
     ImGui::Text("%s", spatial->getName().c_str());
     ImGui::PopID();
