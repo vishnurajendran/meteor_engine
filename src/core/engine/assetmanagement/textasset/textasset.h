@@ -11,9 +11,10 @@ class MTextAsset : public MAsset {
 private:
     SString text;
 public:
-    MTextAsset(SString path);
+    MTextAsset(const SString& path);
     SString getText() const;
-    bool loadFromPath(const SString& path) override;
+private:
+    bool loadFromPath(const SString& path);
 };
 
 

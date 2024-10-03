@@ -36,7 +36,13 @@ void MEditorApplication::initialise() {
         MERROR(STR("Failed to open window"));
         return;
     }
+
+    // Load first, so that it can log everything from here on out.
     subWindows.push_back(new MEditorConsoleWindow());
+
+    //Refresh Asset Manager
+    MAssetManager::getInstance()->refresh();
+
     subWindows.push_back(new MEditorHierarchyWindow());
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());

@@ -1,9 +1,12 @@
 //
 // Created by Vishnu Rajendran on 2024-09-24.
 //
+
+#include <GL/glew.h>
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "imguiwindow.h"
+
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
@@ -16,8 +19,18 @@ MImGuiWindow::MImGuiWindow(const SString &title) : MWindow(title) {
 
 MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) : MWindow(title, sizeX, sizeY, fps) {
     this->targetFPS = fps;
-    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default);
+    sf::ContextSettings settings;
+    settings.majorVersion = 4;
+    settings.minorVersion = 6;
+    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default, settings);
     coreWindow.setFramerateLimit(fps);
+    coreWindow.setActive(true);
+
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) {
+        MERROR(STR("Failed to initialize GLEW" ));
+        return;
+    }
 
     ImGui::SFML::Init(coreWindow);
     ImGuiIO& io = ImGui::GetIO();
@@ -27,7 +40,7 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    setupImGuiDarkTheme();
+    deepDarkTheme();
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size

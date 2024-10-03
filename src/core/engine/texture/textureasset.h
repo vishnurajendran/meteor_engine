@@ -15,9 +15,10 @@ public:
     explicit MTextureAsset(const SString &path)
         : MAsset(path) {
     }
-    bool loadFromPath(const SString &path) override;
     SVector2 getSize() const;
     sf::Texture* getTexture();
+private:
+    bool loadFromPath(const SString &path);
 };
 
 #endif //TEXTUREASSET_H

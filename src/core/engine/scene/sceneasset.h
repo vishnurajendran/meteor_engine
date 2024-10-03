@@ -12,10 +12,11 @@ class MSceneAsset : public MAsset {
 private:
     pugi::xml_document* sceneHierarchy;
 public:
-    MSceneAsset(SString path);
+    MSceneAsset(const SString& path);
     ~MSceneAsset();
-    bool loadFromPath(const SString& path) override;
     pugi::xml_document* getSceneHierarchy();
+private:
+    bool loadFromPath(const SString& path);
 };
 
 #endif //SCENEASSET_H

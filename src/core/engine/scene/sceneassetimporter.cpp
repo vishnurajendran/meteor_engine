@@ -16,7 +16,7 @@ bool MSceneAssetImporter::canImport(SString fileExtension) {
 
 MAsset * MSceneAssetImporter::importAsset(SString path) {
     auto asset = new MSceneAsset(path);
-    if(!asset->loadFromPath(path)) {
+    if(!asset->isValid()) {
         delete asset;
         return nullptr;
     }

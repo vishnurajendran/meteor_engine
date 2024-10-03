@@ -6,7 +6,9 @@
 
 #include "core/meteor_utils.h"
 
-MSceneAsset::MSceneAsset(SString path) : MAsset(path){
+MSceneAsset::MSceneAsset(const SString& path) : MAsset(path){
+    name = "SceneAsset";
+    valid = loadFromPath(path);
 }
 
 MSceneAsset::~MSceneAsset() {
@@ -15,13 +17,13 @@ MSceneAsset::~MSceneAsset() {
 
 bool MSceneAsset::loadFromPath(const SString& path) {
     SString dataTxt;
-    valid = false;
+    auto res = false;
     if(FileIO::readFile(path, dataTxt)) {
         sceneHierarchy = new pugi::xml_document();
         sceneHierarchy->load_string(dataTxt.c_str());
-        valid = true;
+        res = true;
     }
-    return valid;
+    return res;
 }
 
 pugi::xml_document * MSceneAsset::getSceneHierarchy() {

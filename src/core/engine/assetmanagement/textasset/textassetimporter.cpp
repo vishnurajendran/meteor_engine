@@ -18,7 +18,7 @@ bool MTextAssetImporter::canImport(SString fileExtension) {
 
 MAsset * MTextAssetImporter::importAsset(SString path) {
     auto asset = new MTextAsset(path);
-    if(!asset->loadFromPath(path)) {
+    if(!asset->isValid()) {
         delete asset;
         return nullptr;
     }

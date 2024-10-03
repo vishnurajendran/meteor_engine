@@ -4,15 +4,16 @@
 
 #ifndef METEOR_ENGINE_SFMLDRAWCALL_H
 #define METEOR_ENGINE_SFMLDRAWCALL_H
-#include "core/meteor_core_minimal.h"
 #include "drawcall.h"
 
 class MSFMLDrawCall : public MDrawCall {
 private:
     sf::Drawable* drawable;
+    sf::RenderTarget* renderTarget = nullptr;
 public:
     MSFMLDrawCall(sf::Drawable* drawable);
-    void draw(sf::RenderTarget *target) override;
+    void setTarget(sf::RenderTarget* renderTarget);
+    void draw() override;
 };
 
 

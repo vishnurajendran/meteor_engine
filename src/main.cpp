@@ -8,7 +8,6 @@
 extern MApplication* getAppInstance();
 
 int main(){
-    MAssetManager::getInstance()->refresh();
     MObjectPtr appInst = getAppInstance();
     if(appInst == nullptr)
     {

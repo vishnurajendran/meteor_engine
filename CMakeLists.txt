@@ -97,6 +97,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(pugixml)
 #####################################
 
+
+############# GLEW ##################
+include_directories(C:/msys64/mingw64/include)
+find_package(GLEW REQUIRED)
+#####################################
+
+
 ############# TARGETS ################
 
 # Add the executable and its source files
@@ -193,6 +200,16 @@ add_executable(meteor_engine
         src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h
         src/core/utils/glmhelper.cpp
         src/core/utils/glmhelper.h
+        src/core/engine/3d/staticmesh/staticmeshasset.cpp
+        src/core/engine/3d/staticmesh/staticmeshasset.h
+        src/core/engine/3d/staticmesh/MStaticMeshAssetImporter.cpp
+        src/core/engine/3d/staticmesh/MStaticMeshAssetImporter.h
+        src/core/engine/3d/staticmesh/staticmesh.cpp
+        src/core/engine/3d/staticmesh/staticmesh.h
+        src/core/engine/3d/staticmesh/staticmeshdrawcall.cpp
+        src/core/engine/3d/staticmesh/staticmeshdrawcall.h
+        src/core/engine/3d/shader/shader.cpp
+        src/core/engine/3d/shader/shader.h
 )
 
 ############# LINK LIBRARIES ################
@@ -204,6 +221,7 @@ target_link_libraries(
         glm::glm
         pugixml
         assimp::assimp
+        GLEW::GLEW
 )
 
 ############# PLATFORM-SPECIFIC CONFIGURATIONS #############

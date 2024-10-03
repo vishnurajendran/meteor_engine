@@ -20,9 +20,16 @@ MImGuiSubWindow::~MImGuiSubWindow() {
     MImGuiSubWindowManager::remove(this);
 }
 
+void MImGuiSubWindow::setWindowConstraints(float minx, float miny, float maxx, float maxy) {
+    minSize = ImVec2(minx, miny);
+    maxSize = ImVec2(maxx, maxy);
+}
+
 void MImGuiSubWindow::draw() {
     if(ImGui::Begin(title.c_str())){
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minSize);
         onGui();
+        ImGui::PopStyleVar();
         ImGui::End();
     }
 }

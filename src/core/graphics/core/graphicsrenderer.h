@@ -8,11 +8,14 @@
 #include "core/meteor_core_minimal.h"
 #include "drawcall.h"
 
+class MOpenGlDrawCall;
+class MSFMLDrawCall;
+
 class MGraphicsRenderer : MObject {
 private:
     static sf::RenderTarget* renderTarget;
-    static std::vector<MDrawCall*> sfmlDrawCalls;
-    static std::vector<MDrawCall*> openGlDrawCalls;
+    static std::vector<MSFMLDrawCall*> sfmlDrawCalls;
+    static std::vector<MOpenGlDrawCall*> openGlDrawCalls;
 public:
     static void initialise(sf::RenderTarget* target);
     static void submit(MDrawCall* drawCall);

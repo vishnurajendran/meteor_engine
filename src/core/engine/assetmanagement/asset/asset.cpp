@@ -4,7 +4,7 @@
 
 #include "asset.h"
 
-MAsset::MAsset(SString path) {
+MAsset::MAsset(const SString& path) {
     name = "Asset";
     this->path = path;
 }
@@ -15,8 +15,4 @@ SString MAsset::getPath() const {
 
 bool MAsset::isValid() const {
     return valid;
-}
-
-bool MAsset::loadFromPath(const SString& path) {
-    return false;
 }

@@ -6,8 +6,9 @@
 
 #include "core/utils/fileio.h"
 
-MTextAsset::MTextAsset(SString path) : MAsset(path){
+MTextAsset::MTextAsset(const SString& path) : MAsset(path){
     name = "TextAsset";
+    valid = loadFromPath(path);
 }
 
 SString MTextAsset::getText() const {
@@ -15,7 +16,6 @@ SString MTextAsset::getText() const {
 }
 
 bool MTextAsset::loadFromPath(const SString& path) {
-    valid = FileIO::readFile(path, text);
-    return valid;
+    return FileIO::readFile(path, text);
 }
 

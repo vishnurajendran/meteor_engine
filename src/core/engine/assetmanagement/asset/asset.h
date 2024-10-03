@@ -11,11 +11,9 @@ protected:
     SString path;
     bool valid;
 public:
-    MAsset(SString path);
+    MAsset(const SString& path);
     SString getPath() const;
     bool isValid() const;
-protected:
-    virtual bool loadFromPath(const SString& path);
 };
 
 #endif //MASSET_H

@@ -5,12 +5,16 @@
 #include "SFML/OpenGL.hpp"
 #include "sfmldrawcall.h"
 
-void MSFMLDrawCall::draw(sf::RenderTarget *target) {
-    if(target && drawable) {
-        target->draw(*drawable);
+void MSFMLDrawCall::draw() {
+    if(renderTarget && drawable) {
+        renderTarget->draw(*drawable);
     }
 }
 
 MSFMLDrawCall::MSFMLDrawCall(sf::Drawable* drawable) {
     this->drawable = drawable;
+}
+
+void MSFMLDrawCall::setTarget(sf::RenderTarget *renderTarget) {
+    this->renderTarget = renderTarget;
 }

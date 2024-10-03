@@ -6,30 +6,63 @@
 #include "core/engine/entities/spatial/spatial.h"
 
 #include "imgui.h"
+#include "imgui-SFML.h"
 #include "misc/cpp/imgui_stdlib.h"
+
+MSpatialEntityInspectorDrawer::MSpatialEntityInspectorDrawer() {
+    trfTexture.loadFromFile("meteor_assets/icons/transform.png");
+    auto dpi = DPIHelper::GetDPIScaleFactor();
+    trfSize = {trfTexture.getSize().x*dpi, trfTexture.getSize().y*dpi};
+}
 
 void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity *target) {
     if(target == nullptr)
         return;
 
-    ImGui::BeginChild("NameBox", ImVec2(0, 120), true, ImGuiChildFlags_Border);
-    auto size = ImGui::GetContentRegionAvail();
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 20);
-    ImGui::Text("Entity Name");
-    std::string name = target->getName();
-    ImGui::SetNextItemWidth(size.x - 40);
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 20);
-    if(ImGui::InputText("##EntityNameField", &name,ImGuiInputTextFlags_EnterReturnsTrue)) {
+    auto name = target->getName();
+    if(drawTextField("Entity Name", name)) {
         target->setName(name);
     }
-    ImGui::EndChild();
+    drawTransformField(target);
+}
 
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
-    ImGui::BeginChild("TransformBox", ImVec2(0, 200), true, ImGuiChildFlags_Border);
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 20);
+void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char *label, ImVec4 boxColor, float boxWidth) {
+// Get current window's draw list
+    auto dpi = DPIHelper::GetDPIScaleFactor();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImU32 boxColor32 = ImGui::ColorConvertFloat4ToU32(boxColor);
+    ImVec2 textSize = ImGui::CalcTextSize(label);
+    drawList->AddRectFilled(pos, ImVec2(pos.x + boxWidth, pos.y + textSize.y), boxColor32);
+    ImGui::TextUnformatted(label);
+}
+
+bool MSpatialEntityInspectorDrawer::drawTextField(const SString &label, SString &text) {
+    auto dpi = DPIHelper::GetDPIScaleFactor();
+    ImGui::PushID(&label);
+    ImGui::BeginChild("TextBox", ImVec2(0, 65*dpi), true, ImGuiChildFlags_Border);
+    auto size = ImGui::GetContentRegionAvail();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10*dpi);
+    ImGui::Text(label.c_str());
+    std::string name = text;
+    ImGui::SetNextItemWidth(size.x - 20*dpi);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10*dpi);
+    bool res = ImGui::InputText("##EntityNameField", &name,ImGuiInputTextFlags_EnterReturnsTrue);
+    if(res)
+        text = name;
+    ImGui::EndChild();
+    ImGui::PopID();
+    return res;
+}
+
+void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity *target) {
+    auto dpi = DPIHelper::GetDPIScaleFactor();
+    ImGui::BeginChild("TransformBox", ImVec2(0, 150*dpi), true, ImGuiChildFlags_Border);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10*dpi);
+    ImGui::Image(trfTexture, trfSize);
+    ImGui::SameLine();
     ImGui::Text("Transform");
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 20);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10*dpi);
     auto pos = target->getRelativePosition();
     auto rot = quaternionToEuler(target->getRelativeRotation());
     auto scale = target->getRelativeScale();
@@ -38,7 +71,6 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity *target) {
         target->setRelativePosition(pos);
     }
     if(drawXYZComponent("Rotation:", rot)){
-        auto newRot = SQuaternion (SVector3(glm::radians(rot.x),glm::radians(rot.y), glm::radians(rot.z)));
         target->setRelativeRotation(eulerToQuaternion(rot));
     }
     if(drawXYZComponent("Scale:      ", scale)){
@@ -47,47 +79,48 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity *target) {
     ImGui::EndChild();
 }
 
-void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char *label, ImVec4 boxColor, float boxWidth) {
-// Get current window's draw list
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-    ImU32 boxColor32 = ImGui::ColorConvertFloat4ToU32(boxColor);
-    ImVec2 textSize = ImGui::CalcTextSize(label);
-    drawList->AddRectFilled(pos, ImVec2(pos.x + boxWidth, pos.y + textSize.y + 5), boxColor32);
-    ImGui::TextUnformatted(label);
-}
-
 bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVector3& value) {
-    auto size = ImGui::GetContentRegionAvail();
-    auto paddingX = 40;
-    auto boxWidth = 50;
-    auto staticSizeX = (20 * 7) +  (boxWidth * 3);
-    auto fieldSize = (size.x - staticSizeX - (paddingX*2) - 10)/3;
 
+    auto dpi = DPIHelper::GetDPIScaleFactor();
+    auto size = ImGui::GetContentRegionAvail();
+    auto paddingX = 20 * dpi;
+    auto boxWidth = 30 * dpi;
+    auto spaceBetwenBoxAndField = 10 * dpi;
+    auto spaceBetweenFields = 5 * dpi;
+    auto adjustment = 18 * dpi;
+
+    auto staticSizeX = (2 * paddingX) + (boxWidth*3) + (3 * spaceBetwenBoxAndField) + (2 * spaceBetweenFields);
+    auto fieldSize = (size.x - staticSizeX)/3 - adjustment;
     ImGui::BeginGroup();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + paddingX/2);
+
+    // X comp
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + paddingX);
     ImGui::Text(label.c_str());
     ImGui::SameLine();
     drawColoredBoxOverLabel(" X:", ImVec4(1,0,0,0.5f), boxWidth);
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 30);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetwenBoxAndField);
     ImGui::SetNextItemWidth(fieldSize);
     bool res1 = ImGui::DragFloat(STR("##"+label.str()+"X").c_str(), &value.x);
+
+    // Y Comp
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetweenFields);
     drawColoredBoxOverLabel(" Y:", ImVec4(0,1,0,0.5f), boxWidth);
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 30);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetwenBoxAndField);
     ImGui::SetNextItemWidth(fieldSize);
     bool res2 = ImGui::DragFloat(STR("##"+label.str()+"Y").c_str(), &value.y);
+
+    // Z Comp
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetweenFields);
     drawColoredBoxOverLabel(" Z:", ImVec4(0,0,1,0.5f), boxWidth);
     ImGui::SameLine();
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 30);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetwenBoxAndField);
     ImGui::SetNextItemWidth(fieldSize);
     bool res3 = ImGui::DragFloat(STR("##"+label.str()+"Z").c_str(), &value.z);
-    ImGui::EndGroup();
 
+    ImGui::EndGroup();
     return res1 || res2 || res3;
 }
