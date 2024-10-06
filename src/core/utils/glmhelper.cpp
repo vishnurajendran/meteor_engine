@@ -5,17 +5,12 @@
 #include "glmhelper.h"
 
 SVector3 quaternionToEuler(const SQuaternion& q) {
-    //Convert quaternion to Euler angles in radians
     glm::vec3 eulerAngles = glm::eulerAngles(q);
-    // Convert radians to degrees
-    glm::vec3 eulerAnglesDegrees = glm::degrees(eulerAngles);
-    return eulerAnglesDegrees;
+    return glm::degrees(eulerAngles);
 }
 
 glm::quat eulerToQuaternion(const glm::vec3& eulerAngles) {
-    // Convert degrees to radians
-    glm::vec3 eulerAnglesRadians = glm::radians(eulerAngles);
-    // Convert Euler angles (in radians) to quaternion
+    glm::vec3 eulerAnglesRadians = SVector3(glm::radians(eulerAngles.x), glm::radians(eulerAngles.y), glm::radians(eulerAngles.z));
     glm::quat quaternion = glm::quat(eulerAnglesRadians);
     return quaternion;
 }

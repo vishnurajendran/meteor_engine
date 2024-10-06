@@ -7,9 +7,14 @@
 #include "drawcall.h"
 
 class MOpenGlDrawCall : public MDrawCall {
+protected:
+    SVector2 resolution;
 public:
     MOpenGlDrawCall()=default;
-    void draw() override = 0;
+    void draw() override;
+    void setTargetResolution(SVector2 resolution);
+protected:
+    void printOpenGLDrawErrors();
 };
 
 

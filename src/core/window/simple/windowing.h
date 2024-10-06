@@ -10,6 +10,8 @@
 
 class MWindow : public MObject {
 protected:
+    int targetFPS;
+    sf::Clock clock;
     sf::ContextSettings settings;
     SString title;
     sf::Event event;

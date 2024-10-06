@@ -10,19 +10,28 @@
 class MSpatialEntity : public MObject {
 public:
     MSpatialEntity() : MSpatialEntity(nullptr) {}
-    MSpatialEntity(MSpatialEntity *parent);
-    ~MSpatialEntity();
+    explicit MSpatialEntity(MSpatialEntity *parent);
+    ~MSpatialEntity() override;
 
-    SVector3 getRelativePosition() { return relativePosition; }
-    SVector3 getRelativeScale() { return relativeScale; };
-    SQuaternion getRelativeRotation() { return relativeRotation; }
+    void setEnabled(bool enable) {this->enabled = enable;}
+    [[nodiscard]] bool getEnabled() const {return this->enabled;}
 
-    void setRelativePosition(SVector3 position) { relativePosition = position; }
-    void setRelativeRotation(SQuaternion localRotation) { this->relativeRotation = localRotation; }
-    void setRelativeScale(SVector3 scale) { relativeScale = scale;}
+    [[nodiscard]] SVector3 getRelativePosition() const { return relativePosition; }
+    [[nodiscard]] SVector3 getWorldPosition() const ;
+
+    [[nodiscard]] SVector3 getRelativeScale() const { return relativeScale; };
+
+    [[nodiscard]] SQuaternion getRelativeRotation() const { return relativeRotation; }
+    [[nodiscard]] SQuaternion getWorldRotation() const ;
+
+    [[nodiscard]] SMatrix4 getModelMatrix() const;
+
+    void setRelativePosition(SVector3 position) { relativePosition = position; updateTransforms();}
+    void setRelativeRotation(SQuaternion localRotation) { this->relativeRotation = localRotation; updateTransforms();}
+    void setRelativeScale(SVector3 scale) { relativeScale = scale; updateTransforms();}
 
     MSpatialEntity *getParent() { return parent; }
-    std::vector<MSpatialEntity *>* getChildren() { return children; }
+    std::vector<MSpatialEntity *> getChildren() { return children; }
 
     void addChild(MSpatialEntity *entity);
     void removeChild(MSpatialEntity *entity);
@@ -35,11 +44,11 @@ public:
             return (T *) this;
 
         // if no more children return nullptr
-        if (children->size() <= 0)
+        if (children.size() <= 0)
             return nullptr;
 
         // check recursively for each child
-        for (auto child: *children) {
+        for (auto child: children) {
             if (child == nullptr)
                 continue;
 
@@ -57,22 +66,22 @@ public:
         return nullptr;
     }
 
+    void updateTransforms();
     virtual void onStart();
     virtual void onUpdate(float deltaTime);
     virtual void onExit();
-
+private:
+    void setParent(MSpatialEntity *entity) {
+        parent = entity;
+    };
 protected:
     SVector3 relativePosition = SVector3(0);
-    SVector3 relativeScale = SVector3(1);
     SQuaternion relativeRotation = glm::identity<SQuaternion>();
-
+    SMatrix4 modelMatrix = glm::identity<SMatrix4>();
+    SVector3 relativeScale = SVector3(1);
     MSpatialEntity *parent = nullptr;
-    std::vector<MSpatialEntity *> *children = nullptr;
-
-    void updateChildren(float deltaTime);
-
-private:
-    void setParent(MSpatialEntity *entity) { parent = entity; };
+    std::vector<MSpatialEntity*> children;
+    bool enabled = true;
 };
 
 #endif //SPATIAL_H

@@ -39,4 +39,10 @@ void MStaticMesh::prepareMesh() {
     glBindVertexArray(0);
 }
 
+void MStaticMesh::draw() {
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
 

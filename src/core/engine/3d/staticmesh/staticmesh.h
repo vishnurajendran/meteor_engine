@@ -23,6 +23,7 @@ private:
 public:
     MStaticMesh(std::vector<SVertex> vertices, std::vector<unsigned int> indices);
     void prepareMesh();
+    void draw();
 };
 
 

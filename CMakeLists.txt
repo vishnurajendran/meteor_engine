@@ -210,6 +210,30 @@ add_executable(meteor_engine
         src/core/engine/3d/staticmesh/staticmeshdrawcall.h
         src/core/engine/3d/shader/shader.cpp
         src/core/engine/3d/shader/shader.h
+        src/core/engine/3d/shader/shaderasset.cpp
+        src/core/engine/3d/shader/shaderasset.h
+        src/core/engine/3d/shader/shaderassetimporter.cpp
+        src/core/engine/3d/shader/shaderassetimporter.h
+        src/core/engine/3d/material/material.cpp
+        src/core/engine/3d/material/material.h
+        src/core/engine/camera/camera.cpp
+        src/core/engine/camera/camera.h
+        src/core/engine/camera/viewmanagement.cpp
+        src/core/engine/camera/viewmanagement.h
+        src/core/engine/camera/cameradeserialiser.cpp
+        src/core/engine/camera/cameradeserialiser.h
+        src/core/engine/3d/staticmesh/staticmeshentity.cpp
+        src/core/engine/3d/staticmesh/staticmeshentity.h
+        src/core/graphics/core/drawcallsubmitable.h
+        src/core/graphics/core/meteordrawables.h
+        src/core/graphics/core/meteordrawables.cpp
+        src/core/engine/3d/material/MMaterialAsset.cpp
+        src/core/engine/3d/material/MMaterialAsset.h
+        src/core/engine/assetmanagement/asset/defferedloadableasset.h
+        src/core/engine/3d/material/materialassetimporter.cpp
+        src/core/engine/3d/material/materialassetimporter.h
+        src/core/engine/3d/staticmesh/staticmeshentitydeserialiser.cpp
+        src/core/engine/3d/staticmesh/staticmeshentitydeserialiser.h
 )
 
 ############# LINK LIBRARIES ################

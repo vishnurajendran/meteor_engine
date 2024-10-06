@@ -60,4 +60,6 @@ SColor MEditorConsoleWindow::getLabelColor(SString label) {
         return SColor::yellow();
     else if(label == "ERR")
         return SColor::red();
+
+    return {1,1,1,1};
 }

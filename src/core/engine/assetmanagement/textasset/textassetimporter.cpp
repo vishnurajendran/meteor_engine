@@ -5,6 +5,7 @@
 #include "textassetimporter.h"
 
 #include "textasset.h"
+#include "core/utils/logger.h"
 
 //registration pattern
 bool MTextAssetImporter::registered = []() {
@@ -19,6 +20,7 @@ bool MTextAssetImporter::canImport(SString fileExtension) {
 MAsset * MTextAssetImporter::importAsset(SString path) {
     auto asset = new MTextAsset(path);
     if(!asset->isValid()) {
+        MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));
         delete asset;
         return nullptr;
     }

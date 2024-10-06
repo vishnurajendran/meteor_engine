@@ -11,9 +11,8 @@ class MWindow;
 
 class MWindowManager {
 public:
-    static MWindow* getSimpleWindow(const SString& title, int x=800, int y=600, int fps=0);
+    static MWindow* getSimpleWindow(const SString& title, int x=800, int y=600, int fps=60);
     static MWindow* getImGuiWindow(const SString& title, int x=800, int y=600, int fps=60);
 };
-
 
 #endif //METEOR_ENGINE_WINDOWMANAGER_H

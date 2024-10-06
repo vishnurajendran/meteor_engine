@@ -2,11 +2,70 @@
 // Created by ssj5v on 03-10-2024.
 //
 
+#include <GL/glew.h>
 #include "staticmeshdrawcall.h"
 
-void MStaticMeshDrawCall::setStaticMesh(MStaticMesh *mesh){
-    this->mesh = mesh;
+#include "staticmesh.h"
+#include "staticmeshasset.h"
+#include "core/engine/3d/material/material.h"
+#include "core/engine/3d/shader/shader.h"
+#include "core/engine/camera/viewmanagement.h"
+
+MStaticMeshDrawCall::MStaticMeshDrawCall() {
+    drawParams = SStaticMeshDrawParams();
+}
+
+void MStaticMeshDrawCall::setParams(SStaticMeshDrawParams params) {
+    drawParams = params;
 }
 
 void MStaticMeshDrawCall::draw() {
+
+    if(!drawParams.materialInstance || !drawParams.meshAssetRefference) {
+        MERROR("MStaticMeshDrawCall::draw: No mesh or material specified");
+        return;
+    }
+
+    auto cameras = MViewManagement::getCameras();
+    if(cameras.empty()) {
+        MWARN("MStaticMeshDrawCall::draw: No cameras specified");
+        return;
+    }
+
+    for(auto camera : cameras) {
+
+        if(!camera) {
+            MERROR("MStaticMeshDrawCall::draw: Camera Reference Null");
+            continue;
+        }
+
+        if(!camera->getEnabled()) {
+            MLOG("MStaticMeshDrawCall::draw: Camera is not enabled");
+            continue;
+        }
+
+        glm::mat4 test_model = glm::mat4(1.0f); // Identity matrix
+        glm::mat4 test_view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+        glm::mat4 test_projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
+        SShaderPropertyValue view;
+        view.setMat4Val(camera->getViewMatrix());
+        SShaderPropertyValue projection;
+        projection.setMat4Val(camera->getProjectionMatrix(resolution));
+
+        drawParams.materialInstance->setProperty("view",  view);
+        drawParams.materialInstance->setProperty("projection", projection);
+        for(auto mesh : drawParams.meshAssetRefference->getMeshes()) {
+            if(!mesh) {
+                MERROR("MStaticMeshDrawCall::Mesh reference not found");
+                continue;
+            }
+            SShaderPropertyValue model;
+            model.setMat4Val(drawParams.modelMatrix);
+            drawParams.materialInstance->setProperty("model", model);
+            drawParams.materialInstance->bindMaterial();
+            mesh->draw();
+            printOpenGLDrawErrors();
+        }
+    }
 }

@@ -39,7 +39,7 @@ void MEditorHierarchyWindow::onGui() {
     ImGui::SameLine();
     ImGui::Text(scene->getName().c_str());
     if (open) {
-        for(auto rootObjs : *scene->getRootEntities()) {
+        for(auto rootObjs : scene->getRootEntities()) {
             drawRecursiveSceneTree(rootObjs, 1);
         }
         ImGui::TreePop();
@@ -53,7 +53,7 @@ void MEditorHierarchyWindow::drawRecursiveSceneTree(MSpatialEntity* spatial, int
         return;
 
     //draw leaf
-    if(spatial->getChildren() == nullptr || spatial->getChildren()->empty()) {
+    if(spatial->getChildren().empty()) {
         drawLeaf(spatial);
         return;
     }
@@ -71,7 +71,7 @@ void MEditorHierarchyWindow::drawRecursiveSceneTree(MSpatialEntity* spatial, int
     }
 
     if (open) {
-        for(auto child : *spatial->getChildren()) {
+        for(auto child : spatial->getChildren()) {
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 3*depth);
             drawRecursiveSceneTree(child, depth+1);
         }

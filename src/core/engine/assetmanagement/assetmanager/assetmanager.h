@@ -1,13 +1,17 @@
 //
 // Created by ssj5v on 27-09-2024.
 //
-
+#pragma once
 #ifndef ASSETMANAGER_H
 #define ASSETMANAGER_H
 
 #include <map>
+#include <vector>
+
 #include "core/object/object.h"
 
+
+class IDefferedLoadableAsset;
 class MAsset;
 
 namespace pugi {
@@ -32,9 +36,11 @@ public:
 
 private:
     std::map<SString, MAsset*> assetMap;
+    std::vector<IDefferedLoadableAsset*> defferedLoadableAssetList;
     static MAssetManager* instance;
     void loadAssetRecursive(SString path);
     bool loadAsset(SString path);
+    void addToDeferedLoadableAssetList(IDefferedLoadableAsset* asset);
 };
 
 #endif //ASSETMANAGER_H

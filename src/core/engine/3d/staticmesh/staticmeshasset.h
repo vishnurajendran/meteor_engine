@@ -20,8 +20,9 @@ class MStaticMeshAsset : public MAsset {
 private:
     std::vector<MStaticMesh*> meshes;
 public:
-    MStaticMeshAsset(const SString& path);
-    ~MStaticMeshAsset();
+    explicit MStaticMeshAsset(const SString& path);
+    ~MStaticMeshAsset() override;
+    [[nodiscard]] std::vector<MStaticMesh*> getMeshes() const;
 private:
     MStaticMesh* processMesh(aiMesh *mesh);
     void processNode(aiNode *node, const aiScene *scene,std::vector<MStaticMesh*>& meshes);

@@ -4,6 +4,8 @@
 
 #include "editorapplication.h"
 
+#include "core/graphics/core/meteordrawables.h"
+
 MSpatialEntity* MEditorApplication::Selected = nullptr;
 
 MEditorApplication::MEditorApplication() : MApplication(){
@@ -15,6 +17,11 @@ void MEditorApplication::run() {
         return;
 
     window->clear();
+
+    //Todo: set real delta time here
+    MSceneManager::update(0.0);
+
+    MMeteorDrawables::requestDrawCalls();
     window->update();
 }
 
@@ -47,8 +54,6 @@ void MEditorApplication::initialise() {
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
     MLOG(STR("Loaded Editor Windows"));
-
-    MSceneManager::loadScene(STR("assets/scenes/test_scene.scml"));
 }
 
 bool MEditorApplication::isRunning() const {

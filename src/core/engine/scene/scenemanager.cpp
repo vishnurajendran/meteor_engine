@@ -36,6 +36,7 @@ bool MSceneManager::loadScene(const SString& path) {
     loadEmptyScene();
     auto asset = MAssetManager::getInstance()->getAsset<MSceneAsset>(path);
     if(asset == nullptr) {
+        MLOG(STR("Failed to load Scene Asset"));
         return false;
     }
 
@@ -44,17 +45,18 @@ bool MSceneManager::loadScene(const SString& path) {
         return false;
     }
 
+
     if (activeScene->tryParse(asset->getSceneHierarchy())) {
         MLOG(STR("Scene Loaded Complete"));
         return true;
     }
 
+    MLOG(STR("Failed to load Scene"));
     return false;
 }
 
 void MSceneManager::update(float deltaTime) {
     if (activeScene == nullptr)
         return;
-
     activeScene->update(deltaTime);
 }

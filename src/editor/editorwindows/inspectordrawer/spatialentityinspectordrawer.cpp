@@ -101,7 +101,7 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetwenBoxAndField);
     ImGui::SetNextItemWidth(fieldSize);
-    bool res1 = ImGui::DragFloat(STR("##"+label.str()+"X").c_str(), &value.x);
+    bool res1 = ImGui::DragFloat(STR("##"+label.str()+"X").c_str(), &value.x, 0.1f);
 
     // Y Comp
     ImGui::SameLine();
@@ -110,7 +110,7 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetwenBoxAndField);
     ImGui::SetNextItemWidth(fieldSize);
-    bool res2 = ImGui::DragFloat(STR("##"+label.str()+"Y").c_str(), &value.y);
+    bool res2 = ImGui::DragFloat(STR("##"+label.str()+"Y").c_str(), &value.y, 0.1f);
 
     // Z Comp
     ImGui::SameLine();
@@ -119,7 +119,7 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + spaceBetwenBoxAndField);
     ImGui::SetNextItemWidth(fieldSize);
-    bool res3 = ImGui::DragFloat(STR("##"+label.str()+"Z").c_str(), &value.z);
+    bool res3 = ImGui::DragFloat(STR("##"+label.str()+"Z").c_str(), &value.z, 0.1f);
 
     ImGui::EndGroup();
     return res1 || res2 || res3;

@@ -20,6 +20,7 @@ bool MStaticMeshAssetImporter::canImport(SString fileExtension) {
 MAsset * MStaticMeshAssetImporter::importAsset(SString path) {
     auto asset = new MStaticMeshAsset(path);
     if(!asset->isValid()) {
+        MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));
         delete asset;
         return nullptr;
     }

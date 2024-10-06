@@ -13,9 +13,9 @@
 class MSceneEntityTypeDeserializer : public MObject {
 public:
     MSceneEntityTypeDeserializer() {};
-    virtual MSpatialEntity* deserialize(pugi::xml_node* node) = 0;
+    virtual MSpatialEntity* deserialize(pugi::xml_node node) = 0;
 protected:
-    void parseSpatialData(pugi::xml_node* node, MSpatialEntity* entity);
+    void parseSpatialData(pugi::xml_node node, MSpatialEntity* entity);
 private:
     const SString LOCAL_POS_ATTRIB = "localPosition";
     const SString LOCAL_ROT_ATTRIB = "localRotation";

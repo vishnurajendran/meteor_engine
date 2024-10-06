@@ -20,16 +20,16 @@ public:
     void update(float deltaTime);
     void onClose();
     void addToRoot(MSpatialEntity* entity);
-    size_t getRootSize() { return rootEntities == NULL ? 0 : rootEntities->size(); }
-    std::vector<MSpatialEntity*> *getRootEntities() { return rootEntities; };
+    size_t getRootSize() { return rootEntities.size(); }
+    std::vector<MSpatialEntity*> getRootEntities() { return rootEntities; };
     bool tryParse(pugi::xml_document* doc);
     bool isClosing() { return sceneClosing; }
     template<typename T>
     T* find(SString name) {
-        if (rootEntities->size() <= 0)
+        if (rootEntities.size() <= 0)
             return NULL;
 
-        for (auto rootEntity : *rootEntities) {
+        for (auto rootEntity : rootEntities) {
             auto res = rootEntity->find<T>(name);
             if (res != NULL)
                 return res;
@@ -39,8 +39,8 @@ public:
     }
 
 private:
-    std::vector<MSpatialEntity*>* rootEntities;
-    void recursivelyLoadEntity(pugi::xml_node* currNode, MSpatialEntity* parent);
+    std::vector<MSpatialEntity*> rootEntities;
+    void recursivelyLoadEntity(pugi::xml_node currNode, MSpatialEntity* parent);
     bool sceneClosing = false;
 public:
     static const SString VALID_SCENE_FILE_XML_TAG;

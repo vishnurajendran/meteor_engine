@@ -18,7 +18,9 @@ void MGraphicsRenderer::submit(MDrawCall* drawCall) {
     }
 
     if(drawCall) {
-        if(const auto glDrawCall = dynamic_cast<MOpenGlDrawCall*>(drawCall)){
+        if(const auto glDrawCall = dynamic_cast<MOpenGlDrawCall*>(drawCall)) {
+            auto resolution = renderTarget->getSize();
+            glDrawCall->setTargetResolution({resolution.x, resolution.y});
             openGlDrawCalls.push_back(glDrawCall);
         }
         else
@@ -49,6 +51,7 @@ void MGraphicsRenderer::draw() {
         else
             MERROR(STR("Draw Call NULL, ignored"));
     }
+    openGlDrawCalls.clear();
 
     renderTarget->pushGLStates();
     for(const auto drawCall : sfmlDrawCalls){
@@ -60,4 +63,5 @@ void MGraphicsRenderer::draw() {
             MERROR(STR("Draw Call NULL, ignored"));
     }
     renderTarget->popGLStates();
+    sfmlDrawCalls.clear();
 }

@@ -20,6 +20,7 @@ MStaticMeshAsset::~MStaticMeshAsset() {
     for(auto mesh : meshes) {
         delete mesh;
     }
+
 }
 
 MStaticMesh* MStaticMeshAsset::processMesh(aiMesh *mesh) {
@@ -66,4 +67,8 @@ void MStaticMeshAsset::loadMesh(SString path) {
     // Start the recursive processing from the root node
     processNode(scene->mRootNode, scene, meshes);
     valid = !meshes.empty();
+}
+
+std::vector<MStaticMesh *> MStaticMeshAsset::getMeshes() const {
+    return meshes;
 }

@@ -4,6 +4,8 @@
 
 #include "playerapplication.h"
 
+#include "core/graphics/core/meteordrawables.h"
+
 MPlayerApplication::MPlayerApplication() : MApplication(){
     name = STR("MeteorPlayer");
 }
@@ -11,8 +13,9 @@ MPlayerApplication::MPlayerApplication() : MApplication(){
 void MPlayerApplication::run() {
     if(window == nullptr)
         return;
-
     window->clear();
+    MSceneManager::update(0.0f);
+    MMeteorDrawables::requestDrawCalls();
     window->update();
 }
 
@@ -24,10 +27,13 @@ void MPlayerApplication::cleanup() {
 
 void MPlayerApplication::initialise() {
     //appRunning = true;
-    MLOG(STR("Initialising Editor"));
+    MLOG(STR("Initialising Player"));
     window = MWindowManager::getSimpleWindow(STR("Meteor Player"));
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));
+
+    MAssetManager::getInstance()->refresh();
+    MLOG(STR("Player Initialised"));
 }
 
 bool MPlayerApplication::isRunning() const {

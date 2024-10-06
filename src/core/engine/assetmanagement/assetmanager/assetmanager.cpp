@@ -7,10 +7,9 @@
 #include "assetmanager.h"
 #include <core/meteor_utils.h>
 #include <core/engine/assetmanagement/asset/asset.h>
-
 #include "assetimporter.h"
-#include "core/engine/assetmanagement/textasset/textasset.h"
-#include "core/engine/scene/sceneasset.h"
+#include "core/engine/assetmanagement/asset/defferedloadableasset.h"
+
 
 MAssetManager* MAssetManager::instance;
 
@@ -24,6 +23,11 @@ MAssetManager * MAssetManager::getInstance() {
 void MAssetManager::refresh() {
     cleanup();
     loadAssetRecursive("assets/");
+    for (auto asset: defferedLoadableAssetList) {
+
+        if(asset)
+            asset->defferedAssetLoad(false);
+    }
 }
 
 void MAssetManager::cleanup() {
@@ -51,16 +55,22 @@ void MAssetManager::loadAssetRecursive(SString path) {
 }
 
 bool MAssetManager::loadAsset(SString path) {
-    SString extension = FileIO::getFileExtension(path);
-    for(auto importer : *MAssetImporter::getImporters()) {
-        if(importer && importer->canImport(extension)) {
-            auto asset = importer->importAsset(path);
-            if(asset) {
-                assetMap[path] = asset;
-                return true;
-            }
-        }
+    const SString extension = FileIO::getFileExtension(path);
+    for(const auto importer : *MAssetImporter::getImporters()) {
+        if(!importer)
+            continue;
+        if(!importer->canImport(extension))
+            continue;
+        const auto asset = importer->importAsset(path);
+        if(asset == nullptr)
+            continue;
+        assetMap[path] = asset;
+        return true;
     }
     MWARN(STR("No compatible importer found for " + path.str()));
     return false;
+}
+
+void MAssetManager::addToDeferedLoadableAssetList(IDefferedLoadableAsset *asset) {
+    defferedLoadableAssetList.push_back(asset);
 }

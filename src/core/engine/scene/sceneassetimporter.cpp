@@ -4,6 +4,7 @@
 
 #include "sceneassetimporter.h"
 #include "sceneasset.h"
+#include "core/utils/logger.h"
 
 bool MSceneAssetImporter::registered = []() {
     addImporter(new MSceneAssetImporter());
@@ -17,6 +18,7 @@ bool MSceneAssetImporter::canImport(SString fileExtension) {
 MAsset * MSceneAssetImporter::importAsset(SString path) {
     auto asset = new MSceneAsset(path);
     if(!asset->isValid()) {
+        MERROR(STR("MSceneAssetImporter::importAsset(): invalid asset"));
         delete asset;
         return nullptr;
     }

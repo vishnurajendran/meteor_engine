@@ -26,13 +26,10 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
     coreWindow.setFramerateLimit(fps);
     coreWindow.setActive(true);
 
-    glewExperimental = GL_TRUE;
-    if (glewInit() != GLEW_OK) {
-        MERROR(STR("Failed to initialize GLEW" ));
+    if(!ImGui::SFML::Init(coreWindow)) {
+        MERROR(STR("Failed to initialize SFML" ));
         return;
     }
-
-    ImGui::SFML::Init(coreWindow);
     ImGuiIO& io = ImGui::GetIO();
     loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
 
@@ -50,6 +47,7 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
 }
 
 void MImGuiWindow::clear() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     MWindow::clear();
 }
 
@@ -58,7 +56,8 @@ void MImGuiWindow::update() {
     while (coreWindow.pollEvent(event)) {
         ImGui::SFML::ProcessEvent(coreWindow, event);
         if (event.type == sf::Event::Closed) {
-            coreWindow.close();
+            close();
+            return;
         }
     }
 
@@ -150,7 +149,10 @@ void MImGuiWindow::loadFontFile(const SString &pathToFile, float pointSize) {
         MERROR(STR("Unable to load font : ") + pathToFile);
         return;
     }
-    ImGui::SFML::UpdateFontTexture();
+
+    if(!ImGui::SFML::UpdateFontTexture()) {
+        MWARN("Unable to load font file");
+    }
     ImGui::GetIO().FontDefault = font;
 }
 

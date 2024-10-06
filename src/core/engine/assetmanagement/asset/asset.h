@@ -9,7 +9,7 @@
 class MAsset : public MObject {
 protected:
     SString path;
-    bool valid;
+    bool valid = false;
 public:
     MAsset(const SString& path);
     SString getPath() const;
