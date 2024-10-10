@@ -31,7 +31,7 @@ Meteor is a custom game engine built in C++20, featuring a player and an editor.
 - [**GLEW**](http://glew.sourceforge.net/)
 - [**OpenGL**](https://www.opengl.org/)
 - [**SFML**](https://www.sfml-dev.org/)
-- [**ImGui**](https://github.com/ocornut/imgui)
+- [**imgui-sfml**](https://github.com/SFML/imgui-sfml)
 
 ### Installation
 
