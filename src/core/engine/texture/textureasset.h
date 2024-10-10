@@ -12,11 +12,10 @@ class MTextureAsset : public MAsset {
 private:
     sf::Texture coreTexture;
 public:
-    explicit MTextureAsset(const SString &path)
-        : MAsset(path) {
-    }
+    explicit MTextureAsset(const SString &path);
     SVector2 getSize() const;
-    sf::Texture* getTexture();
+    sf::Texture* getUITexture();
+    unsigned int getTextureID();
 private:
     bool loadFromPath(const SString &path);
 };
