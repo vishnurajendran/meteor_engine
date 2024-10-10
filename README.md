@@ -40,15 +40,15 @@ Meteor is a custom game engine built in C++20, featuring a player and an editor.
 To install Assimp on your system, follow these steps:
 
 - **Linux (Ubuntu/Debian):**
-  \`\`\`bash
+  ```bash
   sudo apt-get update
   sudo apt-get install libassimp-dev
-  \`\`\`
+  ```
 
 - **macOS:**
-  \`\`\`bash
+  ```bash
   brew install assimp
-  \`\`\`
+  ```
 
 - **Windows:**
   1. Download the Assimp binaries from the [Assimp GitHub Releases](https://github.com/assimp/assimp/releases).
@@ -61,15 +61,15 @@ To install Assimp on your system, follow these steps:
 To install GLEW, follow these steps:
 
 - **Linux (Ubuntu/Debian):**
-  \`\`\`bash
+  ```bash
   sudo apt-get update
   sudo apt-get install libglew-dev
-  \`\`\`
+  ```
 
 - **macOS:**
-  \`\`\`bash
+  ```bash
   brew install glew
-  \`\`\`
+  ```
 
 - **Windows:**
   1. Download the GLEW binary package from the [GLEW website](http://glew.sourceforge.net/).
@@ -81,28 +81,28 @@ To install GLEW, follow these steps:
 #### 3. Setting Up the Project
 
 1. Clone this repository:
-   \`\`\`bash
+   ```bash
    git clone https://github.com/yourusername/Meteor.git
    cd Meteor
-   \`\`\`
+   ```
 
 2. Create a build directory and run CMake:
-   \`\`\`bash
+   ```bash
    mkdir build
    cd build
    cmake ..
-   \`\`\`
+   ```
 
 3. Build the project:
-   \`\`\`bash
+   ```bash
    make -j$(nproc)
-   \`\`\`
+   ```
 
 4. Run the engine:
-   \`\`\`bash
+   ```bash
    ./bin/MeteorEditor  # To run the editor
    ./bin/MeteorPlayer  # To run the player
-   \`\`\`
+   ```
 
 ### Building with CMake
 
@@ -113,9 +113,9 @@ To install GLEW, follow these steps:
 ### Troubleshooting
 
 - **CMake cannot find Assimp/GLEW**: If CMake cannot locate Assimp or GLEW, you may need to specify their locations manually. You can pass \`-DAssimp_DIR\` and \`-DGLEW_DIR\` to CMake:
-  \`\`\`bash
+  ```bash
   cmake -DAssimp_DIR=/path/to/assimp -DGLEW_DIR=/path/to/glew ..
-  \`\`\`
+  ```
 
 - **Linker errors**: Ensure that the paths to the libraries are correctly set. For example, on Windows, you might need to add the path to \`glew32.lib\` in your \`link_directories\`.
 
