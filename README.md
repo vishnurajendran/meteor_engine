@@ -76,6 +76,7 @@ To install GLEW, follow these steps:
   2. Extract the downloaded ZIP file to a directory (e.g., `C:\glew`).
   3. Add the `include` path (`C:\glew\include`) and the library path (`C:\glew\lib\Release\x64`) in CMake:
      - Add the path to the `include` directory using `include_directories`.
-     - Add the path to the `lib` directory using `link_directories`.### License
+     - Add the path to the `lib` directory using `link_directories`.
 
+### License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
