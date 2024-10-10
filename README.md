@@ -76,56 +76,6 @@ To install GLEW, follow these steps:
   2. Extract the downloaded ZIP file to a directory (e.g., \`C:\glew\`).
   3. Add the \`include\` path (\`C:\glew\include\`) and the library path (\`C:\glew\lib\Release\x64\`) in CMake:
      - Add the path to the \`include\` directory using \`include_directories\`.
-     - Add the path to the \`lib\` directory using \`link_directories\`.
-
-#### 3. Setting Up the Project
-
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yourusername/Meteor.git
-   cd Meteor
-   ```
-
-2. Create a build directory and run CMake:
-   ```bash
-   mkdir build
-   cd build
-   cmake ..
-   ```
-
-3. Build the project:
-   ```bash
-   make -j$(nproc)
-   ```
-
-4. Run the engine:
-   ```bash
-   ./bin/MeteorEditor  # To run the editor
-   ./bin/MeteorPlayer  # To run the player
-   ```
-
-### Building with CMake
-
-- Ensure that Assimp and GLEW are correctly installed and available on your system.
-- Make sure to specify the path to your libraries if they are not in standard directories.
-- On Windows, make sure to copy the \`glew32.dll\` or \`glew32s.dll\` (for static linking) to the directory where your executables are built.
-
-### Troubleshooting
-
-- **CMake cannot find Assimp/GLEW**: If CMake cannot locate Assimp or GLEW, you may need to specify their locations manually. You can pass \`-DAssimp_DIR\` and \`-DGLEW_DIR\` to CMake:
-  ```bash
-  cmake -DAssimp_DIR=/path/to/assimp -DGLEW_DIR=/path/to/glew ..
-  ```
-
-- **Linker errors**: Ensure that the paths to the libraries are correctly set. For example, on Windows, you might need to add the path to \`glew32.lib\` in your \`link_directories\`.
-
-- **Undefined reference errors**: These often occur when a required library is not properly linked. Make sure that \`GLEW\`, \`Assimp\`, \`SFML\`, and other dependencies are correctly linked in your \`CMakeLists.txt\`.
-
-### License
+     - Add the path to the \`lib\` directory using \`link_directories\`.### License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### Acknowledgments
-
-- Thanks to the authors of **Assimp**, **GLEW**, **SFML**, **ImGui**, and **pugixml** for their excellent libraries.
-- Special thanks to the **OpenGL** community for extensive documentation and support.
