@@ -1,6 +1,0 @@
-<material name="Mat1">
-    <shader path="assets/shaders/simple_white.mesl"/>
-    <properties>
-        <property key = "_color" type="u4" default="(0.35,0.25,0.75,1)"/>
-    </properties>
-</material>
