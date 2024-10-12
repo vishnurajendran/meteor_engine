@@ -13,6 +13,7 @@
 struct SVertex {
     SVector3 Position;
     SVector3 Normal;
+    SVector2 TexCoords;
 };
 
 class MStaticMesh : public MObject {
