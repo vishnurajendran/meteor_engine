@@ -11,6 +11,8 @@
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
 
+class MTexture;
+
 enum SShaderPropertyType {
     NoVal=0,
     Int,
@@ -18,7 +20,8 @@ enum SShaderPropertyType {
     UniformVec2,
     UniformVec3,
     UniformVec4,
-    Matrix4
+    Matrix4,
+    Texture2D,
 };
 
 struct SShaderPropertyValue {
@@ -26,6 +29,7 @@ private:
     SShaderPropertyType type = NoVal;
     int intVal = 0;
     float floatVal = 0.0f;
+    SString textureAssetReference;
     SVector2 vec2Val = glm::vec2(0);
     SVector3 vec3Val = glm::vec3(0);
     SVector4 vec4Val = glm::vec4(0);
@@ -38,6 +42,7 @@ public:
     [[nodiscard]] glm::vec3 getVec3Val() const { return vec3Val; }
     [[nodiscard]] glm::vec4 getVec4Val() const { return vec4Val; }
     [[nodiscard]] SMatrix4 getMat4Val() const { return mat4Val; }
+    [[nodiscard]] SString getTexAssetReference() const { return textureAssetReference; }
 
     void setIntVal(int val) { intVal = val; type = SShaderPropertyType::Int; }
     void setFloatVal(float val) { floatVal = val; type = SShaderPropertyType::Float; }
@@ -45,6 +50,7 @@ public:
     void setVec3Val(glm::vec3 val) { vec3Val = val; type = SShaderPropertyType::UniformVec3; }
     void setVec4Val(glm::vec4 val) { vec4Val = val; type = SShaderPropertyType::UniformVec4; }
     void setMat4Val(glm::mat4 val) { mat4Val = val; type = SShaderPropertyType::Matrix4; }
+    void setTextureReference(SString texturePath) { textureAssetReference = texturePath; type = SShaderPropertyType::Texture2D; }
     void print();
 };
 
@@ -74,6 +80,7 @@ private:
     void setUniform3f(const SString &name, const SVector3 &value) const;
     void setUniform4f(const SString &name, const SVector4 &value) const;
     void setUniformMat4(const SString &name, const SMatrix4 &value) const;
+    void setTexture(const SString &name,const SString& textureAssetPath, const unsigned int& index=0) const;
 };
 
 

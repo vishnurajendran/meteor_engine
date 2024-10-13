@@ -1,4 +1,8 @@
 <mscene name = "test_scene">
     <mcamera name="main camera" localPosition="(0,0,10)" localScale="(1,1,1)" localRotation="(0,0,0,0)" fov="60" nearClip="0.1" farClip="100.0" priority="0" orthographic="1"/>
-    <mstaticmesh name="monkey" localPosition="(0,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/monkey.glb" material="assets/materials/mat1.material"/>
+    <mstaticmesh name="box" localPosition="(0,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/box.glb" material="assets/materials/mat1.material"/>
+    <mstaticmesh name="sphere" localPosition="(-5,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/sphere.glb" material="assets/materials/mat1.material"/>
+    <mstaticmesh name="plane" localPosition="(5,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/plane.glb" material="assets/materials/mat1.material"/>
+    <mstaticmesh name="cylinder" localPosition="(-7,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/cylinder.glb" material="assets/materials/mat1.material"/>
+    <mstaticmesh name="cone" localPosition="(7,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/cone.glb" material="assets/materials/mat1.material"/>
 </mscene>

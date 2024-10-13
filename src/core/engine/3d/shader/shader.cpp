@@ -5,6 +5,10 @@
 #include <GL/glew.h>
 #include <utility>
 #include "shader.h"
+
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/texture/texture.h"
+#include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
 #include "core/utils/serialisation_utils.h"
 
@@ -174,6 +178,8 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
         case Matrix4:
             setUniformMat4(name, value.getMat4Val());
             break;
+        case Texture2D:
+            setTexture(name, value.getTexAssetReference());
         default:
             break;
     }
@@ -230,5 +236,27 @@ void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
         MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
     } else {
         glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(value));
+    }
+}
+
+void MShader::setTexture(const SString &name, const SString& textureAssetPath, const unsigned int& index) const {
+    auto asset = MAssetManager::getInstance()->getAsset<MTextureAsset>(textureAssetPath);
+    if(!asset) {
+        MERROR("Shader: Invalid Texture Asset");
+        return;
+    }
+    auto texture = asset->getTexture();
+    if(!texture) {
+        MERROR("Shader: NULL SHADER");
+        return;
+    }
+    auto location = getUniformLocation(name);
+    if (location == -1) {
+        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
+    } else {
+        auto textureId = texture->getTextureID();
+        glActiveTexture(GL_TEXTURE0+index);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glUniform1i(location, static_cast<GLint>(index));
     }
 }

@@ -14,3 +14,9 @@ glm::quat eulerToQuaternion(const glm::vec3& eulerAngles) {
     glm::quat quaternion = glm::quat(eulerAnglesRadians);
     return quaternion;
 }
+
+glm::quat applyRotationDeltas(const glm::quat& currentRotation, const glm::vec3& deltaEulerAngles) {
+    glm::vec3 deltaRadians = glm::radians(deltaEulerAngles);
+    glm::quat deltaQuat = glm::quat(deltaRadians);
+    return deltaQuat * currentRotation; // Apply delta rotation to current rotation
+}

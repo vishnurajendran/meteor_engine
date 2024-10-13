@@ -103,11 +103,11 @@ bool MMaterialAsset::loadFromFile(const SString &path) {
         }
         SShaderPropertyType type = MShaderAsset::parsePropertyType(child.attribute("type").value());
         SShaderPropertyValue value;
-        if (!child.attribute("default")) {
+        if (!child.attribute("value")) {
             MWARN("MShaderAsset::loadShader(): property type missing");
             continue;
         } else {
-            MShaderAsset::parseValue(child.attribute("default").value(), value, type);
+            MShaderAsset::parseValue(child.attribute("value").value(), value, type);
         }
         properties[key] = value;
     }

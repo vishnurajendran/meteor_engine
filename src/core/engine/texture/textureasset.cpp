@@ -1,23 +1,14 @@
 //
-// Created by ssj5v on 27-09-2024.
+// Created by ssj5v on 12-10-2024.
 //
 
 #include "textureasset.h"
-#include "core/object/object.h"
-#include "core/utils/glmhelper.h"
+#include "texture.h"
 
-bool MTextureAsset::loadFromPath(const SString &path) {
-    valid = false;
-    if(coreTexture.loadFromFile(path)) {
-        valid = true;
-    }
-    return valid;
+MTextureAsset::MTextureAsset(const SString &path) : MAsset(path.c_str()) {
+    valid = texture.loadFromPath(path);
 }
 
-SVector2 MTextureAsset::getSize() const {
-    return {coreTexture.getSize().x, coreTexture.getSize().y};
-}
-
-sf::Texture *MTextureAsset::getTexture() {
-    return &coreTexture;
+MTexture * MTextureAsset::getTexture() {
+    return &texture;
 }

@@ -11,6 +11,7 @@
 class MImGuiWindow : public MWindow {
 private:
     void drawGUI();
+    void draw();
 public:
     MImGuiWindow(const SString& title);
     MImGuiWindow(const SString& title, int sizeX, int sizeY, int fps);

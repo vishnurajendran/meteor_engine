@@ -22,4 +22,5 @@ typedef glm::quat SQuaternion;
 
 SVector3 quaternionToEuler(const SQuaternion& q) ;
 glm::quat eulerToQuaternion(const glm::vec3& eulerAngles);
+glm::quat applyRotationDeltas(const glm::quat& currentRotation, const glm::vec3& deltaEulerAngles);
 #endif //METEOR_ENGINE_GLMHELPER_H

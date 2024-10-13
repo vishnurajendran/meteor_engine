@@ -13,7 +13,13 @@ MWindow::MWindow(const SString& title, int sizeX, int sizeY, int fps) : MObject(
     this->title =  title;
     this->targetFPS = fps;
     name = STR("Window - ") + title;
-    coreWindow.create(sf::VideoMode(sizeX, sizeY), title.str(), sf::Style::Default);
+
+    sf::ContextSettings settings;
+    settings.majorVersion = 4;
+    settings.minorVersion = 6;
+    settings.depthBits = 24;
+
+    coreWindow.create(sf::VideoMode(sizeX, sizeY), title.str(), sf::Style::Default, settings);
     coreWindow.setFramerateLimit(fps);
 
     // initialise glew.
@@ -22,10 +28,6 @@ MWindow::MWindow(const SString& title, int sizeX, int sizeY, int fps) : MObject(
         MERROR(STR("Failed to initialize GLEW" ));
         return;
     }
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
     MGraphicsRenderer::initialise(&coreWindow);
 }
 
@@ -39,6 +41,7 @@ bool MWindow::isOpen() const {
 
 void MWindow::clear() {
     coreWindow.clear();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void MWindow::update() {

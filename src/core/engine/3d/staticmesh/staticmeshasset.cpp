@@ -27,10 +27,13 @@ MStaticMesh* MStaticMeshAsset::processMesh(aiMesh *mesh) {
     std::vector<SVertex> vertices;
     std::vector<unsigned int> indices;
 
+    bool hasTextureCoords = mesh->mTextureCoords[0] != nullptr;
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         SVertex vertex;
         vertex.Position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         vertex.Normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        if(hasTextureCoords)
+            vertex.TexCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         vertices.push_back(vertex);
     }
     // Process faces to retrieve indices

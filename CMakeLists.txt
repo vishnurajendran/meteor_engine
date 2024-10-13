@@ -186,8 +186,8 @@ add_executable(meteor_engine
         src/core/utils/serialisation_utils.cpp
         src/core/engine/entities/spatial/spatialdeserialiser.cpp
         src/core/engine/entities/spatial/spatialdeserialiser.h
-        src/core/engine/texture/textureasset.cpp
-        src/core/engine/texture/textureasset.h
+        src/core/engine/texture/texture.cpp
+        src/core/engine/texture/texture.h
         src/core/engine/assetmanagement/assetmanager/assetimporter.h
         src/core/engine/assetmanagement/assetmanager/assetimporter.cpp
         src/core/engine/assetmanagement/textasset/textassetimporter.cpp
@@ -234,6 +234,10 @@ add_executable(meteor_engine
         src/core/engine/3d/material/materialassetimporter.h
         src/core/engine/3d/staticmesh/staticmeshentitydeserialiser.cpp
         src/core/engine/3d/staticmesh/staticmeshentitydeserialiser.h
+        src/core/engine/texture/textureasset.cpp
+        src/core/engine/texture/textureasset.h
+        src/core/engine/texture/textureassetimporter.cpp
+        src/core/engine/texture/textureassetimporter.h
 )
 
 ############# LINK LIBRARIES ################
@@ -272,3 +276,44 @@ endif()
 if(BUILD_PLAYER)
     add_definitions(-DPLAYER_APPLICATION)
 endif()
+
+
+# Set the source and destination directories
+set(SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin")
+set(DEST_COPY_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
+# Custom target to copy files before running
+add_custom_target(copy_files_before_run ALL
+        COMMENT "Copying files before running the application"
+)
+
+# Recursively gather all files from the source directory
+file(GLOB_RECURSE FILES_TO_COPY "${SOURCE_COPY_DIR}/*")
+
+foreach(FILE ${FILES_TO_COPY})
+    # Get relative path of the file with respect to the source directory
+    file(RELATIVE_PATH REL_PATH "${SOURCE_COPY_DIR}" "${FILE}")
+
+    # Get the directory portion of the relative path
+    get_filename_component(DEST_SUBDIR "${REL_PATH}" PATH)
+
+    # Create the destination subdirectory if necessary (handles root-level files as well)
+    if(DEST_SUBDIR)
+        add_custom_command(TARGET copy_files_before_run
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${DEST_COPY_DIR}/${DEST_SUBDIR}"
+                COMMENT "Creating subdirectory: ${DEST_COPY_DIR}/${DEST_SUBDIR}"
+        )
+    endif()
+
+    # Copy each file to its corresponding destination
+    if(NOT IS_DIRECTORY "${FILE}")
+        add_custom_command(TARGET copy_files_before_run
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${FILE}" "${DEST_COPY_DIR}/${REL_PATH}"
+                COMMENT "Copying file: ${FILE} to ${DEST_COPY_DIR}/${REL_PATH}"
+        )
+    endif()
+endforeach()
+
+# Ensure meteor_engine depends on the custom copy target
+add_dependencies(meteor_engine copy_files_before_run)
+

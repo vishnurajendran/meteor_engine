@@ -1,0 +1,36 @@
+<shader name="simple_white" version="330 core">
+    <properties>
+    <property key = "_color" type="u4" default="(1,1,1,1)"/>
+    </properties>
+    <vert>
+        <include header="meteor_vertex_utils.glsl" internal="1"/>
+        <include header="meteor_projection_utils.glsl" internal="1"/>
+        <![CDATA[
+            void main()
+            {
+                // Transform the vertex position using the projection
+                vec3 position = getVertexPosition();
+                vec4 projected = applyProjection(vec4(position, 1.0));
+
+                // apply position
+                applyPosition(projected);
+                // pass the tex coords to fragment
+                passTexCoordsToFragment(getTexCoords());
+            }
+        ]]>
+    </vert>
+
+    <frag>
+        <include header="meteor_fragment_utils.glsl" internal="1"/>
+        <![CDATA[
+            uniform vec4 _color;
+            uniform sampler2D _baseTex;
+            void main()
+            {
+                vec4 texColor = texture(_baseTex,getTexCoords());
+                setFinalOutColor(texColor * _color);
+            }
+        ]]>
+    </frag>
+
+</shader>

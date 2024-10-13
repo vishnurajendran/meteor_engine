@@ -42,8 +42,11 @@ void MGraphicsRenderer::draw() {
     }
 
     auto size = renderTarget->getSize();
+    renderTarget->setActive(true);
     glViewport(0,0,size.x, size.y);
-    renderTarget->clear(sf::Color::Black);
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     for(auto drawCall : openGlDrawCalls){
         if(drawCall){
             drawCall->draw();

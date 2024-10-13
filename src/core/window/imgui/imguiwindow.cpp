@@ -22,6 +22,8 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
     sf::ContextSettings settings;
     settings.majorVersion = 4;
     settings.minorVersion = 6;
+    settings.depthBits = 24;
+
     coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default, settings);
     coreWindow.setFramerateLimit(fps);
     coreWindow.setActive(true);
@@ -47,7 +49,6 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
 }
 
 void MImGuiWindow::clear() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     MWindow::clear();
 }
 
@@ -61,8 +62,7 @@ void MImGuiWindow::update() {
         }
     }
 
-    ImGui::SFML::Update(coreWindow, deltaClock.restart());
-    drawGUI();
+    draw();
 
     sf::Time elapsed = clock.getElapsedTime();
     sf::Time sleepTime = frameTime - elapsed;
@@ -73,11 +73,16 @@ void MImGuiWindow::update() {
 }
 
 void MImGuiWindow::drawGUI() {
-    MGraphicsRenderer::draw();
+    ImGui::SFML::Update(coreWindow, deltaClock.restart());
     drawMenuBar();
     showDockSpace();
     drawImGuiSubWindows();
     ImGui::SFML::Render(coreWindow);
+}
+
+void MImGuiWindow::draw() {
+    MGraphicsRenderer::draw();
+    drawGUI();
     coreWindow.display();
 }
 

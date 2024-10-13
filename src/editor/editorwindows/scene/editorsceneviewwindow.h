@@ -9,6 +9,7 @@
 class MEditorSceneViewWindow : public MImGuiSubWindow{
 private:
     sf::RenderTexture renderTexture;
+    sf::ContextSettings settings;
 public:
     MEditorSceneViewWindow();
     MEditorSceneViewWindow(int x, int y);
