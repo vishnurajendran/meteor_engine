@@ -23,7 +23,7 @@ private:
     bool loadFromFile(const SString& path);
 public:
     explicit MMaterialAsset(const SString& path);
-    ~MMaterialAsset();
+    ~MMaterialAsset() override;
     MMaterial* getInstance();
     void buildMaterialAsset();
 };
