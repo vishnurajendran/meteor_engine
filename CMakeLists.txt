@@ -238,6 +238,8 @@ add_executable(meteor_engine
         src/core/engine/texture/textureasset.h
         src/core/engine/texture/textureassetimporter.cpp
         src/core/engine/texture/textureassetimporter.h
+        src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.h
 )
 
 ############# LINK LIBRARIES ################

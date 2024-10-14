@@ -20,6 +20,7 @@ public:
     void setPriority(const int& priority);
     int getPriority() const;
     void setOrthographic(const bool& orthographic);
+    bool getOrthographic() const;
     void setClipPlanes(float nearClip, float farFar);
     [[nodiscard]] std::pair<float, float> getClipPlanes() const;
     SMatrix4 getProjectionMatrix(const SVector2& resolution) const;

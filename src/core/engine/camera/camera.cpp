@@ -23,6 +23,10 @@ void MCameraEntity::setOrthographic(const bool &orthographic) {
     isOrthoGraphic = orthographic;
 }
 
+bool MCameraEntity::getOrthographic() const {
+    return isOrthoGraphic;
+}
+
 void MCameraEntity::setClipPlanes(float nearClip, float farClip) {
     nearPlane = nearClip;
     farPlane = farClip;

@@ -4,12 +4,12 @@
 
 #include "inspectordrawer.h"
 #include "spatialentityinspectordrawer.h"
+#include "core/engine/camera/camera.h"
 
-std::map<const std::type_info*, MInspectorDrawer*>* MInspectorDrawer::drawers = nullptr;
+std::vector<MInspectorDrawer*> MInspectorDrawer::drawers;
 MInspectorDrawer* MInspectorDrawer::defaultDrawer = nullptr;
 
 void MInspectorDrawer::initialise() {
-    drawers = new std::map<const std::type_info*, MInspectorDrawer*>();
     defaultDrawer = new MSpatialEntityInspectorDrawer();
 }
 
@@ -18,21 +18,17 @@ void MInspectorDrawer::registerDrawer(MInspectorDrawer *drawer) {
     if(!drawer)
         return;
 
-    if(drawers == nullptr){
-        drawers = new std::map<const std::type_info*, MInspectorDrawer*>();
-    }
-
-    drawers->insert({&typeid(drawer), drawer});
+    drawers.push_back(drawer);
 }
 
 MInspectorDrawer *MInspectorDrawer::getDrawer(MSpatialEntity *entity) {
     if(!entity)
         return nullptr;
 
-    if(drawers->contains(&typeid(drawers))){
-        auto key = &typeid(drawers);
-        return (*drawers)[key];
+    for(auto drawer : drawers) {
+        if(drawer->canDraw(entity)) {
+            return drawer;
+        }
     }
-
     return defaultDrawer;
 }

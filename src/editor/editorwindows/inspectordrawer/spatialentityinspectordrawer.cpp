@@ -26,6 +26,10 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity *target) {
     drawTransformField(target);
 }
 
+bool MSpatialEntityInspectorDrawer::canDraw(MSpatialEntity* entity) {
+    return true;
+}
+
 void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char *label, ImVec4 boxColor, float boxWidth) {
 // Get current window's draw list
     auto dpi = DPIHelper::GetDPIScaleFactor();

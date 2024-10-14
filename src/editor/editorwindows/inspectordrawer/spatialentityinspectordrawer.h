@@ -16,8 +16,8 @@ private:
     sf::Vector2f trfSize;
 public:
     MSpatialEntityInspectorDrawer();
-    void onDrawInspector(MSpatialEntity *target) override;
-
+    virtual void onDrawInspector(MSpatialEntity *target) override;
+    virtual bool canDraw(MSpatialEntity* entity) override;
 protected:
     void drawColoredBoxOverLabel(const char* label, ImVec4 boxColor, float boxWidth);
     bool drawXYZComponent(const SString& label, SVector3& value);

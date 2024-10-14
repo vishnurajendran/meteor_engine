@@ -7,18 +7,21 @@
 
 #include <typeinfo>
 #include <map>
+#include <vector>
+
 #include "core/object/object.h"
 
 class MSpatialEntity;
 
 class MInspectorDrawer : public MObject {
 private:
-    static std::map<const std::type_info*, MInspectorDrawer*>* drawers;
+    static std::vector<MInspectorDrawer*> drawers;
     static MInspectorDrawer* defaultDrawer;
 public:
     static void initialise();
     static void registerDrawer(MInspectorDrawer* drawer);
     virtual void onDrawInspector(MSpatialEntity* target)=0;
+    virtual bool canDraw(MSpatialEntity* entity) = 0;
     static MInspectorDrawer* getDrawer(MSpatialEntity* entity);
 };
 
