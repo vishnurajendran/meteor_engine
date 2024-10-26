@@ -15,17 +15,48 @@ MSpatialEntity * MCameraEntityDeserialiser::deserialize(pugi::xml_node node) {
     MCameraEntity* entity = new MCameraEntity();
     parseSpatialData(node, entity);
 
+    const SString CAMAERA_ATTRIB_NODE = "camera";
     const SString NEARCLIP_ATTRIB = "nearClip";
     const SString FARCLIP_ATTRIB = "farClip";
     const SString PRIORITY_ATTRIB = "priority";
     const SString FOV_ATTRIB = "fov";
     const SString ORTHO_ATTRIB = "orthographic";
 
-    auto nearClipVal = std::stof(node.attribute(NEARCLIP_ATTRIB.c_str()).value());
-    auto farClipVal = std::stof(node.attribute(FARCLIP_ATTRIB.c_str()).value());
-    auto fov = std::stof(node.attribute(FOV_ATTRIB.c_str()).value());
-    auto priority = std::stof(node.attribute(PRIORITY_ATTRIB.c_str()).value());
-    auto orthographic = node.attribute(PRIORITY_ATTRIB.c_str()).value() == "1";
+    const auto attribNode = node.child(ATTRIB_NODE.c_str());
+    if(!attribNode) {
+        return entity;
+    }
+
+    const auto cameraNode = attribNode.child(CAMAERA_ATTRIB_NODE.c_str());
+    if(!cameraNode) {
+        return entity;
+    }
+
+    auto nearClipVal = 0.1f;
+    auto farClipVal = 100.0f;
+    auto fov = 60.0f;
+    auto priority = 1;
+    auto orthographic = false;
+
+    if(const auto ncNode = cameraNode.child(NEARCLIP_ATTRIB.c_str())) {
+        nearClipVal = std::stof(ncNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    }
+
+    if(const auto fcNode = cameraNode.child(FARCLIP_ATTRIB.c_str())) {
+        farClipVal = std::stof(fcNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    }
+
+    if(const auto fovNode = cameraNode.child(FOV_ATTRIB.c_str())) {
+        fov = std::stof(fovNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    }
+
+    if(const auto priorityNode = cameraNode.child(PRIORITY_ATTRIB.c_str())) {
+        priority = std::stoi(priorityNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    }
+
+    if(const auto orthographicNode = cameraNode.child(ORTHO_ATTRIB.c_str())) {
+        orthographic = orthographicNode.attribute(ATTRIB_VALUE_KEY.c_str()).value() == "1";
+    }
 
     entity->setClipPlanes(nearClipVal, farClipVal);
     entity->setFov(fov);

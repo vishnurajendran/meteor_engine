@@ -7,6 +7,7 @@
 #define METEOR_ENGINE_EDITORCONSOLEWINDOW_H
 
 #include "editor/meteorite_minimal.h"
+#include "editor/window/imgui/imguisubwindow.h"
 
 class MEditorConsoleWindow : public MImGuiSubWindow {
 private:

@@ -16,11 +16,15 @@ public:
     virtual MSpatialEntity* deserialize(pugi::xml_node node) = 0;
 protected:
     void parseSpatialData(pugi::xml_node node, MSpatialEntity* entity);
-private:
+protected:
+    const SString TRANSFORM_NODE = "transform";
     const SString LOCAL_POS_ATTRIB = "localPosition";
     const SString LOCAL_ROT_ATTRIB = "localRotation";
     const SString LOCAL_SCALE_ATTRIB = "localScale";
     const SString NAME_ATTRIB = "name";
+    const SString ATTRIB_VALUE_KEY = "value";
+public:
+    static const SString ATTRIB_NODE;
 };
 
 #endif //SCENEENTITYTYPEDESERIALIZER_H

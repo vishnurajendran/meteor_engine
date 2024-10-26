@@ -5,6 +5,7 @@
 #ifndef METEOR_ENGINE_EDITORINSPECTORWINDOW_H
 #define METEOR_ENGINE_EDITORINSPECTORWINDOW_H
 #include "editor/meteorite_minimal.h"
+#include "editor/window/imgui/imguisubwindow.h"
 
 class MEditorInspectorWindow : public MImGuiSubWindow{
 public:

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "meteor_utils.h"
-
 #include "object/object.h"
 #include "object/objectpointer.h"
 #include "object/gc.h"

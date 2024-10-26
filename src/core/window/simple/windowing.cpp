@@ -5,7 +5,7 @@
 #include <GL/glew.h>
 #include "windowing.h"
 
-MWindow::MWindow(const SString& title) : MWindow(title, 800, 600, 0) {
+MWindow::MWindow(const SString& title) : MWindow(title, 800, 600, 60) {
 
 }
 
@@ -45,6 +45,9 @@ void MWindow::clear() {
 }
 
 void MWindow::update() {
+    if(targetFPS <= 0) //just a safety check
+        targetFPS = 60;
+
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
     while (coreWindow.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {

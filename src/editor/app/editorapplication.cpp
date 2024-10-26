@@ -5,6 +5,7 @@
 #include "editorapplication.h"
 
 #include "core/graphics/core/meteordrawables.h"
+#include "editor/window/imgui/imguiwindow.h"
 
 MSpatialEntity* MEditorApplication::Selected = nullptr;
 
@@ -34,7 +35,7 @@ void MEditorApplication::cleanup() {
 void MEditorApplication::initialise() {
     //appRunning = true;
     MLOG(STR("Initialising Editor"));
-    window = (MImGuiWindow*)MWindowManager::getImGuiWindow(STR("Meteorite Editor"));
+    window = new MImGuiWindow(STR("Meteorite Editor"));
     if(window == nullptr){
         MERROR(STR("Invalid Window Type"));
         return;

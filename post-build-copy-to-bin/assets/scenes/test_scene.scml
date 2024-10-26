@@ -1,8 +1,83 @@
-<mscene name = "test_scene">
-    <mcamera name="main camera" localPosition="(0,0,10)" localScale="(1,1,1)" localRotation="(0,0,0,0)" fov="60" nearClip="0.1" farClip="100.0" priority="0" orthographic="1"/>
-    <mstaticmesh name="box" localPosition="(0,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/box.glb" material="assets/materials/mat1.material"/>
-    <mstaticmesh name="sphere" localPosition="(-5,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/sphere.glb" material="assets/materials/mat1.material"/>
-    <mstaticmesh name="plane" localPosition="(5,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/plane.glb" material="assets/materials/mat1.material"/>
-    <mstaticmesh name="cylinder" localPosition="(-7,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/cylinder.glb" material="assets/materials/mat1.material"/>
-    <mstaticmesh name="cone" localPosition="(7,0,0)" localScale="(1,1,1)" localRotation="(0,0,0,0)" mesh="assets/mesh/primitive/cone.glb" material="assets/materials/mat1.material"/>
+<mscene name = "Test Scene">
+    <mcamera name="Main Camera">
+        <attrib>
+            <transform>
+                <localPosition value="(0,0,10)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <camera>
+                <fov value="60"/>
+                <nearClip value="0.1"/>
+                <farClip value="100.0"/>
+                <priority value="0"/>
+                <orthographic value="1"/>
+            </camera>
+        </attrib>
+    </mcamera>
+    <mstaticmesh name="Box">
+        <attrib>
+            <transform>
+                <localPosition value="(0,0,0)"/>
+                <localRotation value="(0.846,0.369,0.338,0.184)"/>
+                <localScale value="(3,3,3)"/>
+            </transform>
+            <staticmesh>
+                <src value="assets/mesh/primitive/box.glb"/>
+                <material value="assets/materials/mat2.material"/>
+            </staticmesh>
+        </attrib>
+    </mstaticmesh>
+    <mstaticmesh name="Sphere">
+        <attrib>
+            <transform>
+                <localPosition value="(0,0,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <staticmesh>
+                <src value="assets/mesh/primitive/sphere.glb"/>
+                <material value="assets/materials/mat1.material"/>
+            </staticmesh>
+        </attrib>
+    </mstaticmesh>
+    <mstaticmesh name="Plane">
+        <attrib>
+            <transform>
+                <localPosition value="(0,-10,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(100,1,100)"/>
+            </transform>
+            <staticmesh>
+                <src value="assets/mesh/primitive/plane.glb"/>
+                <material value="assets/materials/plane_mat.material"/>
+            </staticmesh>
+        </attrib>
+    </mstaticmesh>
+    <mstaticmesh name="Cylinder">
+        <attrib>
+            <transform>
+                <localPosition value="(-7,0,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <staticmesh>
+                <src value="assets/mesh/primitive/cylinder.glb"/>
+                <material value="assets/materials/mat1.material"/>
+            </staticmesh>
+        </attrib>
+    </mstaticmesh>
+    <mstaticmesh name="Cone">
+        <attrib>
+            <transform>
+                <localPosition value="(7,0,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <staticmesh>
+                <src value="assets/mesh/primitive/cone.glb"/>
+                <material value="assets/materials/mat1.material"/>
+            </staticmesh>
+        </attrib>
+    </mstaticmesh>
 </mscene>

@@ -14,6 +14,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 option(BUILD_EDITOR "Build the editor application" OFF)
 option(BUILD_PLAYER "Build the player application" OFF)
 
+set(EDITOR_NAME "meteorite")
+set(PLAYER_NAME "meteor_player")
+
 # FetchContent for dependencies
 include(FetchContent)
 
@@ -106,11 +109,14 @@ find_package(GLEW REQUIRED)
 
 ############# TARGETS ################
 
-# Add the executable and its source files
-add_executable(meteor_engine
+set(CORE_SOURCES
         src/main.cpp
         src/core/object/object.cpp
         src/core/object/object.h
+        src/core/utils/logger.cpp
+        src/core/utils/logger.h
+        src/core/window/simple/windowing.cpp
+        src/core/window/simple/windowing.h
         src/core/object/gc.cpp
         src/core/object/gc.h
         src/core/utils/sstring.h
@@ -120,33 +126,7 @@ add_executable(meteor_engine
         src/core/meteor_core.h
         src/core/application/application.cpp
         src/core/application/application.h
-        src/editor/app/editorapplication.cpp
-        src/editor/app/editorapplication.h
-        src/core/utils/logger.cpp
-        src/core/utils/logger.h
-        src/core/window/simple/windowing.cpp
-        src/core/window/simple/windowing.h
-        src/player/app/playerapplication.cpp
-        src/player/app/playerapplication.h
-        src/core/window/windowmanager.cpp
-        src/core/window/windowmanager.h
-        src/core/window/imgui/imguiwindow.cpp
-        src/core/window/imgui/imguiwindow.h
-        src/core/window/imgui/imguisubwindow.cpp
-        src/core/window/imgui/imguisubwindow.h
-        src/core/window/imgui/imguisubwindowmanager.cpp
-        src/core/window/imgui/imguisubwindowmanager.h
-        src/editor/editorwindows/console/editorconsolewindow.cpp
-        src/editor/editorwindows/console/editorconsolewindow.h
-        src/editor/meteorite.h
-        src/core/window/imgui/imguiwindowconstants.h
-        src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
-        src/editor/editorwindows/hierarchy/editorhierarchywindow.h
-        src/editor/editorwindows/inspector/editorinspectorwindow.cpp
-        src/editor/editorwindows/inspector/editorinspectorwindow.h
-        src/editor/editorwindows/scene/editorsceneviewwindow.cpp
-        src/editor/editorwindows/scene/editorsceneviewwindow.cpp
-        src/core/window/imgui/imguistyles.h
+        src/editor/window/imgui/imguistyles.h
         src/core/utils/color.cpp
         src/core/utils/color.h
         src/core/utils/dpihelper.h
@@ -194,10 +174,6 @@ add_executable(meteor_engine
         src/core/engine/assetmanagement/textasset/textassetimporter.h
         src/core/engine/scene/sceneassetimporter.cpp
         src/core/engine/scene/sceneassetimporter.h
-        src/editor/editorwindows/inspectordrawer/inspectordrawer.cpp
-        src/editor/editorwindows/inspectordrawer/inspectordrawer.h
-        src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.cpp
-        src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h
         src/core/utils/glmhelper.cpp
         src/core/utils/glmhelper.h
         src/core/engine/3d/staticmesh/staticmeshasset.cpp
@@ -238,21 +214,76 @@ add_executable(meteor_engine
         src/core/engine/texture/textureasset.h
         src/core/engine/texture/textureassetimporter.cpp
         src/core/engine/texture/textureassetimporter.h
-        src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.cpp
-        src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.h
 )
 
-############# LINK LIBRARIES ################
-target_link_libraries(
-        meteor_engine
-        PUBLIC
-        ImGui-SFML::ImGui-SFML
-        spdlog::spdlog
-        glm::glm
-        pugixml
-        assimp::assimp
-        GLEW::GLEW
+set(EDITOR_SOURCES
+        src/editor/app/editorapplication.cpp
+        src/editor/app/editorapplication.h
+        src/editor/window/imgui/imguiwindow.cpp
+        src/editor/window/imgui/imguiwindow.h
+        src/editor/window/imgui/imguisubwindow.cpp
+        src/editor/window/imgui/imguisubwindow.h
+        src/editor/window/imgui/imguisubwindowmanager.cpp
+        src/editor/window/imgui/imguisubwindowmanager.h
+        src/editor/window/imgui/imguiwindowconstants.h
+        src/editor/editorwindows/console/editorconsolewindow.cpp
+        src/editor/editorwindows/console/editorconsolewindow.h
+        src/editor/meteorite.h
+        src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
+        src/editor/editorwindows/hierarchy/editorhierarchywindow.h
+        src/editor/editorwindows/inspector/editorinspectorwindow.cpp
+        src/editor/editorwindows/inspector/editorinspectorwindow.h
+        src/editor/editorwindows/scene/editorsceneviewwindow.cpp
+        src/editor/editorwindows/scene/editorsceneviewwindow.cpp
+        src/editor/editorwindows/inspectordrawer/inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.h
+        src/editor/window/imgui/editorcontrolsbuttons.cpp
+        src/editor/window/imgui/editorcontrolsbuttons.h
 )
+
+set(PLAYER_SOURCES
+        src/player/app/playerapplication.cpp
+        src/player/app/playerapplication.h
+)
+
+# Add the executable and its source files
+# Conditionally build Editor executable if BUILD_EDITOR is ON
+if(BUILD_EDITOR)
+    add_executable(${EDITOR_NAME} ${CORE_SOURCES} ${EDITOR_SOURCES})
+    target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
+    target_link_libraries(${EDITOR_NAME}
+            PUBLIC
+            ImGui-SFML::ImGui-SFML
+            spdlog::spdlog
+            glm::glm
+            pugixml
+            assimp::assimp
+            GLEW::GLEW
+    )
+    add_dependencies(${EDITOR_NAME} copy_files_before_run)
+    set_target_properties(${EDITOR_NAME} PROPERTIES OUTPUT_NAME ${EDITOR_NAME})
+endif()
+
+# Conditionally build Player executable if BUILD_PLAYER is ON
+if(BUILD_PLAYER)
+    add_executable(${PLAYER_NAME} ${CORE_SOURCES} ${PLAYER_SOURCES})
+    target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
+    target_link_libraries(${PLAYER_NAME}
+            PUBLIC
+            ImGui-SFML::ImGui-SFML
+            spdlog::spdlog
+            glm::glm
+            pugixml
+            assimp::assimp
+            GLEW::GLEW
+    )
+    add_dependencies(${PLAYER_NAME} copy_files_before_run)
+    set_target_properties(${PLAYER_NAME} PROPERTIES OUTPUT_NAME ${PLAYER_NAME})
+endif()
 
 ############# PLATFORM-SPECIFIC CONFIGURATIONS #############
 
@@ -316,6 +347,4 @@ foreach(FILE ${FILES_TO_COPY})
     endif()
 endforeach()
 
-# Ensure meteor_engine depends on the custom copy target
-add_dependencies(meteor_engine copy_files_before_run)
 

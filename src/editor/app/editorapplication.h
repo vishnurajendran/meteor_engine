@@ -7,6 +7,9 @@
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
 
+class MImGuiSubWindow;
+class MImGuiWindow;
+
 class MEditorApplication : public MApplication {
 private:
     MObjectPtr<MImGuiWindow> window;

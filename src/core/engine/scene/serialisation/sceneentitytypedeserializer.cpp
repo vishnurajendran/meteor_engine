@@ -4,7 +4,19 @@
 
 #include "sceneentitytypedeserializer.h"
 
+const SString MSceneEntityTypeDeserializer::ATTRIB_NODE= "attrib";
+
 void MSceneEntityTypeDeserializer::parseSpatialData(pugi::xml_node node, MSpatialEntity *entity) {
+    auto attribNode = node.child(ATTRIB_NODE.c_str());
+    if(!attribNode) {
+        return;
+    }
+
+    auto transformNode = attribNode.child(TRANSFORM_NODE.c_str());
+    if(!transformNode) {
+        return;
+    }
+
     SVector3 localPosition(0);
     SVector3 localScale(1);
     SQuaternion localRotation = glm::identity<SQuaternion>();
@@ -13,16 +25,16 @@ void MSceneEntityTypeDeserializer::parseSpatialData(pugi::xml_node node, MSpatia
         entity->setName(node.attribute(NAME_ATTRIB.c_str()).value());
     }
 
-    if (node.attribute(LOCAL_POS_ATTRIB.c_str())) {
-        parseVector3(node.attribute(LOCAL_POS_ATTRIB.c_str()).value(), localPosition);
+    if (const auto lpNode = transformNode.child(LOCAL_POS_ATTRIB.c_str())) {
+         parseVector3(lpNode.attribute(ATTRIB_VALUE_KEY.c_str()).value(), localPosition);
     }
 
-    if (node.attribute(LOCAL_ROT_ATTRIB.c_str())) {
-        parseQuaternion(node.attribute(LOCAL_ROT_ATTRIB.c_str()).value(), localRotation);
+    if (const auto lrNode = transformNode.child(LOCAL_ROT_ATTRIB.c_str())) {
+        parseQuaternion(lrNode.attribute(ATTRIB_VALUE_KEY.c_str()).value(), localRotation);
     }
 
-    if (node.attribute(LOCAL_SCALE_ATTRIB.c_str())) {
-        parseVector3(node.attribute(LOCAL_SCALE_ATTRIB.c_str()).value(), localScale);
+    if (const auto lsNode = transformNode.child(LOCAL_SCALE_ATTRIB.c_str())) {
+        parseVector3(lsNode.attribute(ATTRIB_VALUE_KEY.c_str()).value(), localScale);
     }
 
     entity->setRelativePosition(localPosition);

@@ -7,13 +7,14 @@
 #include "imgui-SFML.h"
 #include "imguiwindow.h"
 
+#include "editorcontrolsbuttons.h"
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
 #include "imguistyles.h"
 #include "imgui_internal.h"
 
-MImGuiWindow::MImGuiWindow(const SString &title) : MWindow(title) {
+MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
 
 }
 
@@ -142,10 +143,18 @@ void MImGuiWindow::drawMenuBar(){
             ImGui::EndMenu();
         }
 
-        ImGui::SameLine(ImGui::GetWindowWidth() - ImGui::CalcTextSize("Meteorite Editor  ").x - ImGui::GetStyle().FramePadding.x);
+        auto mtTitleSize = ImGui::CalcTextSize("Meteorite Editor  ");
+        ImGui::SameLine(ImGui::GetWindowWidth() - mtTitleSize.x - ImGui::GetStyle().FramePadding.x);
         ImGui::Text("Meteorite Editor");
+
+        drawControls();
+
         ImGui::EndMainMenuBar();
     }
+}
+
+void MImGuiWindow::drawControls() {
+    MEditorControlsButtons::playButton();
 }
 
 void MImGuiWindow::loadFontFile(const SString &pathToFile, float pointSize) {

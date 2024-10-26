@@ -45,4 +45,3 @@
 // windowing
 #include "core/application/application.h"
 #include "core/window/simple/windowing.h"
-#include "core/window/windowmanager.h"

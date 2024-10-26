@@ -2,8 +2,8 @@
 // Created by Vishnu Rajendran on 2024-09-24.
 //
 
-#include "editor/meteorite.h"
 #include "editorconsolewindow.h"
+#include "editor/window/imgui/imguisubwindow.h"
 
 MEditorConsoleWindow::MEditorConsoleWindow() :MEditorConsoleWindow(700, 300) {
     subscriptionId = MLogger::subscribe(std::bind(&MEditorConsoleWindow::onLogRecieved, this, std::placeholders::_1));

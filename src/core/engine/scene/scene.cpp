@@ -77,6 +77,10 @@ const SString MScene::SCENE_NAME_TAG = "name";
 		if (currNode == nullptr) {
 			return;
 		}
+		if(MSceneEntityTypeDeserializer::ATTRIB_NODE == SString(currNode.name())) {
+			return;
+		}
+
 		auto type = currNode.name();
 		auto deserializer = MSceneEntityTypeMap::getDeserializer(type);
 		if (deserializer == nullptr) {

@@ -1,0 +1,7 @@
+<material name="Mat1">
+    <shader path="assets/shaders/unlit.mesl"/>
+    <properties>
+        <property key = "_color" type="u4" value = "(1,1,1,1)"/>
+        <property key = "_baseTex" type="tex2D" value = "assets/textures/crate.png"/>
+    </properties>
+</material>

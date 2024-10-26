@@ -16,23 +16,31 @@ bool MStaticMeshEntityDeserialiser::registered = []() {
 }();
 
 MSpatialEntity * MStaticMeshEntityDeserialiser::deserialize(pugi::xml_node node) {
-    auto entity = new MStaticMeshEntity();
+    const auto entity = new MStaticMeshEntity();
     parseSpatialData(node, entity);
 
-    const SString ATTRIB_MESH_ASSET_PATH = "mesh";
-    const SString ATTRIB_MATERIAL_ASSET_PATH = "material";
+    const SString ATTRIB_MESH_ATTRIB_PATH = "staticmesh";
+    const SString MESH_ATTRIB_SRC = "src";
+    const SString MESH_ATTRIB_MATERIAL = "material";
+    const auto attribNode = node.child(ATTRIB_NODE.c_str());
+    if(!attribNode) {
+        return entity;
+    }
 
-    if(node.attribute(ATTRIB_MESH_ASSET_PATH.c_str())) {
-        auto meshAsset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(node.attribute(ATTRIB_MESH_ASSET_PATH.c_str()).value());
-        if(meshAsset) {
+    const auto meshNode = attribNode.child(ATTRIB_MESH_ATTRIB_PATH.c_str());
+    if(!meshNode) {
+        return entity;
+    }
+
+    if(const auto meshSrcNode = meshNode.child(MESH_ATTRIB_SRC.c_str())) {
+        if(const auto meshAsset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshSrcNode.attribute(ATTRIB_VALUE_KEY.c_str()).value())) {
             entity->setStaticMeshAsset(meshAsset);
         }
         else
             MERROR("Failed to load mesh asset");
     }
-    if(node.attribute(ATTRIB_MATERIAL_ASSET_PATH.c_str())) {
-        auto material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(node.attribute(ATTRIB_MATERIAL_ASSET_PATH.c_str()).value());
-        if(material) {
+    if(const auto meshMatNode = meshNode.child(MESH_ATTRIB_MATERIAL.c_str())) {
+        if(const auto material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(meshMatNode.attribute(ATTRIB_VALUE_KEY.c_str()).value())) {
             entity->setMaterial( material->getInstance());
         }
         else

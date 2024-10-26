@@ -28,7 +28,7 @@ void MPlayerApplication::cleanup() {
 void MPlayerApplication::initialise() {
     //appRunning = true;
     MLOG(STR("Initialising Player"));
-    window = MWindowManager::getSimpleWindow(STR("Meteor Player"));
+    window = new MWindow(STR("Meteor Player"));
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));
 
