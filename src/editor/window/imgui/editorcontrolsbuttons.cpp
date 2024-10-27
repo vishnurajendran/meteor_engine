@@ -17,7 +17,7 @@ void MEditorControlsButtons::playButton() {
 
     ImGui::SameLine(ImGui::GetWindowWidth() / 2);
     auto size = playTexture.getSize();
-    if(ImGui::ImageButton("#MTR_PLAY_BTTN", playTexture, ImVec2(size.x, size.y))) {
+    if(ImGui::ImageButton("##MTR_PLAY_BTTN", playTexture, ImVec2(size.x, size.y))) {
         std::system(METEOR_PLAYER_PROC_NAME.c_str());
     }
 }

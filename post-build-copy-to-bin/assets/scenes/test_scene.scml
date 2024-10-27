@@ -27,6 +27,19 @@
                 <material value="assets/materials/mat2.material"/>
             </staticmesh>
         </attrib>
+        <mstaticmesh name="Sphere">
+            <attrib>
+                <transform>
+                    <localPosition value="(0,0,0)"/>
+                    <localRotation value="(0,0,0,0)"/>
+                    <localScale value="(1,1,1)"/>
+                </transform>
+                <staticmesh>
+                    <src value="assets/mesh/primitive/sphere.glb"/>
+                    <material value="assets/materials/mat1.material"/>
+                </staticmesh>
+            </attrib>
+        </mstaticmesh>
     </mstaticmesh>
     <mstaticmesh name="Sphere">
         <attrib>

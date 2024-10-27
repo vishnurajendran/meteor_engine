@@ -26,12 +26,11 @@ void MImGuiSubWindow::setWindowConstraints(float minx, float miny, float maxx, f
 }
 
 void MImGuiSubWindow::draw() {
-    if(ImGui::Begin(title.c_str())){
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minSize);
-        onGui();
-        ImGui::PopStyleVar();
-        ImGui::End();
-    }
+    ImGui::Begin(title.c_str());
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minSize);
+    onGui();
+    ImGui::PopStyleVar();
+    ImGui::End();
 }
 
 SString MImGuiSubWindow::getTitle() const {
