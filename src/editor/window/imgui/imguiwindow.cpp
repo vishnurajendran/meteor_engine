@@ -129,11 +129,6 @@ void MImGuiWindow::drawMenuBar(){
     if(ImGui::BeginMainMenuBar()){
         //Todo: Add Menu Items here
         if(ImGui::BeginMenu("File")){
-            if(ImGui::MenuItem("Log")){
-                MLOG(STR("Log Message looks like this"));
-                MWARN(STR("Warnings look like this"));
-                MERROR(STR("Errors look like this"));
-            }
            ImGui::EndMenu();
         }
         if(ImGui::BeginMenu("Edit")){
@@ -143,10 +138,6 @@ void MImGuiWindow::drawMenuBar(){
             ImGui::EndMenu();
         }
 
-        auto mtTitleSize = ImGui::CalcTextSize("Meteorite Editor  ");
-        ImGui::SameLine(ImGui::GetWindowWidth() - mtTitleSize.x - ImGui::GetStyle().FramePadding.x);
-        ImGui::Text("Meteorite Editor");
-
         drawControls();
 
         ImGui::EndMainMenuBar();
@@ -154,7 +145,7 @@ void MImGuiWindow::drawMenuBar(){
 }
 
 void MImGuiWindow::drawControls() {
-    MEditorControlsButtons::playButton();
+    MEditorControlsButtons::runtimeControls();
 }
 
 void MImGuiWindow::loadFontFile(const SString &pathToFile, float pointSize) {

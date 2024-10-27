@@ -10,8 +10,9 @@
 class MEditorControlsButtons : MObject {
 private:
     static sf::Texture playTexture;
-public:
     static void playButton();
+public:
+   static void runtimeControls();
 };
 
 
