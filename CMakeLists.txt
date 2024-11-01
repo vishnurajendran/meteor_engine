@@ -107,6 +107,30 @@ find_package(GLEW REQUIRED)
 #####################################
 
 
+############# IMGUIZMO ################
+# Fetch ImGuizmo
+FetchContent_Declare(
+        imguizmo
+        GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
+        GIT_TAG master
+)
+FetchContent_MakeAvailable(imguizmo)
+
+# Create the ImGuizmo library target, using ImGui-SFML's include directories
+add_library(imguizmo STATIC ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp)
+
+# Include ImGuizmo's directory and ImGui-SFML’s include directories
+target_include_directories(imguizmo PUBLIC
+        ${imguizmo_SOURCE_DIR}
+        ${imgui-sfml_SOURCE_DIR}/imgui-sfml/include  # SFML integration includes ImGui
+        ${imgui-sfml_SOURCE_DIR}/imgui
+)
+
+# Link ImGui-SFML instead of linking imgui directly
+target_link_libraries(imguizmo PRIVATE ImGui-SFML::ImGui-SFML)
+#######################################
+
+
 ############# TARGETS ################
 
 set(CORE_SOURCES
@@ -263,6 +287,7 @@ if(BUILD_EDITOR)
             pugixml
             assimp::assimp
             GLEW::GLEW
+            imguizmo
     )
     add_dependencies(${EDITOR_NAME} copy_files_before_run)
     set_target_properties(${EDITOR_NAME} PROPERTIES OUTPUT_NAME ${EDITOR_NAME})

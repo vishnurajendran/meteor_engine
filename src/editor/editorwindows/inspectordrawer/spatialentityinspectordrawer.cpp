@@ -68,14 +68,24 @@ void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity *target) {
     ImGui::Text("Transform");
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10*dpi);
     auto pos = target->getRelativePosition();
-    auto rot = quaternionToEuler(target->getRelativeRotation());
+
+    auto rotQuat = target->getRelativeRotation();
+    auto rotEuler = quaternionToEuler(target->getRelativeRotation());
+    auto oldRotEuler = quaternionToEuler(target->getRelativeRotation());
     auto scale = target->getRelativeScale();
 
     if(drawXYZComponent("Position: ", pos)){
         target->setRelativePosition(pos);
     }
-    if(drawXYZComponent("Rotation:", rot)){
-        target->setRelativeRotation(eulerToQuaternion(rot));
+    if(drawXYZComponent("Rotation:", rotEuler)){
+        auto deltaEuler = rotEuler - oldRotEuler;
+        glm::quat deltaX = glm::angleAxis(glm::radians(deltaEuler.x), glm::vec3(1, 0, 0));
+        glm::quat deltaY = glm::angleAxis(glm::radians(deltaEuler.y), glm::vec3(0, 1, 0));
+        glm::quat deltaZ = glm::angleAxis(glm::radians(deltaEuler.z), glm::vec3(0, 0, 1));
+
+        // Apply the rotations in the correct order (e.g., yaw-pitch-roll)
+        rotQuat *= (deltaX * deltaY * deltaZ);
+        target->setRelativeRotation(rotQuat);
     }
     if(drawXYZComponent("Scale:      ", scale)){
         target->setRelativeScale(scale);

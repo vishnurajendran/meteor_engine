@@ -26,15 +26,20 @@ public:
 
     [[nodiscard]] SMatrix4 getModelMatrix() const;
 
-    void setRelativePosition(SVector3 position) { relativePosition = position; updateTransforms();}
-    void setRelativeRotation(SQuaternion localRotation) { this->relativeRotation = localRotation; updateTransforms();}
-    void setRelativeScale(SVector3 scale) { relativeScale = scale; updateTransforms();}
+    void setRelativePosition(const SVector3& position) { relativePosition = position; updateTransforms();}
+    void setWorldPosition(const SVector3& worldPosition);
+    void setRelativeRotation(const SQuaternion& localRotation) { this->relativeRotation = localRotation; updateTransforms();}
+    void setWorldRotation(const SQuaternion& worldRotation);
+
+    void setRelativeScale(const SVector3& scale) { relativeScale = scale; updateTransforms();}
 
     MSpatialEntity *getParent() { return parent; }
     std::vector<MSpatialEntity *> getChildren() { return children; }
 
     void addChild(MSpatialEntity *entity);
     void removeChild(MSpatialEntity *entity);
+
+    SMatrix4 getTransformMatrix() const;
 
     template<typename T>
     T *find(SString name) {
@@ -77,8 +82,10 @@ private:
 protected:
     SVector3 relativePosition = SVector3(0);
     SQuaternion relativeRotation = glm::identity<SQuaternion>();
-    SMatrix4 modelMatrix = glm::identity<SMatrix4>();
     SVector3 relativeScale = SVector3(1);
+
+    SMatrix4 modelMatrix = glm::identity<SMatrix4>();
+
     MSpatialEntity *parent = nullptr;
     std::vector<MSpatialEntity*> children;
     bool enabled = true;

@@ -26,7 +26,7 @@ void MStaticMeshEntity::raiseDrawCall() {
     auto drawParams = SStaticMeshDrawParams();
     drawParams.materialInstance = materialInstance;
     drawParams.meshAssetRefference = staticMeshAsset;
-    drawParams.modelMatrix = getModelMatrix();
+    drawParams.modelMatrix = getTransformMatrix();
     drawCall->setParams(drawParams);
     MGraphicsRenderer::submit(drawCall);
 }

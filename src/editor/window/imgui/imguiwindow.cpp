@@ -13,6 +13,7 @@
 #include "imguiwindowconstants.h"
 #include "imguistyles.h"
 #include "imgui_internal.h"
+#include "../../../../cmake-build-debug/_deps/imguizmo-src/ImGuizmo.h"
 
 MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
 
@@ -63,7 +64,15 @@ void MImGuiWindow::update() {
         }
     }
 
-    draw();
+    // draw openGL
+    MGraphicsRenderer::draw();
+
+    //ImGui::SFML::Update(coreWindow, deltaClock.restart());
+    ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
+    drawGUI();
+    ImGui::SFML::Render(coreWindow);
+    coreWindow.display();
 
     sf::Time elapsed = clock.getElapsedTime();
     sf::Time sleepTime = frameTime - elapsed;
@@ -74,17 +83,9 @@ void MImGuiWindow::update() {
 }
 
 void MImGuiWindow::drawGUI() {
-    ImGui::SFML::Update(coreWindow, deltaClock.restart());
     drawMenuBar();
     showDockSpace();
     drawImGuiSubWindows();
-    ImGui::SFML::Render(coreWindow);
-}
-
-void MImGuiWindow::draw() {
-    MGraphicsRenderer::draw();
-    drawGUI();
-    coreWindow.display();
 }
 
 void MImGuiWindow::close() {

@@ -64,6 +64,14 @@ void MSpatialEntity::removeChild(MSpatialEntity *entity) {
     makeRootEntity(entity);
 }
 
+SMatrix4 MSpatialEntity::getTransformMatrix() const {
+    auto modelMatrix = getModelMatrix();
+    if (parent) {
+        return parent->getModelMatrix() * modelMatrix;
+    }
+    return modelMatrix;
+}
+
 MSpatialEntity::~MSpatialEntity() {
     if (parent != nullptr) {
         for (auto &child: children) {
@@ -95,13 +103,33 @@ SMatrix4 MSpatialEntity::getModelMatrix() const {
     SMatrix4 rotationMatrix = glm::mat4_cast(relativeRotation);  // Convert quaternion to rotation matrix
     SMatrix4 translationMatrix = glm::translate(SMatrix4(1.0f), relativePosition);
     SMatrix4 localModelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
-
-    // If this entity has a parent, multiply by the parent's model matrix (for hierarchical transformation)
-    if (parent) {
-        return parent->getModelMatrix() * localModelMatrix;
-    }
-
     return localModelMatrix;
+}
+
+void  MSpatialEntity::setWorldPosition(const SVector3& worldPosition) {
+    if (parent) {
+        // Get the inverse of the parent's transform to convert world position to local space
+        SMatrix4 parentTransform = parent->getTransformMatrix();
+        SMatrix4 inverseParentTransform = glm::inverse(parentTransform);
+
+        // Transform the world position to the parent's local space
+        SVector4 localPosition4 = inverseParentTransform * SVector4(worldPosition, 1.0f);
+        relativePosition = SVector3(localPosition4); // Convert back to 3D vector
+    } else {
+        // If no parent, directly set world position as relative
+        relativePosition = worldPosition;
+    }
+}
+
+void MSpatialEntity::setWorldRotation(const SQuaternion& worldRotation) {
+    if (parent) {
+        // Calculate the relative rotation using the parent's world rotation
+        SQuaternion parentWorldRotation = parent->getWorldRotation();
+        relativeRotation = glm::inverse(parentWorldRotation) * worldRotation;
+    } else {
+        // If no parent, directly set world rotation as relative
+        relativeRotation = worldRotation;
+    }
 }
 
 void MSpatialEntity::updateTransforms() {

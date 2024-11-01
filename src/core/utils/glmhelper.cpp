@@ -4,6 +4,9 @@
 
 #include "glmhelper.h"
 
+#include "glm/gtx/quaternion.hpp"
+#include "glm/gtx/rotate_vector.hpp"
+
 SVector3 quaternionToEuler(const SQuaternion& q) {
     glm::vec3 eulerAngles = glm::eulerAngles(q);
     return glm::degrees(eulerAngles);
