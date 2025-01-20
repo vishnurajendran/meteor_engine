@@ -13,7 +13,7 @@
 #include "imguiwindowconstants.h"
 #include "imguistyles.h"
 #include "imgui_internal.h"
-#include "../../../../cmake-build-debug/_deps/imguizmo-src/ImGuizmo.h"
+#include "ImGuizmo.h"
 
 MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
 

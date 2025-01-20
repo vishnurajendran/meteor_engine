@@ -4,8 +4,8 @@
 
 #ifndef EDITORCONTROLSBUTTONS_H
 #define EDITORCONTROLSBUTTONS_H
-#include "../../../core/object/object.h"
-#include "../../../../cmake-build-player_debug/_deps/sfml-src/include/SFML/Graphics.hpp"
+#include "core/object/object.h"
+#include "SFML/Graphics.hpp"
 
 class MEditorControlsButtons : MObject {
 private:

@@ -7,7 +7,7 @@
 
 #include "inspectordrawer.h"
 #include "imgui.h"
-#include "../../../../cmake-build-player_debug/_deps/sfml-src/include/SFML/Graphics/Texture.hpp"
+#include "SFML/Graphics/Texture.hpp"
 #include "core/utils/glmhelper.h"
 
 class MSpatialEntityInspectorDrawer : public MInspectorDrawer {
