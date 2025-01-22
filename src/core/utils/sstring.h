@@ -2,9 +2,9 @@
 
 #ifndef METEOR_ENGINE_SSTRING_H
 #define METEOR_ENGINE_SSTRING_H
-#include <iostream>
 #include <string>
 #include <algorithm>
+#include <vector>
 
 #define STR(...) SString(__VA_ARGS__)
 
@@ -110,6 +110,19 @@ public:
         return coreStr.find(str.coreStr);
     }
 
+    // Split method
+    std::vector<SString> split(const SString& delimiter) const {
+        std::vector<SString> result;
+        size_t start = 0;
+        size_t end = 0;
+        while ((end = coreStr.find(delimiter.coreStr, start)) != std::string::npos) {
+            result.emplace_back(coreStr.substr(start, end - start));
+            start = end + delimiter.coreStr.length();
+        }
+        result.emplace_back(coreStr.substr(start));
+        return result;
+    }
+
     // To uppercase
     void toUpperCase() {
         std::transform(coreStr.begin(), coreStr.end(), coreStr.begin(), ::toupper);
@@ -130,12 +143,21 @@ public:
         }).base(), coreStr.end());
     }
 
+    // Replace method (replaces all occurrences of a substring with another substring)
+    void replace(const SString& target, const SString& replacement) {
+        size_t pos = 0;
+        while ((pos = coreStr.find(target.coreStr, pos)) != std::string::npos) {
+            coreStr.replace(pos, target.coreStr.length(), replacement.coreStr);
+            pos += replacement.coreStr.length(); // Move past the replacement
+        }
+    }
+
     // C_str method for compatibility
     const char* c_str() const {
         return coreStr.c_str();
     }
 
-    std::string str() const{
+    std::string str() const {
         return coreStr;
     }
 
@@ -151,30 +173,9 @@ public:
         return is;
     }
 
-    // Contains method (checks if the string contains a substring)
-    bool contains(const SString& substring) const {
-        return coreStr.find(substring.coreStr) != std::string::npos;
-    }
-
-    // StartsWith method (checks if the string starts with a given prefix)
-    bool startsWith(const SString& prefix) const {
-        return coreStr.rfind(prefix.coreStr, 0) == 0;
-    }
-
-    // EndsWith method (checks if the string ends with a given suffix)
-    bool endsWith(const SString& suffix) const {
-        if (suffix.length() > coreStr.length()) return false;
-        return coreStr.compare(coreStr.length() - suffix.length(), suffix.length(), suffix.coreStr) == 0;
-    }
-
-    // Replace method (replaces all occurrences of a substring with another substring)
-    void replace(const SString& target, const SString& replacement) {
-        size_t pos = 0;
-        while ((pos = coreStr.find(target.coreStr, pos)) != std::string::npos) {
-            coreStr.replace(pos, target.coreStr.length(), replacement.coreStr);
-            pos += replacement.coreStr.length(); // Move past the replacement
-        }
+    std::size_t operator()(const SString& s) const {
+        return std::hash<std::string>()(s.str());
     }
 };
 
-#endif //METEOR_ENGINE_SSTRING_H
+#endif // METEOR_ENGINE_SSTRING_H

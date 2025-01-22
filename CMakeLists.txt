@@ -144,6 +144,7 @@ set(CORE_SOURCES
         src/core/object/gc.cpp
         src/core/object/gc.h
         src/core/utils/sstring.h
+        src/core/utils/sstring_hash.h
         src/core/utils/guid.cpp
         src/core/utils/guid.h
         src/core/object/objectpointer.h
@@ -267,6 +268,16 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/cameradrawer/cameraentityinspectordrawer.h
         src/editor/window/imgui/editorcontrolsbuttons.cpp
         src/editor/window/imgui/editorcontrolsbuttons.h
+        src/editor/window/menubar/menubaritem.h
+        src/editor/window/menubar/menubaritem.cpp
+        src/editor/window/menubar/menubartree.h
+        src/editor/window/menubar/menubartree.cpp
+        src/editor/window/menubar/default/create_empty_scene/create_empty_scene.cpp
+        src/editor/window/menubar/default/create_empty_scene/create_empty_scene.h
+        src/editor/window/menubar/default/quit_editor/quite_ditor.cpp
+        src/editor/window/menubar/default/quit_editor/quit_editor.h
+        src/editor/window/menubar/default/save_scene/save_scene.cpp
+        src/editor/window/menubar/default/save_scene/save_scene.h
 )
 
 set(PLAYER_SOURCES

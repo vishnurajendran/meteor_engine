@@ -14,6 +14,7 @@ class MEditorApplication : public MApplication {
 private:
     MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
+    static MEditorApplication *editorInst;
 public:
     static MSpatialEntity* Selected;
 public:
@@ -22,6 +23,9 @@ public:
     void run() override;
     void cleanup() override;
     bool isRunning() const override;
+
+    //statics
+    static void exit();
 };
 
 #endif //METEOR_ENGINE_EDITORAPPLICATION_H

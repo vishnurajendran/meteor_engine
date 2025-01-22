@@ -5,9 +5,13 @@
 #include "editorapplication.h"
 
 #include "core/graphics/core/meteordrawables.h"
+#include "editor/window/menubar/menubartree.h"
 #include "editor/window/imgui/imguiwindow.h"
 
+
 MSpatialEntity* MEditorApplication::Selected = nullptr;
+MEditorApplication* MEditorApplication::editorInst = nullptr;
+
 
 MEditorApplication::MEditorApplication() : MApplication(){
     name = STR("MeteoriteEditor");
@@ -28,7 +32,8 @@ void MEditorApplication::run() {
 
 void MEditorApplication::cleanup() {
     MLOG(STR("Cleanup"));
-    window->close();
+    if (window != nullptr)
+        window->close();
     window = nullptr;
 }
 
@@ -45,6 +50,7 @@ void MEditorApplication::initialise() {
         return;
     }
 
+    editorInst = this;
     // Load first, so that it can log everything from here on out.
     subWindows.push_back(new MEditorConsoleWindow());
 
@@ -55,6 +61,9 @@ void MEditorApplication::initialise() {
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
     MLOG(STR("Loaded Editor Windows"));
+
+    MMenubarTreeNode::buildTree();
+    MLOG(STR("Built Menubar Items"));
 }
 
 bool MEditorApplication::isRunning() const {
@@ -62,6 +71,12 @@ bool MEditorApplication::isRunning() const {
         return false;
 
     return window->isOpen();
+}
+
+void MEditorApplication::exit()
+{
+    if (editorInst != nullptr)
+        editorInst->window->close();
 }
 
 #if EDITOR_APPLICATION

@@ -14,6 +14,8 @@
 #include "imguistyles.h"
 #include "imgui_internal.h"
 #include "ImGuizmo.h"
+#include "editor/app/editorapplication.h"
+#include "editor/window/menubar/menubartree.h"
 
 MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
 
@@ -128,19 +130,10 @@ void MImGuiWindow::showDockSpace() {
 
 void MImGuiWindow::drawMenuBar(){
     if(ImGui::BeginMainMenuBar()){
-        //Todo: Add Menu Items here
-        if(ImGui::BeginMenu("File")){
-           ImGui::EndMenu();
-        }
-        if(ImGui::BeginMenu("Edit")){
-            ImGui::EndMenu();
-        }
-        if(ImGui::BeginMenu("Help")){
-            ImGui::EndMenu();
-        }
-
+        auto menubarRoot = MMenubarTreeNode::getRoot();
+        if (menubarRoot)
+            menubarRoot->renderMenubar();
         drawControls();
-
         ImGui::EndMainMenuBar();
     }
 }
