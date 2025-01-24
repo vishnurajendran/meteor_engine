@@ -22,7 +22,8 @@
 
     #FRAGMENT_PROGRAM
 
-    #include <meteor_fragment_utils.glsl>
+    #include </meteor_fragment_utils.glsl>
+
     uniform vec4 _color;
     uniform sampler2D _baseTex;
     void main(){
