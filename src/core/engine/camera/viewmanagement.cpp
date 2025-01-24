@@ -20,7 +20,7 @@ void MViewManagement::removeCamera(MCameraEntity *camera) {
     cameras.erase(it);
 }
 
-std::vector<MCameraEntity *> MViewManagement::getCameras() {
+std::vector<MCameraEntity *>& MViewManagement::getCameras() {
     return cameras;
 }
 

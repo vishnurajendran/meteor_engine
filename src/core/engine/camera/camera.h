@@ -17,16 +17,21 @@ private:
 public:
     MCameraEntity();
     ~MCameraEntity() override = default;
+
     void setPriority(const int& priority);
-    int getPriority() const;
+    [[nodiscard]] int getPriority() const;
+
     void setOrthographic(const bool& orthographic);
-    bool getOrthographic() const;
+    [[nodiscard]] bool getOrthographic() const;
+
     void setClipPlanes(float nearClip, float farFar);
     [[nodiscard]] std::pair<float, float> getClipPlanes() const;
-    SMatrix4 getProjectionMatrix(const SVector2& resolution) const;
-    SMatrix4 getViewMatrix() const;
+
+    [[nodiscard]] SMatrix4 getProjectionMatrix(const SVector2& resolution) const;
+    [[nodiscard]] SMatrix4 getViewMatrix() const;
+
     void setFov(const float& fov);
-    float getFov() const;
+    [[nodiscard]] float getFov() const;
 };
 
 #endif //CAMERA_H

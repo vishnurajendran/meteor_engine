@@ -12,17 +12,16 @@ auto makeRootEntity(MSpatialEntity *entity) -> void {
         entity->getParent()->removeChild(entity);
     }
 
-    MSceneManager::getActiveScene()->addToRoot(entity);
+    MSceneManager::getSceneManagerInstance()->getActiveScene()->addToRoot(entity);
 }
 
-void removeFromRoot(MSpatialEntity *entity, MScene *scene) {
-    auto rootEntities = scene->getRootEntities();
-    std::vector<MSpatialEntity *>::iterator it = std::find(rootEntities.begin(), rootEntities.end(), entity);
+void removeFromRoot(const MSpatialEntity *entity, MScene *scene) {
+    auto& rootEntities = scene->getRootEntities();
+    const auto it = std::find(rootEntities.begin(), rootEntities.end(), entity);
     if (it == rootEntities.end())
         return;
 
-    int diff = it - rootEntities.begin();
-    rootEntities.erase(rootEntities.begin() + diff);
+    rootEntities.erase(it);
 }
 
 MSpatialEntity::MSpatialEntity(MSpatialEntity *parent) {
@@ -50,7 +49,7 @@ void MSpatialEntity::addChild(MSpatialEntity *entity) {
     // this is a by-product of un-parenting an entity using removeChild.
     // since the entity becomes an independent, it will be considered as a root entity
     // and appended to the scene root list.
-    removeFromRoot(entity, MSceneManager::getActiveScene());
+    removeFromRoot(entity, MSceneManager::getSceneManagerInstance()->getActiveScene());
 }
 
 void MSpatialEntity::removeChild(MSpatialEntity *entity) {
@@ -119,6 +118,7 @@ void  MSpatialEntity::setWorldPosition(const SVector3& worldPosition) {
         // If no parent, directly set world position as relative
         relativePosition = worldPosition;
     }
+    updateTransforms();
 }
 
 void MSpatialEntity::setWorldRotation(const SQuaternion& worldRotation) {
@@ -130,6 +130,7 @@ void MSpatialEntity::setWorldRotation(const SQuaternion& worldRotation) {
         // If no parent, directly set world rotation as relative
         relativeRotation = worldRotation;
     }
+    updateTransforms();
 }
 
 void MSpatialEntity::updateTransforms() {

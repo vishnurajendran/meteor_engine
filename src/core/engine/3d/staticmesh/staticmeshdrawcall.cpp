@@ -15,24 +15,23 @@ MStaticMeshDrawCall::MStaticMeshDrawCall() {
     drawParams = SStaticMeshDrawParams();
 }
 
-void MStaticMeshDrawCall::setParams(SStaticMeshDrawParams params) {
+void MStaticMeshDrawCall::setParams(const SStaticMeshDrawParams& params) {
     drawParams = params;
 }
 
 void MStaticMeshDrawCall::draw() {
-
     if(!drawParams.materialInstance || !drawParams.meshAssetRefference) {
         MERROR("MStaticMeshDrawCall::draw: No mesh or material specified");
         return;
     }
 
-    auto cameras = MViewManagement::getCameras();
+    auto& cameras = MViewManagement::getCameras();
     if(cameras.empty()) {
         MWARN("MStaticMeshDrawCall::draw: No cameras specified");
         return;
     }
 
-    for(auto camera : cameras) {
+    for(const auto& camera : cameras) {
 
         if(!camera) {
             MERROR("MStaticMeshDrawCall::draw: Camera Reference Null");
@@ -51,7 +50,7 @@ void MStaticMeshDrawCall::draw() {
 
         drawParams.materialInstance->setProperty("view",  view);
         drawParams.materialInstance->setProperty("projection", projection);
-        for(auto mesh : drawParams.meshAssetRefference->getMeshes()) {
+        for(const auto& mesh : drawParams.meshAssetRefference->getMeshes()) {
             if(!mesh) {
                 MERROR("MStaticMeshDrawCall::Mesh reference not found");
                 continue;

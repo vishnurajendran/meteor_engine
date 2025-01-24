@@ -3,7 +3,6 @@
 //
 
 #include "editorhierarchywindow.h"
-
 #include "editor/app/editorapplication.h"
 
 MEditorHierarchyWindow::MEditorHierarchyWindow(): MEditorHierarchyWindow(700, 300) {
@@ -24,7 +23,7 @@ void MEditorHierarchyWindow::onGui() {
     // Create a child window with a specific size and enable scrolling
     auto size = ImGui::GetContentRegionAvail();
 
-    auto scene = MSceneManager::getActiveScene();
+    auto scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
 
     if(!scene)
         return;
@@ -38,8 +37,9 @@ void MEditorHierarchyWindow::onGui() {
     ImGui::Image(sceneTex, sceneTexSize);
     ImGui::SameLine();
     ImGui::Text(scene->getName().c_str());
+    const auto& rootEntities = scene->getRootEntities();
     if (open) {
-        for(auto rootObjs : scene->getRootEntities()) {
+        for(const auto& rootObjs : rootEntities) {
             drawRecursiveSceneTree(rootObjs, 1);
         }
         ImGui::TreePop();
@@ -51,6 +51,12 @@ void MEditorHierarchyWindow::onGui() {
 void MEditorHierarchyWindow::drawRecursiveSceneTree(MSpatialEntity* spatial, int depth) {
     if(!spatial)
         return;
+
+    //ignore hidden entities.
+    if ((spatial->getEntityFlags() & EEntityFlags::HideInEditor) == EEntityFlags::HideInEditor)
+    {
+        return;
+    }
 
     //draw leaf
     if(spatial->getChildren().empty()) {

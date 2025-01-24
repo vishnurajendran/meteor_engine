@@ -7,11 +7,16 @@
 #include <core/meteor_core_minimal.h>
 #include <vector>
 
+#include "entityflags.h"
+
 class MSpatialEntity : public MObject {
 public:
     MSpatialEntity() : MSpatialEntity(nullptr) {}
     explicit MSpatialEntity(MSpatialEntity *parent);
     ~MSpatialEntity() override;
+
+    [[nodiscard]] EEntityFlags getEntityFlags() const {return flags;}
+    void setEntityFlags(EEntityFlags flag) { this->flags = flag; }
 
     void setEnabled(bool enable) {this->enabled = enable;}
     [[nodiscard]] bool getEnabled() const {return this->enabled;}
@@ -89,6 +94,7 @@ protected:
     MSpatialEntity *parent = nullptr;
     std::vector<MSpatialEntity*> children;
     bool enabled = true;
+    EEntityFlags flags = EEntityFlags::Default;
 };
 
 #endif //SPATIAL_H

@@ -23,7 +23,7 @@ private:
     SStaticMeshDrawParams drawParams;
 public:
     MStaticMeshDrawCall();
-    void setParams(SStaticMeshDrawParams params);
+    void setParams(const SStaticMeshDrawParams& params);
     void draw() override;
 };
 

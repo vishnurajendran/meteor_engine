@@ -11,13 +11,18 @@ class MScene;
 */
 class MSceneManager : public MObject {
 public:
-    static bool loadEmptyScene();
-    static bool loadScene(const SString& path);
-    static bool closeActiveScene();
-    static void update(float deltaTime);
-    static MScene* getActiveScene() { return activeScene; }
+    MSceneManager() = default;
+    ~MSceneManager() override;
+    virtual bool loadEmptyScene();
+    virtual bool loadScene(const SString& path);
+    virtual bool closeActiveScene();
+    virtual void update(float deltaTime);
+    virtual MScene* getActiveScene() { return activeScene; }
+    static void registerSceneManager(MSceneManager* sceneManagerInstance);
+    static MSceneManager* getSceneManagerInstance();
 private:
     static MScene* activeScene;
+    static MSceneManager* sceneManagerInstance;
 };
 
 #endif //SCENEMANAGER_H

@@ -21,7 +21,7 @@ public:
     void onClose();
     void addToRoot(MSpatialEntity* entity);
     size_t getRootSize() { return rootEntities.size(); }
-    std::vector<MSpatialEntity*> getRootEntities() { return rootEntities; };
+    std::vector<MSpatialEntity*>& getRootEntities() { return rootEntities; };
     bool tryParse(pugi::xml_document* doc);
     bool isClosing() { return sceneClosing; }
     template<typename T>

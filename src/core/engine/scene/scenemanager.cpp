@@ -8,6 +8,7 @@
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 
 MScene* MSceneManager::activeScene = nullptr;
+MSceneManager* MSceneManager::sceneManagerInstance = nullptr;
 
 bool MSceneManager::closeActiveScene() {
     if (activeScene == nullptr)
@@ -17,6 +18,12 @@ bool MSceneManager::closeActiveScene() {
     activeScene->onClose();
     activeScene = nullptr;
     return true;
+}
+
+MSceneManager::~MSceneManager()
+{
+    //close any open scenes safely.
+    closeActiveScene();
 }
 
 bool MSceneManager::loadEmptyScene() {
@@ -59,4 +66,21 @@ void MSceneManager::update(float deltaTime) {
     if (activeScene == nullptr)
         return;
     activeScene->update(deltaTime);
+}
+
+void MSceneManager::registerSceneManager(MSceneManager* instance)
+{
+    if (instance == nullptr)
+        return;
+
+    //close previous manager
+    if (sceneManagerInstance != nullptr)
+        delete sceneManagerInstance;
+
+    sceneManagerInstance = instance;
+}
+
+MSceneManager* MSceneManager::getSceneManagerInstance()
+{
+    return sceneManagerInstance;
 }
