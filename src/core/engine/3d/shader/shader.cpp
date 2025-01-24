@@ -6,6 +6,7 @@
 #include <utility>
 #include "shader.h"
 
+#include "shadercompiler.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/texture/texture.h"
 #include "core/engine/texture/textureasset.h"
@@ -67,78 +68,12 @@ GLint MShader::getUniformLocation(const SString& name) const {
     return glGetUniformLocation(shaderProgram, nameBuff);
 }
 
-bool MShader::getShaderCompilaionStatus(const GLuint& shaderId) {
-    GLint success;
-    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
-    return success == GL_TRUE;
-}
-
-SString MShader::getShaderInfoLog(const GLuint &shaderId) {
-    GLint length = 0;
-    glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &length);
-
-    // Dynamically allocate memory for infoLog
-    std::vector<char> infoLog(length + 1);
-    glGetShaderInfoLog(shaderId, length, &length, infoLog.data());
-
-    return {infoLog.data()};
-}
-
 void MShader::compile() {
     if(valid) {
         MWARN(STR("Shader already compiled"));
         return;
     }
-
-    valid = false;
-    // Compile vertex shader
-    auto vertex = glCreateShader(GL_VERTEX_SHADER);
-    auto vertBuff = vertexShaderSource.c_str();
-    GLint vertLength = vertexShaderSource.length();
-    glShaderSource(vertex, 1, &vertBuff, &vertLength);
-    glCompileShader(vertex);
-
-    if(!getShaderCompilaionStatus(vertex)) {
-        MERROR(STR("Error compiling vertex shader: ") + getShaderInfoLog(vertex));
-        glDeleteShader(vertex);
-        return;
-    }
-
-    // Compile fragment shader
-    auto fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    auto fragBuff = fragmentShaderSource.c_str();
-    GLint fragLength = fragmentShaderSource.length();
-    glShaderSource(fragment, 1, &fragBuff, &fragLength);
-    glCompileShader(fragment);
-
-    if(!getShaderCompilaionStatus(fragment)) {
-        MERROR(STR("Error compiling fragment shader: ") + getShaderInfoLog(fragment));
-        glDeleteShader(fragment);
-        glDeleteShader(vertex);
-        return;
-    }
-
-    // Link shaders into a program
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertex);
-    glAttachShader(shaderProgram, fragment);
-    glLinkProgram(shaderProgram);
-
-    // Check if linking was successful
-    GLint programSuccess;
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &programSuccess);
-    if (!programSuccess) {
-        MERROR(STR("Error linking shader program"));
-        glDeleteProgram(shaderProgram);
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
-        return;
-    }
-
-    // Clean up shaders (they are no longer needed after linking)
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-    valid = true;
+    valid = MShaderCompiler::compileShader(this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
 }
 
 void MShader::bind() {

@@ -18,7 +18,7 @@ int main(){
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
-
+    MSceneManager::getSceneManagerInstance()->loadScene(STR("assets/scenes/test_scene.scml"));
     while(appInst->isRunning()){
         appInst->run();
     }

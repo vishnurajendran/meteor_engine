@@ -10,16 +10,20 @@
 #include "core/utils/serialisation_utils.h"
 
 const SString MShaderAsset::SHDR_ROOTNODE = "shader";
-const SString MShaderAsset::SHDR_VERTNODE = "vert";
-const SString MShaderAsset::SHDR_FRAGNODE = "frag";
-const SString MShaderAsset::SHDR_INCLNODE = "include";
-const SString MShaderAsset::SHDR_INCL_ATTRIB_PATH="header";
-const SString MShaderAsset::SHDR_INCL_ATTRIB_INTERNAL="internal";
 const SString MShaderAsset::SHDR_PROPERTY_PARENT_NODE = "properties";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_NODE = "property";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_ATTRIB_KEY = "key";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_ATTRIB_TYPE = "type";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_ATTRIB_VALUE = "default";
+const SString MShaderAsset::SHDR_VERT_PROGRAM_BEGIN = "#VERTEX_PROGRAM";
+const SString MShaderAsset::SHDR_VERT_PROGRAM_END = "#END_VERTEX_PROGRAM";
+const SString MShaderAsset::SHDR_FRAG_PROGRAM_BEGIN = "#FRAGMENT_PROGRAM";
+const SString MShaderAsset::SHDR_FRAG_PROGRAM_END = "#END_FRAGMENT_PROGRAM";
+const SString MShaderAsset::SHDR_CDATA_BEGIN = "<![CDATA[";
+const SString MShaderAsset::SHDR_CDATA_END = "]]>";
+
+const SString MShaderAsset::SHDR_VERTNODE = "vert";
+const SString MShaderAsset::SHDR_FRAGNODE= "frag";
 
 void MShaderAsset::loadShader(const SString &path) {
     valid = false;
@@ -29,6 +33,12 @@ void MShaderAsset::loadShader(const SString &path) {
         MERROR("MShaderAsset::loadShader(): Failed to read file");
         return;
     };
+
+    // replace files correctly
+    data.replace(SHDR_VERT_PROGRAM_BEGIN, STR("<"+SHDR_VERTNODE.str()+">")+SHDR_CDATA_BEGIN);
+    data.replace(SHDR_FRAG_PROGRAM_BEGIN, STR("<"+SHDR_FRAGNODE.str()+">")+SHDR_CDATA_BEGIN);
+    data.replace(SHDR_VERT_PROGRAM_END, SHDR_CDATA_END + STR("</"+SHDR_VERTNODE.str()+">"));
+    data.replace(SHDR_FRAG_PROGRAM_END, SHDR_CDATA_END + STR("</"+SHDR_FRAGNODE.str()+">"));
     pugi::xml_document document;
     auto parseRes = document.load_string(data.c_str(), pugi::parse_default);
     if (parseRes.status != pugi::status_ok) {
@@ -44,59 +54,27 @@ void MShaderAsset::loadShader(const SString &path) {
 
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
     name = nameAndVersiontring.first;
-    auto versionStr = nameAndVersiontring.second;
+    auto versionStr = nameAndVersiontring.second + "\n";
+    auto extension = "#extension GL_ARB_shading_language_include : require\n";
 
     if (!rootNode.child(SHDR_VERTNODE.c_str())) {
         MERROR("MShaderAsset::loadShader(): shader file structure incorrect - missing vertex program tree");
         return;
     }
-    SString vertPreReq = getPrequisiteCode(rootNode.child(SHDR_VERTNODE.c_str()));
-    SString vertexSource = versionStr + vertPreReq+ rootNode.child(SHDR_VERTNODE.c_str()).text().get();
+
+    SString vertexSource = versionStr + extension + rootNode.child(SHDR_VERTNODE.c_str()).text().get();
     if (!rootNode.child(SHDR_FRAGNODE.c_str())) {
         MERROR("MShaderAsset::loadShader(): shader file structure incorrect - missing fragment program tree");
         return;
     }
 
-    const SString fragPreReq = getPrequisiteCode(rootNode.child(SHDR_FRAGNODE.c_str()));
-    const SString fragmentSource = versionStr + fragPreReq + rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
+    const SString fragmentSource = versionStr + extension + rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
 
     const auto properties = getShaderProperties(rootNode);
     shader = new MShader(vertexSource, fragmentSource, properties);
     valid = true;
 }
 
-SString MShaderAsset::getPrequisiteCode(pugi::xml_node node) {
-    SString prequisiteCode="";
-    for(auto child : node.children()) {
-        if(child.name() != SHDR_INCLNODE.str()) {
-            continue;
-        }
-
-        if(!child.attribute(SHDR_INCL_ATTRIB_PATH.c_str()))
-            continue;
-
-        auto fileName = STR(child.attribute(SHDR_INCL_ATTRIB_PATH.c_str()).value());
-
-        if(child.attribute(SHDR_INCL_ATTRIB_INTERNAL.c_str())) {
-            auto internalSrc = STR(child.attribute(SHDR_INCL_ATTRIB_INTERNAL.c_str()).value()) == "1";
-            fileName = internalSrc ? STR("meteor_assets/shader_utils/")+fileName : fileName;
-        }
-
-        if (fileName.empty()) {
-            MERROR("MShaderAsset:loadShader(): shader file structure incorrect - missing include name");
-            return "";
-        }
-        SString fileContents="";
-        if(FileIO::readFile(fileName, fileContents)) {
-            prequisiteCode += fileContents + STR("\n");
-        }
-        else {
-            MERROR(STR("MShaderAsset:loadShader(): Failed to read file ") + fileName + "\n");
-            return "";
-        }
-    }
-    return prequisiteCode;
-}
 
 std::map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(pugi::xml_node node) {
     std::map<SString, SShaderPropertyValue> properties;

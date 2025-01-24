@@ -48,7 +48,7 @@ void MGraphicsRenderer::draw() {
     glEnable(GL_CULL_FACE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for(auto drawCall : openGlDrawCalls){
+    for(const auto& drawCall : openGlDrawCalls){
         if(drawCall){
             drawCall->draw();
         }

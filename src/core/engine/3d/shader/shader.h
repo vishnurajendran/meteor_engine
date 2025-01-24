@@ -65,8 +65,6 @@ private:
     std::map<SString, SShaderPropertyValue> properties;
 private:
     void compile();
-    static bool getShaderCompilaionStatus(const GLuint& shaderId);
-    SString getShaderInfoLog(const GLuint& shaderId);
 public:
     MShader(const SString& vertProg, const SString& fragProg, const std::map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse=true);
     ~MShader() override;
