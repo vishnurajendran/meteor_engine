@@ -7,11 +7,14 @@
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
 
+class MCameraEntity;
+class MEditorSceneManager;
 class MImGuiSubWindow;
 class MImGuiWindow;
 
 class MEditorApplication : public MApplication {
 private:
+    MEditorSceneManager* sceneManagerRef;
     MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
     static MEditorApplication *editorInst;
@@ -26,6 +29,7 @@ public:
 
     //statics
     static void exit();
+    static MCameraEntity* getSceneCamera();
 };
 
 #endif //METEOR_ENGINE_EDITORAPPLICATION_H

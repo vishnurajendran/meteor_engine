@@ -5,6 +5,7 @@
 #include "editorapplication.h"
 
 #include "core/graphics/core/meteordrawables.h"
+#include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/window/menubar/menubartree.h"
 #include "editor/window/imgui/imguiwindow.h"
 
@@ -24,17 +25,23 @@ void MEditorApplication::run() {
     window->clear();
 
     //Todo: set real delta time here
-    MSceneManager::update(0.0);
+    MSceneManager::getSceneManagerInstance()->update(0.0);
 
     MMeteorDrawables::requestDrawCalls();
     window->update();
 }
 
 void MEditorApplication::cleanup() {
-    MLOG(STR("Cleanup"));
+    MLOG(STR("Cleanup..."));
+
+    MLOG(STR("Deleting SceneManager"));
+    delete sceneManagerRef;
+
+    MLOG(STR("Closing Window"));
     if (window != nullptr)
         window->close();
     window = nullptr;
+    MLOG(STR("Editor Application Cleanup Complete"));
 }
 
 void MEditorApplication::initialise() {
@@ -57,6 +64,11 @@ void MEditorApplication::initialise() {
     //Refresh Asset Manager
     MAssetManager::getInstance()->refresh();
 
+    //setup scene manager
+    sceneManagerRef = new MEditorSceneManager();
+    MSceneManager::registerSceneManager(sceneManagerRef);
+
+    //add remaining windows
     subWindows.push_back(new MEditorHierarchyWindow());
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
@@ -77,6 +89,14 @@ void MEditorApplication::exit()
 {
     if (editorInst != nullptr)
         editorInst->window->close();
+}
+
+MCameraEntity* MEditorApplication::getSceneCamera()
+{
+    if (editorInst == nullptr)
+        return nullptr;
+
+    return editorInst->sceneManagerRef->getEditorSceneCamera();
 }
 
 #if EDITOR_APPLICATION

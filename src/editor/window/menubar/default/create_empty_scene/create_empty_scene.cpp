@@ -20,10 +20,10 @@ int MCreateEmptySceneMenubarItem::getPriority() const
 
 SString MCreateEmptySceneMenubarItem::getPath() const
 {
-    return "File/New Empty Scene";
+    return "File/New Scene";
 }
 
 void MCreateEmptySceneMenubarItem::onSelect()
 {
-    MSceneManager::loadEmptyScene();
+    MSceneManager::getSceneManagerInstance()->loadEmptyScene();
 }

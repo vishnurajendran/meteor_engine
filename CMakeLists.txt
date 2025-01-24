@@ -167,6 +167,7 @@ set(CORE_SOURCES
         src/core/utils/glmhelper.cpp
         src/core/engine/entities/spatial/spatial.cpp
         src/core/engine/entities/spatial/spatial.h
+        src/core/engine/entities/spatial/entityflags.h
         src/core/engine/scene/scene.cpp
         src/core/engine/scene/scene.h
         src/core/engine/scene/serialisation/xmlserialisable.h
@@ -211,6 +212,8 @@ set(CORE_SOURCES
         src/core/engine/3d/staticmesh/staticmeshdrawcall.h
         src/core/engine/3d/shader/shader.cpp
         src/core/engine/3d/shader/shader.h
+        src/core/engine/3d/shader/shadercompiler.cpp
+        src/core/engine/3d/shader/shadercompiler.h
         src/core/engine/3d/shader/shaderasset.cpp
         src/core/engine/3d/shader/shaderasset.h
         src/core/engine/3d/shader/shaderassetimporter.cpp
@@ -242,6 +245,8 @@ set(CORE_SOURCES
 )
 
 set(EDITOR_SOURCES
+        src/editor/editorscenemanager/editorscenemanager.cpp
+        src/editor/editorscenemanager/editorscenemanager.h
         src/editor/app/editorapplication.cpp
         src/editor/app/editorapplication.h
         src/editor/window/imgui/imguiwindow.cpp
@@ -278,6 +283,14 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/quit_editor/quit_editor.h
         src/editor/window/menubar/default/save_scene/save_scene.cpp
         src/editor/window/menubar/default/save_scene/save_scene.h
+        src/editor/window/menubar/default/open_scene/open_scene.cpp
+        src/editor/window/menubar/default/open_scene/open_scene.h
+        src/editor/window/menubar/default/align_selected_to_view/align_selected_to_view.cpp
+        src/editor/window/menubar/default/align_selected_to_view/align_selected_to_view.h
+        src/editor/window/menubar/default/align_view_to_selected/align_view_to_selected.cpp
+        src/editor/window/menubar/default/align_view_to_selected/align_view_to_selected.h
+        src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.cpp
+        src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.h
 )
 
 set(PLAYER_SOURCES

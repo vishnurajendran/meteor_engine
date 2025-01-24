@@ -30,9 +30,9 @@ void MMenubarTreeNode::renderMenubar() const
 {
     if (nodeType == EMenubarTreeNodeType::Root)
     {
-        for (const auto child : children)
+        for (const auto& childKey : orderedChildrenKeys)
         {
-            child.second->renderMenubar();
+            children.at(childKey)->renderMenubar();
         }
         return;
     }
@@ -51,9 +51,9 @@ void MMenubarTreeNode::renderMenubar() const
         //recursively render the sub-menus
         if (ImGui::BeginMenu(menuTreeNodeTitle.c_str()))
         {
-            for (const auto& child : orderedChildrenKeys)
+            for (const auto& childKey : orderedChildrenKeys)
             {
-                children.at(child)->renderMenubar();
+                children.at(childKey)->renderMenubar();
             }
             ImGui::EndMenu();
         }
