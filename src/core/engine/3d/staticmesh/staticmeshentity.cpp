@@ -6,9 +6,10 @@
 #include "staticmeshdrawcall.h"
 #include "core/engine/3d/material/material.h"
 #include "core/graphics/core/graphicsrenderer.h"
-#include "core/graphics/core/meteordrawables.h"
+#include "core/graphics/core/render_queue.h"
 
-void MStaticMeshEntity::raiseDrawCall() {
+void MStaticMeshEntity::prepareForDraw()
+{
     if(staticMeshAsset == nullptr) {
         MERROR("MStaticMeshEntity::raiseDrawCall(): No mesh asset");
         return;
@@ -28,12 +29,19 @@ void MStaticMeshEntity::raiseDrawCall() {
     drawParams.meshAssetRefference = staticMeshAsset;
     drawParams.modelMatrix = getTransformMatrix();
     drawCall->setParams(drawParams);
+}
+
+void MStaticMeshEntity::raiseDrawCall() {
+    if (drawCall == nullptr){
+        MWARN("MStaticMeshEntity::raiseDrawCall(): No draw call");
+        return;
+    }
     MGraphicsRenderer::submit(drawCall);
 }
 
 MStaticMeshEntity::MStaticMeshEntity() : MSpatialEntity(){
     name = "StaticMeshEntity";
-    MMeteorDrawables::addToSubmitables(this);
+    MRenderQueue::addToSubmitables(this);
 }
 
 MStaticMeshEntity::~MStaticMeshEntity() {

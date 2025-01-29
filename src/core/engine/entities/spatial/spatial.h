@@ -11,7 +11,7 @@
 
 class MSpatialEntity : public MObject {
 public:
-    MSpatialEntity() : MSpatialEntity(nullptr) {}
+    MSpatialEntity();
     explicit MSpatialEntity(MSpatialEntity *parent);
     ~MSpatialEntity() override;
 
@@ -33,6 +33,7 @@ public:
 
     void setRelativePosition(const SVector3& position) { relativePosition = position; updateTransforms();}
     void setWorldPosition(const SVector3& worldPosition);
+
     void setRelativeRotation(const SQuaternion& localRotation) { this->relativeRotation = localRotation; updateTransforms();}
     void setWorldRotation(const SQuaternion& worldRotation);
 
@@ -45,6 +46,9 @@ public:
     void removeChild(MSpatialEntity *entity);
 
     SMatrix4 getTransformMatrix() const;
+    SVector3 getForwardVector() const;
+    SVector3 getRightVector() const;
+    SVector3 getUpVector() const;
 
     template<typename T>
     T *find(SString name) {
@@ -95,6 +99,15 @@ protected:
     std::vector<MSpatialEntity*> children;
     bool enabled = true;
     EEntityFlags flags = EEntityFlags::Default;
+
+public:
+    static void updateAllSceneEntities(float deltaTime);
+
+private:
+    static std::map<SString,MSpatialEntity*> allAliveEntities;
+
+    static void addAliveEntity(MSpatialEntity *entity);
+    static void removeAliveEntity(MSpatialEntity *entity);
 };
 
 #endif //SPATIAL_H

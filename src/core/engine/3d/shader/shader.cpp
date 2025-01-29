@@ -122,54 +122,42 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
 
 void MShader::setUniform1i(const SString &name, int value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1)  {
         glUniform1i(location, value);
     }
 }
 
 void MShader::setUniform1f(const SString &name, float value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform1f(location, value);
     }
 }
 
 void MShader::setUniform2f(const SString &name, const SVector2 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform2f(location, value.x, value.y);
     }
 }
 
 void MShader::setUniform3f(const SString &name, const SVector3 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform3f(location, value.x, value.y, value.z);
     }
 }
 
 void MShader::setUniform4f(const SString &name, const SVector4 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 }
 
 void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(value));
     }
 }
@@ -186,9 +174,7 @@ void MShader::setTexture(const SString &name, const SString& textureAssetPath, c
         return;
     }
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         auto textureId = texture->getTextureID();
         glActiveTexture(GL_TEXTURE0+index);
         glBindTexture(GL_TEXTURE_2D, textureId);

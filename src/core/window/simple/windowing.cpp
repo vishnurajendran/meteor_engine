@@ -57,6 +57,7 @@ void MWindow::update() {
     }
 
     coreWindow.clear();
+    MGraphicsRenderer::prepare();
     MGraphicsRenderer::draw();
     coreWindow.display();
 

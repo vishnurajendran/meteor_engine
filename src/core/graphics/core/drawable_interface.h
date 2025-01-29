@@ -5,8 +5,9 @@
 #ifndef IDRAWCALLSUBMITABLE_H
 #define IDRAWCALLSUBMITABLE_H
 
-class IDrawCallSubmitable {
+class IMeteorDrawable {
     public:
+    virtual void prepareForDraw()=0;
     virtual void raiseDrawCall()=0;
 };
 

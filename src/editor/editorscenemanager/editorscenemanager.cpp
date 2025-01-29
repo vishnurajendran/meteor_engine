@@ -40,6 +40,7 @@ void MEditorSceneManager::createEditorSceneCamera()
 {
     delete editorSceneCamera;
     editorSceneCamera = new MCameraEntity();
+    editorSceneCamera->setPriority(-999);
     editorSceneCamera->setEntityFlags(EEntityFlags::HideInEditor);
     editorSceneCamera->setWorldPosition(SVector3(0, 0, 10));
     editorSceneCamera->setName("_EditorSceneCamera");

@@ -19,6 +19,7 @@ private:
 public:
     static void initialise(sf::RenderTarget* target);
     static void submit(MDrawCall* drawCall);
+    static void prepare();
     static void draw();
 };
 

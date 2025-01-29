@@ -28,7 +28,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     glCompileShader(vertex);
 
     if(!getShaderCompilaionStatus(vertex)) {
-        MERROR(STR("Error compiling vertex shader: ") + getShaderInfoLog(vertex));
+        MERROR(STR("ShadeCompiler:: Error compiling vertex shader: ") + getShaderInfoLog(vertex));
         glDeleteShader(vertex);
         return false;
     }
@@ -44,7 +44,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     glCompileShader(fragment);
 
     if(!getShaderCompilaionStatus(fragment)) {
-        MERROR(STR("Error compiling fragment shader: ") + getShaderInfoLog(fragment));
+        MERROR(STR("ShadeCompiler:: Error compiling fragment shader: ") + getShaderInfoLog(fragment));
         glDeleteShader(fragment);
         glDeleteShader(vertex);
         return false;
@@ -60,7 +60,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     GLint programSuccess;
     glGetProgramiv(shaderProgramHandle, GL_LINK_STATUS, &programSuccess);
     if (!programSuccess) {
-        MERROR(STR("Error linking shader program"));
+        MERROR(STR("ShadeCompiler:: Error linking shader program: ") + getShaderInfoLog(shaderProgramHandle));
         glDeleteProgram(shaderProgramHandle);
         glDeleteShader(vertex);
         glDeleteShader(fragment);
@@ -106,9 +106,9 @@ bool MShaderCompiler::initialiseEngine()
             }
         }
     } catch (const std::filesystem::filesystem_error& e) {
-        MERROR(STR("Filesystem error: ") + e.what());;
+        MERROR(STR("ShadeCompiler:: Filesystem error: ") + e.what());;
     } catch (const std::exception& e) {
-        MERROR(STR("General error: ") + e.what());
+        MERROR(STR("ShadeCompiler:: General error: ") + e.what());
     }
 
     return true;
@@ -123,9 +123,7 @@ void MShaderCompiler::registerGLNamedString(const SString& filePath, const SStri
         glNamedStringARB(GL_SHADER_INCLUDE_ARB, -1, fileNamePath.c_str(),-1, fileData.c_str());
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
-            MERROR(STR("Error registering named string: ") + std::to_string(err));
+            MERROR(STR("ShadeCompiler:: Error registering named string: ") + std::to_string(err));
         }
-        else
-            MLOG(STR("Successfully registered named string: ") + fileNamePath);
     }
 }

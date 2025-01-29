@@ -5,15 +5,16 @@
 #ifndef STATICMESHENTITY_H
 #define STATICMESHENTITY_H
 #include "core/engine/entities/spatial/spatial.h"
-#include "core/graphics/core/drawcallsubmitable.h"
+#include "core/graphics/core/drawable_interface.h"
 
 
 class MStaticMeshDrawCall;
 class MMaterial;
 class MStaticMeshAsset;
 
-class MStaticMeshEntity : public MSpatialEntity, public IDrawCallSubmitable {
+class MStaticMeshEntity : public MSpatialEntity, public IMeteorDrawable {
 public:
+    void prepareForDraw() override;
     void raiseDrawCall() override;
 
 private:

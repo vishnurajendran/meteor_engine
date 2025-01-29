@@ -66,7 +66,8 @@ void MImGuiWindow::update() {
         }
     }
 
-    // draw openGL
+    //prepare all draw-calls, and setups and draw content.
+    MGraphicsRenderer::prepare();
     MGraphicsRenderer::draw();
 
     //ImGui::SFML::Update(coreWindow, deltaClock.restart());

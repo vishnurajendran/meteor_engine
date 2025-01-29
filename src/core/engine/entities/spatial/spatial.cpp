@@ -7,6 +7,8 @@
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 
+std::map<SString, MSpatialEntity*> MSpatialEntity::allAliveEntities;
+
 auto makeRootEntity(MSpatialEntity *entity) -> void {
     if (entity->getParent() != nullptr) {
         entity->getParent()->removeChild(entity);
@@ -24,6 +26,11 @@ void removeFromRoot(const MSpatialEntity *entity, MScene *scene) {
     rootEntities.erase(it);
 }
 
+MSpatialEntity::MSpatialEntity() : MSpatialEntity(nullptr)
+{
+    // defaults to an empty root level entity.
+}
+
 MSpatialEntity::MSpatialEntity(MSpatialEntity *parent) {
     name = "Spatial";
     relativeScale.x = relativeScale.y = 1;
@@ -31,6 +38,10 @@ MSpatialEntity::MSpatialEntity(MSpatialEntity *parent) {
         makeRootEntity(this);
     else
         parent->addChild(this);
+
+    addAliveEntity(this);
+
+    //call on start initialise any custom logic.
     onStart();
 }
 
@@ -71,7 +82,27 @@ SMatrix4 MSpatialEntity::getTransformMatrix() const {
     return modelMatrix;
 }
 
+SVector3 MSpatialEntity::getForwardVector() const
+{
+    return glm::normalize(getRelativeRotation() * SVector3(0.0f, 0.0f, -1.0f));
+}
+
+SVector3 MSpatialEntity::getRightVector() const
+{
+    return getRelativeRotation() * SVector3(1.0f, 0.0f, 0.0f);
+}
+
+SVector3 MSpatialEntity::getUpVector() const
+{
+    return getRelativeRotation() * SVector3(0.0f, 1.0f, 0.0f);
+}
+
 MSpatialEntity::~MSpatialEntity() {
+
+    //call onExit to allow game-code to clean up.
+    onExit();
+    removeAliveEntity(this);
+
     if (parent != nullptr) {
         for (auto &child: children) {
             parent->addChild(child);
@@ -146,10 +177,34 @@ void MSpatialEntity::updateTransforms() {
 }
 
 void MSpatialEntity::onStart() {
+    //will be overriden for code
 }
 
 void MSpatialEntity::onUpdate(float deltaTime) {
+    //will be overriden for code
 }
 
 void MSpatialEntity::onExit() {
+    //will be overriden for code
+}
+
+void MSpatialEntity::updateAllSceneEntities(float deltaTime)
+{
+    for (const auto& pair : allAliveEntities)
+    {
+        pair.second->onUpdate(deltaTime);
+    }
+}
+
+void MSpatialEntity::addAliveEntity(MSpatialEntity* entity)
+{
+    allAliveEntities[entity->getGUID()] = entity;
+}
+
+void MSpatialEntity::removeAliveEntity(MSpatialEntity* entity)
+{
+    if (allAliveEntities.contains(entity->getGUID()))
+    {
+        allAliveEntities.erase(entity->getGUID());
+    }
 }

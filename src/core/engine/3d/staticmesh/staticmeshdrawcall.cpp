@@ -31,36 +31,39 @@ void MStaticMeshDrawCall::draw() {
         return;
     }
 
-    for(const auto& camera : cameras) {
+    MCameraEntity* renderCamera = nullptr;
+    for (const auto& c : cameras)
+    {
+        if (c != nullptr && c->getEnabled())
+            renderCamera = c;
+    }
+    if(!renderCamera) {
+        MERROR("MStaticMeshDrawCall::draw: Camera Reference Null");
+        return;
+    }
 
-        if(!camera) {
-            MERROR("MStaticMeshDrawCall::draw: Camera Reference Null");
+    if(!renderCamera->getEnabled()) {
+        MLOG("MStaticMeshDrawCall::draw: Camera is not enabled");
+        return;
+    }
+
+    SShaderPropertyValue view;
+    view.setMat4Val(renderCamera->getViewMatrix());
+    SShaderPropertyValue projection;
+    projection.setMat4Val(renderCamera->getProjectionMatrix(resolution));
+
+    drawParams.materialInstance->setProperty("view",  view);
+    drawParams.materialInstance->setProperty("projection", projection);
+    for(const auto& mesh : drawParams.meshAssetRefference->getMeshes()) {
+        if(!mesh) {
+            MERROR("MStaticMeshDrawCall::Mesh reference not found");
             continue;
         }
-
-        if(!camera->getEnabled()) {
-            MLOG("MStaticMeshDrawCall::draw: Camera is not enabled");
-            continue;
-        }
-
-        SShaderPropertyValue view;
-        view.setMat4Val(camera->getViewMatrix());
-        SShaderPropertyValue projection;
-        projection.setMat4Val(camera->getProjectionMatrix(resolution));
-
-        drawParams.materialInstance->setProperty("view",  view);
-        drawParams.materialInstance->setProperty("projection", projection);
-        for(const auto& mesh : drawParams.meshAssetRefference->getMeshes()) {
-            if(!mesh) {
-                MERROR("MStaticMeshDrawCall::Mesh reference not found");
-                continue;
-            }
-            SShaderPropertyValue model;
-            model.setMat4Val(drawParams.modelMatrix);
-            drawParams.materialInstance->setProperty("model", model);
-            drawParams.materialInstance->bindMaterial();
-            mesh->draw();
-            printOpenGLDrawErrors();
-        }
+        SShaderPropertyValue model;
+        model.setMat4Val(drawParams.modelMatrix);
+        drawParams.materialInstance->setProperty("model", model);
+        drawParams.materialInstance->bindMaterial();
+        mesh->draw();
+        printOpenGLDrawErrors();
     }
 }

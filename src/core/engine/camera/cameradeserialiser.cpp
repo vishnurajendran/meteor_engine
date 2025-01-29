@@ -7,7 +7,7 @@
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 
 bool MCameraEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("mcamera", new MCameraEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("camera", new MCameraEntityDeserialiser());
     return true;
 }();
 

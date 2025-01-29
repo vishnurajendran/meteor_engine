@@ -16,8 +16,8 @@ public:
 
     MScene();
     ~MScene();
-    void startScene();
-    void update(float deltaTime);
+    void startScene() const;
+    void update(float deltaTime) const;
     void onClose();
     void addToRoot(MSpatialEntity* entity);
     size_t getRootSize() { return rootEntities.size(); }

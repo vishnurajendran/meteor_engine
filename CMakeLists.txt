@@ -228,9 +228,9 @@ set(CORE_SOURCES
         src/core/engine/camera/cameradeserialiser.h
         src/core/engine/3d/staticmesh/staticmeshentity.cpp
         src/core/engine/3d/staticmesh/staticmeshentity.h
-        src/core/graphics/core/drawcallsubmitable.h
-        src/core/graphics/core/meteordrawables.h
-        src/core/graphics/core/meteordrawables.cpp
+        src/core/graphics/core/drawable_interface.h
+        src/core/graphics/core/render_queue.h
+        src/core/graphics/core/render_queue.cpp
         src/core/engine/3d/material/MMaterialAsset.cpp
         src/core/engine/3d/material/MMaterialAsset.h
         src/core/engine/assetmanagement/asset/defferedloadableasset.h
@@ -242,6 +242,21 @@ set(CORE_SOURCES
         src/core/engine/texture/textureasset.h
         src/core/engine/texture/textureassetimporter.cpp
         src/core/engine/texture/textureassetimporter.h
+        src/core/engine/lighting/light_entity.cpp
+        src/core/engine/lighting/light_entity.h
+        src/core/engine/lighting/light_type.h
+        src/core/engine/lighting/lighting_system_manager.cpp
+        src/core/engine/lighting/lighting_system_manager.h
+        src/core/engine/lighting/ambient/ambient_light.cpp
+        src/core/engine/lighting/ambient/ambient_light.h
+        src/core/engine/lighting/ambient/ambient_light_gpu_struct.h
+        src/core/engine/lighting/ambient/ambient_light_entity_deserialiser.cpp
+        src/core/engine/lighting/ambient/ambient_light_entity_deserialiser.h
+        src/core/engine/lighting/directional/directional_light.cpp
+        src/core/engine/lighting/directional/directional_light.h
+        src/core/engine/lighting/directional/directional_light_gpu_struct.h
+        src/core/engine/lighting/directional/directional_light_entity_deserialiser.cpp
+        src/core/engine/lighting/directional/directional_light_entity_deserialiser.h
 )
 
 set(EDITOR_SOURCES

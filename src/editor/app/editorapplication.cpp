@@ -4,7 +4,7 @@
 
 #include "editorapplication.h"
 
-#include "core/graphics/core/meteordrawables.h"
+#include "core/graphics/core/render_queue.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/window/menubar/menubartree.h"
 #include "editor/window/imgui/imguiwindow.h"
@@ -26,8 +26,6 @@ void MEditorApplication::run() {
 
     //Todo: set real delta time here
     MSceneManager::getSceneManagerInstance()->update(0.0);
-
-    MMeteorDrawables::requestDrawCalls();
     window->update();
 }
 

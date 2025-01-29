@@ -11,7 +11,7 @@
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 
 bool MStaticMeshEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("mstaticmesh", new MStaticMeshEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("static_mesh", new MStaticMeshEntityDeserialiser());
     return true;
 }();
 
@@ -19,7 +19,7 @@ MSpatialEntity * MStaticMeshEntityDeserialiser::deserialize(pugi::xml_node node)
     const auto entity = new MStaticMeshEntity();
     parseSpatialData(node, entity);
 
-    const SString ATTRIB_MESH_ATTRIB_PATH = "staticmesh";
+    const SString ATTRIB_MESH_ATTRIB_PATH = "static_mesh";
     const SString MESH_ATTRIB_SRC = "src";
     const SString MESH_ATTRIB_MATERIAL = "material";
     const auto attribNode = node.child(ATTRIB_NODE.c_str());
