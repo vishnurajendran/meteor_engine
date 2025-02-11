@@ -33,50 +33,18 @@ Meteor is a custom game engine built in C++20, featuring a player and an editor.
 - [**SFML**](https://www.sfml-dev.org/)
 - [**imgui-sfml**](https://github.com/SFML/imgui-sfml)
 
-### Installation
+### Installation (Windows)
 
-#### 1. Installing Assimp
+#### 1. Installing Assimp (MSYS2)
 
-To install Assimp on your system, follow these steps:
+run this command in the MSYS2 console window: ```bash pacman -S mingw-w64-x86_64-assimp```
 
-- **Linux (Ubuntu/Debian):**
-  ```bash
-  sudo apt-get update
-  sudo apt-get install libassimp-dev
-  ```
+#### 2. Installing GLEW (MSYS2)
 
-- **macOS:**
-  ```bash
-  brew install assimp
-  ```
+run this command in the MSYS2 console window: ```bash pacman -S mingw-w64-x86_64-glew```
 
-- **Windows:**
-  1. Download the Assimp binaries from the [Assimp GitHub Releases](https://github.com/assimp/assimp/releases).
-  2. Extract the contents and add the \`include\` and \`lib\` directories to your CMake configuration:
-     - Add the path to the \`include\` directory using \`include_directories\`.
-     - Ensure the \`lib\` path is available in the \`CMakeLists.txt\` or your compiler’s library path.
+### 3. Change the lines 105 and 88 in CMakeLists.txt to point the include directory within the MSYS2 installation.
 
-#### 2. Installing GLEW
-
-To install GLEW, follow these steps:
-
-- **Linux (Ubuntu/Debian):**
-  ```bash
-  sudo apt-get update
-  sudo apt-get install libglew-dev
-  ```
-
-- **macOS:**
-  ```bash
-  brew install glew
-  ```
-
-- **Windows:**
-  1. Download the GLEW binary package from the [GLEW website](http://glew.sourceforge.net/).
-  2. Extract the downloaded ZIP file to a directory (e.g., `C:\glew`).
-  3. Add the `include` path (`C:\glew\include`) and the library path (`C:\glew\lib\Release\x64`) in CMake:
-     - Add the path to the `include` directory using `include_directories`.
-     - Add the path to the `lib` directory using `link_directories`.
 
 ### License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
