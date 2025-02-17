@@ -8,8 +8,9 @@
 #include "core/utils/glmhelper.h"
 
 struct SAmbientLightData {
-    SVector3 color = {0,0,0};
+    SVector3 color = {0.0f,0.0f,0.0f};
     float intensity = 0.1f;
+    float padding[3];
 };
 
 #endif //AMBIENT_LIGHT_GPU_STRUCT_H

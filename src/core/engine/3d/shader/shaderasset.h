@@ -16,6 +16,7 @@ class MShader;
 class MShaderAsset : public MAsset {
 private:
     static const SString SHDR_ROOTNODE;
+    static const SString SHDR_ATTRIB_BASE_SOURCE;
     static const SString SHDR_PROPERTY_PARENT_NODE;
     static const SString SHDR_PROPERTY_CHILD_NODE;
     static const SString SHDR_PROPERTY_CHILD_ATTRIB_KEY;
@@ -29,6 +30,13 @@ private:
     static const SString SHDR_CDATA_END;
     static const SString SHDR_VERTNODE;
     static const SString SHDR_FRAGNODE;
+
+    static const SString SHDR_EXTENSIONS;
+    static const SString SHDR_DEFINE_COMPILE_VERT;
+    static const SString SHDR_DEFINE_COMPILE_FRAG;
+
+    static const SString SHDR_FALLBACK_MISSING_VERT_PASS;
+    static const SString SHDR_FALLBACK_MISSING_FRAG_PASS;
 
     MShader* shader{};
 private:

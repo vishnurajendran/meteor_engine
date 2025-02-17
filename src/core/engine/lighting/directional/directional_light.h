@@ -22,7 +22,7 @@ public:
     void onExit() override;
 private:
     SDirectionalLightData lightData;
-    GLuint bufferId;
+    GLuint bufferId=0;
     static MDirectionalLight* lightInstance;
 };
 

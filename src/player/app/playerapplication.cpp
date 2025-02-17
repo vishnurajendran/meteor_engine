@@ -14,7 +14,7 @@ void MPlayerApplication::run() {
     if(window == nullptr)
         return;
     window->clear();
-    MSceneManager::update(0.0f);
+    MSceneManager::getSceneManagerInstance()->update(0.0f);
     MRenderQueue::requestDrawCalls();
     window->update();
 }

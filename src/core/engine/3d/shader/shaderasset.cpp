@@ -10,20 +10,28 @@
 #include "core/utils/serialisation_utils.h"
 
 const SString MShaderAsset::SHDR_ROOTNODE = "shader";
+const SString MShaderAsset::SHDR_ATTRIB_BASE_SOURCE = "base";
 const SString MShaderAsset::SHDR_PROPERTY_PARENT_NODE = "properties";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_NODE = "property";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_ATTRIB_KEY = "key";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_ATTRIB_TYPE = "type";
 const SString MShaderAsset::SHDR_PROPERTY_CHILD_ATTRIB_VALUE = "default";
-const SString MShaderAsset::SHDR_VERT_PROGRAM_BEGIN = "#VERTEX_PROGRAM";
-const SString MShaderAsset::SHDR_VERT_PROGRAM_END = "#END_VERTEX_PROGRAM";
-const SString MShaderAsset::SHDR_FRAG_PROGRAM_BEGIN = "#FRAGMENT_PROGRAM";
-const SString MShaderAsset::SHDR_FRAG_PROGRAM_END = "#END_FRAGMENT_PROGRAM";
+const SString MShaderAsset::SHDR_VERT_PROGRAM_BEGIN = "#VERTEX_PASS";
+const SString MShaderAsset::SHDR_VERT_PROGRAM_END = "#END_VERTEX_PASS";
+const SString MShaderAsset::SHDR_FRAG_PROGRAM_BEGIN = "#FRAGMENT_PASS";
+const SString MShaderAsset::SHDR_FRAG_PROGRAM_END = "#END_FRAGMENT_PASS";
 const SString MShaderAsset::SHDR_CDATA_BEGIN = "<![CDATA[";
 const SString MShaderAsset::SHDR_CDATA_END = "]]>";
 
 const SString MShaderAsset::SHDR_VERTNODE = "vert";
 const SString MShaderAsset::SHDR_FRAGNODE= "frag";
+
+const SString MShaderAsset::SHDR_EXTENSIONS = "#extension GL_ARB_shading_language_include : require\n";
+const SString MShaderAsset::SHDR_DEFINE_COMPILE_VERT =  "#define COMPILE_VERTEX\n";
+const SString MShaderAsset::SHDR_DEFINE_COMPILE_FRAG =  "#define COMPILE_FRAGMENT\n";
+
+const SString MShaderAsset::SHDR_FALLBACK_MISSING_VERT_PASS = "#NO_VERTEX_PASS_DEFINED\n";
+const SString MShaderAsset::SHDR_FALLBACK_MISSING_FRAG_PASS = "#NO_FRAGMENT_PASS_DEFINED\n";
 
 void MShaderAsset::loadShader(const SString &path) {
     valid = false;
@@ -34,11 +42,18 @@ void MShaderAsset::loadShader(const SString &path) {
         return;
     };
 
+    bool hasVertPass = data.find(SHDR_VERT_PROGRAM_BEGIN) != std::string::npos
+                        && data.find(SHDR_VERT_PROGRAM_END) != std::string::npos;
+
+    bool hasFragPass = data.find(SHDR_FRAG_PROGRAM_BEGIN) != std::string::npos
+                        && data.find(SHDR_FRAG_PROGRAM_END) != std::string::npos;
+
     // replace files correctly
     data.replace(SHDR_VERT_PROGRAM_BEGIN, STR("<"+SHDR_VERTNODE.str()+">")+SHDR_CDATA_BEGIN);
     data.replace(SHDR_FRAG_PROGRAM_BEGIN, STR("<"+SHDR_FRAGNODE.str()+">")+SHDR_CDATA_BEGIN);
     data.replace(SHDR_VERT_PROGRAM_END, SHDR_CDATA_END + STR("</"+SHDR_VERTNODE.str()+">"));
     data.replace(SHDR_FRAG_PROGRAM_END, SHDR_CDATA_END + STR("</"+SHDR_FRAGNODE.str()+">"));
+
     pugi::xml_document document;
     auto parseRes = document.load_string(data.c_str(), pugi::parse_default);
     if (parseRes.status != pugi::status_ok) {
@@ -52,26 +67,40 @@ void MShaderAsset::loadShader(const SString &path) {
         return;
     }
 
+    auto baseSourcePath = STR(rootNode.attribute(SHDR_ATTRIB_BASE_SOURCE.c_str()).value());
+    auto baseSource = STR("");
+    FileIO::readFile(baseSourcePath, baseSource);
+    if (baseSource.empty())
+    {
+        MERROR("MShaderAsset::loadShader(): Base shader source not defined");
+        return;
+    }
+
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
     name = nameAndVersiontring.first;
     auto versionStr = nameAndVersiontring.second + "\n";
-    auto extension = "#extension GL_ARB_shading_language_include : require\n";
+    auto extension = SHDR_EXTENSIONS;
 
-    if (!rootNode.child(SHDR_VERTNODE.c_str())) {
-        MERROR("MShaderAsset::loadShader(): shader file structure incorrect - missing vertex program tree");
-        return;
+    SString vertexSource = versionStr + extension + SHDR_DEFINE_COMPILE_VERT + baseSource;
+    SString fragmentSource = versionStr + extension + SHDR_DEFINE_COMPILE_FRAG + baseSource;
+
+    if (!hasVertPass)
+    {
+        vertexSource += SHDR_FALLBACK_MISSING_VERT_PASS;
     }
+    else
+        vertexSource += rootNode.child(SHDR_VERTNODE.c_str()).text().get();
 
-    SString vertexSource = versionStr + extension + rootNode.child(SHDR_VERTNODE.c_str()).text().get();
-    if (!rootNode.child(SHDR_FRAGNODE.c_str())) {
-        MERROR("MShaderAsset::loadShader(): shader file structure incorrect - missing fragment program tree");
-        return;
-    }
-
-    const SString fragmentSource = versionStr + extension + rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
+    if (!hasFragPass)
+    {
+        fragmentSource += SHDR_FALLBACK_MISSING_FRAG_PASS;
+    }else
+        fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
 
     const auto properties = getShaderProperties(rootNode);
+    MLOG(STR("MShaderAsset::Creating Shader Object (") + name+ ")");
     shader = new MShader(vertexSource, fragmentSource, properties);
+    shader->setName(name);
     valid = true;
 }
 

@@ -11,6 +11,8 @@ bool MShaderCompiler::initialised = false;
 bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& fragmentSource,
                                     GLuint& shaderProgramHandle)
 {
+
+    MLOG("MShaderCompiler::Compiling Shader...");
     if (!initialised)
     {
         initialiseEngine();
@@ -60,7 +62,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     GLint programSuccess;
     glGetProgramiv(shaderProgramHandle, GL_LINK_STATUS, &programSuccess);
     if (!programSuccess) {
-        MERROR(STR("ShadeCompiler:: Error linking shader program: ") + getShaderInfoLog(shaderProgramHandle));
+        MERROR(STR("ShadeCompiler:: Error linking shader program: ") + getShaderProgramInfoLog(shaderProgramHandle));
         glDeleteProgram(shaderProgramHandle);
         glDeleteShader(vertex);
         glDeleteShader(fragment);
@@ -70,6 +72,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     // Clean up shaders (they are no longer needed after linking)
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+    MLOG(STR("ShadeCompiler:: Successfully compiled "));
     return true;
 }
 
@@ -86,22 +89,34 @@ SString MShaderCompiler::getShaderInfoLog(const GLuint &shaderId) {
     // Dynamically allocate memory for infoLog
     std::vector<char> infoLog(length + 1);
     glGetShaderInfoLog(shaderId, length, &length, infoLog.data());
+    return {infoLog.data()};
+}
 
+
+SString MShaderCompiler::getShaderProgramInfoLog(const GLuint &shaderId) {
+    GLint length = 0;
+    glGetProgramiv(shaderId, GL_INFO_LOG_LENGTH, &length);
+
+    // Dynamically allocate memory for infoLog
+    std::vector<char> infoLog(length + 1);
+    glGetProgramInfoLog(shaderId, length, &length, infoLog.data());
     return {infoLog.data()};
 }
 
 bool MShaderCompiler::initialiseEngine()
 {
     if (initialised)
-        return true;
+        return false;
 
-    auto directoryPath = "meteor_assets/shader_headers";
+    MLOG(STR("MShaderCompiler::Initialising Shader Compiler."));
+    auto directoryPath = "meteor_assets/shader_utils";
     try {
         for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
             if (entry.is_regular_file()) {
                 std::string extension = entry.path().extension().string();
                 if (extension == ".glsl") {
                     registerGLNamedString(entry.path().string(), entry.path().filename().string());
+                    MLOG(STR("ShaderCompiler:: Added: " + entry.path().string()));
                 }
             }
         }
@@ -110,7 +125,8 @@ bool MShaderCompiler::initialiseEngine()
     } catch (const std::exception& e) {
         MERROR(STR("ShadeCompiler:: General error: ") + e.what());
     }
-
+    MLOG(STR("MShaderCompiler::Initialisation Complete."));
+    initialised = true;
     return true;
 }
 

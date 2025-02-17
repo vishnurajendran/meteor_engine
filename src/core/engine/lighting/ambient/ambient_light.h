@@ -25,7 +25,7 @@ public:
 
     virtual void onExit() override;
 private:
-    GLuint ambientLightDataBufferId;
+    GLuint ambientLightDataBufferId=0;
     SAmbientLightData ambientLightData;
     static MAmbientLightEntity* ambientLightInstance;
 };

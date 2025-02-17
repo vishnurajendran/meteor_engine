@@ -61,7 +61,6 @@ void MAmbientLightEntity::onExit()
     glBindBuffer(GL_UNIFORM_BUFFER, ambientLightDataBufferId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ambientLightData), &ambientLightData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glFinish();
     ambientLightInstance = nullptr;
 }
 
@@ -81,5 +80,4 @@ void MAmbientLightEntity::prepareLightRender()
     glBindBuffer(GL_UNIFORM_BUFFER, ambientLightDataBufferId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ambientLightData), &ambientLightData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glFinish();
 }

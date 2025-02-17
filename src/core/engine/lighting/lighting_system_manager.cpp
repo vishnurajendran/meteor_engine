@@ -3,7 +3,6 @@
 //
 
 #include "lighting_system_manager.h"
-
 #include "light_entity.h"
 
 MLightSystemManager* MLightSystemManager::lightingManagerInstance = nullptr;
