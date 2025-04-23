@@ -41,6 +41,9 @@ private:
     MShader* shader{};
 private:
     void loadShader(const SString& path);
+    bool loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass, const bool& hasFragPass);
+    bool loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass, const bool& hasFragPass);
+
     [[nodiscard]] static std::map<SString, SShaderPropertyValue> getShaderProperties(pugi::xml_node node);
     [[nodiscard]] static std::pair<SString, SString> getShaderNameAndVersion(pugi::xml_node node);
 

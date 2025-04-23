@@ -5,6 +5,11 @@
 #include "textureasset.h"
 #include "texture.h"
 
+MTextureAsset::MTextureAsset() : MAsset("")
+{
+
+}
+
 MTextureAsset::MTextureAsset(const SString &path) : MAsset(path.c_str()) {
     valid = texture.loadFromPath(path);
 }

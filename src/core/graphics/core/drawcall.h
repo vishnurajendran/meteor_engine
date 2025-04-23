@@ -12,6 +12,7 @@ class MDrawCall : public MObject {
 public:
     MDrawCall() = default;
     virtual void draw()=0;
+    virtual int getSortinOrder() {return 0;}
 };
 
 

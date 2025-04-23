@@ -1,4 +1,16 @@
 <mscene name = "Test Scene">
+    <skybox name="Skybox">
+        <attrib>
+            <transform>
+                <localPosition value="(0,0,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <skybox>
+                <src value="assets/skybox/sky_basic/basic_skybox.skybox"/>
+            </skybox>
+        </attrib>
+    </skybox>
     <camera name="Main Camera">
         <attrib>
             <transform>
@@ -51,6 +63,19 @@
             <static_mesh>
                 <src value="assets/mesh/primitive/sphere.glb"/>
                 <material value="assets/materials/mat1.material"/>
+            </static_mesh>
+        </attrib>
+    </static_mesh>
+    <static_mesh name="GlbCharacter">
+        <attrib>
+            <transform>
+                <localPosition value="(5,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <static_mesh>
+                <src value="assets/mesh/test/source/Dayo.glb"/>
+                <material value="assets/materials/mat_lit.material"/>
             </static_mesh>
         </attrib>
     </static_mesh>

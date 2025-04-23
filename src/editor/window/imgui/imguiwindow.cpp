@@ -7,15 +7,16 @@
 #include "imgui-SFML.h"
 #include "imguiwindow.h"
 
+#include "ImGuizmo.h"
+#include "core/engine/gizmos/gizmos.h"
+#include "editor/app/editorapplication.h"
+#include "editor/window/menubar/menubartree.h"
 #include "editorcontrolsbuttons.h"
+#include "imgui_internal.h"
+#include "imguistyles.h"
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
-#include "imguistyles.h"
-#include "imgui_internal.h"
-#include "ImGuizmo.h"
-#include "editor/app/editorapplication.h"
-#include "editor/window/menubar/menubartree.h"
 
 MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
 

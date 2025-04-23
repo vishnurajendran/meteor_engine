@@ -4,7 +4,6 @@
 #pragma once
 #ifndef METEOR_ENGINE_GRAPHICSRENDERER_H
 #define METEOR_ENGINE_GRAPHICSRENDERER_H
-#include "SFML/Graphics.hpp"
 #include "core/meteor_core_minimal.h"
 #include "drawcall.h"
 
@@ -17,6 +16,9 @@ private:
     static std::vector<MSFMLDrawCall*> sfmlDrawCalls;
     static std::vector<MOpenGlDrawCall*> openGlDrawCalls;
 public:
+    static bool drawGizmos;
+
+    static SVector2 getResolution();
     static void initialise(sf::RenderTarget* target);
     static void submit(MDrawCall* drawCall);
     static void prepare();

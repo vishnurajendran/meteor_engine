@@ -15,8 +15,10 @@ private:
     float farPlane = 100.0f;
     float fov = 60;
 public:
+
+    const SString EDITOR_CAMERA_NAME = "_EditorSceneCamera";
     MCameraEntity();
-    ~MCameraEntity() override = default;
+    MCameraEntity(bool editorSceneCamera);
 
     void setPriority(const int& priority);
     [[nodiscard]] int getPriority() const;

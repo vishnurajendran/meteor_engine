@@ -22,7 +22,11 @@ MAssetManager * MAssetManager::getInstance() {
 
 void MAssetManager::refresh() {
     cleanup();
-    loadAssetRecursive("assets/");
+    for (auto path : ASSET_SEARCH_PATHS)
+    {
+        loadAssetRecursive(path);
+    }
+
     for (auto asset: defferedLoadableAssetList) {
 
         if(asset)
@@ -43,6 +47,10 @@ void MAssetManager::loadAssetRecursive(SString path) {
     int assetCount=0;
     for (const auto& entry : std::filesystem::recursive_directory_iterator(directory_path)) {
         if (entry.is_regular_file()) {
+            auto fileName = STR(entry.path().filename().string());
+            //Ignore symbol, all files starting with ~ will be ignored by the asset manager refresh.
+            if (fileName[0] == '~')
+                continue;
             SString path = entry.path().string();
             path.replace("\\", "/");
             auto res = loadAsset(path);
@@ -65,6 +73,7 @@ bool MAssetManager::loadAsset(SString path) {
         if(asset == nullptr)
             continue;
         assetMap[path] = asset;
+        //MLOG(STR("AssetManager::Loaded ") + path);
         return true;
     }
     MWARN(STR("No compatible importer found for " + path.str()));

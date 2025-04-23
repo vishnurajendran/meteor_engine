@@ -2,17 +2,19 @@
 // Created by Vishnu Rajendran on 2024-09-25.
 //
 
-#include <GL/glew.h>
-#include "SFML/OpenGL.hpp"
 #include "graphicsrenderer.h"
+#include <GL/glew.h>
+#include "core/engine/gizmos/gizmos.h"
+#include "core/engine/lighting/lighting_system_manager.h"
 #include "opengldrawcall.h"
 #include "render_queue.h"
 #include "sfmldrawcall.h"
-#include "core/engine/lighting/lighting_system_manager.h"
 
 sf::RenderTarget* MGraphicsRenderer::renderTarget;
 std::vector<MSFMLDrawCall*> MGraphicsRenderer::sfmlDrawCalls;
 std::vector<MOpenGlDrawCall*> MGraphicsRenderer::openGlDrawCalls;
+
+bool MGraphicsRenderer::drawGizmos = true;
 
 void MGraphicsRenderer::submit(MDrawCall* drawCall) {
     if(!renderTarget) {
@@ -27,7 +29,9 @@ void MGraphicsRenderer::submit(MDrawCall* drawCall) {
             openGlDrawCalls.push_back(glDrawCall);
         }
         else
+        {
             sfmlDrawCalls.push_back(dynamic_cast<MSFMLDrawCall*>(drawCall));
+        }
     }
     else
         MERROR(STR("drawCall NULL, ignored"));
@@ -35,14 +39,22 @@ void MGraphicsRenderer::submit(MDrawCall* drawCall) {
 
 void MGraphicsRenderer::prepare()
 {
-    if(!renderTarget) {
+    if (!renderTarget)
+    {
         MERROR(STR("Graphics Render Target NULL, Draw cancelled"));
         return;
     }
 
+    // sort these calls in order
+    std::ranges::sort(openGlDrawCalls, [](MOpenGlDrawCall* lhs, MOpenGlDrawCall* rhs)
+                      { return lhs->getSortinOrder() > rhs->getSortinOrder(); });
+
+    std::ranges::sort(sfmlDrawCalls, [](MSFMLDrawCall* lhs, MSFMLDrawCall* rhs)
+                      { return lhs->getSortinOrder() > rhs->getSortinOrder(); });
+
     auto size = renderTarget->getSize();
     renderTarget->setActive(true);
-    glViewport(0,0,size.x, size.y);
+    glViewport(0, 0, size.x, size.y);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -52,6 +64,17 @@ void MGraphicsRenderer::prepare()
     MRenderQueue::prepareToDraw();
     MRenderQueue::requestDrawCalls();
 }
+
+SVector2 MGraphicsRenderer::getResolution()
+{
+    if (renderTarget)
+    {
+        return {renderTarget->getSize().x, renderTarget->getSize().y};
+    }
+
+    return {0,0};
+}
+
 
 void MGraphicsRenderer::initialise(sf::RenderTarget *target) {
     renderTarget = target;
@@ -95,6 +118,11 @@ void MGraphicsRenderer::draw() {
             MERROR(STR("Draw Call NULL, ignored"));
     }
 
+    if (drawGizmos)
+    {
+        MGizmos::requestGizmoDraws();
+    }
+
     auto error = glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -104,7 +132,7 @@ void MGraphicsRenderer::draw() {
 
     openGlDrawCalls.clear();
 
-    renderTarget->pushGLStates();
+    /*renderTarget->pushGLStates();
     for(const auto drawCall : sfmlDrawCalls){
         if(drawCall){
             drawCall->setTarget(renderTarget);
@@ -114,5 +142,5 @@ void MGraphicsRenderer::draw() {
             MERROR(STR("Draw Call NULL, ignored"));
     }
     renderTarget->popGLStates();
-    sfmlDrawCalls.clear();
+    sfmlDrawCalls.clear();*/
 }

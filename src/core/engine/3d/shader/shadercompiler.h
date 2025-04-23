@@ -16,7 +16,7 @@ public:
 private:
     static bool initialised;
 private:
-    static bool getShaderCompilaionStatus(const GLuint& shaderId);
+    static bool getShaderCompilationStatus(const GLuint& shaderId);
     static SString getShaderInfoLog(const GLuint& shaderId);
     static SString getShaderProgramInfoLog(const GLuint& shaderId);
     static void registerGLNamedString(const SString& filePath, const SString& fileName);

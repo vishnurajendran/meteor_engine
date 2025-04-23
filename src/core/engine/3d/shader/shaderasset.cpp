@@ -33,49 +33,68 @@ const SString MShaderAsset::SHDR_DEFINE_COMPILE_FRAG =  "#define COMPILE_FRAGMEN
 const SString MShaderAsset::SHDR_FALLBACK_MISSING_VERT_PASS = "#NO_VERTEX_PASS_DEFINED\n";
 const SString MShaderAsset::SHDR_FALLBACK_MISSING_FRAG_PASS = "#NO_FRAGMENT_PASS_DEFINED\n";
 
-void MShaderAsset::loadShader(const SString &path) {
+void MShaderAsset::loadShader(const SString& path)
+{
     valid = false;
     SString data;
     auto fileReadRes = FileIO::readFile(path, data);
-    if (!fileReadRes) {
+    if (!fileReadRes)
+    {
         MERROR("MShaderAsset::loadShader(): Failed to read file");
         return;
     };
 
-    bool hasVertPass = data.find(SHDR_VERT_PROGRAM_BEGIN) != std::string::npos
-                        && data.find(SHDR_VERT_PROGRAM_END) != std::string::npos;
+    bool hasVertPass = data.find(SHDR_VERT_PROGRAM_BEGIN) != std::string::npos &&
+        data.find(SHDR_VERT_PROGRAM_END) != std::string::npos;
 
-    bool hasFragPass = data.find(SHDR_FRAG_PROGRAM_BEGIN) != std::string::npos
-                        && data.find(SHDR_FRAG_PROGRAM_END) != std::string::npos;
+    bool hasFragPass = data.find(SHDR_FRAG_PROGRAM_BEGIN) != std::string::npos &&
+        data.find(SHDR_FRAG_PROGRAM_END) != std::string::npos;
 
     // replace files correctly
-    data.replace(SHDR_VERT_PROGRAM_BEGIN, STR("<"+SHDR_VERTNODE.str()+">")+SHDR_CDATA_BEGIN);
-    data.replace(SHDR_FRAG_PROGRAM_BEGIN, STR("<"+SHDR_FRAGNODE.str()+">")+SHDR_CDATA_BEGIN);
-    data.replace(SHDR_VERT_PROGRAM_END, SHDR_CDATA_END + STR("</"+SHDR_VERTNODE.str()+">"));
-    data.replace(SHDR_FRAG_PROGRAM_END, SHDR_CDATA_END + STR("</"+SHDR_FRAGNODE.str()+">"));
+    data.replace(SHDR_VERT_PROGRAM_BEGIN, STR("<" + SHDR_VERTNODE.str() + ">") + SHDR_CDATA_BEGIN);
+    data.replace(SHDR_FRAG_PROGRAM_BEGIN, STR("<" + SHDR_FRAGNODE.str() + ">") + SHDR_CDATA_BEGIN);
+    data.replace(SHDR_VERT_PROGRAM_END, SHDR_CDATA_END + STR("</" + SHDR_VERTNODE.str() + ">"));
+    data.replace(SHDR_FRAG_PROGRAM_END, SHDR_CDATA_END + STR("</" + SHDR_FRAGNODE.str() + ">"));
 
     pugi::xml_document document;
     auto parseRes = document.load_string(data.c_str(), pugi::parse_default);
-    if (parseRes.status != pugi::status_ok) {
+    if (parseRes.status != pugi::status_ok)
+    {
         MERROR(STR("MShaderAsset::loadShader(): Failed to parse shader file - ") + parseRes.description() + "\n");
         return;
     };
 
     pugi::xml_node rootNode = document.child(SHDR_ROOTNODE.c_str());
-    if (!rootNode) {
+    if (!rootNode)
+    {
         MERROR("MShaderAsset::loadShader(): shader file structure incorrect, missing shader-tree");
         return;
     }
 
     auto baseSourcePath = STR(rootNode.attribute(SHDR_ATTRIB_BASE_SOURCE.c_str()).value());
-    auto baseSource = STR("");
-    FileIO::readFile(baseSourcePath, baseSource);
-    if (baseSource.empty())
+
+    bool isSubShader = true;
+    if (baseSourcePath.empty())
     {
-        MERROR("MShaderAsset::loadShader(): Base shader source not defined");
-        return;
+        //Shader is not using a base shader file, compile as if it is an independent shader
+        isSubShader = false;
     }
 
+    if (isSubShader)
+    {
+        auto baseSource = STR("");
+        FileIO::readFile(baseSourcePath, baseSource);
+        valid = loadAsSubShader(rootNode, baseSource, hasVertPass, hasFragPass);
+    }
+    else
+    {
+        valid = loadAsIndependantShader(rootNode, hasVertPass, hasFragPass);
+    }
+}
+
+bool MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass,
+                                   const bool& hasFragPass)
+{
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
     name = nameAndVersiontring.first;
     auto versionStr = nameAndVersiontring.second + "\n";
@@ -94,14 +113,46 @@ void MShaderAsset::loadShader(const SString &path) {
     if (!hasFragPass)
     {
         fragmentSource += SHDR_FALLBACK_MISSING_FRAG_PASS;
-    }else
+    }
+    else
         fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
 
     const auto properties = getShaderProperties(rootNode);
-    MLOG(STR("MShaderAsset::Creating Shader Object (") + name+ ")");
+    MLOG(STR("MShaderAsset::Creating Shader Object (") + name + ")");
     shader = new MShader(vertexSource, fragmentSource, properties);
     shader->setName(name);
-    valid = true;
+    return true;
+}
+
+bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass,const bool& hasFragPass)
+{
+    auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
+    name = nameAndVersiontring.first;
+    auto versionStr = nameAndVersiontring.second + "\n";
+    auto extension = SHDR_EXTENSIONS;
+
+    SString vertexSource = versionStr + extension + SHDR_DEFINE_COMPILE_VERT;
+    SString fragmentSource = versionStr + extension + SHDR_DEFINE_COMPILE_FRAG;
+
+    if (!hasVertPass)
+    {
+        MERROR("MShaderAsset::loadAsIndependantShader(): shader file structure incorrect, Vertex Program Missing");
+        return false;
+    }
+
+    if (!hasFragPass)
+    {
+        MERROR("MShaderAsset::loadAsIndependantShader(): shader file structure incorrect, Fragment Program Missing");
+        return false;
+    }
+
+    vertexSource += rootNode.child(SHDR_VERTNODE.c_str()).text().get();
+    fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
+    const auto properties = getShaderProperties(rootNode);
+    MLOG(STR("MShaderAsset::Creating Shader Object (") + name + ")");
+    shader = new MShader(vertexSource, fragmentSource, properties);
+    shader->setName(name);
+    return true;
 }
 
 
@@ -183,7 +234,8 @@ SShaderPropertyType MShaderAsset::parsePropertyType(const SString &str) {
     if (str == "u3") return UniformVec3;
     if (str == "u4") return UniformVec4;
     if (str == "m4") return Matrix4;
-    if (str == "tex2D") return Texture2D;
+    if (str == "tex2D") return Texture;
+    if (str == "tex") return Texture;
     return NoVal;
 }
 
@@ -224,7 +276,7 @@ void MShaderAsset::parseValue(const SString &str, SShaderPropertyValue &value, c
         }
             break;
 
-        case Texture2D: {
+        case Texture: {
            value.setTextureReference(str);
         }
         break;

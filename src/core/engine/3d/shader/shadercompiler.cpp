@@ -29,7 +29,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     glShaderSource(vertex, 1, &vertBuff, &vertLength);
     glCompileShader(vertex);
 
-    if(!getShaderCompilaionStatus(vertex)) {
+    if(!getShaderCompilationStatus(vertex)) {
         MERROR(STR("ShadeCompiler:: Error compiling vertex shader: ") + getShaderInfoLog(vertex));
         glDeleteShader(vertex);
         return false;
@@ -45,7 +45,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     glShaderSource(fragment, 1, &fragBuff, &fragLength);
     glCompileShader(fragment);
 
-    if(!getShaderCompilaionStatus(fragment)) {
+    if(!getShaderCompilationStatus(fragment)) {
         MERROR(STR("ShadeCompiler:: Error compiling fragment shader: ") + getShaderInfoLog(fragment));
         glDeleteShader(fragment);
         glDeleteShader(vertex);
@@ -76,7 +76,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     return true;
 }
 
-bool MShaderCompiler::getShaderCompilaionStatus(const GLuint& shaderId) {
+bool MShaderCompiler::getShaderCompilationStatus(const GLuint& shaderId) {
     GLint success;
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
     return success == GL_TRUE;
@@ -116,7 +116,7 @@ bool MShaderCompiler::initialiseEngine()
                 std::string extension = entry.path().extension().string();
                 if (extension == ".glsl") {
                     registerGLNamedString(entry.path().string(), entry.path().filename().string());
-                    MLOG(STR("ShaderCompiler:: Added: " + entry.path().string()));
+                    //MLOG(STR("ShaderCompiler:: Added: " + entry.path().string()));
                 }
             }
         }

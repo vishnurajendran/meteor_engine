@@ -11,7 +11,7 @@ const bool MTextureAssetImporter::registered = []() {
 }();
 
 bool MTextureAssetImporter::canImport(SString fileExtension) {
-    return fileExtension == "png" || fileExtension == "jpg";
+    return fileExtension == "png" || fileExtension == "jpg" || fileExtension == "jpeg";
 }
 
 MAsset * MTextureAssetImporter::importAsset(SString path) {

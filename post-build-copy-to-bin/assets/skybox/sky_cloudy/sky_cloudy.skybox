@@ -1,0 +1,8 @@
+<cubemap name="Sky Cloudy">
+    <right src="assets/skybox/sky_cloudy/imgs/~miramar_rt.jpg"/>
+    <left src="assets/skybox/sky_cloudy/imgs/~miramar_lf.jpg"/>
+    <top src= "assets/skybox/sky_cloudy/imgs/~miramar_up.jpg"/>
+    <bottom src="assets/skybox/sky_cloudy/imgs/~miramar_dn.jpg"/>
+    <front src="assets/skybox/sky_cloudy/imgs/~miramar_ft.jpg"/>
+    <back src="assets/skybox/sky_cloudy/imgs/~miramar_bk.jpg"/>
+</cubemap>

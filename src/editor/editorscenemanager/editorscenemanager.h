@@ -18,7 +18,7 @@ public:
 private:
     void createEditorSceneCamera();
 private:
-    MCameraEntity* editorSceneCamera;
+    MCameraEntity* editorSceneCamera = nullptr;
 };
 
 

@@ -27,7 +27,10 @@ bool MEditorSceneManager::loadScene(const SString& path)
 
 bool MEditorSceneManager::closeActiveScene()
 {
-    delete editorSceneCamera;
+    /*MSpatialEntity::destroy(editorSceneCamera);
+    editorSceneCamera = nullptr;
+    */
+
     return MSceneManager::closeActiveScene();
 }
 
@@ -38,10 +41,7 @@ MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const
 
 void MEditorSceneManager::createEditorSceneCamera()
 {
-    delete editorSceneCamera;
-    editorSceneCamera = new MCameraEntity();
-    editorSceneCamera->setPriority(-999);
-    editorSceneCamera->setEntityFlags(EEntityFlags::HideInEditor);
-    editorSceneCamera->setWorldPosition(SVector3(0, 0, 10));
-    editorSceneCamera->setName("_EditorSceneCamera");
+    /*MSpatialEntity::destroy(editorSceneCamera);
+    editorSceneCamera = new MCameraEntity(true);
+    editorSceneCamera->setWorldPosition(SVector3(0, 0, 20));*/
 }

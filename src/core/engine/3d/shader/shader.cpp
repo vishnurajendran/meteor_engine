@@ -54,7 +54,7 @@ MShader::MShader(const SString& vertProg, const SString& fragProg, const std::ma
 }
 
 MShader::~MShader() {
-    if(valid) {
+    if(compiled) {
         glDeleteProgram(shaderProgram);
     }
 }
@@ -69,19 +69,19 @@ GLint MShader::getUniformLocation(const SString& name) const {
 }
 
 void MShader::compile() {
-    if(valid) {
+    if(compiled) {
         MWARN(STR("Shader already compiled"));
         return;
     }
-    valid = MShaderCompiler::compileShader(this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
+    compiled = MShaderCompiler::compileShader(this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
 }
 
 void MShader::bind() {
-    if(!valid && compileOnFirstUse) {
+    if(!compiled && compileOnFirstUse) {
         compile();
     }
 
-    if(!valid) {
+    if(!compiled) {
         MERROR(STR("Shader cannot be bound! Reason: Error during compilation and/or not compiled."));
         return;
     }
@@ -113,7 +113,7 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
         case Matrix4:
             setUniformMat4(name, value.getMat4Val());
             break;
-        case Texture2D:
+        case Texture:
             setTexture(name, value.getTexAssetReference());
         default:
             break;
@@ -175,9 +175,7 @@ void MShader::setTexture(const SString &name, const SString& textureAssetPath, c
     }
     auto location = getUniformLocation(name);
     if (location != -1) {
-        auto textureId = texture->getTextureID();
-        glActiveTexture(GL_TEXTURE0+index);
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        texture->bind(location, index);
         glUniform1i(location, static_cast<GLint>(index));
     }
 }

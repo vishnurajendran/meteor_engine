@@ -46,6 +46,20 @@ FetchContent_MakeAvailable(imgui)
 
 ##################################
 
+########### STB ###############
+# Fetch Dear ImGui
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY "https://github.com/nothings/stb.git"
+        GIT_TAG "master"
+)
+# Build Dear ImGui
+FetchContent_MakeAvailable(stb)
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+
+##################################
+
 ########## IMGUI_SFML #############
 # Fetch ImGui-SFML binding
 FetchContent_Declare(
@@ -257,6 +271,20 @@ set(CORE_SOURCES
         src/core/engine/lighting/directional/directional_light_gpu_struct.h
         src/core/engine/lighting/directional/directional_light_entity_deserialiser.cpp
         src/core/engine/lighting/directional/directional_light_entity_deserialiser.h
+        src/core/engine/skybox/cubemaptexture.cpp
+        src/core/engine/skybox/cubemaptexture.h
+        src/core/engine/skybox/skybox.cpp
+        src/core/engine/skybox/skybox.h
+        src/core/engine/skybox/skyboxdrawcall.cpp
+        src/core/engine/skybox/skyboxdrawcall.h
+        src/core/engine/skybox/cubemapasset.cpp
+        src/core/engine/skybox/cubemapasset.h
+        src/core/engine/skybox/cubemapassetimporter.cpp
+        src/core/engine/skybox/cubemapassetimporter.h
+        src/core/engine/skybox/skyboxentitydeserialiser.cpp
+        src/core/engine/skybox/skyboxentitydeserialiser.h
+        src/core/engine/gizmos/gizmos.cpp
+        src/core/engine/gizmos/gizmos.h
 )
 
 set(EDITOR_SOURCES
@@ -319,7 +347,7 @@ if(BUILD_EDITOR)
     add_executable(${EDITOR_NAME} ${CORE_SOURCES} ${EDITOR_SOURCES})
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
     target_link_libraries(${EDITOR_NAME}
-            PUBLIC
+            PRIVATE
             ImGui-SFML::ImGui-SFML
             spdlog::spdlog
             glm::glm
@@ -327,6 +355,7 @@ if(BUILD_EDITOR)
             assimp::assimp
             GLEW::GLEW
             imguizmo
+            stb
     )
     add_dependencies(${EDITOR_NAME} copy_files_before_run)
     set_target_properties(${EDITOR_NAME} PROPERTIES OUTPUT_NAME ${EDITOR_NAME})
@@ -337,13 +366,14 @@ if(BUILD_PLAYER)
     add_executable(${PLAYER_NAME} ${CORE_SOURCES} ${PLAYER_SOURCES})
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
     target_link_libraries(${PLAYER_NAME}
-            PUBLIC
+            PRIVATE
             ImGui-SFML::ImGui-SFML
             spdlog::spdlog
             glm::glm
             pugixml
             assimp::assimp
             GLEW::GLEW
+            stb
     )
     add_dependencies(${PLAYER_NAME} copy_files_before_run)
     set_target_properties(${PLAYER_NAME} PROPERTIES OUTPUT_NAME ${PLAYER_NAME})

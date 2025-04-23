@@ -20,6 +20,8 @@ public:
     MDirectionalLight();
     ~MDirectionalLight() override = default;
     void onExit() override;
+    void onDrawGizmo() override;
+
 private:
     SDirectionalLightData lightData;
     GLuint bufferId=0;

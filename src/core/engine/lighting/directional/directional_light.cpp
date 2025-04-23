@@ -4,7 +4,10 @@
 
 #include "directional_light.h"
 
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/gizmos/gizmos.h"
 #include "core/engine/lighting/lighting_system_manager.h"
+#include "core/engine/texture/textureasset.h"
 
 MDirectionalLight* MDirectionalLight::lightInstance = nullptr;
 
@@ -31,7 +34,7 @@ void MDirectionalLight::onExit()
 
     MLightSystemManager::getInstance()->unregisterLight(this);
     // reset data
-    lightData.lightColor = SVector3(0,0,0);
+    lightData.lightColor = SVector3(0, 0, 0);
     lightData.lightIntensity = 0.0f;
 
     // update GPU buffer
@@ -40,8 +43,18 @@ void MDirectionalLight::onExit()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glFinish();
 
-    //reset light instance
+    // reset light instance
     lightInstance = nullptr;
+}
+void MDirectionalLight::onDrawGizmo()
+{
+    auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/sun.png");
+    if (texture == nullptr)
+    {
+        MERROR("Failed to load sun.png");
+        return;
+    }
+    MGizmos::DrawTextureRect(getWorldPosition(), SVector2(1, 1), texture->getTexture());
 }
 
 

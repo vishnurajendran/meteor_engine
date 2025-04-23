@@ -3,11 +3,30 @@
 //
 
 #include "camera.h"
+#include "core/engine/scene/scene.h"
+#include "core/engine/scene/scenemanager.h"
 #include "viewmanagement.h"
 
-MCameraEntity::MCameraEntity() : MSpatialEntity() {
+MCameraEntity::MCameraEntity()
+{
     name = "camera";
     MViewManagement::addCamera(this);
+}
+MCameraEntity::MCameraEntity(bool editorSceneCamera) : MCameraEntity()
+{
+    if (!editorSceneCamera)
+        return;
+
+    name = EDITOR_CAMERA_NAME;
+    setPriority(-9999);
+    setEntityFlags(EEntityFlags::HideInEditor);
+
+    auto scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    if (scene == nullptr) return;
+    auto& roots = scene->getRootEntities();
+    auto it = std::find(roots.begin(), roots.end(), this);
+    if (it == roots.end()) return;
+    roots.erase(it);
 }
 
 void MCameraEntity::setPriority(const int &priority) {

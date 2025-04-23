@@ -76,8 +76,9 @@ void MEditorApplication::initialise() {
     MLOG(STR("Built Menubar Items"));
 }
 
-bool MEditorApplication::isRunning() const {
-    if(window == nullptr)
+bool MEditorApplication::isRunning() const
+{
+    if (window == nullptr)
         return false;
 
     return window->isOpen();
