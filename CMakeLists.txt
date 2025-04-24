@@ -334,6 +334,8 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/align_view_to_selected/align_view_to_selected.h
         src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.cpp
         src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.h
+        src/editor/editorscenemanager/editorscenecamera.cpp
+        src/editor/editorscenemanager/editorscenecamera.h
 )
 
 set(PLAYER_SOURCES

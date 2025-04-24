@@ -6,6 +6,7 @@
 
 #include "core/engine/3d/shader/shaderasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/gizmos/gizmos.h"
 #include "core/graphics/core/graphicsrenderer.h"
 #include "core/graphics/core/render_queue.h"
 MSkyboxEntity::MSkyboxEntity()
@@ -32,7 +33,9 @@ void MSkyboxEntity::prepareForDraw()
     //nothing here
 }
 
-void MSkyboxEntity::raiseDrawCall()
+void MSkyboxEntity::raiseDrawCall() { MGraphicsRenderer::submit(skyboxDrawCall); }
+void MSkyboxEntity::onDrawGizmo()
 {
-    MGraphicsRenderer::submit(skyboxDrawCall);
+    auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox.png");
+    MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

@@ -1,0 +1,33 @@
+<shader name="gizmo" version="440 core" base="">
+    <properties>
+    <property key = "_color" type="u4" default="(1,1,1,1)"/>
+    </properties>
+    
+    #VERTEX_PASS
+
+    layout(location = 0) in vec2 inPos;
+    layout(location = 1) in vec2 inUV;
+
+    uniform mat4 uMVP;
+    out vec2 vUV;
+
+    void main() {
+    vUV = inUV;
+    gl_Position = uMVP * vec4(inPos, 0.0, 1.0);
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    in vec2 vUV;
+    out vec4 FragColor;
+    uniform sampler2D uTexture;
+
+    void main() {
+    FragColor = texture(uTexture, vUV);
+    }
+
+    #END_FRAGMENT_PASS
+    
+</shader>

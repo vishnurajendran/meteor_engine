@@ -12,7 +12,7 @@
 class MShaderCompiler : public MObject {
 public:
     static bool initialiseEngine();
-    static bool compileShader(const SString& vertexSource, const SString& fragmentSource, GLuint& shaderProgramHandle);
+    static bool compileShader(const SString& name, const SString& vertexSource, const SString& fragmentSource, GLuint& shaderProgramHandle);
 private:
     static bool initialised;
 private:

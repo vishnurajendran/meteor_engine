@@ -73,7 +73,7 @@ void MShader::compile() {
         MWARN(STR("Shader already compiled"));
         return;
     }
-    compiled = MShaderCompiler::compileShader(this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
+    compiled = MShaderCompiler::compileShader(getName(), this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
 }
 
 void MShader::bind() {

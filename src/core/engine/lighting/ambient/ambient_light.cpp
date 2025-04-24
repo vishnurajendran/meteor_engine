@@ -4,9 +4,12 @@
 
 #include "ambient_light.h"
 
-#include "core/engine/lighting/lighting_system_manager.h"
-#include "core/graphics/core/render_queue.h"
 #include "GL/glew.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/gizmos/gizmos.h"
+#include "core/engine/lighting/lighting_system_manager.h"
+#include "core/engine/texture/textureasset.h"
+#include "core/graphics/core/render_queue.h"
 
 MAmbientLightEntity* MAmbientLightEntity::ambientLightInstance=nullptr;
 
@@ -50,18 +53,23 @@ void MAmbientLightEntity::onExit()
     MSpatialEntity::onExit();
     if (ambientLightInstance != this)
     {
-       return;
+        return;
     }
 
     MLightSystemManager::getInstance()->unregisterLight(this);
     ambientLightData.color = SVector3(0, 0, 0);
     ambientLightData.intensity = 0;
 
-    //update color and intensity
+    // update color and intensity
     glBindBuffer(GL_UNIFORM_BUFFER, ambientLightDataBufferId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(ambientLightData), &ambientLightData);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     ambientLightInstance = nullptr;
+}
+void MAmbientLightEntity::onDrawGizmo()
+{
+    auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/arealight.png");
+    MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }
 
 void MAmbientLightEntity::prepareLightRender()

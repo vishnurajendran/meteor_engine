@@ -16,9 +16,8 @@ private:
     float fov = 60;
 public:
 
-    const SString EDITOR_CAMERA_NAME = "_EditorSceneCamera";
     MCameraEntity();
-    MCameraEntity(bool editorSceneCamera);
+    ~MCameraEntity() override;
 
     void setPriority(const int& priority);
     [[nodiscard]] int getPriority() const;
@@ -34,6 +33,8 @@ public:
 
     void setFov(const float& fov);
     [[nodiscard]] float getFov() const;
+
+    void onDrawGizmo() override;
 };
 
 #endif //CAMERA_H

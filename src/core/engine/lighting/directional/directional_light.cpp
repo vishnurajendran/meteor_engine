@@ -49,12 +49,8 @@ void MDirectionalLight::onExit()
 void MDirectionalLight::onDrawGizmo()
 {
     auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/sun.png");
-    if (texture == nullptr)
-    {
-        MERROR("Failed to load sun.png");
-        return;
-    }
-    MGizmos::DrawTextureRect(getWorldPosition(), SVector2(1, 1), texture->getTexture());
+    MGizmos::drawRay(getWorldPosition(), -getForwardVector(), 2.0f, SColor(1,1,1,1), 3);
+    MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }
 
 

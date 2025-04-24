@@ -8,11 +8,11 @@
 #include <fstream>
 
 bool MShaderCompiler::initialised = false;
-bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& fragmentSource,
+bool MShaderCompiler::compileShader(const SString& name, const SString& vertexSource, const SString& fragmentSource,
                                     GLuint& shaderProgramHandle)
 {
 
-    MLOG("MShaderCompiler::Compiling Shader...");
+    MLOG(STR("MShaderCompiler::Compiling Shader ") + name);
     if (!initialised)
     {
         initialiseEngine();

@@ -14,12 +14,24 @@ class MCameraEntity;
 class MTexture;
 class MGizmos : MObject {
 public:
-    static void DrawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture);
-    static void DrawWireCube(SVector3 position, SVector3 halfExtents, SColor color);
-    static void DrawWireSphere(SVector3 position, float radius, SColor color);
+    static void drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture);
+    static void drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness);
+    static void drawWireSphere(SVector3 position, float radius, SColor color, float thickness);
+    static void drawRay(const SVector3& origin, const SVector3& direction, const float& length, const SColor& color, const float& thickness);
+    static void drawLine(const SVector3& start, const SVector3& end, const SColor& color, const float& thickness, bool ignoreZDepth);
+    static void drawWireFrustum(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, SColor color, float thickness);
 private:
     static MCameraEntity* getActiveCamera();
     static SVector2 getResolution();
+
+    static unsigned int uiQuadVAO;
+
+    static unsigned int uiLineVAO;
+    static unsigned int uiLineVBO;
+private:
+    static unsigned int createQuadVAO();
+    static void createLineVAO();
+
 public:
 
     static void requestGizmoDraws();

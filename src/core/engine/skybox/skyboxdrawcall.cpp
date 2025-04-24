@@ -94,7 +94,10 @@ void MSkyboxDrawCall::draw()
     for (const auto& c : cameras)
     {
         if (c != nullptr && c->getEnabled())
+        {
             renderCamera = c;
+            break;
+        }
     }
 
     if(!renderCamera) {

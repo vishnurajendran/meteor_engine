@@ -1,0 +1,30 @@
+<shader name="line" version="440 core" base="">
+    <properties>
+    <property key = "_color" type="u4" default="(1,1,1,1)"/>
+    </properties>
+    
+    #VERTEX_PASS
+
+    layout(location = 0) in vec3 inPos;
+    uniform mat4 uViewProj;
+
+    void main()
+    {
+        gl_Position = uViewProj * vec4(inPos, 1.0);
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform vec4 _color;
+    out vec4 FragColor;
+
+    void main()
+    {
+        FragColor = _color;
+    }
+
+    #END_FRAGMENT_PASS
+    
+</shader>

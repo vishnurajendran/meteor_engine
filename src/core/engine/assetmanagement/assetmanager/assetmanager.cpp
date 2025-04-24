@@ -73,7 +73,6 @@ bool MAssetManager::loadAsset(SString path) {
         if(asset == nullptr)
             continue;
         assetMap[path] = asset;
-        //MLOG(STR("AssetManager::Loaded ") + path);
         return true;
     }
     MWARN(STR("No compatible importer found for " + path.str()));

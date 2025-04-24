@@ -22,6 +22,8 @@ public:
     void setCubemapAsset(MCubemapAsset* cubemap);
     void prepareForDraw() override;
     void raiseDrawCall() override;
+
+    void onDrawGizmo() override;
 };
 
 #endif //SKYBOXENTITIY_H
