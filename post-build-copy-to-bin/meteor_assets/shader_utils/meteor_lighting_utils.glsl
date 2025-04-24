@@ -24,7 +24,7 @@ vec3 applyLighting(vec3 inColor){
     vec3 vertexNormal = normalize(getVertexNormal());
     vec3 lightForward = normalize(uDirectionalLight.forward);
     float lightContrib = dot(lightForward, vertexNormal);
-    vec3 directionalLight = max(lightContrib, 0.0) * uDirectionalLight.color;
+    vec3 directionalLight = max(lightContrib, 0.0) * uDirectionalLight.color * uDirectionalLight.intensity;
 
     //point lights
     return (ambientLight + directionalLight) * inColor;

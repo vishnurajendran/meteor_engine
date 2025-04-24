@@ -336,6 +336,10 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.h
         src/editor/editorscenemanager/editorscenecamera.cpp
         src/editor/editorscenemanager/editorscenecamera.h
+        src/editor/editorwindows/inspectordrawer/lights/directional_light/directionalight_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/directional_light/directionalight_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/ambient_light/ambientlight_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/ambient_light/ambientlight_inspector_drawer.h
 )
 
 set(PLAYER_SOURCES

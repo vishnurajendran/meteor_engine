@@ -62,7 +62,7 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
     mvpProp.setMat4Val(viewProj);
 
     SShaderPropertyValue colorProp;
-    colorProp.setVec4Val(SVector4(color.a, color.g, color.b, color.a));
+    colorProp.setVec4Val(SVector4(color.r, color.g, color.b, color.a));
 
     lineShader->setPropertyValue("uViewProj", mvpProp);
     lineShader->setPropertyValue("_color", colorProp);
