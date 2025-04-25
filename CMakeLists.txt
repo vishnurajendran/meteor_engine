@@ -347,10 +347,10 @@ set(PLAYER_SOURCES
         src/player/app/playerapplication.h
 )
 
-# Add the executable and its source files
+
 # Conditionally build Editor executable if BUILD_EDITOR is ON
 if(BUILD_EDITOR)
-    add_executable(${EDITOR_NAME} ${CORE_SOURCES} ${EDITOR_SOURCES})
+    add_executable(${EDITOR_NAME} WIN32 ${CORE_SOURCES} ${EDITOR_SOURCES})  # WIN32 hides console on Windows
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
     target_link_libraries(${EDITOR_NAME}
             PRIVATE
@@ -369,7 +369,7 @@ endif()
 
 # Conditionally build Player executable if BUILD_PLAYER is ON
 if(BUILD_PLAYER)
-    add_executable(${PLAYER_NAME} ${CORE_SOURCES} ${PLAYER_SOURCES})
+    add_executable(${PLAYER_NAME} WIN32 ${CORE_SOURCES} ${PLAYER_SOURCES})  # WIN32 hides console on Windows
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
     target_link_libraries(${PLAYER_NAME}
             PRIVATE
@@ -384,6 +384,7 @@ if(BUILD_PLAYER)
     add_dependencies(${PLAYER_NAME} copy_files_before_run)
     set_target_properties(${PLAYER_NAME} PROPERTIES OUTPUT_NAME ${PLAYER_NAME})
 endif()
+
 
 ############# PLATFORM-SPECIFIC CONFIGURATIONS #############
 
@@ -409,7 +410,6 @@ endif()
 if(BUILD_PLAYER)
     add_definitions(-DPLAYER_APPLICATION)
 endif()
-
 
 # Set the source and destination directories
 set(SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin")

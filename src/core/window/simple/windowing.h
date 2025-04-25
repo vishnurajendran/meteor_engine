@@ -24,6 +24,8 @@ public:
     virtual void update();
     virtual bool isOpen() const;
     virtual void close();
+
+    void setVisible(bool visible);
 };
 
 #endif //METEOR_ENGINE_WINDOWING_H

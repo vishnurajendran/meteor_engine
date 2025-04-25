@@ -56,6 +56,15 @@ void MEditorSceneViewWindow::drawTransformGizmoSelector() {
     auto seperatorTextSize = ImGui::CalcTextSize(seperatorText.c_str()).x;
 
     ImGui::BeginChild("##MTR_TransformationGizmos", ImVec2(130 + seperatorTextSize + selectionTextSize, 37.5), true, ImGuiChildFlags_Border);
+
+    // Draw opaque background
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 min = ImGui::GetWindowPos();
+    ImVec2 max = ImVec2(min.x + ImGui::GetWindowWidth(), min.y + ImGui::GetWindowHeight());
+
+    drawList->AddRectFilled(min, max, IM_COL32(30, 30, 30, 255)); // solid color (RGBA)
+
+
     ImGui::SameLine();
     ImGui::Text(selectionText.c_str());
     ImGui::SameLine();
@@ -95,6 +104,12 @@ void MEditorSceneViewWindow::drawModeSelector() {
 
     ImGui::SameLine();
     ImGui::BeginChild("##MTR_TransformationMode", ImVec2(95 + seperatorTextSize + selectionTextSize, 37.5), true, ImGuiChildFlags_Border);
+    // Draw opaque background
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+    ImVec2 min = ImGui::GetWindowPos();
+    ImVec2 max = ImVec2(min.x + ImGui::GetWindowWidth(), min.y + ImGui::GetWindowHeight());
+    drawList->AddRectFilled(min, max, IM_COL32(30, 30, 30, 255)); // solid color (RGBA)
+    
     ImGui::SameLine();
     ImGui::Text(selectionText.c_str());
     ImGui::SameLine();

@@ -24,33 +24,12 @@ MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600,
 
 MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) : MWindow(title, sizeX, sizeY, fps) {
     this->targetFPS = fps;
+    this->settings = settings;
     sf::ContextSettings settings;
     settings.majorVersion = 4;
     settings.minorVersion = 6;
     settings.depthBits = 24;
-
-    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default, settings);
-    coreWindow.setFramerateLimit(fps);
-    coreWindow.setActive(true);
-
-    if(!ImGui::SFML::Init(coreWindow)) {
-        MERROR(STR("Failed to initialize SFML" ));
-        return;
-    }
-    ImGuiIO& io = ImGui::GetIO();
-    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
-
-    io.FontGlobalScale = 1;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    deepDarkTheme();
-
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size
-    ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
-
-    MGraphicsRenderer::initialise(&coreWindow);
+    createWindow();
 }
 
 void MImGuiWindow::clear() {
@@ -86,10 +65,37 @@ void MImGuiWindow::update() {
     clock.restart();
 }
 
-void MImGuiWindow::drawGUI() {
+void MImGuiWindow::drawGUI()
+{
     drawMenuBar();
     showDockSpace();
     drawImGuiSubWindows();
+}
+
+void MImGuiWindow::createWindow()
+{
+    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default, settings);
+    coreWindow.setFramerateLimit(targetFPS);
+    coreWindow.setActive(true);
+
+    if(!ImGui::SFML::Init(coreWindow)) {
+        MERROR(STR("Failed to initialize SFML" ));
+        return;
+    }
+    ImGuiIO& io = ImGui::GetIO();
+    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
+
+    io.FontGlobalScale = 1;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    deepDarkTheme();
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size
+    ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+
+    MGraphicsRenderer::initialise(&coreWindow);
 }
 
 void MImGuiWindow::close() {
@@ -144,14 +150,17 @@ void MImGuiWindow::drawControls() {
     MEditorControlsButtons::runtimeControls();
 }
 
-void MImGuiWindow::loadFontFile(const SString &pathToFile, float pointSize) {
+void MImGuiWindow::loadFontFile(const SString& pathToFile, float pointSize)
+{
     ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(pathToFile.c_str(), pointSize);
-    if (!font) {
+    if (!font)
+    {
         MERROR(STR("Unable to load font : ") + pathToFile);
         return;
     }
 
-    if(!ImGui::SFML::UpdateFontTexture()) {
+    if (!ImGui::SFML::UpdateFontTexture())
+    {
         MWARN("Unable to load font file");
     }
     ImGui::GetIO().FontDefault = font;

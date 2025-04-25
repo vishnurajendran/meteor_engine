@@ -43,6 +43,9 @@ void MEditorApplication::cleanup() {
 }
 
 void MEditorApplication::initialise() {
+
+    std::thread splashThread(&MEditorApplication::showSplashScreen, this);
+    editorInst = this;
     //appRunning = true;
     MLOG(STR("Initialising Editor"));
     window = new MImGuiWindow(STR("Meteorite Editor"));
@@ -54,19 +57,11 @@ void MEditorApplication::initialise() {
         MERROR(STR("Failed to open window"));
         return;
     }
+    window->setVisible(false);
+    loadPrerequisites();
 
-    editorInst = this;
     // Load first, so that it can log everything from here on out.
     subWindows.push_back(new MEditorConsoleWindow());
-
-    //Refresh Asset Manager
-    MAssetManager::getInstance()->refresh();
-
-    //setup scene manager
-    sceneManagerRef = new MEditorSceneManager();
-    MSceneManager::registerSceneManager(sceneManagerRef);
-
-    //add remaining windows
     subWindows.push_back(new MEditorHierarchyWindow());
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
@@ -74,6 +69,10 @@ void MEditorApplication::initialise() {
 
     MMenubarTreeNode::buildTree();
     MLOG(STR("Built Menubar Items"));
+
+    window->setVisible(true);
+    splashShowing = false;
+    splashThread.join();
 }
 
 bool MEditorApplication::isRunning() const
@@ -82,6 +81,67 @@ bool MEditorApplication::isRunning() const
         return false;
 
     return window->isOpen();
+}
+
+void MEditorApplication::showSplashScreen()
+{
+    sf::RenderWindow splashWindow(sf::VideoMode(960, 540), "Meteorite-Splash", sf::Style::None);
+    splashWindow.setFramerateLimit(60);
+    splashWindow.setActive(true);
+    splashWindow.setVisible(true);
+    splashWindow.requestFocus();
+
+    //Hack to force to top
+    HWND hwnd = splashWindow.getSystemHandle();  // SFML lets you grab the native Win32 handle
+    ShowWindow(hwnd, SW_SHOW);               // Ensure it is shown
+    SetForegroundWindow(hwnd);               // Bring to foreground
+    SetFocus(hwnd);
+
+
+    sf::Texture splashTexture;
+    splashTexture.loadFromFile("meteor_assets/splash.png");
+
+    sf::Sprite sprite(splashTexture);
+    sprite.setScale(splashWindow.getSize().x / (float)splashTexture.getSize().x,
+                    splashWindow.getSize().y / (float)splashTexture.getSize().y);
+
+    sf::Font font;
+    font.loadFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
+    sf::Text text;
+    text.setFont(font);
+    text.setString("Loading Meteorite...");
+    text.setCharacterSize(12); // in pixels
+    text.setFillColor(sf::Color::White);
+    text.setPosition(sf::Vector2f(30, 500));
+
+    while (splashShowing && splashWindow.isOpen())
+    {
+        sf::Event event;
+        while (splashWindow.pollEvent(event))
+        {
+            continue;
+        }
+
+        text.setString(MLogger::getLastMessage().c_str());
+
+        splashWindow.clear();
+        splashWindow.draw(sprite);
+        splashWindow.draw(text);
+        splashWindow.display();
+    }
+
+
+    splashWindow.close();
+}
+
+void MEditorApplication::loadPrerequisites()
+{
+    //Refresh Asset Manager
+    MAssetManager::getInstance()->refresh();
+
+    //setup scene manager
+    sceneManagerRef = new MEditorSceneManager();
+    MSceneManager::registerSceneManager(sceneManagerRef);
 }
 
 void MEditorApplication::exit()
