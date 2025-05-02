@@ -8,9 +8,10 @@
 
 struct SDirectionalLightData
 {
-    alignas(16) SVector3 lightDirection;
-    alignas(16) SVector3 lightColor;
-    float lightIntensity;
+    SVector3 lightDirection = {0.0f, 0.0f, 0.0f};
+    float lightIntensity = 1.0f;
+    SVector3 lightColor = {1.0f, 1.0f, 1.0f};
+    int enabled = true;
 };
 
 #endif //DIRECTIONAL_LIGHT_DATA_H

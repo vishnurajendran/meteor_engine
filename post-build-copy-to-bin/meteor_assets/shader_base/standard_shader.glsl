@@ -27,6 +27,10 @@ void main()
     applyPosition(projectedPosition);
     updateNormals(projectedNormals);
     passVertexInfoToFragment();
+    setWorldPos((getModelMatrix() * vec4(position,1.0)).xyz);
+
+    mat3 normalMatrix = transpose(inverse(mat3(getModelMatrix())));
+    setWorldNormals(normalize(normalMatrix * normal));
 }
 
 #ifdef NO_VERTEX_PASS_DEFINED

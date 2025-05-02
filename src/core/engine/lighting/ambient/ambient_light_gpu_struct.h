@@ -10,6 +10,7 @@
 struct SAmbientLightData {
     SVector3 color = {0.0f,0.0f,0.0f};
     float intensity = 0.1f;
+    int enabled = true;
     float padding[3];
 };
 

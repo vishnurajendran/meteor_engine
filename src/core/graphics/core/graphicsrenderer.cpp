@@ -103,15 +103,24 @@ const char* getGLErrorString(GLenum error) {
     }
 }
 
-void MGraphicsRenderer::draw() {
+void MGraphicsRenderer::draw()
+{
+    draw(renderTarget);
+}
 
-    if(!renderTarget) {
+void MGraphicsRenderer::draw(sf::RenderTarget* target)
+{
+    if (!target)
+    {
         MERROR(STR("Graphics Render Target NULL, Draw cancelled"));
         return;
     }
 
-    for(const auto& drawCall : openGlDrawCalls){
-        if(drawCall){
+    target->setActive(true);
+    for (const auto& drawCall : openGlDrawCalls)
+    {
+        if (drawCall)
+        {
             drawCall->draw();
         }
         else
@@ -129,18 +138,6 @@ void MGraphicsRenderer::draw() {
         glGetError();
         MERROR(STR("OpenGL Error: ") + getGLErrorString(error));
     }
-
+    renderTarget->setActive(false);
     openGlDrawCalls.clear();
-
-    /*renderTarget->pushGLStates();
-    for(const auto drawCall : sfmlDrawCalls){
-        if(drawCall){
-            drawCall->setTarget(renderTarget);
-            drawCall->draw();
-        }
-        else
-            MERROR(STR("Draw Call NULL, ignored"));
-    }
-    renderTarget->popGLStates();
-    sfmlDrawCalls.clear();*/
 }

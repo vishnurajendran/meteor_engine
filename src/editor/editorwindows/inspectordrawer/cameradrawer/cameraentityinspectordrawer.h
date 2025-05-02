@@ -13,9 +13,10 @@ class MCameraEntityInspectorDrawer : MSpatialEntityInspectorDrawer {
 private:
     static const bool registered;
 public:
-    virtual void onDrawInspector(MSpatialEntity *target) override;
+    SString getInspectorName() const override {return "Camera";}
     virtual bool canDraw(MSpatialEntity *entity) override;
 private:
+    virtual void onDrawInspector(MSpatialEntity *target) override;
     void drawCameraGUI(MCameraEntity* cameraTarget);
 };
 

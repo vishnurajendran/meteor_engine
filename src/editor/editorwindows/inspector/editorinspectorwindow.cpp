@@ -24,6 +24,6 @@ void MEditorInspectorWindow::onGui() {
     auto selected = MEditorApplication::Selected;
     auto drawer = MInspectorDrawer::getDrawer(selected);
     if(drawer){
-        drawer->onDrawInspector(selected);
+        drawer->onDraw(selected);
     }
 }

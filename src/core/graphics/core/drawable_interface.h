@@ -9,6 +9,7 @@ class IMeteorDrawable {
     public:
     virtual void prepareForDraw()=0;
     virtual void raiseDrawCall()=0;
+    virtual bool canDraw()= 0;
 };
 
 #endif //IDRAWCALLSUBMITABLE_H

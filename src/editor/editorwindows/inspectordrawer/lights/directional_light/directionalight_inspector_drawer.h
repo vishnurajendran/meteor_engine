@@ -15,9 +15,10 @@ private:
     static const bool registered;
 
 public:
-    virtual void onDrawInspector(MSpatialEntity* target) override;
+    SString getInspectorName() const override { return "Directional Light"; }
     virtual bool canDraw(MSpatialEntity* entity) override;
-
+protected:
+    virtual void onDrawInspector(MSpatialEntity* target) override;
 private:
     void drawDLGui(MDirectionalLight* light);
 };

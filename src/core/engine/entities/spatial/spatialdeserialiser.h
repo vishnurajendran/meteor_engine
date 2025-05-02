@@ -7,7 +7,7 @@
 #include "core/engine/scene/serialisation/sceneentitytypedeserializer.h"
 
 
-class MSpatialDeserializer : MSceneEntityTypeDeserializer {
+class MSpatialDeserializer : public MSceneEntityTypeDeserializer {
 public:
     virtual MSpatialEntity* deserialize(pugi::xml_node node) override;
 private:

@@ -5,6 +5,10 @@
 #ifndef LIGHTING_MANAGER_H
 #define LIGHTING_MANAGER_H
 #include "core/object/object.h"
+#include "core/utils/glmhelper.h"
+#include "dynamic_light_shader_container.h"
+#include "dynamiclights/lightbvh/lightscene.h"
+
 
 class MLightEntity;
 
@@ -13,15 +17,23 @@ public:
     void registerLight(MLightEntity* light);
     void unregisterLight(MLightEntity* light);
     void prepareLights();
+    void prepareDynamicLights(const AABB& bounds);
+    void requestLightSceneRebuild();
 public:
     static MLightSystemManager* getInstance();
 private:
     MLightEntity* ambientLightInstance = nullptr;
     MLightEntity* directionalLightInstance = nullptr;
-    std::vector<MLightEntity*> otherLights;
+    std::vector<MDynamicLight*> dynamicLights;
 
-    void addLightToOthers(MLightEntity* light);
-    void removeLightFromOthers(MLightEntity* light);
+
+    bool rebuildRequested = false;
+    MLightScene lightScene;
+    unsigned int dynLightsBuffer=0;
+    SDynamicLightShaderContainer dynLightsData = {};
+
+    void addLightToDynamicLights(MLightEntity* light);
+    void removeLightFromDynamicLights(MLightEntity* light);
 
     static MLightSystemManager* lightingManagerInstance ;
 };

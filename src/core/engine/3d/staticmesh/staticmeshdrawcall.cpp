@@ -5,11 +5,12 @@
 #include <GL/glew.h>
 #include "staticmeshdrawcall.h"
 
-#include "staticmesh.h"
-#include "staticmeshasset.h"
 #include "core/engine/3d/material/material.h"
 #include "core/engine/3d/shader/shader.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/lighting/lighting_system_manager.h"
+#include "staticmesh.h"
+#include "staticmeshasset.h"
 
 MStaticMeshDrawCall::MStaticMeshDrawCall() {
     drawParams = SStaticMeshDrawParams();
@@ -50,6 +51,11 @@ void MStaticMeshDrawCall::draw() {
         MLOG("MStaticMeshDrawCall::draw: Camera is not enabled");
         return;
     }
+
+    //Inform Light Manager to prepare lights for this object.
+    //As I write this I realise this is kinda dumb way to do it, honestly it should
+    //be query-ed and passed here, but YOLO!! I'm making this then refactoring it.
+    MLightSystemManager::getInstance()->prepareDynamicLights(drawParams.meshBounds);
 
     SShaderPropertyValue view;
     view.setMat4Val(renderCamera->getViewMatrix());

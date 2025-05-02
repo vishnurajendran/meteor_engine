@@ -26,7 +26,8 @@ const SString MShaderAsset::SHDR_CDATA_END = "]]>";
 const SString MShaderAsset::SHDR_VERTNODE = "vert";
 const SString MShaderAsset::SHDR_FRAGNODE= "frag";
 
-const SString MShaderAsset::SHDR_EXTENSIONS = "#extension GL_ARB_shading_language_include : require\n";
+const SString MShaderAsset::SHDR_EXTENSIONS = "#extension GL_ARB_shading_language_include : require\n"
+                                              "#extension GL_NV_uniform_buffer_std430_layout : require\n";
 const SString MShaderAsset::SHDR_DEFINE_COMPILE_VERT =  "#define COMPILE_VERTEX\n";
 const SString MShaderAsset::SHDR_DEFINE_COMPILE_FRAG =  "#define COMPILE_FRAGMENT\n";
 

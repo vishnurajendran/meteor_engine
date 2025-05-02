@@ -8,6 +8,9 @@ project(meteor_engine)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(APP_ICON_RESOURCE_WINDOWS ${CMAKE_SOURCE_DIR}/resource.rc)
+
+
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Define build options for Editor and Player modes
@@ -285,6 +288,29 @@ set(CORE_SOURCES
         src/core/engine/skybox/skyboxentitydeserialiser.h
         src/core/engine/gizmos/gizmos.cpp
         src/core/engine/gizmos/gizmos.h
+        src/core/engine/lighting/dynamiclights/lightbvh/light_bounds.h
+        src/core/engine/lighting/dynamiclights/point_light/point_light.cpp
+        src/core/engine/lighting/dynamiclights/point_light/point_light.h
+        src/core/engine/lighting/dynamiclights/lightbvh/light_bounds.h
+        src/core/engine/lighting/dynamiclights/lightbvh/light_bvh_node.h
+        src/core/utils/aabb.h
+        src/core/utils/aabb.cpp
+        src/core/engine/lighting/dynamiclights/lightbvh/lightscene.cpp
+        src/core/engine/lighting/dynamiclights/lightbvh/lightscene.h
+        src/core/engine/lighting/dynamiclights/dynamic_light.cpp
+        src/core/engine/lighting/dynamiclights/dynamic_light.h
+        src/core/engine/lighting/dynamiclights/point_light/point_light.cpp
+        src/core/engine/lighting/dynamiclights/point_light/point_light.h
+        src/core/engine/lighting/dynamiclights/dynamic_light_data.h
+        src/core/engine/lighting/dynamiclights/dynamic_light_datatype.h
+        src/core/engine/lighting/dynamiclights/point_light/point_light_entity_deserialiser.cpp
+        src/core/engine/lighting/dynamiclights/point_light/point_light_entity_deserialiser.h
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light.cpp
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light.h
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.cpp
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.h
+        src/core/engine/lighting/dynamic_light_shader_container.h
+        src/core/engine/lighting/light_shader_constants.h
 )
 
 set(EDITOR_SOURCES
@@ -340,6 +366,14 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/lights/directional_light/directionalight_inspector_drawer.h
         src/editor/editorwindows/inspectordrawer/lights/ambient_light/ambientlight_inspector_drawer.cpp
         src/editor/editorwindows/inspectordrawer/lights/ambient_light/ambientlight_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.h
 )
 
 set(PLAYER_SOURCES
@@ -350,7 +384,7 @@ set(PLAYER_SOURCES
 
 # Conditionally build Editor executable if BUILD_EDITOR is ON
 if(BUILD_EDITOR)
-    add_executable(${EDITOR_NAME} WIN32 ${CORE_SOURCES} ${EDITOR_SOURCES})  # WIN32 hides console on Windows
+    add_executable(${EDITOR_NAME} WIN32 ${CORE_SOURCES} ${EDITOR_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
     target_link_libraries(${EDITOR_NAME}
             PRIVATE
@@ -369,7 +403,7 @@ endif()
 
 # Conditionally build Player executable if BUILD_PLAYER is ON
 if(BUILD_PLAYER)
-    add_executable(${PLAYER_NAME} WIN32 ${CORE_SOURCES} ${PLAYER_SOURCES})  # WIN32 hides console on Windows
+    add_executable(${PLAYER_NAME} WIN32 ${CORE_SOURCES} ${PLAYER_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
     target_link_libraries(${PLAYER_NAME}
             PRIVATE

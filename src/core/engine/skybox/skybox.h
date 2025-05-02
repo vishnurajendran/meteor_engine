@@ -22,6 +22,7 @@ public:
     void setCubemapAsset(MCubemapAsset* cubemap);
     void prepareForDraw() override;
     void raiseDrawCall() override;
+    bool canDraw() override { return getEnabled();}
 
     void onDrawGizmo() override;
 };

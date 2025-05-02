@@ -7,6 +7,7 @@
 #include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/lighting/light_shader_constants.h"
 #include "core/engine/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render_queue.h"
@@ -74,6 +75,7 @@ void MAmbientLightEntity::onDrawGizmo()
 
 void MAmbientLightEntity::prepareLightRender()
 {
+    ambientLightData.enabled = getEnabled();
     if (!ambientLightDataBufferId)
     {
         glGenBuffers(1, &ambientLightDataBufferId);

@@ -24,7 +24,8 @@ void MRenderQueue::removeFromSubmitables(IMeteorDrawable *instance) {
 
 void MRenderQueue::requestDrawCalls() {
     for(auto drawable : drawables) {
-        drawable->raiseDrawCall();
+        if (drawable->canDraw())
+            drawable->raiseDrawCall();
     }
 }
 
@@ -32,6 +33,7 @@ void MRenderQueue::prepareToDraw()
 {
     // inform all drawables to prepare for rendering.
     for(auto drawable : drawables) {
-        drawable->prepareForDraw();
+        if (drawable->canDraw())
+            drawable->prepareForDraw();
     }
 }

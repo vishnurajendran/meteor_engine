@@ -34,7 +34,7 @@ MCameraEntity* MGizmos::getActiveCamera()
 
 SVector2 MGizmos::getResolution() { return MGraphicsRenderer::getResolution(); }
 
-void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor& color, const float& thickness, bool ignoreZDepth=true)
+void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor& color, const float& thickness, bool ignoreZDepth)
 {
     if (!uiLineVAO || !uiLineVBO)
         createLineVAO();
@@ -334,7 +334,8 @@ void MGizmos::recursiveGizmoDraws(MSpatialEntity* entity)
         return;
     }
 
-    entity->onDrawGizmo();
+    if (entity->getEnabled())
+        entity->onDrawGizmo();
 
     for (auto child : entity->getChildren())
     {

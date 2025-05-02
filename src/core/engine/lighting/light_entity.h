@@ -17,11 +17,9 @@ public:
 
     virtual void setIntensity(const float& intensity)=0;
     virtual float getIntensity() const = 0;
-protected:
-    ELightType lightType;
 
-    const int LIGHT_INDEX_AMBIENT = 1;
-    const int LIGHT_INDEX_DIRECTIONAL = 2;
+protected:
+    ELightType lightType = ELightType::Ambient;
 };
 
 #endif //LIGHT_ENTITY_H

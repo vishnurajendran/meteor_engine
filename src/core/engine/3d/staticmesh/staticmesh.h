@@ -23,6 +23,9 @@ private:
     unsigned int VAO, VBO, EBO;
 public:
     MStaticMesh(std::vector<SVertex> vertices, std::vector<unsigned int> indices);
+    [[nodiscard]] std::vector<SVertex> getVertices() const { return vertices; }
+    [[nodiscard]] std::vector<unsigned int> getIndices() const { return indices; }
+
     void prepareMesh();
     void draw();
 };

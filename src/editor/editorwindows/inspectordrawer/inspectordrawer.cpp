@@ -13,12 +13,19 @@ void MInspectorDrawer::initialise() {
     defaultDrawer = new MSpatialEntityInspectorDrawer();
 }
 
-void MInspectorDrawer::registerDrawer(MInspectorDrawer *drawer) {
+void MInspectorDrawer::registerDrawer(MInspectorDrawer* drawer)
+{
 
-    if(!drawer)
+    if (!drawer)
         return;
 
     drawers.push_back(drawer);
+}
+
+void MInspectorDrawer::onDraw(MSpatialEntity* target)
+{
+    auto name = getName();
+    onDrawInspector(target);
 }
 
 MInspectorDrawer *MInspectorDrawer::getDrawer(MSpatialEntity *entity) {

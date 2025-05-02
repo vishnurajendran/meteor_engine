@@ -11,6 +11,8 @@ layout(location = 2) in vec2 aTexCoords; // TexCoords attribute
 out vec3 v2fVertPosition;
 out vec3 v2fVertNormal;
 out vec2 v2fTexCoord;
+out vec3 v2fVertPositionWorld;
+out vec3 v2fVertNormalWorld;
 
 vec3 getNormal(){
     return aNormal;
@@ -28,9 +30,18 @@ void updateNormals(vec3 newNormals){
     v2fVertNormal = newNormals;
 }
 
+void setWorldNormals(vec3 normals){
+    v2fVertNormalWorld = normals;
+}
+
+
 void passVertexInfoToFragment(){
     v2fTexCoord = getTexCoords();
     v2fVertPosition = getVertexPosition();
+}
+
+void setWorldPos(vec3 worldPos){
+    v2fVertPositionWorld = worldPos;
 }
 
 #endif //Shader guard

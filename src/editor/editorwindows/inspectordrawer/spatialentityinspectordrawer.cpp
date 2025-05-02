@@ -19,10 +19,18 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity *target) {
     if(target == nullptr)
         return;
 
-    auto name = target->getName();
-    if(drawTextField("Entity Name", name)) {
-        target->setName(name);
+    if (ImGui::CollapsingHeader("Basic Properties", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        bool enabled = target->getEnabled();
+        if (ImGui::Checkbox("Enabled", &enabled))
+            target->setEnabled(enabled);
+
+        auto name = target->getName();
+        if(drawTextField("Entity Name", name)) {
+            target->setName(name);
+        }
     }
+
     drawTransformField(target);
 }
 
@@ -44,53 +52,47 @@ void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char *label, I
 bool MSpatialEntityInspectorDrawer::drawTextField(const SString &label, SString &text) {
     auto dpi = DPIHelper::GetDPIScaleFactor();
     ImGui::PushID(&label);
-    ImGui::BeginChild("TextBox", ImVec2(0, 65*dpi), true, ImGuiChildFlags_Border);
     auto size = ImGui::GetContentRegionAvail();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10*dpi);
     ImGui::Text(label.c_str());
+    ImGui::SameLine();
     std::string name = text;
     ImGui::SetNextItemWidth(size.x - 20*dpi);
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10*dpi);
     bool res = ImGui::InputText("##EntityNameField", &name,ImGuiInputTextFlags_EnterReturnsTrue);
     if(res)
         text = name;
-    ImGui::EndChild();
     ImGui::PopID();
     return res;
 }
 
 void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity *target) {
     auto dpi = DPIHelper::GetDPIScaleFactor();
-    ImGui::BeginChild("TransformBox", ImVec2(0, 150*dpi), true, ImGuiChildFlags_Border);
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10*dpi);
-    ImGui::Image(trfTexture, trfSize);
-    ImGui::SameLine();
-    ImGui::Text("Transform");
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 10*dpi);
-    auto pos = target->getRelativePosition();
+    if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        auto pos = target->getRelativePosition();
+        auto rotQuat = target->getRelativeRotation();
+        auto rotEuler = quaternionToEuler(target->getRelativeRotation());
+        auto oldRotEuler = quaternionToEuler(target->getRelativeRotation());
+        auto scale = target->getRelativeScale();
 
-    auto rotQuat = target->getRelativeRotation();
-    auto rotEuler = quaternionToEuler(target->getRelativeRotation());
-    auto oldRotEuler = quaternionToEuler(target->getRelativeRotation());
-    auto scale = target->getRelativeScale();
+        if(drawXYZComponent("Position: ", pos)){
+            target->setRelativePosition(pos);
+        }
+        if(drawXYZComponent("Rotation:", rotEuler)){
+            auto deltaEuler = rotEuler - oldRotEuler;
+            glm::quat deltaX = glm::angleAxis(glm::radians(deltaEuler.x), glm::vec3(1, 0, 0));
+            glm::quat deltaY = glm::angleAxis(glm::radians(deltaEuler.y), glm::vec3(0, 1, 0));
+            glm::quat deltaZ = glm::angleAxis(glm::radians(deltaEuler.z), glm::vec3(0, 0, 1));
 
-    if(drawXYZComponent("Position: ", pos)){
-        target->setRelativePosition(pos);
+            // Apply the rotations in the correct order (e.g., yaw-pitch-roll)
+            rotQuat *= (deltaX * deltaY * deltaZ);
+            target->setRelativeRotation(rotQuat);
+        }
+        if(drawXYZComponent("Scale:      ", scale)){
+            target->setRelativeScale(scale);
+        }
     }
-    if(drawXYZComponent("Rotation:", rotEuler)){
-        auto deltaEuler = rotEuler - oldRotEuler;
-        glm::quat deltaX = glm::angleAxis(glm::radians(deltaEuler.x), glm::vec3(1, 0, 0));
-        glm::quat deltaY = glm::angleAxis(glm::radians(deltaEuler.y), glm::vec3(0, 1, 0));
-        glm::quat deltaZ = glm::angleAxis(glm::radians(deltaEuler.z), glm::vec3(0, 0, 1));
-
-        // Apply the rotations in the correct order (e.g., yaw-pitch-roll)
-        rotQuat *= (deltaX * deltaY * deltaZ);
-        target->setRelativeRotation(rotQuat);
-    }
-    if(drawXYZComponent("Scale:      ", scale)){
-        target->setRelativeScale(scale);
-    }
-    ImGui::EndChild();
 }
 
 bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVector3& value) {

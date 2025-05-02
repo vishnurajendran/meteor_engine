@@ -11,10 +11,12 @@ class MAmbientLightEntity;
 class MAmbientLightInspectorDrawer : MSpatialEntityInspectorDrawer {
 private:
     static const bool registered;
-
 public:
-    virtual void onDrawInspector(MSpatialEntity* target) override;
     virtual bool canDraw(MSpatialEntity* entity) override;
+    SString getInspectorName() const override { return "Ambient Light";}
+
+protected:
+    virtual void onDrawInspector(MSpatialEntity* target) override;
 
 private:
     void drawALGui(MAmbientLightEntity* light);

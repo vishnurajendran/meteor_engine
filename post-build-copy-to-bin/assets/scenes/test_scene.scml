@@ -27,6 +27,35 @@
             </camera>
         </attrib>
     </camera>
+    <point_light name="Test Point Light">
+        <attrib>
+            <transform>
+                <localPosition value="(0,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <point_light>
+                <intensity value="10"/>
+                <range value="10"/>
+                <color value="(1.0,1.0,1.0,1.0)"/>
+            </point_light>
+        </attrib>
+    </point_light>
+    <spot_light name="Test Spot Light">
+        <attrib>
+            <transform>
+                <localPosition value="(0,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <spot_light>
+                <intensity value="10"/>
+                <range value="10"/>
+                <color value="(1.0,1.0,1.0,1.0)"/>
+                <angle value="35"/>
+            </spot_light>
+        </attrib>
+    </spot_light>
     <ambient_light name="Test Ambient Light">
         <attrib>
             <transform>

@@ -23,6 +23,7 @@ public:
     static void submit(MDrawCall* drawCall);
     static void prepare();
     static void draw();
+    static void draw(sf::RenderTarget* target);
 };
 
 

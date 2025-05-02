@@ -6,6 +6,7 @@
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/lighting/light_shader_constants.h"
 #include "core/engine/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
 
@@ -17,7 +18,7 @@ MDirectionalLight::MDirectionalLight()
     {
         MERROR(STR("Meteor only support 1 directional light node in scenes. "
                   "Please modify current ambient light entity, or delete and create again"));
-        delete this;
+        destroy(this);
         return;
     }
 
@@ -46,6 +47,7 @@ void MDirectionalLight::onExit()
     // reset light instance
     lightInstance = nullptr;
 }
+
 void MDirectionalLight::onDrawGizmo()
 {
     auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/sun.png");
@@ -76,6 +78,7 @@ float MDirectionalLight::getIntensity() const
 
 void MDirectionalLight::prepareLightRender()
 {
+    lightData.enabled = getEnabled();
     lightData.lightDirection = getForwardVector();
 
     if (!bufferId)
