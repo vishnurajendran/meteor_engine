@@ -108,6 +108,12 @@ bool MShaderCompiler::initialiseEngine()
     if (initialised)
         return false;
 
+    if (!glewIsSupported("GL_ARB_shading_language_include"))
+    {
+        MERROR(STR("MShaderCompiler:: Error GL_ARB NAMED STRING NOT SUPPORTED"));
+        return false;
+    }
+
     MLOG(STR("MShaderCompiler::Initialising Shader Compiler."));
     auto directoryPath = "meteor_assets/shader_utils";
     try {
