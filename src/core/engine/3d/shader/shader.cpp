@@ -54,7 +54,7 @@ MShader::MShader(const SString& vertProg, const SString& fragProg, const std::ma
 }
 
 MShader::~MShader() {
-    if(valid) {
+    if(compiled) {
         glDeleteProgram(shaderProgram);
     }
 }
@@ -69,19 +69,19 @@ GLint MShader::getUniformLocation(const SString& name) const {
 }
 
 void MShader::compile() {
-    if(valid) {
+    if(compiled) {
         MWARN(STR("Shader already compiled"));
         return;
     }
-    valid = MShaderCompiler::compileShader(this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
+    compiled = MShaderCompiler::compileShader(getName(), this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
 }
 
 void MShader::bind() {
-    if(!valid && compileOnFirstUse) {
+    if(!compiled && compileOnFirstUse) {
         compile();
     }
 
-    if(!valid) {
+    if(!compiled) {
         MERROR(STR("Shader cannot be bound! Reason: Error during compilation and/or not compiled."));
         return;
     }
@@ -113,7 +113,7 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
         case Matrix4:
             setUniformMat4(name, value.getMat4Val());
             break;
-        case Texture2D:
+        case Texture:
             setTexture(name, value.getTexAssetReference());
         default:
             break;
@@ -122,54 +122,42 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
 
 void MShader::setUniform1i(const SString &name, int value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1)  {
         glUniform1i(location, value);
     }
 }
 
 void MShader::setUniform1f(const SString &name, float value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform1f(location, value);
     }
 }
 
 void MShader::setUniform2f(const SString &name, const SVector2 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform2f(location, value.x, value.y);
     }
 }
 
 void MShader::setUniform3f(const SString &name, const SVector3 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform3f(location, value.x, value.y, value.z);
     }
 }
 
 void MShader::setUniform4f(const SString &name, const SVector4 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 }
 
 void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
+    if (location != -1) {
         glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(value));
     }
 }
@@ -186,12 +174,8 @@ void MShader::setTexture(const SString &name, const SString& textureAssetPath, c
         return;
     }
     auto location = getUniformLocation(name);
-    if (location == -1) {
-        MWARN(STR("Uniform '") + name + STR("' doesn't exist or isn't used."));
-    } else {
-        auto textureId = texture->getTextureID();
-        glActiveTexture(GL_TEXTURE0+index);
-        glBindTexture(GL_TEXTURE_2D, textureId);
+    if (location != -1) {
+        texture->bind(location, index);
         glUniform1i(location, static_cast<GLint>(index));
     }
 }

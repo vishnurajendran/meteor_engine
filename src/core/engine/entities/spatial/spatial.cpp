@@ -7,6 +7,9 @@
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 
+std::map<SString, MSpatialEntity*> MSpatialEntity::allAliveEntities;
+std::vector<MSpatialEntity*> MSpatialEntity::markedForDestruction;
+
 auto makeRootEntity(MSpatialEntity *entity) -> void {
     if (entity->getParent() != nullptr) {
         entity->getParent()->removeChild(entity);
@@ -16,12 +19,19 @@ auto makeRootEntity(MSpatialEntity *entity) -> void {
 }
 
 void removeFromRoot(const MSpatialEntity *entity, MScene *scene) {
-    auto& rootEntities = scene->getRootEntities();
+    auto rootEntities = scene->getRootEntities();
     const auto it = std::find(rootEntities.begin(), rootEntities.end(), entity);
     if (it == rootEntities.end())
         return;
 
     rootEntities.erase(it);
+}
+
+MSpatialEntity::MSpatialEntity() : MSpatialEntity(nullptr)
+{
+    // defaults to an empty root level entity.
+    //clear before use
+    children.clear();
 }
 
 MSpatialEntity::MSpatialEntity(MSpatialEntity *parent) {
@@ -31,6 +41,10 @@ MSpatialEntity::MSpatialEntity(MSpatialEntity *parent) {
         makeRootEntity(this);
     else
         parent->addChild(this);
+
+    addAliveEntity(this);
+
+    //call on start initialise any custom logic.
     onStart();
 }
 
@@ -71,16 +85,25 @@ SMatrix4 MSpatialEntity::getTransformMatrix() const {
     return modelMatrix;
 }
 
+SVector3 MSpatialEntity::getForwardVector() const
+{
+    return glm::normalize(getRelativeRotation() * SVector3(0.0f, 0.0f, -1.0f));
+}
+
+SVector3 MSpatialEntity::getRightVector() const
+{
+    return getRelativeRotation() * SVector3(1.0f, 0.0f, 0.0f);
+}
+
+SVector3 MSpatialEntity::getUpVector() const
+{
+    return getRelativeRotation() * SVector3(0.0f, 1.0f, 0.0f);
+}
+
 MSpatialEntity::~MSpatialEntity() {
-    if (parent != nullptr) {
-        for (auto &child: children) {
-            parent->addChild(child);
-        }
-    } else {
-        for (auto &child: children) {
-            makeRootEntity(child);
-        }
-    }
+
+    //call onExit to allow game-code to clean up.
+
 }
 
 SVector3 MSpatialEntity::getWorldPosition() const {
@@ -146,10 +169,75 @@ void MSpatialEntity::updateTransforms() {
 }
 
 void MSpatialEntity::onStart() {
+    //will be overriden for code
 }
 
 void MSpatialEntity::onUpdate(float deltaTime) {
+    //will be overriden for code
 }
 
-void MSpatialEntity::onExit() {
+void MSpatialEntity::onExit()
+{
+    // will be overriden for code
+}
+void MSpatialEntity::onDrawGizmo()
+{
+    // will be overriden for gizmos
+}
+
+void MSpatialEntity::updateAllSceneEntities(float deltaTime)
+{
+    for (const auto& pair : allAliveEntities)
+    {
+        pair.second->onUpdate(deltaTime);
+    }
+}
+
+void MSpatialEntity::destroy(MSpatialEntity* entity)
+{
+    if (entity == nullptr) return;
+
+    entity->onExit();
+    removeAliveEntity(entity);
+    if (entity->parent != nullptr) {
+        for (auto &child: entity->children) {
+            entity->parent->addChild(child);
+        }
+        entity->parent->removeChild(entity);
+        //remove from scene roots.
+    } else {
+        for (auto &child: entity->children) {
+            makeRootEntity(child);
+        }
+        auto roots = MSceneManager::getSceneManagerInstance()->getActiveScene()->getRootEntities();
+        auto it = std::find(roots.begin(), roots.end(), entity);
+        if (it != roots.end())
+        {
+            roots.erase(it);
+        }
+    }
+
+    markedForDestruction.push_back(entity);
+}
+
+void MSpatialEntity::destroyMarked()
+{
+    for (auto marked : markedForDestruction)
+    {
+        delete marked;
+    }
+    markedForDestruction.clear();
+}
+
+void MSpatialEntity::addAliveEntity(MSpatialEntity* entity)
+{
+    allAliveEntities[entity->getGUID()] = entity;
+}
+
+void MSpatialEntity::removeAliveEntity(MSpatialEntity* entity)
+{
+    if (allAliveEntities.contains(entity->getGUID()))
+    {
+        allAliveEntities.erase(entity->getGUID());
+    }
 }

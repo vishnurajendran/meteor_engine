@@ -18,6 +18,9 @@ private:
     MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
     static MEditorApplication *editorInst;
+
+    std::atomic<bool> splashShowing = true;
+
 public:
     static MSpatialEntity* Selected;
 public:
@@ -26,6 +29,9 @@ public:
     void run() override;
     void cleanup() override;
     bool isRunning() const override;
+
+    void showSplashScreen();
+    void loadPrerequisites();
 
     //statics
     static void exit();

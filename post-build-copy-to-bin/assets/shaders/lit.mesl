@@ -1,37 +1,30 @@
-<shader name="simple_lit" version="330 core">
+<shader name="lit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
     <properties>
     <property key = "_color" type="u4" default="(1,1,1,1)"/>
     </properties>
 
-    #VERTEX_PROGRAM
-    
-    #include </meteor_vertex_utils.glsl>
-    #include </meteor_projection_utils.glsl>
+    #VERTEX_PASS
 
-    void main()
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
     {
-        // Transform the vertex position using the projection
-        vec3 position = getVertexPosition();
-        vec4 projected = applyProjection(vec4(position, 1.0));        // apply position
-        applyPosition(projected);
-        // pass the tex coords to fragment
-        passTexCoordsToFragment(getTexCoords());
+
     }
 
-    #END_VERTEX_PROGRAM
+    #END_VERTEX_PASS
 
-    #FRAGMENT_PROGRAM
-
-    #include </meteor_fragment_utils.glsl>
+    #FRAGMENT_PASS
 
     uniform vec4 _color;
     uniform sampler2D _baseTex;
-    void main(){
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords){
     
-       vec4 texColor = texture(_baseTex,getTexCoords());
-       setFinalOutColor(texColor * _color);
+       vec4 texColor = texture(_baseTex,v2fTexCoords) * _color;
+       vec4 objectColor = texColor * _color;
+
+       vec3 lit = applyLighting(vec3(objectColor));
+       return vec4(lit, 1.0);
     }
 
-    #END_FRAGMENT_PROGRAM
+    #END_FRAGMENT_PASS
     
 </shader>

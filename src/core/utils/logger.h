@@ -18,6 +18,8 @@ class MLogger {
 private:
     static std::map<int,LogEventHandler> listeners;
     static int nextId;
+    static SString lastMsg;
+
     static void notify(SString msg);
 public:
     static void log(SString msg);
@@ -26,6 +28,8 @@ public:
 
     static int subscribe(const LogEventHandler& handler);
     static void unsubscribe(const int& id);
+
+    static SString getLastMessage();
 };
 
 

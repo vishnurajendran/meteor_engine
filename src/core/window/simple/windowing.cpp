@@ -31,8 +31,21 @@ MWindow::MWindow(const SString& title, int sizeX, int sizeY, int fps) : MObject(
     MGraphicsRenderer::initialise(&coreWindow);
 }
 
-void MWindow::close() {
+void MWindow::close()
+{
     coreWindow.close();
+}
+
+void MWindow::setVisible(bool visible)
+{
+    coreWindow.setVisible(visible);
+    if (visible)
+    {
+        HWND hwnd = coreWindow.getSystemHandle();  // SFML lets you grab the native Win32 handle
+        ShowWindow(hwnd, SW_SHOW);               // Ensure it is shown
+        SetForegroundWindow(hwnd);               // Bring to foreground
+        SetFocus(hwnd);
+    }
 }
 
 bool MWindow::isOpen() const {
@@ -57,6 +70,7 @@ void MWindow::update() {
     }
 
     coreWindow.clear();
+    MGraphicsRenderer::prepare();
     MGraphicsRenderer::draw();
     coreWindow.display();
 

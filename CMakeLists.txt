@@ -8,6 +8,9 @@ project(meteor_engine)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(APP_ICON_RESOURCE_WINDOWS ${CMAKE_SOURCE_DIR}/resource.rc)
+
+
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Define build options for Editor and Player modes
@@ -43,6 +46,20 @@ FetchContent_Declare(
 )
 # Build Dear ImGui
 FetchContent_MakeAvailable(imgui)
+
+##################################
+
+########### STB ###############
+# Fetch Dear ImGui
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY "https://github.com/nothings/stb.git"
+        GIT_TAG "master"
+)
+# Build Dear ImGui
+FetchContent_MakeAvailable(stb)
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 
 ##################################
 
@@ -228,9 +245,9 @@ set(CORE_SOURCES
         src/core/engine/camera/cameradeserialiser.h
         src/core/engine/3d/staticmesh/staticmeshentity.cpp
         src/core/engine/3d/staticmesh/staticmeshentity.h
-        src/core/graphics/core/drawcallsubmitable.h
-        src/core/graphics/core/meteordrawables.h
-        src/core/graphics/core/meteordrawables.cpp
+        src/core/graphics/core/drawable_interface.h
+        src/core/graphics/core/render_queue.h
+        src/core/graphics/core/render_queue.cpp
         src/core/engine/3d/material/MMaterialAsset.cpp
         src/core/engine/3d/material/MMaterialAsset.h
         src/core/engine/assetmanagement/asset/defferedloadableasset.h
@@ -242,6 +259,58 @@ set(CORE_SOURCES
         src/core/engine/texture/textureasset.h
         src/core/engine/texture/textureassetimporter.cpp
         src/core/engine/texture/textureassetimporter.h
+        src/core/engine/lighting/light_entity.cpp
+        src/core/engine/lighting/light_entity.h
+        src/core/engine/lighting/light_type.h
+        src/core/engine/lighting/lighting_system_manager.cpp
+        src/core/engine/lighting/lighting_system_manager.h
+        src/core/engine/lighting/ambient/ambient_light.cpp
+        src/core/engine/lighting/ambient/ambient_light.h
+        src/core/engine/lighting/ambient/ambient_light_gpu_struct.h
+        src/core/engine/lighting/ambient/ambient_light_entity_deserialiser.cpp
+        src/core/engine/lighting/ambient/ambient_light_entity_deserialiser.h
+        src/core/engine/lighting/directional/directional_light.cpp
+        src/core/engine/lighting/directional/directional_light.h
+        src/core/engine/lighting/directional/directional_light_gpu_struct.h
+        src/core/engine/lighting/directional/directional_light_entity_deserialiser.cpp
+        src/core/engine/lighting/directional/directional_light_entity_deserialiser.h
+        src/core/engine/skybox/cubemaptexture.cpp
+        src/core/engine/skybox/cubemaptexture.h
+        src/core/engine/skybox/skybox.cpp
+        src/core/engine/skybox/skybox.h
+        src/core/engine/skybox/skyboxdrawcall.cpp
+        src/core/engine/skybox/skyboxdrawcall.h
+        src/core/engine/skybox/cubemapasset.cpp
+        src/core/engine/skybox/cubemapasset.h
+        src/core/engine/skybox/cubemapassetimporter.cpp
+        src/core/engine/skybox/cubemapassetimporter.h
+        src/core/engine/skybox/skyboxentitydeserialiser.cpp
+        src/core/engine/skybox/skyboxentitydeserialiser.h
+        src/core/engine/gizmos/gizmos.cpp
+        src/core/engine/gizmos/gizmos.h
+        src/core/engine/lighting/dynamiclights/lightbvh/light_bounds.h
+        src/core/engine/lighting/dynamiclights/point_light/point_light.cpp
+        src/core/engine/lighting/dynamiclights/point_light/point_light.h
+        src/core/engine/lighting/dynamiclights/lightbvh/light_bounds.h
+        src/core/engine/lighting/dynamiclights/lightbvh/light_bvh_node.h
+        src/core/utils/aabb.h
+        src/core/utils/aabb.cpp
+        src/core/engine/lighting/dynamiclights/lightbvh/lightscene.cpp
+        src/core/engine/lighting/dynamiclights/lightbvh/lightscene.h
+        src/core/engine/lighting/dynamiclights/dynamic_light.cpp
+        src/core/engine/lighting/dynamiclights/dynamic_light.h
+        src/core/engine/lighting/dynamiclights/point_light/point_light.cpp
+        src/core/engine/lighting/dynamiclights/point_light/point_light.h
+        src/core/engine/lighting/dynamiclights/dynamic_light_data.h
+        src/core/engine/lighting/dynamiclights/dynamic_light_datatype.h
+        src/core/engine/lighting/dynamiclights/point_light/point_light_entity_deserialiser.cpp
+        src/core/engine/lighting/dynamiclights/point_light/point_light_entity_deserialiser.h
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light.cpp
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light.h
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.cpp
+        src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.h
+        src/core/engine/lighting/dynamic_light_shader_container.h
+        src/core/engine/lighting/light_shader_constants.h
 )
 
 set(EDITOR_SOURCES
@@ -291,6 +360,20 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/align_view_to_selected/align_view_to_selected.h
         src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.cpp
         src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.h
+        src/editor/editorscenemanager/editorscenecamera.cpp
+        src/editor/editorscenemanager/editorscenecamera.h
+        src/editor/editorwindows/inspectordrawer/lights/directional_light/directionalight_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/directional_light/directionalight_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/ambient_light/ambientlight_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/ambient_light/ambientlight_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.h
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.h
 )
 
 set(PLAYER_SOURCES
@@ -298,13 +381,13 @@ set(PLAYER_SOURCES
         src/player/app/playerapplication.h
 )
 
-# Add the executable and its source files
+
 # Conditionally build Editor executable if BUILD_EDITOR is ON
 if(BUILD_EDITOR)
-    add_executable(${EDITOR_NAME} ${CORE_SOURCES} ${EDITOR_SOURCES})
+    add_executable(${EDITOR_NAME} WIN32 ${CORE_SOURCES} ${EDITOR_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
     target_link_libraries(${EDITOR_NAME}
-            PUBLIC
+            PRIVATE
             ImGui-SFML::ImGui-SFML
             spdlog::spdlog
             glm::glm
@@ -312,6 +395,7 @@ if(BUILD_EDITOR)
             assimp::assimp
             GLEW::GLEW
             imguizmo
+            stb
     )
     add_dependencies(${EDITOR_NAME} copy_files_before_run)
     set_target_properties(${EDITOR_NAME} PROPERTIES OUTPUT_NAME ${EDITOR_NAME})
@@ -319,20 +403,22 @@ endif()
 
 # Conditionally build Player executable if BUILD_PLAYER is ON
 if(BUILD_PLAYER)
-    add_executable(${PLAYER_NAME} ${CORE_SOURCES} ${PLAYER_SOURCES})
+    add_executable(${PLAYER_NAME} WIN32 ${CORE_SOURCES} ${PLAYER_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
     target_link_libraries(${PLAYER_NAME}
-            PUBLIC
+            PRIVATE
             ImGui-SFML::ImGui-SFML
             spdlog::spdlog
             glm::glm
             pugixml
             assimp::assimp
             GLEW::GLEW
+            stb
     )
     add_dependencies(${PLAYER_NAME} copy_files_before_run)
     set_target_properties(${PLAYER_NAME} PROPERTIES OUTPUT_NAME ${PLAYER_NAME})
 endif()
+
 
 ############# PLATFORM-SPECIFIC CONFIGURATIONS #############
 
@@ -358,7 +444,6 @@ endif()
 if(BUILD_PLAYER)
     add_definitions(-DPLAYER_APPLICATION)
 endif()
-
 
 # Set the source and destination directories
 set(SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin")

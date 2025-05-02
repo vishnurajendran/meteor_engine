@@ -4,7 +4,7 @@
 
 #include "playerapplication.h"
 
-#include "core/graphics/core/meteordrawables.h"
+#include "core/graphics/core/render_queue.h"
 
 MPlayerApplication::MPlayerApplication() : MApplication(){
     name = STR("MeteorPlayer");
@@ -14,8 +14,8 @@ void MPlayerApplication::run() {
     if(window == nullptr)
         return;
     window->clear();
-    MSceneManager::update(0.0f);
-    MMeteorDrawables::requestDrawCalls();
+    MSceneManager::getSceneManagerInstance()->update(0.0f);
+    MRenderQueue::requestDrawCalls();
     window->update();
 }
 

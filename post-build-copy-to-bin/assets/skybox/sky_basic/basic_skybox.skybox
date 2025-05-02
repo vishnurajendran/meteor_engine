@@ -1,0 +1,8 @@
+<cubemap name="Space">
+    <left src="assets/skybox/sky_basic/imgs/~left.png"/>
+    <right src="assets/skybox/sky_basic/imgs/~right.png"/>
+    <top src= "assets/skybox/sky_basic/imgs/~top.png"/>
+    <bottom src="assets/skybox/sky_basic/imgs/~bottom.png"/>
+    <front src="assets/skybox/sky_basic/imgs/~front.png"/>
+    <back src="assets/skybox/sky_basic/imgs/~back.png"/>
+</cubemap>

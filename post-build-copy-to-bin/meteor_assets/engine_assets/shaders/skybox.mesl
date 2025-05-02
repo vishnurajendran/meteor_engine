@@ -1,0 +1,37 @@
+<shader name="skybox" version="440 core" base="">
+    <properties>
+    <property key = "_color" type="u4" default="(1,1,1,1)"/>
+    </properties>
+    
+    #VERTEX_PASS
+
+    layout (location = 0) in vec3 aPos;
+    out vec3 TexCoords;
+
+    uniform mat4 projection;
+    uniform mat4 view;
+
+    void main(){
+        TexCoords = aPos;
+        gl_Position = projection * view * vec4(aPos, 1.0);
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform vec4 _color;
+    out vec4 FragColor;
+    in vec3 TexCoords;
+
+    uniform samplerCube skybox;
+
+    void main()
+    {
+        vec4 color = texture(skybox, TexCoords);
+        FragColor = color;
+    }
+
+    #END_FRAGMENT_PASS
+    
+</shader>

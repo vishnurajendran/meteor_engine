@@ -41,7 +41,6 @@ void MMaterialAsset::buildMaterialAsset() {
     for(auto kv : properties) {
         original->setProperty(kv.first, kv.second);
     }
-    MLOG("MMaterialAsset::buildMaterialAsset(): built material asset");
 }
 
 

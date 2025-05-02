@@ -7,9 +7,7 @@
 
 #include <map>
 #include <vector>
-
 #include "core/object/object.h"
-
 
 class IDefferedLoadableAsset;
 class MAsset;
@@ -18,7 +16,8 @@ namespace pugi {
     class xml_document;
 }
 
-class MAssetManager : public MObject {
+class MAssetManager : public MObject
+{
 public:
     static MAssetManager* getInstance();
     void refresh();
@@ -35,6 +34,7 @@ public:
     }
 
 private:
+    std::vector<SString> ASSET_SEARCH_PATHS = {"assets/", "meteor_assets/engine_assets/"};
     std::map<SString, MAsset*> assetMap;
     std::vector<IDefferedLoadableAsset*> defferedLoadableAssetList;
     static MAssetManager* instance;

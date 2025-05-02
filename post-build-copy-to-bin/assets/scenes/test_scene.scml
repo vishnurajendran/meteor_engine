@@ -1,5 +1,17 @@
 <mscene name = "Test Scene">
-    <!--mcamera name="Main Camera">
+    <skybox name="Skybox">
+        <attrib>
+            <transform>
+                <localPosition value="(0,0,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <skybox>
+                <src value="assets/skybox/sky_basic/basic_skybox.skybox"/>
+            </skybox>
+        </attrib>
+    </skybox>
+    <camera name="Main Camera">
         <attrib>
             <transform>
                 <localPosition value="(0,0,10)"/>
@@ -14,83 +26,138 @@
                 <orthographic value="1"/>
             </camera>
         </attrib>
-    </mcamera-->
-    <mstaticmesh name="Sphere">
+    </camera>
+    <point_light name="Test Point Light">
+        <attrib>
+            <transform>
+                <localPosition value="(0,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <point_light>
+                <intensity value="10"/>
+                <range value="10"/>
+                <color value="(1.0,1.0,1.0,1.0)"/>
+            </point_light>
+        </attrib>
+    </point_light>
+    <spot_light name="Test Spot Light">
+        <attrib>
+            <transform>
+                <localPosition value="(0,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <spot_light>
+                <intensity value="10"/>
+                <range value="10"/>
+                <color value="(1.0,1.0,1.0,1.0)"/>
+                <angle value="35"/>
+            </spot_light>
+        </attrib>
+    </spot_light>
+    <ambient_light name="Test Ambient Light">
         <attrib>
             <transform>
                 <localPosition value="(0,0,0)"/>
                 <localRotation value="(0,0,0,0)"/>
                 <localScale value="(1,1,1)"/>
             </transform>
-            <staticmesh>
+            <ambient_light>
+                <intensity value="0.45"/>
+                <color value="(0.50,0.80,0.92,1.0)"/>
+            </ambient_light>
+        </attrib>
+    </ambient_light>
+    <directional_light name="Test Directional Light">
+        <attrib>
+            <transform>
+                <localPosition value="(0,5,0)"/>
+                <localRotation value="(0.5709415,0.1675188,0.5709415,0.5656758)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <directional_light>
+                <intensity value="1"/>
+                <color value="(1.0,1.0,1.0,1.0)"/>
+            </directional_light>
+        </attrib>
+    </directional_light>
+    <static_mesh name="Sphere">
+        <attrib>
+            <transform>
+                <localPosition value="(0,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <static_mesh>
                 <src value="assets/mesh/primitive/sphere.glb"/>
                 <material value="assets/materials/mat1.material"/>
-            </staticmesh>
+            </static_mesh>
         </attrib>
-    </mstaticmesh>
-    <mstaticmesh name="Plane">
+    </static_mesh>
+    <static_mesh name="GlbCharacter">
+        <attrib>
+            <transform>
+                <localPosition value="(5,5,0)"/>
+                <localRotation value="(0,0,0,0)"/>
+                <localScale value="(1,1,1)"/>
+            </transform>
+            <static_mesh>
+                <src value="assets/mesh/test/source/Dayo.glb"/>
+                <material value="assets/materials/mat_lit.material"/>
+            </static_mesh>
+        </attrib>
+    </static_mesh>
+    <static_mesh name="Plane">
         <attrib>
             <transform>
                 <localPosition value="(0,-10,0)"/>
                 <localRotation value="(0,0,0,0)"/>
                 <localScale value="(100,1,100)"/>
             </transform>
-            <staticmesh>
+            <static_mesh>
                 <src value="assets/mesh/primitive/plane.glb"/>
                 <material value="assets/materials/plane_mat.material"/>
-            </staticmesh>
+            </static_mesh>
         </attrib>
-    </mstaticmesh>
-    <mstaticmesh name="Cylinder">
+    </static_mesh>
+    <static_mesh name="Cylinder">
         <attrib>
             <transform>
                 <localPosition value="(-7,0,0)"/>
                 <localRotation value="(0,0,0,0)"/>
                 <localScale value="(1,1,1)"/>
             </transform>
-            <staticmesh>
+            <static_mesh>
                 <src value="assets/mesh/primitive/cylinder.glb"/>
                 <material value="assets/materials/mat1.material"/>
-            </staticmesh>
+            </static_mesh>
         </attrib>
-    </mstaticmesh>
-    <mstaticmesh name="Cone">
+    </static_mesh>
+    <static_mesh name="Cone">
         <attrib>
             <transform>
                 <localPosition value="(7,0,0)"/>
                 <localRotation value="(0,0,0,0)"/>
                 <localScale value="(1,1,1)"/>
             </transform>
-            <staticmesh>
+            <static_mesh>
                 <src value="assets/mesh/primitive/cone.glb"/>
                 <material value="assets/materials/mat1.material"/>
-            </staticmesh>
+            </static_mesh>
         </attrib>
-    </mstaticmesh>
-    <mstaticmesh name="Box">
+    </static_mesh>
+    <static_mesh name="Box">
             <attrib>
                 <transform>
                     <localPosition value="(0,0,0)"/>
                     <localRotation value="(0.846,0.369,0.338,0.184)"/>
                     <localScale value="(3,3,3)"/>
                 </transform>
-                <staticmesh>
+                <static_mesh>
                     <src value="assets/mesh/primitive/box.glb"/>
                     <material value="assets/materials/mat2.material"/>
-                </staticmesh>
+                </static_mesh>
             </attrib>
-            <mstaticmesh name="Sphere_">
-                <attrib>
-                    <transform>
-                        <localPosition value="(0,0,0)"/>
-                        <localRotation value="(0,0,0,0)"/>
-                        <localScale value="(1,1,1)"/>
-                    </transform>
-                    <staticmesh>
-                        <src value="assets/mesh/primitive/sphere.glb"/>
-                        <material value="assets/materials/mat1.material"/>
-                    </staticmesh>
-                </attrib>
-            </mstaticmesh>
-        </mstaticmesh>
+    </static_mesh>
 </mscene>

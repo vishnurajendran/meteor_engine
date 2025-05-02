@@ -8,9 +8,11 @@
 #include <fstream>
 
 bool MShaderCompiler::initialised = false;
-bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& fragmentSource,
+bool MShaderCompiler::compileShader(const SString& name, const SString& vertexSource, const SString& fragmentSource,
                                     GLuint& shaderProgramHandle)
 {
+
+    MLOG(STR("MShaderCompiler::Compiling Shader ") + name);
     if (!initialised)
     {
         initialiseEngine();
@@ -27,8 +29,8 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     glShaderSource(vertex, 1, &vertBuff, &vertLength);
     glCompileShader(vertex);
 
-    if(!getShaderCompilaionStatus(vertex)) {
-        MERROR(STR("Error compiling vertex shader: ") + getShaderInfoLog(vertex));
+    if(!getShaderCompilationStatus(vertex)) {
+        MERROR(STR("ShadeCompiler:: Error compiling vertex shader: ") + getShaderInfoLog(vertex));
         glDeleteShader(vertex);
         return false;
     }
@@ -43,8 +45,8 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     glShaderSource(fragment, 1, &fragBuff, &fragLength);
     glCompileShader(fragment);
 
-    if(!getShaderCompilaionStatus(fragment)) {
-        MERROR(STR("Error compiling fragment shader: ") + getShaderInfoLog(fragment));
+    if(!getShaderCompilationStatus(fragment)) {
+        MERROR(STR("ShadeCompiler:: Error compiling fragment shader: ") + getShaderInfoLog(fragment));
         glDeleteShader(fragment);
         glDeleteShader(vertex);
         return false;
@@ -60,7 +62,7 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     GLint programSuccess;
     glGetProgramiv(shaderProgramHandle, GL_LINK_STATUS, &programSuccess);
     if (!programSuccess) {
-        MERROR(STR("Error linking shader program"));
+        MERROR(STR("ShadeCompiler:: Error linking shader program: ") + getShaderProgramInfoLog(shaderProgramHandle));
         glDeleteProgram(shaderProgramHandle);
         glDeleteShader(vertex);
         glDeleteShader(fragment);
@@ -70,10 +72,11 @@ bool MShaderCompiler::compileShader(const SString& vertexSource, const SString& 
     // Clean up shaders (they are no longer needed after linking)
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+    MLOG(STR("ShadeCompiler:: Successfully compiled "));
     return true;
 }
 
-bool MShaderCompiler::getShaderCompilaionStatus(const GLuint& shaderId) {
+bool MShaderCompiler::getShaderCompilationStatus(const GLuint& shaderId) {
     GLint success;
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
     return success == GL_TRUE;
@@ -86,31 +89,44 @@ SString MShaderCompiler::getShaderInfoLog(const GLuint &shaderId) {
     // Dynamically allocate memory for infoLog
     std::vector<char> infoLog(length + 1);
     glGetShaderInfoLog(shaderId, length, &length, infoLog.data());
+    return {infoLog.data()};
+}
 
+
+SString MShaderCompiler::getShaderProgramInfoLog(const GLuint &shaderId) {
+    GLint length = 0;
+    glGetProgramiv(shaderId, GL_INFO_LOG_LENGTH, &length);
+
+    // Dynamically allocate memory for infoLog
+    std::vector<char> infoLog(length + 1);
+    glGetProgramInfoLog(shaderId, length, &length, infoLog.data());
     return {infoLog.data()};
 }
 
 bool MShaderCompiler::initialiseEngine()
 {
     if (initialised)
-        return true;
+        return false;
 
-    auto directoryPath = "meteor_assets/shader_headers";
+    MLOG(STR("MShaderCompiler::Initialising Shader Compiler."));
+    auto directoryPath = "meteor_assets/shader_utils";
     try {
         for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
             if (entry.is_regular_file()) {
                 std::string extension = entry.path().extension().string();
                 if (extension == ".glsl") {
                     registerGLNamedString(entry.path().string(), entry.path().filename().string());
+                    //MLOG(STR("ShaderCompiler:: Added: " + entry.path().string()));
                 }
             }
         }
     } catch (const std::filesystem::filesystem_error& e) {
-        MERROR(STR("Filesystem error: ") + e.what());;
+        MERROR(STR("ShadeCompiler:: Filesystem error: ") + e.what());;
     } catch (const std::exception& e) {
-        MERROR(STR("General error: ") + e.what());
+        MERROR(STR("ShadeCompiler:: General error: ") + e.what());
     }
-
+    MLOG(STR("MShaderCompiler::Initialisation Complete."));
+    initialised = true;
     return true;
 }
 
@@ -123,9 +139,7 @@ void MShaderCompiler::registerGLNamedString(const SString& filePath, const SStri
         glNamedStringARB(GL_SHADER_INCLUDE_ARB, -1, fileNamePath.c_str(),-1, fileData.c_str());
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
-            MERROR(STR("Error registering named string: ") + std::to_string(err));
+            MERROR(STR("ShadeCompiler:: Error registering named string: ") + std::to_string(err));
         }
-        else
-            MLOG(STR("Successfully registered named string: ") + fileNamePath);
     }
 }

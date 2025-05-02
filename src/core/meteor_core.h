@@ -3,6 +3,10 @@
 //
 
 #pragma once
+// shaders
+#include "core/engine/3d/shader/shadercompiler.h"
+#include "core/engine/3d/shader/shader.h"
+#include "core/engine/3d/shader/shaderasset.h"
 
 #include "meteor_core_minimal.h"
 
@@ -32,10 +36,6 @@
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshdrawcall.h"
-
-// shaders
-#include "core/engine/3d/shader/shader.h"
-#include "core/engine/3d/shader/shaderasset.h"
 
 // scene entity deserialiser
 

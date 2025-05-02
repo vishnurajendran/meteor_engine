@@ -21,7 +21,7 @@ enum SShaderPropertyType {
     UniformVec3,
     UniformVec4,
     Matrix4,
-    Texture2D,
+    Texture
 };
 
 struct SShaderPropertyValue {
@@ -50,7 +50,7 @@ public:
     void setVec3Val(glm::vec3 val) { vec3Val = val; type = SShaderPropertyType::UniformVec3; }
     void setVec4Val(glm::vec4 val) { vec4Val = val; type = SShaderPropertyType::UniformVec4; }
     void setMat4Val(glm::mat4 val) { mat4Val = val; type = SShaderPropertyType::Matrix4; }
-    void setTextureReference(SString texturePath) { textureAssetReference = texturePath; type = SShaderPropertyType::Texture2D; }
+    void setTextureReference(SString texturePath) { textureAssetReference = texturePath; type = SShaderPropertyType::Texture; }
     void print();
 };
 
@@ -60,7 +60,7 @@ private:
     GLint getUniformLocation(const SString& name) const;
     SString vertexShaderSource;
     SString fragmentShaderSource;
-    bool valid = false;
+    bool compiled = false;
     bool compileOnFirstUse;
     std::map<SString, SShaderPropertyValue> properties;
 private:

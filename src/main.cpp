@@ -1,7 +1,8 @@
+#include "core/meteor_core.h"
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "SFML/OpenGL.hpp"
-#include "core/meteor_core.h"
+
 
 
 extern MApplication* getAppInstance();
@@ -15,9 +16,7 @@ int main(){
     }
 
     appInst->initialise();
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
+    MShaderCompiler::initialiseEngine();
     MSceneManager::getSceneManagerInstance()->loadScene(STR("assets/scenes/test_scene.scml"));
     while(appInst->isRunning()){
         appInst->run();

@@ -36,11 +36,16 @@ void MStaticMesh::prepareMesh() {
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex), (void*)offsetof(SVertex, Normal));
 
-    // Vertex normals
+    // Vertex TexCoords
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex), (void*)offsetof(SVertex, TexCoords));
 
     glBindVertexArray(0);
+
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        MERROR(STR("OpenGL error in prepareMesh:"));
+    }
 }
 
 void MStaticMesh::draw() {

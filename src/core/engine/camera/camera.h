@@ -15,8 +15,9 @@ private:
     float farPlane = 100.0f;
     float fov = 60;
 public:
+
     MCameraEntity();
-    ~MCameraEntity() override = default;
+    ~MCameraEntity() override;
 
     void setPriority(const int& priority);
     [[nodiscard]] int getPriority() const;
@@ -32,6 +33,8 @@ public:
 
     void setFov(const float& fov);
     [[nodiscard]] float getFov() const;
+
+    void onDrawGizmo() override;
 };
 
 #endif //CAMERA_H

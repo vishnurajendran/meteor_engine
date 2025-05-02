@@ -3,11 +3,25 @@
 //
 
 #include "camera.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/gizmos/gizmos.h"
+#include "core/engine/scene/scene.h"
+#include "core/engine/scene/scenemanager.h"
+#include "core/engine/texture/textureasset.h"
+#include "core/graphics/core/graphicsrenderer.h"
 #include "viewmanagement.h"
 
-MCameraEntity::MCameraEntity() : MSpatialEntity() {
+
+class MTextureAsset;
+MCameraEntity::MCameraEntity()
+{
     name = "camera";
     MViewManagement::addCamera(this);
+}
+
+MCameraEntity::~MCameraEntity()
+{
+    MViewManagement::removeCamera(this);
 }
 
 void MCameraEntity::setPriority(const int &priority) {
@@ -69,6 +83,12 @@ void MCameraEntity::setFov(const float &fov) {
     this->fov = fov;
 }
 
-float MCameraEntity::getFov() const {
-    return this->fov;
+float MCameraEntity::getFov() const { return this->fov; }
+void MCameraEntity::onDrawGizmo()
+{
+    const auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/camera.png");
+    MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
+
+    const auto res = MGraphicsRenderer::getResolution();
+    MGizmos::drawWireFrustum(getViewMatrix(), getProjectionMatrix(res), SColor(1,1,1,1), 1.0f);
 }

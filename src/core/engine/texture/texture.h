@@ -14,11 +14,12 @@ private:
 public:
     MTexture()= default;
     SVector2 getSize() const;
-    sf::Texture* getTexture();
-    unsigned int getTextureID();
-    bool loadFromPath(const SString &path);
-    bool loadFromStream(sf::InputStream &stream);
-    bool loadFromMemory(const void* data, size_t size);
+    virtual void bind(const unsigned int& location, const unsigned int& index);
+    virtual sf::Texture* getTexture();
+    virtual unsigned int getTextureID();
+    virtual bool loadFromPath(const SString &path);
+    virtual bool loadFromStream(sf::InputStream &stream);
+    virtual bool loadFromMemory(const void* data, size_t size);
 };
 
 #endif //TEXTUREASSET_H

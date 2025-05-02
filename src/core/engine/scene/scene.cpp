@@ -19,23 +19,19 @@ const SString MScene::SCENE_NAME_TAG = "name";
 		rootEntities.clear();
 	}
 
-	void MScene::startScene() {
-		//logNoFormat("Loading scene");
-		for (int i = 0; i < rootEntities.size(); i++) {
-			rootEntities.at(i)->onStart();
-		}
+	void MScene::startScene() const
+	{
+		//nothing here for now
 	}
 
-	void MScene::update(float deltaTime) {
-		//logNoFormat("updating scene");
+	void MScene::update(float deltaTime) const
+	{
+		MSpatialEntity::updateAllSceneEntities(deltaTime);
 	}
 
 	void MScene::onClose() {
 		//logNoFormat("cleaning scene");
 		sceneClosing = true;
-		for (int i = 0; i < rootEntities.size(); i++) {
-			rootEntities.at(i)->onExit();
-		}
 	}
 
 	void MScene::addToRoot(MSpatialEntity* entity) {

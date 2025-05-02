@@ -7,15 +7,16 @@
 #include "imgui-SFML.h"
 #include "imguiwindow.h"
 
+#include "ImGuizmo.h"
+#include "core/engine/gizmos/gizmos.h"
+#include "editor/app/editorapplication.h"
+#include "editor/window/menubar/menubartree.h"
 #include "editorcontrolsbuttons.h"
+#include "imgui_internal.h"
+#include "imguistyles.h"
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
-#include "imguistyles.h"
-#include "imgui_internal.h"
-#include "ImGuizmo.h"
-#include "editor/app/editorapplication.h"
-#include "editor/window/menubar/menubartree.h"
 
 MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
 
@@ -23,13 +24,58 @@ MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600,
 
 MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) : MWindow(title, sizeX, sizeY, fps) {
     this->targetFPS = fps;
+    this->settings = settings;
     sf::ContextSettings settings;
     settings.majorVersion = 4;
     settings.minorVersion = 6;
     settings.depthBits = 24;
+    createWindow();
+}
 
+void MImGuiWindow::clear() {
+    MWindow::clear();
+}
+
+void MImGuiWindow::update() {
+    const sf::Time frameTime = sf::seconds(1.f / targetFPS);
+    while (coreWindow.pollEvent(event)) {
+        ImGui::SFML::ProcessEvent(coreWindow, event);
+        if (event.type == sf::Event::Closed) {
+            close();
+            return;
+        }
+    }
+
+    //prepare all draw-calls, and setups and draw content.
+    MGraphicsRenderer::prepare();
+    MGraphicsRenderer::draw();
+
+    //ImGui::SFML::Update(coreWindow, deltaClock.restart());
+    ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
+    drawGUI();
+    ImGui::SFML::Render(coreWindow);
+    coreWindow.display();
+
+    sf::Time elapsed = clock.getElapsedTime();
+    sf::Time sleepTime = frameTime - elapsed;
+    if (sleepTime > sf::Time::Zero) {
+        sf::sleep(sleepTime);  // Sleep to limit the framerate
+    }
+    clock.restart();
+}
+
+void MImGuiWindow::drawGUI()
+{
+    drawMenuBar();
+    showDockSpace();
+    drawImGuiSubWindows();
+}
+
+void MImGuiWindow::createWindow()
+{
     coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default, settings);
-    coreWindow.setFramerateLimit(fps);
+    coreWindow.setFramerateLimit(targetFPS);
     coreWindow.setActive(true);
 
     if(!ImGui::SFML::Init(coreWindow)) {
@@ -50,44 +96,6 @@ MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) 
     ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
 
     MGraphicsRenderer::initialise(&coreWindow);
-}
-
-void MImGuiWindow::clear() {
-    MWindow::clear();
-}
-
-void MImGuiWindow::update() {
-    const sf::Time frameTime = sf::seconds(1.f / targetFPS);
-    while (coreWindow.pollEvent(event)) {
-        ImGui::SFML::ProcessEvent(coreWindow, event);
-        if (event.type == sf::Event::Closed) {
-            close();
-            return;
-        }
-    }
-
-    // draw openGL
-    MGraphicsRenderer::draw();
-
-    //ImGui::SFML::Update(coreWindow, deltaClock.restart());
-    ImGui::NewFrame();
-    ImGuizmo::BeginFrame();
-    drawGUI();
-    ImGui::SFML::Render(coreWindow);
-    coreWindow.display();
-
-    sf::Time elapsed = clock.getElapsedTime();
-    sf::Time sleepTime = frameTime - elapsed;
-    if (sleepTime > sf::Time::Zero) {
-        sf::sleep(sleepTime);  // Sleep to limit the framerate
-    }
-    clock.restart();
-}
-
-void MImGuiWindow::drawGUI() {
-    drawMenuBar();
-    showDockSpace();
-    drawImGuiSubWindows();
 }
 
 void MImGuiWindow::close() {
@@ -142,14 +150,17 @@ void MImGuiWindow::drawControls() {
     MEditorControlsButtons::runtimeControls();
 }
 
-void MImGuiWindow::loadFontFile(const SString &pathToFile, float pointSize) {
+void MImGuiWindow::loadFontFile(const SString& pathToFile, float pointSize)
+{
     ImFont* font = ImGui::GetIO().Fonts->AddFontFromFileTTF(pathToFile.c_str(), pointSize);
-    if (!font) {
+    if (!font)
+    {
         MERROR(STR("Unable to load font : ") + pathToFile);
         return;
     }
 
-    if(!ImGui::SFML::UpdateFontTexture()) {
+    if (!ImGui::SFML::UpdateFontTexture())
+    {
         MWARN("Unable to load font file");
     }
     ImGui::GetIO().FontDefault = font;

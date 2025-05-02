@@ -65,6 +65,8 @@ bool MSceneManager::loadScene(const SString& path) {
 void MSceneManager::update(float deltaTime) {
     if (activeScene == nullptr)
         return;
+
+    MSpatialEntity::destroyMarked();
     activeScene->update(deltaTime);
 }
 

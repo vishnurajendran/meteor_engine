@@ -11,8 +11,9 @@ class MTextureAsset : public MAsset {
 private:
     MTexture texture;
 public:
+    MTextureAsset();
     explicit MTextureAsset(const SString& path);
-    MTexture* getTexture();
+    virtual MTexture* getTexture();
 };
 
 

@@ -20,9 +20,12 @@ private:
 public:
     static void initialise();
     static void registerDrawer(MInspectorDrawer* drawer);
-    virtual void onDrawInspector(MSpatialEntity* target)=0;
+    virtual SString getInspectorName() const=0;
+    void onDraw(MSpatialEntity* target);
     virtual bool canDraw(MSpatialEntity* entity) = 0;
     static MInspectorDrawer* getDrawer(MSpatialEntity* entity);
+protected:
+    virtual void onDrawInspector(MSpatialEntity* target)=0;
 };
 
 #endif //METEOR_ENGINE_INSPECTORDRAWER_H
