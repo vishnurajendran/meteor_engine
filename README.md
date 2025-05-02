@@ -3,8 +3,6 @@
 
 Meteor is a custom game engine built in C++20, featuring a player and an editor. It leverages modern C++ and various libraries to provide a robust and flexible environment for game development.
 
-![meteorite_editor](https://i.ibb.co/8L1wtw4Q/Screenshot-2025-04-24-015820.png)
-
 ## Features
 
 - Built with **C++20** using the **STL**.
