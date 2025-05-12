@@ -31,7 +31,7 @@ void MTexture::bind(const unsigned int& location, const unsigned int& index)
     glBindTexture(GL_TEXTURE_2D, textureId);
 }
 
-sf::Texture *MTexture::getTexture() {
+sf::Texture *MTexture::getCoreTexture() {
     return &coreTexture;
 }
 

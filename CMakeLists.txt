@@ -374,6 +374,12 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/lights/point_light/point_light_inspector_drawer.h
         src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.cpp
         src/editor/editorwindows/inspectordrawer/lights/spot_light/spot_light_inspector_drawer.h
+        src/editor/editorwindows/assetwindow/editorassetwindow.cpp
+        src/editor/editorwindows/assetwindow/editorassetwindow.h
+        src/editor/editorassetmanager/editorassetmanager.cpp
+        src/editor/editorassetmanager/editorassetmanager.h
+        src/editor/editorassetmanager/editor_asset_directory_node.cpp
+        src/editor/editorassetmanager/editor_asset_directory_node.h
 )
 
 set(PLAYER_SOURCES
@@ -384,7 +390,7 @@ set(PLAYER_SOURCES
 
 # Conditionally build Editor executable if BUILD_EDITOR is ON
 if(BUILD_EDITOR)
-    add_executable(${EDITOR_NAME} WIN32 ${CORE_SOURCES} ${EDITOR_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
+    add_executable(${EDITOR_NAME} ${CORE_SOURCES} ${EDITOR_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
     target_link_libraries(${EDITOR_NAME}
             PRIVATE
@@ -403,7 +409,7 @@ endif()
 
 # Conditionally build Player executable if BUILD_PLAYER is ON
 if(BUILD_PLAYER)
-    add_executable(${PLAYER_NAME} WIN32 ${CORE_SOURCES} ${PLAYER_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
+    add_executable(${PLAYER_NAME} ${CORE_SOURCES} ${PLAYER_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
     target_link_libraries(${PLAYER_NAME}
             PRIVATE

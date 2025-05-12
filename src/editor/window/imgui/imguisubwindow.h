@@ -5,6 +5,7 @@
 
 #ifndef METEOR_ENGINE_IMGUISUBWINDOW_H
 #define METEOR_ENGINE_IMGUISUBWINDOW_H
+#include "imgui.h"
 #include "core/meteor_core_minimal.h"
 
 class MImGuiSubWindow : public MObject{

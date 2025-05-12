@@ -151,5 +151,5 @@ void MStaticMeshEntity::calculateBounds()
 
     bounds.min = min;
     bounds.max = max;
-    MLOG("Bounds calculated");
+    //MLOG("Bounds calculated");
 }

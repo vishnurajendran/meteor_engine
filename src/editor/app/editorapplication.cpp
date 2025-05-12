@@ -5,9 +5,11 @@
 #include "editorapplication.h"
 
 #include "core/graphics/core/render_queue.h"
+#include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
-#include "editor/window/menubar/menubartree.h"
+#include "editor/editorwindows/assetwindow/editorassetwindow.h"
 #include "editor/window/imgui/imguiwindow.h"
+#include "editor/window/menubar/menubartree.h"
 
 
 MSpatialEntity* MEditorApplication::Selected = nullptr;
@@ -65,6 +67,7 @@ void MEditorApplication::initialise() {
     subWindows.push_back(new MEditorHierarchyWindow());
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
+    subWindows.push_back(new MEditorAssetWindow());
     MLOG(STR("Loaded Editor Windows"));
 
     MMenubarTreeNode::buildTree();
@@ -137,6 +140,7 @@ void MEditorApplication::showSplashScreen()
 void MEditorApplication::loadPrerequisites()
 {
     //Refresh Asset Manager
+    MAssetManager::registerAssetManagerInstance(new MEditorAssetManager());
     MAssetManager::getInstance()->refresh();
 
     //setup scene manager

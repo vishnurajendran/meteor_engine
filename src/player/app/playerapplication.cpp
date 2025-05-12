@@ -32,6 +32,7 @@ void MPlayerApplication::initialise() {
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));
 
+    MAssetManager::registerAssetManagerInstance(new MAssetManager());
     MAssetManager::getInstance()->refresh();
     MLOG(STR("Player Initialised"));
 }

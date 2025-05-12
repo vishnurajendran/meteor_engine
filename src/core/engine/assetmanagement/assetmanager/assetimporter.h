@@ -18,6 +18,7 @@ public:
 
     virtual bool canImport(SString fileExtension) = 0;
     virtual MAsset* importAsset(SString path) = 0;
+    virtual SString getIconPath() const;
 };
 
 #endif //ASSETIMPORTER_H

@@ -20,8 +20,9 @@ class MAssetManager : public MObject
 {
 public:
     static MAssetManager* getInstance();
-    void refresh();
-    void cleanup();
+    static void registerAssetManagerInstance(MAssetManager* instance);
+    virtual void refresh();
+    virtual void cleanup();
     template <typename T>
     T* getAsset(SString path) {
         static_assert(std::is_base_of<MAsset, T>::value,"T must inherit from MAsset");
@@ -33,14 +34,14 @@ public:
         return nullptr;
     }
 
-private:
+protected:
     std::vector<SString> ASSET_SEARCH_PATHS = {"assets/", "meteor_assets/engine_assets/"};
     std::map<SString, MAsset*> assetMap;
     std::vector<IDefferedLoadableAsset*> defferedLoadableAssetList;
-    static MAssetManager* instance;
-    void loadAssetRecursive(SString path);
-    bool loadAsset(SString path);
-    void addToDeferedLoadableAssetList(IDefferedLoadableAsset* asset);
+    static MAssetManager* managerInstance;
+    virtual void loadAssetRecursive(SString path);
+    virtual bool loadAsset(SString path);
+    virtual void addToDeferedLoadableAssetList(IDefferedLoadableAsset* asset);
 };
 
 #endif //ASSETMANAGER_H

@@ -15,7 +15,7 @@ public:
     MTexture()= default;
     SVector2 getSize() const;
     virtual void bind(const unsigned int& location, const unsigned int& index);
-    virtual sf::Texture* getTexture();
+    virtual sf::Texture* getCoreTexture();
     virtual unsigned int getTextureID();
     virtual bool loadFromPath(const SString &path);
     virtual bool loadFromStream(sf::InputStream &stream);

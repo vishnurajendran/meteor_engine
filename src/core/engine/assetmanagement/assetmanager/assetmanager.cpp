@@ -11,13 +11,23 @@
 #include "core/engine/assetmanagement/asset/defferedloadableasset.h"
 
 
-MAssetManager* MAssetManager::instance;
+MAssetManager* MAssetManager::managerInstance = nullptr;
 
-MAssetManager * MAssetManager::getInstance() {
-    if(instance == nullptr)
-        instance = new MAssetManager();
+MAssetManager* MAssetManager::getInstance()
+{
+    if (!managerInstance)
+    {
+        MERROR("Asset Manager not registered!!");
+    }
+    return managerInstance;
+}
 
-    return instance;
+void MAssetManager::registerAssetManagerInstance(MAssetManager* instance)
+{
+    if (managerInstance != nullptr)
+        delete managerInstance;
+
+    managerInstance = instance;
 }
 
 void MAssetManager::refresh() {

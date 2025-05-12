@@ -15,7 +15,7 @@ public:
     bool loadFromMemory(const void* data, size_t size) override;
     bool loadFromPath(const SString& path) override;
     bool loadFromStream(sf::InputStream& stream) override;
-    sf::Texture* getTexture() override {return nullptr;}
+    sf::Texture* getCoreTexture() override {return nullptr;}
     unsigned int getTextureID() override {return textureId;};
     void bind(const unsigned int& location, const unsigned int& index) override;
 
