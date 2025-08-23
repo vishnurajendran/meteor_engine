@@ -1,0 +1,33 @@
+//
+// Created by ssj5v on 12-05-2025.
+//
+
+#ifndef OBJECT_REFERENCE_CONTROLS_H
+#define OBJECT_REFERENCE_CONTROLS_H
+#include <functional>
+
+
+#include "SFML/Graphics/Texture.hpp"
+#include "core/object/object.h"
+
+
+class MAssetManager;
+class MAsset;
+class MAssetReferenceControl : MObject {
+private:
+    SString assetIdReference = "";
+private:
+    sf::Texture* getFileIcon(MAssetManager* assetManager, MAsset* asset) const;
+    static bool defaultTestFuncCallback(MAsset* asset);
+    static void drawCenteredLabel(SString label, const SString& id);
+public:
+    static const SString ASSET_REF_TARGET_KEY;
+    MAssetReferenceControl();
+    explicit MAssetReferenceControl(MAsset* asset);
+    MAsset* getAssetReference() const;
+    void setAssetReference(MAsset* asset);
+    bool drawControl(const SString& label);
+    std::function<bool(MAsset* asset)> canAcceptAssetFuncCallback;
+};
+
+#endif //OBJECT_REFERENCE_CONTROLS_H

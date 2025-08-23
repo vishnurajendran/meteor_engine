@@ -15,7 +15,6 @@ void MInspectorDrawer::initialise() {
 
 void MInspectorDrawer::registerDrawer(MInspectorDrawer* drawer)
 {
-
     if (!drawer)
         return;
 

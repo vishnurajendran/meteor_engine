@@ -380,6 +380,12 @@ set(EDITOR_SOURCES
         src/editor/editorassetmanager/editorassetmanager.h
         src/editor/editorassetmanager/editor_asset_directory_node.cpp
         src/editor/editorassetmanager/editor_asset_directory_node.h
+        src/editor/editorwindows/inspectordrawer/controls/asset_reference_controls.cpp
+        src/editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h
+        src/editor/editorwindows/inspectordrawer/static_mesh/static_mesh_inspector.cpp
+        src/editor/editorwindows/inspectordrawer/static_mesh/static_mesh_inspector.h
+        src/editor/editorwindows/inspectordrawer/controls/material_properties_controls.cpp
+        src/editor/editorwindows/inspectordrawer/controls/material_properties_controls.h
 )
 
 set(PLAYER_SOURCES

@@ -17,7 +17,12 @@ public:
     virtual void run() = 0;
     virtual void cleanup() = 0;
 private:
-    MSceneManager* sceneManagerInstance;
+    MSceneManager* sceneManagerInstance = nullptr;
+    float startTime = 0;
+protected:
+    float deltaTime = 0.0f;
+    void startFrame();
+    void endFrame();
 };
 
 #endif //METEOR_ENGINE_APPLICATION_H

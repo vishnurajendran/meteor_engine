@@ -14,7 +14,7 @@ bool MMaterialAsserImporter::canImport(SString fileExtension) {
     return fileExtension == "material";
 }
 
-MAsset * MMaterialAsserImporter::importAsset(SString path) {
+MAsset * MMaterialAsserImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     auto asset = new MMaterialAsset(path);
     if(!asset->isValid()) {
         delete asset;

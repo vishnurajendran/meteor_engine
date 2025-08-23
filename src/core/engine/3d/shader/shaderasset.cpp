@@ -234,6 +234,7 @@ SShaderPropertyType MShaderAsset::parsePropertyType(const SString &str) {
     if (str == "u2") return UniformVec2;
     if (str == "u3") return UniformVec3;
     if (str == "u4") return UniformVec4;
+    if (str == "col") return Color;
     if (str == "m4") return Matrix4;
     if (str == "tex2D") return Texture;
     if (str == "tex") return Texture;
@@ -265,6 +266,15 @@ void MShaderAsset::parseValue(const SString &str, SShaderPropertyValue &value, c
             SVector3 vec3 = SVector3(0);
             if (parseVector3(str, vec3)) {
                 value.setVec3Val(vec3);
+            }
+        }
+            break;
+
+        // Color and Vec4 are identical
+        case Color: {
+            SVector4 colVec4 = SVector4(0);
+            if (parseVector4(str, colVec4)) {
+                value.setColVal(colVec4);
             }
         }
             break;

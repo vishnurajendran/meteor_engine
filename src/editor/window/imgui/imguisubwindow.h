@@ -19,7 +19,8 @@ public:
     MImGuiSubWindow(const SString& title, int x, int y);
     ~MImGuiSubWindow();
     void setWindowConstraints(float minx, float miny, float maxx, float maxy);
-    void draw();
+    void draw(float deltaTime);
+    virtual void handleInput(float deltaTime);
     virtual void onGui()=0;
 };
 

@@ -14,7 +14,7 @@ bool MTextureAssetImporter::canImport(SString fileExtension) {
     return fileExtension == "png" || fileExtension == "jpg" || fileExtension == "jpeg";
 }
 
-MAsset * MTextureAssetImporter::importAsset(SString path) {
+MAsset * MTextureAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     MTextureAsset* asset = new MTextureAsset(path);
     if(!asset->isValid()) {
         delete asset;

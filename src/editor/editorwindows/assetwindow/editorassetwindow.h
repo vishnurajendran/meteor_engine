@@ -14,10 +14,15 @@ private:
     void drawCurrentPath();
     void drawAssetWindowControls();
     void drawAssetWindow(SAssetDirectoryNode* root);
-    void drawNodeAsDirectory(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node, const ImVec2& size);
-    void drawNodeAsFile(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node, const ImVec2& size);
+    void drawNodeAsDirectory(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node,
+                             const ImVec2& containerSize, const ImVec2& iconSize);
+    void onFileDoubleClicked(SAssetDirectoryNode* node);
+    void drawNodeAsFile(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node,const ImVec2& containerSize, const ImVec2& iconSize);
     sf::Texture* getFileIcon(MAssetManager* assetManager, SAssetDirectoryNode* asset) const;
     void drawAssetText(SAssetDirectoryNode* node);
+
+    void doAssetDragSource(SString key, const sf::Texture& icon, SAssetDirectoryNode* node);
+
 public:
     MEditorAssetWindow();
     MEditorAssetWindow(int x, int y);
@@ -27,7 +32,9 @@ private:
     SAssetDirectoryNode* currentAssetDirectoryNode = nullptr;
     SAssetDirectoryNode* selectedAssetNode = nullptr;
     std::vector<SAssetDirectoryNode*> nodeHistoryStack;
-    float scalingFactor = 1.0f;
+    float scalingFactor = 1.559f;
+
+    SString draggedAssetId;
 };
 
 

@@ -7,8 +7,10 @@
 #include <iostream>
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 #include "core/engine/assetmanagement/textasset/textasset.h"
+#include "core/engine/skybox/cubemaptexture.h"
 #include "core/engine/texture/textureasset.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
+#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "glm/glm.hpp"
 #include "imgui-SFML.h"
 
@@ -83,12 +85,16 @@ void MEditorAssetWindow::drawAssetWindow(SAssetDirectoryNode* root)
         if (node == nullptr)
             continue;
 
+        ImVec2 containerSize = ImVec2(iconSize + padding, iconSize + padding + 8);
         ImGui::PushID(++itemIndex);
-        ImGui::BeginChild("##Container",ImVec2(iconSize+6, iconSize + 28), ImGuiChildFlags_None);
-        if (node->isDirectory)
-            drawNodeAsDirectory(itemIndex, assetManager, node, ImVec2(iconSize + 6, iconSize));
-        else
-            drawNodeAsFile(itemIndex, assetManager, node, ImVec2(iconSize, iconSize));
+        if (ImGui::BeginChild("##Container",containerSize))
+        {
+            if (node->isDirectory)
+                drawNodeAsDirectory(itemIndex, assetManager, node,containerSize, ImVec2(iconSize, iconSize));
+            else
+                drawNodeAsFile(itemIndex, assetManager, node,containerSize,ImVec2(iconSize, iconSize));
+        }
+
         ImGui::EndChild();
         ImGui::PopID();
 
@@ -106,7 +112,8 @@ void MEditorAssetWindow::drawAssetWindow(SAssetDirectoryNode* root)
 
 }
 
-void MEditorAssetWindow::drawNodeAsDirectory(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node, const ImVec2& size)
+void MEditorAssetWindow::drawNodeAsDirectory(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node,
+                                             const ImVec2& containerSize, const ImVec2& iconSize)
 {
     const auto& textureAsset = assetManager->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/folder.png");
     if (!textureAsset)
@@ -117,25 +124,33 @@ void MEditorAssetWindow::drawNodeAsDirectory(const int& id, MAssetManager* asset
     bool selected = node == selectedAssetNode;
     auto flags = ImGuiSelectableFlags_AllowDoubleClick;
     ImVec2 pos = ImGui::GetCursorPos();
-    ImVec2 contentRegion = ImGui::GetContentRegionAvail();
-    if (ImGui::Selectable(selId.c_str(),selected,flags, contentRegion)) {
+    ImVec2 region = ImGui::GetContentRegionAvail();
+    if (ImGui::Selectable(selId.c_str(), selected, flags, region))
+    {
         selectedAssetNode = node;
         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
         {
             currentAssetDirectoryNode = node;
             nodeHistoryStack.push_back(node);
-            MLOG("Directory Click");
         }
     }
     const SString ImgId = "##Directory_Ico";
     ImGui::SetCursorPos(pos);
-    ImGui::Image(sfmlTexture, size);
+    ImGui::SetCursorPosX((region.x - iconSize.x) * 0.5f);
+    ImGui::Image(sfmlTexture, iconSize);
 
     drawAssetText(node);
 }
+void MEditorAssetWindow::onFileDoubleClicked(SAssetDirectoryNode* node)
+{
+    if (!node || node->isDirectory || !node->assetReference)
+        return;
 
-void MEditorAssetWindow::drawNodeAsFile(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node,
-                                        const ImVec2& size)
+    auto cmd = STR("\"") + node->getAsset()->getFullPath() + STR("\"");
+    system(cmd.c_str());
+}
+
+void MEditorAssetWindow::drawNodeAsFile(const int& id, MAssetManager* assetManager, SAssetDirectoryNode* node, const ImVec2& containerSize, const ImVec2& iconSize)
 {
     MAsset* asset = node->getAsset();
     if (!asset)
@@ -150,20 +165,37 @@ void MEditorAssetWindow::drawNodeAsFile(const int& id, MAssetManager* assetManag
     bool selected = node == selectedAssetNode;
     auto flags = ImGuiSelectableFlags_AllowDoubleClick;
     ImVec2 pos = ImGui::GetCursorPos();
-    ImVec2 contentRegion = ImGui::GetContentRegionAvail();
-    if (ImGui::Selectable(fileId.c_str(),selected,flags, contentRegion)) {
+    ImVec2 region = ImGui::GetContentRegionAvail();
+
+    if (ImGui::Selectable(fileId.c_str(),selected,flags, region)) {
         selectedAssetNode = node;
         if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0))
         {
-            MLOG("File Click");
+            onFileDoubleClicked(node);
         }
     }
+
+    doAssetDragSource(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str(), *sfmlTextureRef, node);
+
     const SString ImgId = "##Directory_Ico";
     ImGui::SetCursorPos(pos);
-    ImGui::Image(*sfmlTextureRef, size);
+    ImGui::SetCursorPosX((region.x - iconSize.x) * 0.5f);
+    ImGui::Image(*sfmlTextureRef, iconSize);
     drawAssetText(node);
-
 }
+
+void MEditorAssetWindow::doAssetDragSource(SString key, const sf::Texture& icon, SAssetDirectoryNode* node)
+{
+    if (ImGui::BeginDragDropSource())
+    {
+        draggedAssetId = node->assetReference->getAssetId();
+        ImGui::SetDragDropPayload(key.c_str(), &draggedAssetId, sizeof(draggedAssetId));
+        ImGui::Image(icon, ImVec2(64, 64));
+        drawAssetText(node);
+        ImGui::EndDragDropSource();
+    }
+}
+
 sf::Texture* MEditorAssetWindow::getFileIcon(MAssetManager* assetManager, SAssetDirectoryNode* asset) const
 {
     // default
@@ -175,14 +207,10 @@ sf::Texture* MEditorAssetWindow::getFileIcon(MAssetManager* assetManager, SAsset
     // if asset is image type
     // kinda hacky, but for now ignore
     // todo: optimise this, casting always is going to be slow
-    auto textureAsset = dynamic_cast<MTextureAsset*>(asset->getAsset());
-    if (textureAsset)
+    const auto& textureAsset = dynamic_cast<MTextureAsset*>(asset->getAsset());
+    //hacky, but YOLO!!
+    if (textureAsset && textureAsset->getTexture()->getCoreTexture())
     {
-        // skyboxes don't have a proper sf::texture
-        if (!textureAsset->getTexture()->getCoreTexture() ||
-            textureAsset->getTexture()->getCoreTexture()->getSize() == sf::Vector2u(0, 0))
-            return defaultFileTextureAsset;
-
         return textureAsset->getTexture()->getCoreTexture();
     }
 
@@ -221,8 +249,21 @@ MEditorAssetWindow::MEditorAssetWindow(int x, int y) : MImGuiSubWindow(x, y)
 {
     title = "Assets";
     auto editorAssetManager = dynamic_cast<MEditorAssetManager*>(MAssetManager ::getInstance());
-    currentAssetDirectoryNode = editorAssetManager->getAssetRootNode();
-    nodeHistoryStack.push_back(currentAssetDirectoryNode);
+    auto root = editorAssetManager->getAssetRootNode();
+    if (!root)
+        return;
+    auto rootChild = root->getChildrenNodes();
+    for (const auto& child : rootChild)
+    {
+        auto childName = child->getName();
+        childName.toLowerCase();
+        if (childName == "assets")
+        {
+            currentAssetDirectoryNode = child;
+            nodeHistoryStack.push_back(child);
+            break;
+        }
+    }
 }
 
 MEditorAssetWindow::~MEditorAssetWindow()

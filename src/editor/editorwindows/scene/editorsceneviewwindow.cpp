@@ -20,10 +20,13 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     MGraphicsRenderer::initialise(&renderTexture);
 }
 
-void MEditorSceneViewWindow::onGui() {
+void MEditorSceneViewWindow::onGui()
+{
     auto contentRegion = ImGui::GetContentRegionAvail();
-    const auto& sizeChanged = renderTexture.getSize().x != contentRegion.x || renderTexture.getSize().y != contentRegion.y;
-    if(sizeChanged) {
+    const auto& sizeChanged =
+        renderTexture.getSize().x != contentRegion.x || renderTexture.getSize().y != contentRegion.y;
+    if (sizeChanged)
+    {
         renderTexture.create(contentRegion.x, contentRegion.y, settings);
     }
     ImGui::Image(renderTexture, contentRegion);
@@ -32,6 +35,73 @@ void MEditorSceneViewWindow::onGui() {
     drawTranformHandles();
     drawTransformGizmoSelector();
     drawModeSelector();
+}
+
+void MEditorSceneViewWindow::handleInput(float deltaTime)
+{
+    const auto& camera = MEditorApplication::getSceneCamera();
+    if (camera == nullptr)
+        return;
+
+    if (handleCameraMouseInputs(camera, deltaTime))
+    {
+        handleCameraKeyboardInputs(camera, deltaTime);
+    }
+}
+
+void MEditorSceneViewWindow::handleCameraKeyboardInputs(MCameraEntity* camera, const float& deltaTime)
+{
+    if (ImGui::IsKeyDown(ImGuiKey_W))
+    {
+        camera->setWorldPosition(camera->getWorldPosition() + camera->getForwardVector() * 10.0f * deltaTime);
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_S))
+    {
+        camera->setWorldPosition(camera->getWorldPosition() + camera->getForwardVector() * 10.0f * deltaTime * -1.0f);
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_A))
+    {
+        camera->setWorldPosition(camera->getWorldPosition() + camera->getRightVector() * 10.0f * deltaTime * -1.0f);
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_D))
+    {
+        camera->setWorldPosition(camera->getWorldPosition() + camera->getRightVector() * 10.0f * deltaTime * 1.0f);
+    }
+}
+
+bool MEditorSceneViewWindow::handleCameraMouseInputs(MCameraEntity* camera, float deltaTime)
+{
+    const bool& mouseRMB = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+    const bool& mouseMMB = ImGui::IsMouseDown(ImGuiMouseButton_Middle);
+    const auto& dragDelta = ImGui::GetIO().MouseDelta;
+    if (mouseRMB)
+    {
+        // Update yaw and pitch
+        cameraYaw += dragDelta.x * cameraSensitivity;
+        cameraPitch -= dragDelta.y * cameraSensitivity; // minus to invert Y-axis
+
+        // Clamp pitch to avoid flipping
+        const float pitchLimit = 89.0f;
+        if (cameraPitch > pitchLimit) cameraPitch = pitchLimit;
+        if (cameraPitch < -pitchLimit) cameraPitch = -pitchLimit;
+
+        const auto rot = glm::quat(glm::vec3(glm::radians(cameraPitch), glm::radians(-cameraYaw), 0));
+        camera->setWorldRotation(rot);
+    }
+    else if (mouseMMB)
+    {
+        glm::vec3 right   = camera->getRightVector();
+        glm::vec3 up      = camera->getUpVector();
+        glm::vec3 movement =
+            right   * (-dragDelta.x * cameraMoveSpeed * deltaTime) +
+            up      * ( dragDelta.y * cameraMoveSpeed * deltaTime);
+        camera->setWorldPosition(camera->getWorldPosition() + movement);
+    }
+
+    return mouseRMB;
 }
 
 void MEditorSceneViewWindow::drawTransformGizmoSelector() {
@@ -195,13 +265,17 @@ SString MEditorSceneViewWindow::getCurrentTransformGizmoText() const {
     }
 }
 
-SString MEditorSceneViewWindow::getCurrentTransformModeText() const {
-    switch(transformMode) {
-        case ImGuizmo::MODE::LOCAL:
-            return "Local";
-        case ImGuizmo::MODE::WORLD:
-            return "World";
-        default:
-            return "???";
+SString MEditorSceneViewWindow::getCurrentTransformModeText() const
+{
+    switch (transformMode)
+    {
+    case ImGuizmo::MODE::LOCAL:
+        return "Local";
+    case ImGuizmo::MODE::WORLD:
+        return "World";
+    default:
+        return "???";
     }
 }
+
+

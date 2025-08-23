@@ -15,7 +15,7 @@ bool MCubemapAssetImporter::canImport(SString fileExtension) {
     return fileExtension == "skybox";
 }
 
-MAsset * MCubemapAssetImporter::importAsset(SString path) {
+MAsset * MCubemapAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     MCubemapAsset* asset = new MCubemapAsset(path);
     if(!asset->isValid()) {
         delete asset;

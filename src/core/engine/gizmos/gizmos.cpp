@@ -26,7 +26,9 @@ MCameraEntity* MGizmos::getActiveCamera()
     for (auto camera : cameras)
     {
         if (camera != nullptr && camera->getEnabled())
+        {
             return camera;
+        }
     }
 
     return nullptr;
@@ -92,25 +94,15 @@ void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExte
 
     // Set up orthographic projection for screen
     auto camera = getActiveCamera();
+
     SVector2 resolution = getResolution(); // screen resolution
     SMatrix4 proj = camera->getProjectionMatrix(resolution);
     SMatrix4 view = camera->getViewMatrix(); // no view transform
 
-    // Model transform: translate to bottom-left and scale to size
-    SVector3 bottomLeft = {
-        position.x - halfExtents.x,
-        position.y - halfExtents.y,
-        position.z
-    };
-
-    SVector3 size = {
-        halfExtents.x * 2.0f,
-        halfExtents.y * 2.0f,
-        1.0f
-    };
-
-    SMatrix4 model = glm::translate(SMatrix4(1.0f), bottomLeft) *
-                      glm::scale(SMatrix4(1.0f), size);
+    SMatrix4 model(1.0f);
+    model = glm::translate(model, position);
+    model *= SMatrix4(glm::mat3(glm::transpose(view))); // camera rotation only
+    model = glm::scale(model, SVector3(halfExtents.x * 2.0f, halfExtents.y * 2.0f, 1.0f));
 
     SMatrix4 mvp = proj * view * model;
 

@@ -57,7 +57,7 @@ void MWindow::clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void MWindow::update() {
+void MWindow::update(float deltaTime) {
     if(targetFPS <= 0) //just a safety check
         targetFPS = 60;
 

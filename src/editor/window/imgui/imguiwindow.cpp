@@ -36,7 +36,7 @@ void MImGuiWindow::clear() {
     MWindow::clear();
 }
 
-void MImGuiWindow::update() {
+void MImGuiWindow::update(float deltaTime) {
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
     while (coreWindow.pollEvent(event)) {
         ImGui::SFML::ProcessEvent(coreWindow, event);
@@ -53,7 +53,7 @@ void MImGuiWindow::update() {
     //ImGui::SFML::Update(coreWindow, deltaClock.restart());
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
-    drawGUI();
+    drawGUI(deltaTime);
     ImGui::SFML::Render(coreWindow);
     coreWindow.display();
 
@@ -65,11 +65,11 @@ void MImGuiWindow::update() {
     clock.restart();
 }
 
-void MImGuiWindow::drawGUI()
+void MImGuiWindow::drawGUI(float deltaTime)
 {
     drawMenuBar();
     showDockSpace();
-    drawImGuiSubWindows();
+    drawImGuiSubWindows(deltaTime);
 }
 
 void MImGuiWindow::createWindow()
@@ -103,10 +103,10 @@ void MImGuiWindow::close() {
     MWindow::close();
 }
 
-void MImGuiWindow::drawImGuiSubWindows() {
+void MImGuiWindow::drawImGuiSubWindows(float deltaTime) {
     for(auto window : MImGuiSubWindowManager::getSubWindows()){
         if(window)
-            window->draw();
+            window->draw(deltaTime);
     }
 }
 

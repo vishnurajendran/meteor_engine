@@ -31,7 +31,7 @@ void MCameraEntityInspectorDrawer::drawCameraGUI(MCameraEntity* cameraTarget) {
     auto farClip = cameraTarget->getClipPlanes().second;
 
     auto dpi = DPIHelper::GetDPIScaleFactor();
-    ImGui::BeginChild("##Camera", ImVec2(0, 150*dpi), true, ImGuiChildFlags_Border);
+    ImGui::BeginChild("##Camera", ImVec2(0, 250*dpi), true, ImGuiChildFlags_Border);
     ImGui::Text("Camera");
 
     ImGui::Text("Fov");
@@ -63,6 +63,12 @@ void MCameraEntityInspectorDrawer::drawCameraGUI(MCameraEntity* cameraTarget) {
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     if(ImGui::InputFloat("##FarClip",&farClip, 0.1f, 100.0f)) {
         cameraTarget->setClipPlanes(nearClip, farClip);
+    }
+
+
+    if (refrenceControl.drawControl("Test Asset Reference"))
+    {
+
     }
 
     ImGui::EndChild();

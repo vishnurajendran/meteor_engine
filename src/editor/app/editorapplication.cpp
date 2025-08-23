@@ -24,11 +24,13 @@ void MEditorApplication::run() {
     if(window == nullptr)
         return;
 
+    startFrame();
     window->clear();
 
     //Todo: set real delta time here
-    MSceneManager::getSceneManagerInstance()->update(0.0);
-    window->update();
+    MSceneManager::getSceneManagerInstance()->update(deltaTime);
+    window->update(deltaTime);
+    endFrame();
 }
 
 void MEditorApplication::cleanup() {

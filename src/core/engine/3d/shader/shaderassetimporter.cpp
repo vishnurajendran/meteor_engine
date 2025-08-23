@@ -16,7 +16,7 @@ bool MShaderAssetImporter::canImport(SString fileExtension) {
     return fileExtension == "mesl";
 }
 
-MAsset * MShaderAssetImporter::importAsset(SString path) {
+MAsset * MShaderAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     auto asset = new MShaderAsset(path);
     if(!asset->isValid()) {
         MERROR(STR("MShaderAssetImporter::importAsset(): invalid asset"));
