@@ -4,6 +4,7 @@
 
 #include "playerapplication.h"
 
+#include "core/engine/gizmos/gizmos.h"
 #include "core/graphics/core/render_queue.h"
 
 MPlayerApplication::MPlayerApplication() : MApplication(){
@@ -13,10 +14,13 @@ MPlayerApplication::MPlayerApplication() : MApplication(){
 void MPlayerApplication::run() {
     if(window == nullptr)
         return;
+
+    startFrame();
     window->clear();
-    MSceneManager::getSceneManagerInstance()->update(0.0f);
+    MSceneManager::getSceneManagerInstance()->update(deltaTime);
     MRenderQueue::requestDrawCalls();
-    window->update();
+    window->update(deltaTime);
+    endFrame();
 }
 
 void MPlayerApplication::cleanup() {
@@ -32,6 +36,8 @@ void MPlayerApplication::initialise() {
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));
 
+    MSceneManager::registerSceneManager(new MSceneManager());
+    MAssetManager::registerAssetManagerInstance(new MAssetManager());
     MAssetManager::getInstance()->refresh();
     MLOG(STR("Player Initialised"));
 }

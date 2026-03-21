@@ -5,9 +5,11 @@
 #include "editorapplication.h"
 
 #include "core/graphics/core/render_queue.h"
+#include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
-#include "editor/window/menubar/menubartree.h"
+#include "editor/editorwindows/assetwindow/editorassetwindow.h"
 #include "editor/window/imgui/imguiwindow.h"
+#include "editor/window/menubar/menubartree.h"
 
 
 MSpatialEntity* MEditorApplication::Selected = nullptr;
@@ -22,11 +24,13 @@ void MEditorApplication::run() {
     if(window == nullptr)
         return;
 
+    startFrame();
     window->clear();
 
     //Todo: set real delta time here
-    MSceneManager::getSceneManagerInstance()->update(0.0);
-    window->update();
+    MSceneManager::getSceneManagerInstance()->update(deltaTime);
+    window->update(deltaTime);
+    endFrame();
 }
 
 void MEditorApplication::cleanup() {
@@ -65,6 +69,7 @@ void MEditorApplication::initialise() {
     subWindows.push_back(new MEditorHierarchyWindow());
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
+    subWindows.push_back(new MEditorAssetWindow());
     MLOG(STR("Loaded Editor Windows"));
 
     MMenubarTreeNode::buildTree();
@@ -85,14 +90,14 @@ bool MEditorApplication::isRunning() const
 
 void MEditorApplication::showSplashScreen()
 {
-    sf::RenderWindow splashWindow(sf::VideoMode(960, 540), "Meteorite-Splash", sf::Style::None);
+    sf::RenderWindow splashWindow(sf::VideoMode(sf::Vector2u(960, 540)), "Meteorite-Splash", sf::Style::None);
     splashWindow.setFramerateLimit(60);
     splashWindow.setActive(true);
     splashWindow.setVisible(true);
     splashWindow.requestFocus();
 
     //Hack to force to top
-    HWND hwnd = splashWindow.getSystemHandle();  // SFML lets you grab the native Win32 handle
+    HWND hwnd = splashWindow.getNativeHandle();  // SFML lets you grab the native Win32 handle
     ShowWindow(hwnd, SW_SHOW);               // Ensure it is shown
     SetForegroundWindow(hwnd);               // Bring to foreground
     SetFocus(hwnd);
@@ -102,22 +107,20 @@ void MEditorApplication::showSplashScreen()
     splashTexture.loadFromFile("meteor_assets/splash.png");
 
     sf::Sprite sprite(splashTexture);
-    sprite.setScale(splashWindow.getSize().x / (float)splashTexture.getSize().x,
-                    splashWindow.getSize().y / (float)splashTexture.getSize().y);
+    sprite.setScale( { splashWindow.getSize().x / (float)splashTexture.getSize().x,
+                    splashWindow.getSize().y / (float)splashTexture.getSize().y});
 
     sf::Font font;
-    font.loadFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
-    sf::Text text;
-    text.setFont(font);
-    text.setString("Loading Meteorite...");
+    font.openFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
+    sf::Text text(font, "Loading Meteorite...");
     text.setCharacterSize(12); // in pixels
     text.setFillColor(sf::Color::White);
     text.setPosition(sf::Vector2f(30, 500));
 
     while (splashShowing && splashWindow.isOpen())
     {
-        sf::Event event;
-        while (splashWindow.pollEvent(event))
+        std::optional<sf::Event> event;
+        while (event = splashWindow.pollEvent())
         {
             continue;
         }
@@ -137,6 +140,7 @@ void MEditorApplication::showSplashScreen()
 void MEditorApplication::loadPrerequisites()
 {
     //Refresh Asset Manager
+    MAssetManager::registerAssetManagerInstance(new MEditorAssetManager());
     MAssetManager::getInstance()->refresh();
 
     //setup scene manager

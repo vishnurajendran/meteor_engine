@@ -107,6 +107,7 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
         case UniformVec3:
             setUniform3f(name, value.getVec3Val());
             break;
+        case Color:
         case UniformVec4:
             setUniform4f(name, value.getVec4Val());
             break;
@@ -114,7 +115,8 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
             setUniformMat4(name, value.getMat4Val());
             break;
         case Texture:
-            setTexture(name, value.getTexAssetReference());
+            if (!value.getTexAssetReference().empty())
+                setTexture(name, value.getTexAssetReference());
         default:
             break;
     }

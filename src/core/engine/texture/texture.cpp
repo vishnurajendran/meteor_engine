@@ -10,7 +10,7 @@
 #include "core/utils/glmhelper.h"
 
 bool MTexture::loadFromPath(const SString &path) {
-    return coreTexture.loadFromFile(path);
+    return coreTexture.loadFromFile(path.c_str());
 }
 
 bool MTexture::loadFromStream(sf::InputStream &stream) {
@@ -31,7 +31,7 @@ void MTexture::bind(const unsigned int& location, const unsigned int& index)
     glBindTexture(GL_TEXTURE_2D, textureId);
 }
 
-sf::Texture *MTexture::getTexture() {
+sf::Texture *MTexture::getCoreTexture() {
     return &coreTexture;
 }
 

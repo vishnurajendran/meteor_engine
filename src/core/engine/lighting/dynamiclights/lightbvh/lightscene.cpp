@@ -1,9 +1,7 @@
 //
 // Created by ssj5v on 29-04-2025.
 //
-
 #include "lightscene.h"
-
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "glm/gtx/norm.hpp"
 

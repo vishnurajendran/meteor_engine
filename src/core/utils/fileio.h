@@ -14,8 +14,11 @@
 
 class FileIO : MObject {
     public:
+    static bool hasFile(const SString& path);
     static bool readFile(const SString& path, SString& data);
+    static bool writeFile(const SString& path, SString& data);
     static SString getFileExtension(const SString& path);
+    static SString getWorkingDir();
 };
 
 #endif //FILEIO_H

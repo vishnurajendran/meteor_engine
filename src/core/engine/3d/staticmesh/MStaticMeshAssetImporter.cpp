@@ -17,7 +17,7 @@ bool MStaticMeshAssetImporter::canImport(SString fileExtension) {
                                                                             != supportedFileExtensions.end();
 }
 
-MAsset * MStaticMeshAssetImporter::importAsset(SString path) {
+MAsset * MStaticMeshAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     auto asset = new MStaticMeshAsset(path);
     if(!asset->isValid()) {
         MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));

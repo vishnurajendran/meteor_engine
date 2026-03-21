@@ -41,7 +41,7 @@ MSpatialEntity * MStaticMeshEntityDeserialiser::deserialize(pugi::xml_node node)
     }
     if(const auto meshMatNode = meshNode.child(MESH_ATTRIB_MATERIAL.c_str())) {
         if(const auto material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(meshMatNode.attribute(ATTRIB_VALUE_KEY.c_str()).value())) {
-            entity->setMaterial( material->getInstance());
+            entity->setMaterialAsset( material);
         }
         else
             MERROR("Failed to load material asset");

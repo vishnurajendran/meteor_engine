@@ -8,6 +8,8 @@
 
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/object/object.h"
+#include "pugixml.hpp"
+
 
 class MAssetImporter : MObject {
 private:
@@ -17,7 +19,8 @@ public:
     static std::vector<MAssetImporter*>* getImporters();
 
     virtual bool canImport(SString fileExtension) = 0;
-    virtual MAsset* importAsset(SString path) = 0;
+    virtual MAsset* importAsset(SString path, const pugi::xml_document& metaData) = 0;
+    virtual SString getIconPath() const;
 };
 
 #endif //ASSETIMPORTER_H

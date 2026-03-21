@@ -10,15 +10,15 @@
 
 class MImGuiWindow : public MWindow {
 private:
-    void drawGUI();
+    void drawGUI(float deltaTime);
     void createWindow();
 public:
     MImGuiWindow(const SString& title);
     MImGuiWindow(const SString& title, int sizeX, int sizeY, int fps);
     void clear() override;
-    void update() override;
+    void update(float deltaTime) override;
     void close() override;
-    void drawImGuiSubWindows();
+    void drawImGuiSubWindows(float deltaTime);
     void showDockSpace();
     void drawMenuBar();
     void drawControls();

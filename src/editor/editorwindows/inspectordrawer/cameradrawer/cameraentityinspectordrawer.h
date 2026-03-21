@@ -4,6 +4,7 @@
 
 #ifndef CAMERAENTITYINSPECTORDRAWER_H
 #define CAMERAENTITYINSPECTORDRAWER_H
+#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
 
 
@@ -12,6 +13,7 @@ class MCameraEntity;
 class MCameraEntityInspectorDrawer : MSpatialEntityInspectorDrawer {
 private:
     static const bool registered;
+    MAssetReferenceControl refrenceControl;
 public:
     SString getInspectorName() const override {return "Camera";}
     virtual bool canDraw(MSpatialEntity *entity) override;

@@ -15,6 +15,9 @@ void MAssetImporter::addImporter(MAssetImporter *importer) {
     }
 }
 
-std::vector<MAssetImporter *>* MAssetImporter::getImporters() {
-    return importers;
+std::vector<MAssetImporter*>* MAssetImporter::getImporters() { return importers; }
+
+SString MAssetImporter::getIconPath() const
+{
+    return "meteor_assets/engine_assets/icons/file-default.png";
 }

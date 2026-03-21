@@ -17,7 +17,7 @@ bool MTextAssetImporter::canImport(SString fileExtension) {
     return fileExtension == "txt";
 }
 
-MAsset * MTextAssetImporter::importAsset(SString path) {
+MAsset * MTextAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     auto asset = new MTextAsset(path);
     if(!asset->isValid()) {
         MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));

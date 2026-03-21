@@ -4,6 +4,9 @@
 
 #ifndef TEXTURE_H
 #define TEXTURE_H
+
+#include "stb_image.h"
+
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/utils/glmhelper.h"
 #include "SFML/Graphics/Texture.hpp"
@@ -15,7 +18,7 @@ public:
     MTexture()= default;
     SVector2 getSize() const;
     virtual void bind(const unsigned int& location, const unsigned int& index);
-    virtual sf::Texture* getTexture();
+    virtual sf::Texture* getCoreTexture();
     virtual unsigned int getTextureID();
     virtual bool loadFromPath(const SString &path);
     virtual bool loadFromStream(sf::InputStream &stream);

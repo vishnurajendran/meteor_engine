@@ -9,6 +9,7 @@
 #include "core/utils/aabb.h"
 
 
+class MMaterialAsset;
 class MStaticMeshDrawCall;
 class MMaterial;
 class MStaticMeshAsset;
@@ -22,6 +23,7 @@ public:
     void onUpdate(float deltaTime) override;
 private:
     MStaticMeshAsset* staticMeshAsset = nullptr;
+    MMaterialAsset* materialAsset = nullptr;
     MMaterial* materialInstance = nullptr;
     MStaticMeshDrawCall* drawCall = nullptr;
     AABB bounds;
@@ -32,8 +34,11 @@ public:
     MStaticMeshEntity();
     ~MStaticMeshEntity() override;
     void setStaticMeshAsset(MStaticMeshAsset* asset);
-    void setMaterial(MMaterial *material);
+    void setMaterialAsset(MMaterialAsset* asset);
     void calculateBounds();
+    [[nodiscard]] MStaticMeshAsset* getStaticMeshAsset() const { return staticMeshAsset; }
+    [[nodiscard]] MMaterialAsset* getMaterialAsset() const { return materialAsset; }
+    [[nodiscard]] MMaterial* getMaterialInstance() const { return materialInstance; }
     [[nodiscard]] AABB getBounds() const { return bounds; }
 };
 

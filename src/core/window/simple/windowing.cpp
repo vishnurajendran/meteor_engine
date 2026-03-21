@@ -19,7 +19,10 @@ MWindow::MWindow(const SString& title, int sizeX, int sizeY, int fps) : MObject(
     settings.minorVersion = 6;
     settings.depthBits = 24;
 
-    coreWindow.create(sf::VideoMode(sizeX, sizeY), title.str(), sf::Style::Default, settings);
+
+    const auto& size = sf::Vector2u(sizeX, sizeY);
+    auto videoMode = sf::VideoMode(size, 32);
+    coreWindow.create(videoMode, title.str(),  sf::State::Windowed, settings);
     coreWindow.setFramerateLimit(fps);
 
     // initialise glew.
@@ -41,7 +44,7 @@ void MWindow::setVisible(bool visible)
     coreWindow.setVisible(visible);
     if (visible)
     {
-        HWND hwnd = coreWindow.getSystemHandle();  // SFML lets you grab the native Win32 handle
+        HWND hwnd = coreWindow.getNativeHandle();  // SFML lets you grab the native Win32 handle
         ShowWindow(hwnd, SW_SHOW);               // Ensure it is shown
         SetForegroundWindow(hwnd);               // Bring to foreground
         SetFocus(hwnd);
@@ -57,13 +60,14 @@ void MWindow::clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void MWindow::update() {
+void MWindow::update(float deltaTime) {
     if(targetFPS <= 0) //just a safety check
         targetFPS = 60;
 
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
-    while (coreWindow.pollEvent(event)) {
-        if (event.type == sf::Event::Closed) {
+    std::optional<sf::Event> event;
+    while (event = coreWindow.pollEvent()) {
+        if (event.has_value() && event->is<sf::Event::Closed>()) {
             close();
             return;
         }

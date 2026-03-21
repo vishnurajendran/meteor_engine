@@ -7,12 +7,13 @@
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 
 
-class MTextAssetImporter : MAssetImporter {
+class MTextAssetImporter : public MAssetImporter {
 private:
     static bool registered;
 public:
     bool canImport(SString fileExtension) override;
-    MAsset * importAsset(SString path) override;
+    MAsset * importAsset(SString path, const pugi::xml_document& metaData) override;
+    [[nodiscard]] SString getIconPath() const override { return "meteor_assets/engine_assets/icons/file-text.png";}
 };
 
 

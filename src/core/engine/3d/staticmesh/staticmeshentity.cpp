@@ -6,6 +6,7 @@
 
 #include <cmath>
 
+#include "core/engine/3d/material/MMaterialAsset.h"
 #include "core/engine/3d/material/material.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/graphics/core/graphicsrenderer.h"
@@ -17,7 +18,7 @@
 void MStaticMeshEntity::prepareForDraw()
 {
     if(staticMeshAsset == nullptr) {
-        MERROR("MStaticMeshEntity::raiseDrawCall(): No mesh asset");
+        //MERROR("MStaticMeshEntity::raiseDrawCall(): No mesh asset");
         return;
     }
 
@@ -46,6 +47,10 @@ void MStaticMeshEntity::raiseDrawCall()
         MWARN("MStaticMeshEntity::raiseDrawCall(): No draw call");
         return;
     }
+
+    if (staticMeshAsset == nullptr)
+        return;
+
     MGraphicsRenderer::submit(drawCall);
 }
 void MStaticMeshEntity::onDrawGizmo()
@@ -123,12 +128,16 @@ void MStaticMeshEntity::setStaticMeshAsset(MStaticMeshAsset *asset) {
     calculateBounds();
 }
 
-void MStaticMeshEntity::setMaterial(MMaterial* material)
+void MStaticMeshEntity::setMaterialAsset(MMaterialAsset* materialAsset)
 {
-    if (material == nullptr)
+    if (materialInstance)
+        delete materialInstance; //delete this instance.
+
+    if (materialAsset == nullptr)
         MERROR("MStaticMeshEntity::setMaterial: null argument");
 
-    this->materialInstance = material;
+    this->materialAsset = materialAsset;
+    this->materialInstance = materialAsset->getInstance();
 }
 
 void MStaticMeshEntity::calculateBounds()
@@ -151,5 +160,5 @@ void MStaticMeshEntity::calculateBounds()
 
     bounds.min = min;
     bounds.max = max;
-    MLOG("Bounds calculated");
+    //MLOG("Bounds calculated");
 }

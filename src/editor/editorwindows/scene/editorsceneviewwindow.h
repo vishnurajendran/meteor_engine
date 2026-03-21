@@ -7,6 +7,8 @@
 #include "ImGuizmo.h"
 #include "editor/meteorite_minimal.h"
 
+
+class MCameraEntity;
 class MEditorSceneViewWindow : public MImGuiSubWindow{
 private:
     sf::RenderTexture renderTexture;
@@ -27,12 +29,21 @@ public:
     MEditorSceneViewWindow();
     MEditorSceneViewWindow(int x, int y);
     void onGui() override;
+    void handleInput(float deltaTime) override;
 private:
     void drawTransformGizmoSelector();
     void drawModeSelector();
     void drawTranformHandles();
     SString getCurrentTransformGizmoText() const;
     SString getCurrentTransformModeText() const;
+
+    bool handleCameraMouseInputs(MCameraEntity* camera, float delta_time);
+    void handleCameraKeyboardInputs(MCameraEntity* camera, const float& deltaTime);
+
+    float cameraMoveSpeed = 1;
+    float cameraYaw = 0;
+    float cameraPitch = 0;
+    float cameraSensitivity = 0.1f;
 };
 
 

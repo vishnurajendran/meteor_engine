@@ -14,7 +14,7 @@ private:
     static const bool registered;
 public:
     bool canImport(SString fileExtension) override;
-    MAsset * importAsset(SString path) override;
+    MAsset * importAsset(SString path, const pugi::xml_document& metaData) override;
 };
 
 

@@ -14,14 +14,13 @@ protected:
     sf::Clock clock;
     sf::ContextSettings settings;
     SString title;
-    sf::Event event;
     sf::RenderWindow coreWindow;
     sf::Clock deltaClock;
 public:
     MWindow(const SString& title);
     MWindow(const SString& title, int sizeX, int sizeY, int fps);
     virtual void clear();
-    virtual void update();
+    virtual void update(float deltaTime);
     virtual bool isOpen() const;
     virtual void close();
 

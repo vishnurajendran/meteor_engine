@@ -14,6 +14,7 @@ public:
     MTextureAsset();
     explicit MTextureAsset(const SString& path);
     virtual MTexture* getTexture();
+
 };
 
 

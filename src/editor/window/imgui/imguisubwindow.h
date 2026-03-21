@@ -5,6 +5,7 @@
 
 #ifndef METEOR_ENGINE_IMGUISUBWINDOW_H
 #define METEOR_ENGINE_IMGUISUBWINDOW_H
+#include "imgui.h"
 #include "core/meteor_core_minimal.h"
 
 class MImGuiSubWindow : public MObject{
@@ -18,7 +19,8 @@ public:
     MImGuiSubWindow(const SString& title, int x, int y);
     ~MImGuiSubWindow();
     void setWindowConstraints(float minx, float miny, float maxx, float maxy);
-    void draw();
+    void draw(float deltaTime);
+    virtual void handleInput(float deltaTime);
     virtual void onGui()=0;
 };
 

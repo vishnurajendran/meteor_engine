@@ -15,7 +15,7 @@ bool MSceneAssetImporter::canImport(SString fileExtension) {
     return fileExtension == "scml";
 }
 
-MAsset * MSceneAssetImporter::importAsset(SString path) {
+MAsset * MSceneAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
     auto asset = new MSceneAsset(path);
     if(!asset->isValid()) {
         MERROR(STR("MSceneAssetImporter::importAsset(): invalid asset"));

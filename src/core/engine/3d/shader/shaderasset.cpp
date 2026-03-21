@@ -31,8 +31,8 @@ const SString MShaderAsset::SHDR_EXTENSIONS = "#extension GL_ARB_shading_languag
 const SString MShaderAsset::SHDR_DEFINE_COMPILE_VERT =  "#define COMPILE_VERTEX\n";
 const SString MShaderAsset::SHDR_DEFINE_COMPILE_FRAG =  "#define COMPILE_FRAGMENT\n";
 
-const SString MShaderAsset::SHDR_FALLBACK_MISSING_VERT_PASS = "#NO_VERTEX_PASS_DEFINED\n";
-const SString MShaderAsset::SHDR_FALLBACK_MISSING_FRAG_PASS = "#NO_FRAGMENT_PASS_DEFINED\n";
+const SString MShaderAsset::SHDR_FALLBACK_MISSING_VERT_PASS = "#define NO_VERTEX_PASS_DEFINED\n";
+const SString MShaderAsset::SHDR_FALLBACK_MISSING_FRAG_PASS = "#define NO_FRAGMENT_PASS_DEFINED\n";
 
 void MShaderAsset::loadShader(const SString& path)
 {
@@ -101,22 +101,21 @@ bool MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString
     auto versionStr = nameAndVersiontring.second + "\n";
     auto extension = SHDR_EXTENSIONS;
 
-    SString vertexSource = versionStr + extension + SHDR_DEFINE_COMPILE_VERT + baseSource;
-    SString fragmentSource = versionStr + extension + SHDR_DEFINE_COMPILE_FRAG + baseSource;
+    SString vertexSource = versionStr + extension + SHDR_DEFINE_COMPILE_VERT + (!hasVertPass? SHDR_FALLBACK_MISSING_VERT_PASS : "") +
+        baseSource;
 
-    if (!hasVertPass)
+    SString fragmentSource = versionStr + extension + SHDR_DEFINE_COMPILE_FRAG +(!hasFragPass? SHDR_FALLBACK_MISSING_FRAG_PASS : "") +
+        baseSource;
+
+    if (hasVertPass)
     {
-        vertexSource += SHDR_FALLBACK_MISSING_VERT_PASS;
-    }
-    else
         vertexSource += rootNode.child(SHDR_VERTNODE.c_str()).text().get();
-
-    if (!hasFragPass)
-    {
-        fragmentSource += SHDR_FALLBACK_MISSING_FRAG_PASS;
     }
-    else
+
+    if (hasFragPass)
+    {
         fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
+    }
 
     const auto properties = getShaderProperties(rootNode);
     MLOG(STR("MShaderAsset::Creating Shader Object (") + name + ")");
@@ -234,6 +233,7 @@ SShaderPropertyType MShaderAsset::parsePropertyType(const SString &str) {
     if (str == "u2") return UniformVec2;
     if (str == "u3") return UniformVec3;
     if (str == "u4") return UniformVec4;
+    if (str == "col") return Color;
     if (str == "m4") return Matrix4;
     if (str == "tex2D") return Texture;
     if (str == "tex") return Texture;
@@ -265,6 +265,15 @@ void MShaderAsset::parseValue(const SString &str, SShaderPropertyValue &value, c
             SVector3 vec3 = SVector3(0);
             if (parseVector3(str, vec3)) {
                 value.setVec3Val(vec3);
+            }
+        }
+            break;
+
+        // Color and Vec4 are identical
+        case Color: {
+            SVector4 colVec4 = SVector4(0);
+            if (parseVector4(str, colVec4)) {
+                value.setColVal(colVec4);
             }
         }
             break;

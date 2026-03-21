@@ -21,7 +21,8 @@ enum SShaderPropertyType {
     UniformVec3,
     UniformVec4,
     Matrix4,
-    Texture
+    Texture,
+    Color,
 };
 
 struct SShaderPropertyValue {
@@ -41,6 +42,7 @@ public:
     [[nodiscard]] glm::vec2 getVec2Val() const { return vec2Val; }
     [[nodiscard]] glm::vec3 getVec3Val() const { return vec3Val; }
     [[nodiscard]] glm::vec4 getVec4Val() const { return vec4Val; }
+    [[nodiscard]] glm::vec4 getColor() const { return vec4Val; }
     [[nodiscard]] SMatrix4 getMat4Val() const { return mat4Val; }
     [[nodiscard]] SString getTexAssetReference() const { return textureAssetReference; }
 
@@ -48,6 +50,7 @@ public:
     void setFloatVal(float val) { floatVal = val; type = SShaderPropertyType::Float; }
     void setVec2Val(glm::vec2 val) { vec2Val = val; type = SShaderPropertyType::UniformVec2; }
     void setVec3Val(glm::vec3 val) { vec3Val = val; type = SShaderPropertyType::UniformVec3; }
+    void setColVal(glm::vec4 val) { vec4Val = val; type = SShaderPropertyType::Color; }
     void setVec4Val(glm::vec4 val) { vec4Val = val; type = SShaderPropertyType::UniformVec4; }
     void setMat4Val(glm::mat4 val) { mat4Val = val; type = SShaderPropertyType::Matrix4; }
     void setTextureReference(SString texturePath) { textureAssetReference = texturePath; type = SShaderPropertyType::Texture; }

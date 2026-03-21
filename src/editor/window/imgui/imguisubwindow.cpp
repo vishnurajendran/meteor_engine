@@ -25,12 +25,22 @@ void MImGuiSubWindow::setWindowConstraints(float minx, float miny, float maxx, f
     maxSize = ImVec2(maxx, maxy);
 }
 
-void MImGuiSubWindow::draw() {
+void MImGuiSubWindow::draw(float deltaTime)
+{
     ImGui::Begin(title.c_str());
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minSize);
+
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+        handleInput(deltaTime);
+
     onGui();
     ImGui::PopStyleVar();
     ImGui::End();
+}
+
+void MImGuiSubWindow::handleInput(float deltaTime)
+{
+
 }
 
 SString MImGuiSubWindow::getTitle() const {

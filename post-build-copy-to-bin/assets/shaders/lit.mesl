@@ -1,6 +1,6 @@
 <shader name="lit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
     <properties>
-    <property key = "_color" type="u4" default="(1,1,1,1)"/>
+    <property key = "_color" type="col" default="(1,1,1,1)"/>
     </properties>
 
     #VERTEX_PASS
