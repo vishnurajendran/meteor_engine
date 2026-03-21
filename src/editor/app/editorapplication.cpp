@@ -90,14 +90,14 @@ bool MEditorApplication::isRunning() const
 
 void MEditorApplication::showSplashScreen()
 {
-    sf::RenderWindow splashWindow(sf::VideoMode(960, 540), "Meteorite-Splash", sf::Style::None);
+    sf::RenderWindow splashWindow(sf::VideoMode(sf::Vector2u(960, 540)), "Meteorite-Splash", sf::Style::None);
     splashWindow.setFramerateLimit(60);
     splashWindow.setActive(true);
     splashWindow.setVisible(true);
     splashWindow.requestFocus();
 
     //Hack to force to top
-    HWND hwnd = splashWindow.getSystemHandle();  // SFML lets you grab the native Win32 handle
+    HWND hwnd = splashWindow.getNativeHandle();  // SFML lets you grab the native Win32 handle
     ShowWindow(hwnd, SW_SHOW);               // Ensure it is shown
     SetForegroundWindow(hwnd);               // Bring to foreground
     SetFocus(hwnd);
@@ -107,22 +107,20 @@ void MEditorApplication::showSplashScreen()
     splashTexture.loadFromFile("meteor_assets/splash.png");
 
     sf::Sprite sprite(splashTexture);
-    sprite.setScale(splashWindow.getSize().x / (float)splashTexture.getSize().x,
-                    splashWindow.getSize().y / (float)splashTexture.getSize().y);
+    sprite.setScale( { splashWindow.getSize().x / (float)splashTexture.getSize().x,
+                    splashWindow.getSize().y / (float)splashTexture.getSize().y});
 
     sf::Font font;
-    font.loadFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
-    sf::Text text;
-    text.setFont(font);
-    text.setString("Loading Meteorite...");
+    font.openFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
+    sf::Text text(font, "Loading Meteorite...");
     text.setCharacterSize(12); // in pixels
     text.setFillColor(sf::Color::White);
     text.setPosition(sf::Vector2f(30, 500));
 
     while (splashShowing && splashWindow.isOpen())
     {
-        sf::Event event;
-        while (splashWindow.pollEvent(event))
+        std::optional<sf::Event> event;
+        while (event = splashWindow.pollEvent())
         {
             continue;
         }

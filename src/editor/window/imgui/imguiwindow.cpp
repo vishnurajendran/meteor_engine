@@ -38,9 +38,10 @@ void MImGuiWindow::clear() {
 
 void MImGuiWindow::update(float deltaTime) {
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
-    while (coreWindow.pollEvent(event)) {
-        ImGui::SFML::ProcessEvent(coreWindow, event);
-        if (event.type == sf::Event::Closed) {
+    std::optional<sf::Event> event;
+    while (event = coreWindow.pollEvent()) {
+        ImGui::SFML::ProcessEvent(coreWindow, event.value());
+        if (event.has_value() && event->is<sf::Event::Closed>()) {
             close();
             return;
         }
@@ -74,7 +75,7 @@ void MImGuiWindow::drawGUI(float deltaTime)
 
 void MImGuiWindow::createWindow()
 {
-    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::Style::Default, settings);
+    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::State::Windowed, settings);
     coreWindow.setFramerateLimit(targetFPS);
     coreWindow.setActive(true);
 

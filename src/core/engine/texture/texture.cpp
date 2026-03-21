@@ -10,7 +10,7 @@
 #include "core/utils/glmhelper.h"
 
 bool MTexture::loadFromPath(const SString &path) {
-    return coreTexture.loadFromFile(path);
+    return coreTexture.loadFromFile(path.c_str());
 }
 
 bool MTexture::loadFromStream(sf::InputStream &stream) {

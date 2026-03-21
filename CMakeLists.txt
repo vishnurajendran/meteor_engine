@@ -1,155 +1,148 @@
 cmake_minimum_required(VERSION 3.26)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")
-
-# Set the directory where executables will be placed
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 project(meteor_engine)
-
 set(CMAKE_CXX_STANDARD 20)
 
-set(APP_ICON_RESOURCE_WINDOWS ${CMAKE_SOURCE_DIR}/resource.rc)
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-# Define build options for Editor and Player modes
-option(BUILD_EDITOR "Build the editor application" OFF)
-option(BUILD_PLAYER "Build the player application" OFF)
+option(BUILD_EDITOR "Build editor" ON)
+option(BUILD_PLAYER "Build player" ON)
 
-set(EDITOR_NAME "meteorite")
-set(PLAYER_NAME "meteor_player")
+set(PLAYER_NAME meteor_player)
+set(EDITOR_NAME meteorite)
 
-# FetchContent for dependencies
 include(FetchContent)
 
-set(SFML_VERSION 2.5.1)
-set(IMGUI_VERSION 1.90.9)
+# ---------------------------------------------------------------------------
+# SFML
+# ---------------------------------------------------------------------------
+set(SFML_VERSION 3.0.2)
+set(IMGUI_VERSION 1.91.9-docking)
+set(IMGUI_SFML_VERSION 3.0)
 
-# Fetch SFML
+# It's nice to get stripped-down release zips instead of cloning
+# a repo and checking out a tag
 FetchContent_Declare(
         SFML
         URL "https://github.com/SFML/SFML/archive/${SFML_VERSION}.zip"
 )
 
-# Build SFML
-option(SFML_BUILD_AUDIO "Build audio" OFF)
-option(SFML_BUILD_NETWORK "Build network" OFF)
-FetchContent_MakeAvailable(SFML)
-
-########### IMGUI ###############
-# Fetch Dear ImGui
+# ---------------------------------------------------------------------------
+# IMGUI
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
         imgui
-        GIT_REPOSITORY "https://github.com/ocornut/imgui.git"
-        GIT_TAG "docking"
+        URL "https://github.com/ocornut/imgui/archive/v${IMGUI_VERSION}.zip"
 )
-# Build Dear ImGui
-FetchContent_MakeAvailable(imgui)
 
-##################################
-
-########### STB ###############
-# Fetch Dear ImGui
-FetchContent_Declare(
-        stb
-        GIT_REPOSITORY "https://github.com/nothings/stb.git"
-        GIT_TAG "master"
-)
-# Build Dear ImGui
-FetchContent_MakeAvailable(stb)
-add_library(stb INTERFACE)
-target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
-
-##################################
-
-########## IMGUI_SFML #############
-# Fetch ImGui-SFML binding
+# ---------------------------------------------------------------------------
+# IMGUI-SFML
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
         imgui-sfml
-        GIT_REPOSITORY https://github.com/SFML/imgui-sfml.git
-        GIT_TAG        2.6.x
+        URL "https://github.com/SFML/imgui-sfml/archive/v${IMGUI_SFML_VERSION}.zip"
 )
-# Build ImGui-SFML
+
+## Build
+
+# SFML
+option(SFML_BUILD_AUDIO "Build audio" OFF)
+option(SFML_BUILD_NETWORK "Build network" OFF)
+FetchContent_MakeAvailable(sfml)
+
+# Dear ImGui
+FetchContent_MakeAvailable(imgui)
+
+# ImGui-SFML
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
 option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
 option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
 FetchContent_MakeAvailable(imgui-sfml)
 
-#####################################
-
-############## SPDLOG ###############
-# Fetch spdlog
+# ---------------------------------------------------------------------------
+# SPDLOG
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG        v1.12.0
+        GIT_TAG v1.12.0
+        GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(spdlog)
-#####################################
 
-
-############## GLM ##################
-# Fetch GLM
+# ---------------------------------------------------------------------------
+# GLM
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
         glm
-        GIT_REPOSITORY	https://github.com/g-truc/glm.git
-        GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG master
+        GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glm)
-#####################################
 
-
-############# ASSIMP ################
-
-include_directories(C:/msys64/mingw64/include)
-find_package(assimp REQUIRED)
-
-#####################################
-
-############# PUGIXML ################
-# Fetch Pugixml
+# ---------------------------------------------------------------------------
+# STB
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
-        pugixml
-        GIT_REPOSITORY	https://github.com/zeux/pugixml.git
-        GIT_TAG 	    master
+        stb
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+        GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(pugixml)
-#####################################
+FetchContent_MakeAvailable(stb)
 
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 
-############# GLEW ##################
-include_directories(C:/msys64/mingw64/include)
-find_package(GLEW REQUIRED)
-#####################################
-
-
-############# IMGUIZMO ################
-# Fetch ImGuizmo
+# ---------------------------------------------------------------------------
+# IMGUIZMO
+# ---------------------------------------------------------------------------
 FetchContent_Declare(
         imguizmo
         GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
-        GIT_TAG master
+        GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(imguizmo)
 
-# Create the ImGuizmo library target, using ImGui-SFML's include directories
 add_library(imguizmo STATIC ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp)
-
-# Include ImGuizmo's directory and ImGui-SFML’s include directories
 target_include_directories(imguizmo PUBLIC
         ${imguizmo_SOURCE_DIR}
-        ${imgui-sfml_SOURCE_DIR}/imgui-sfml/include  # SFML integration includes ImGui
-        ${imgui-sfml_SOURCE_DIR}/imgui
+        ${imgui_SOURCE_DIR}
 )
 
-# Link ImGui-SFML instead of linking imgui directly
 target_link_libraries(imguizmo PRIVATE ImGui-SFML::ImGui-SFML)
-#######################################
 
+# ---------------------------------------------------------------------------
+# PUGIXML
+# ---------------------------------------------------------------------------
+FetchContent_Declare(
+        pugixml
+        GIT_REPOSITORY https://github.com/zeux/pugixml.git
+        GIT_TAG v1.15
+        GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(pugixml)
 
-############# TARGETS ################
+# ---------------------------------------------------------------------------
+# Vendor Dependencies (GLEW + ASSIMP...)
+# ---------------------------------------------------------------------------
 
+# My Libs for Glew and Assimp are stored in this directory using Msys2
+
+include_directories(C:/msys64/mingw64/include)
+find_library(ASSIMP_LIBRARY assimp PATHS C:/msys64/mingw64/lib)
+include_directories(C:/msys64/mingw64/include)
+
+set(GLEW_INCLUDE_DIR "C:/msys64/mingw64/include")
+set(GLEW_LIBRARY "C:/msys64/mingw64/lib/libglew32.dll.a")
+
+include_directories(${GLEW_INCLUDE_DIR})
+
+# ---------------------------------------------------------------------------
+# CORE SOURCES (UNCHANGED)
+# ---------------------------------------------------------------------------
 set(CORE_SOURCES
         src/main.cpp
         src/core/object/object.cpp
@@ -393,104 +386,94 @@ set(PLAYER_SOURCES
         src/player/app/playerapplication.h
 )
 
+# ---------------------------------------------------------------------------
+# Editor
+# ---------------------------------------------------------------------------
+if (BUILD_EDITOR)
 
-# Conditionally build Editor executable if BUILD_EDITOR is ON
-if(BUILD_EDITOR)
-    add_executable(${EDITOR_NAME} ${CORE_SOURCES} ${EDITOR_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
+    add_executable(${EDITOR_NAME}
+            ${CORE_SOURCES}
+            ${EDITOR_SOURCES}
+    )
+
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
-    target_link_libraries(${EDITOR_NAME}
-            PRIVATE
+
+    target_link_libraries(${EDITOR_NAME} PRIVATE
+            SFML::Graphics
+            SFML::Window
+            SFML::System
+
             ImGui-SFML::ImGui-SFML
             spdlog::spdlog
             glm::glm
-            pugixml
-            assimp::assimp
-            GLEW::GLEW
+            stb
             imguizmo
-            stb
+
+            ${GLEW_LIBRARY}
+            ${ASSIMP_LIBRARY}
+            pugixml
     )
-    add_dependencies(${EDITOR_NAME} copy_files_before_run)
-    set_target_properties(${EDITOR_NAME} PROPERTIES OUTPUT_NAME ${EDITOR_NAME})
 endif()
 
-# Conditionally build Player executable if BUILD_PLAYER is ON
-if(BUILD_PLAYER)
-    add_executable(${PLAYER_NAME} ${CORE_SOURCES} ${PLAYER_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})  # WIN32 hides console on Windows
+# ---------------------------------------------------------------------------
+# Player
+# ---------------------------------------------------------------------------
+if (BUILD_PLAYER)
+
+    add_executable(${PLAYER_NAME}
+            ${CORE_SOURCES}
+            ${PLAYER_SOURCES}
+    )
+
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
-    target_link_libraries(${PLAYER_NAME}
-            PRIVATE
+
+    target_link_libraries(${PLAYER_NAME} PRIVATE
+            SFML::Graphics
+            SFML::Window
+            SFML::System
+
             ImGui-SFML::ImGui-SFML
             spdlog::spdlog
             glm::glm
-            pugixml
-            assimp::assimp
-            GLEW::GLEW
             stb
+
+            ${GLEW_LIBRARY}
+            ${ASSIMP_LIBRARY}
+            pugixml
     )
-    add_dependencies(${PLAYER_NAME} copy_files_before_run)
-    set_target_properties(${PLAYER_NAME} PROPERTIES OUTPUT_NAME ${PLAYER_NAME})
 endif()
 
-
-############# PLATFORM-SPECIFIC CONFIGURATIONS #############
-
-# Set platform-specific libraries
+# ---------------------------------------------------------------------------
+# Platform-specific
+# ---------------------------------------------------------------------------
 if (APPLE)
-    # macOS requires CoreGraphics for DPI detection
     find_library(COREGRAPHICS_LIBRARY CoreGraphics)
-    target_link_libraries(meteor_engine PRIVATE ${COREGRAPHICS_LIBRARY})
+    target_link_libraries(${EDITOR_NAME} PRIVATE ${COREGRAPHICS_LIBRARY})
 endif()
 
 if (UNIX AND NOT APPLE)
-    # Linux requires X11 for DPI detection
     find_package(X11 REQUIRED)
-    target_link_libraries(meteor_engine PRIVATE X11)
+    target_link_libraries(${EDITOR_NAME} PRIVATE X11)
 endif()
 
-############# PREPROCESSOR DEFINITIONS ################
-# Set preprocessor definitions based on CMake options
-if(BUILD_EDITOR)
-    add_definitions(-DEDITOR_APPLICATION)
-endif()
+# ---------------------------------------------------------------------------
+# Copy system
+# ---------------------------------------------------------------------------
 
-if(BUILD_PLAYER)
-    add_definitions(-DPLAYER_APPLICATION)
-endif()
+function(add_copy_post_build target_name)
+    add_custom_command(TARGET ${target_name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "Copying assets for ${target_name}..."
 
-# Set the source and destination directories
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${SOURCE_COPY_DIR}"
+            "${DEST_COPY_DIR}"
+
+            VERBATIM
+    )
+endfunction()
+
 set(SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin")
 set(DEST_COPY_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-# Custom target to copy files before running
-add_custom_target(copy_files_before_run ALL
-        COMMENT "Copying files before running the application"
-)
-
-# Recursively gather all files from the source directory
-file(GLOB_RECURSE FILES_TO_COPY "${SOURCE_COPY_DIR}/*")
-
-foreach(FILE ${FILES_TO_COPY})
-    # Get relative path of the file with respect to the source directory
-    file(RELATIVE_PATH REL_PATH "${SOURCE_COPY_DIR}" "${FILE}")
-
-    # Get the directory portion of the relative path
-    get_filename_component(DEST_SUBDIR "${REL_PATH}" PATH)
-
-    # Create the destination subdirectory if necessary (handles root-level files as well)
-    if(DEST_SUBDIR)
-        add_custom_command(TARGET copy_files_before_run
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${DEST_COPY_DIR}/${DEST_SUBDIR}"
-                COMMENT "Creating subdirectory: ${DEST_COPY_DIR}/${DEST_SUBDIR}"
-        )
-    endif()
-
-    # Copy each file to its corresponding destination
-    if(NOT IS_DIRECTORY "${FILE}")
-        add_custom_command(TARGET copy_files_before_run
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${FILE}" "${DEST_COPY_DIR}/${REL_PATH}"
-                COMMENT "Copying file: ${FILE} to ${DEST_COPY_DIR}/${REL_PATH}"
-        )
-    endif()
-endforeach()
-
-
+add_copy_post_build(${EDITOR_NAME})
+add_copy_post_build(${PLAYER_NAME})

@@ -12,11 +12,12 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(): MEditorSceneViewWindow(700, 30
 
 }
 
-MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x, y) {
+MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x, y)
+{
     title = "Scene";
     settings.depthBits = 24;
 
-    renderTexture.create(1920, 1080, settings);
+    renderTexture = sf::RenderTexture({1920, 1080}, settings);
     MGraphicsRenderer::initialise(&renderTexture);
 }
 
@@ -27,7 +28,7 @@ void MEditorSceneViewWindow::onGui()
         renderTexture.getSize().x != contentRegion.x || renderTexture.getSize().y != contentRegion.y;
     if (sizeChanged)
     {
-        renderTexture.create(contentRegion.x, contentRegion.y, settings);
+        renderTexture = sf::RenderTexture(sf::Vector2u(contentRegion.x, contentRegion.y), settings);
     }
     ImGui::Image(renderTexture, contentRegion);
     sceneImageCursorPosition = ImGui::GetItemRectMin();
@@ -125,7 +126,7 @@ void MEditorSceneViewWindow::drawTransformGizmoSelector() {
     auto seperatorText = STR(" | ");
     auto seperatorTextSize = ImGui::CalcTextSize(seperatorText.c_str()).x;
 
-    ImGui::BeginChild("##MTR_TransformationGizmos", ImVec2(130 + seperatorTextSize + selectionTextSize, 37.5), true, ImGuiChildFlags_Border);
+    ImGui::BeginChild("##MTR_TransformationGizmos", ImVec2(130 + seperatorTextSize + selectionTextSize, 37.5), true, ImGuiChildFlags_Borders);
 
     // Draw opaque background
     ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -173,7 +174,7 @@ void MEditorSceneViewWindow::drawModeSelector() {
     auto seperatorTextSize = ImGui::CalcTextSize(seperatorText.c_str()).x;
 
     ImGui::SameLine();
-    ImGui::BeginChild("##MTR_TransformationMode", ImVec2(95 + seperatorTextSize + selectionTextSize, 37.5), true, ImGuiChildFlags_Border);
+    ImGui::BeginChild("##MTR_TransformationMode", ImVec2(95 + seperatorTextSize + selectionTextSize, 37.5), true, ImGuiChildFlags_Borders);
     // Draw opaque background
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     ImVec2 min = ImGui::GetWindowPos();
@@ -220,7 +221,7 @@ void MEditorSceneViewWindow::drawTranformHandles() {
     auto viewMat = primaryCamera->getViewMatrix();
     auto projMat = primaryCamera->getProjectionMatrix(SVector2(renderTexture.getSize().x, renderTexture.getSize().y));
     auto transform =  selected->getTransformMatrix();
-    ImGui::SetItemAllowOverlap();
+    ImGui::SetNextItemAllowOverlap();
     ImGuizmo::Manipulate(glm::value_ptr(viewMat), glm::value_ptr(projMat),transformOperation,
     transformMode, glm::value_ptr(transform));
 

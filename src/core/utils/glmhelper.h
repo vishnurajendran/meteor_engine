@@ -5,6 +5,7 @@
 #ifndef METEOR_ENGINE_GLMHELPER_H
 #define METEOR_ENGINE_GLMHELPER_H
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

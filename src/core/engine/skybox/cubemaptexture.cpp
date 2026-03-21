@@ -6,9 +6,6 @@
 
 #include "core/utils/fileio.h"
 #include "SFML/System/InputStream.hpp"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 #include "core/utils/logger.h"
 
 

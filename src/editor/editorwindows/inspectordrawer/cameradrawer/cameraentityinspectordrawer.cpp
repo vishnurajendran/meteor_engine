@@ -31,7 +31,7 @@ void MCameraEntityInspectorDrawer::drawCameraGUI(MCameraEntity* cameraTarget) {
     auto farClip = cameraTarget->getClipPlanes().second;
 
     auto dpi = DPIHelper::GetDPIScaleFactor();
-    ImGui::BeginChild("##Camera", ImVec2(0, 250*dpi), true, ImGuiChildFlags_Border);
+    ImGui::BeginChild("##Camera", ImVec2(0, 250*dpi), true, ImGuiChildFlags_Borders);
     ImGui::Text("Camera");
 
     ImGui::Text("Fov");

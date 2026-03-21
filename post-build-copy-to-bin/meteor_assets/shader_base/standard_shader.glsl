@@ -6,8 +6,13 @@
 #include </meteor_vertex_utils.glsl>
 #include </meteor_projection_utils.glsl>
 
+#ifndef NO_VERTEX_PASS_DEFINED
 //This is modifiable part of the code.
 void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 texCoords);
+#else
+// if no function is defined, put this empty function.
+void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec3 vertexTexCoords) {}
+#endif //NO_VERTEX_PASS_DEFINED
 
 void main()
 {
@@ -33,11 +38,6 @@ void main()
     setWorldNormals(normalize(normalMatrix * normal));
 }
 
-#ifdef NO_VERTEX_PASS_DEFINED
-// if no function is defined, put this empty function.
-void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec3 vertexTexCoords) {}
-#endif //NO_VERTEX_PASS_DEFINED
-
 #endif //COMPILE_VERTEX
 
 #ifdef COMPILE_FRAGMENT
@@ -45,7 +45,15 @@ void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout 
 #include </meteor_fragment_utils.glsl>
 #include </meteor_lighting_utils.glsl>
 
+#ifndef NO_FRAGMENT_PASS_DEFINED
 vec4 meteorFragmentPass(vec3 vertexPosition, vec3 vertexNormal, vec2 v2fTexCoords);
+#else
+vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+{
+    vec3 err = vec3(1.0, 0.0, 1.0);
+    return vec4(err, 1.0);
+}
+#endif
 
 void main(){
 
@@ -54,11 +62,6 @@ void main(){
     vec4 color = meteorFragmentPass(getVertexPosition(), getVertexNormal(), getTexCoords());
     setFinalOutColor(color);
 }
-
-#ifdef NO_FRAGMENT_PASS_DEFINED
-// set a magenta color to show invalid shader.
-vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords) { return vec4(1.0, 0.0, 1.0, 1.0);}
-#endif //NO_FRAGMENT_PASS_DEFINED
 
 #endif //COMPILE_FRAGMENT
 

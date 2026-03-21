@@ -14,7 +14,6 @@ protected:
     sf::Clock clock;
     sf::ContextSettings settings;
     SString title;
-    sf::Event event;
     sf::RenderWindow coreWindow;
     sf::Clock deltaClock;
 public:

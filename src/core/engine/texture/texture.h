@@ -4,6 +4,9 @@
 
 #ifndef TEXTURE_H
 #define TEXTURE_H
+
+#include "stb_image.h"
+
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/utils/glmhelper.h"
 #include "SFML/Graphics/Texture.hpp"
