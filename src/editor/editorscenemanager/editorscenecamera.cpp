@@ -1,11 +1,9 @@
-//
-// Created by ssj5v on 24-04-2025.
-//
-
+#include "imgui.h"
 #include "editorscenecamera.h"
-
+#include "core/engine/camera/viewmanagement.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
+
 MEditorSceneCameraEntity::MEditorSceneCameraEntity()
 {
     name = EDITOR_CAMERA_NAME;
@@ -13,10 +11,20 @@ MEditorSceneCameraEntity::MEditorSceneCameraEntity()
     setClipPlanes(0.1f, 1000.0f);
     setEntityFlags(EEntityFlags::HideInEditor);
 
-    auto scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
-    if (scene == nullptr) return;
+    // Explicitly register with the view system.  Do NOT rely on onStart() since
+    // HideInEditor is already set by the time onStart() would auto-register,
+    // and some implementations skip registration for hidden entities.
+    MViewManagement::addCamera(this);
+
+    // Remove from scene root list — editor camera is not a scene entity.
+    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    if (!scene) return;
     auto& roots = scene->getRootEntities();
     auto it = std::find(roots.begin(), roots.end(), this);
-    if (it == roots.end()) return;
-    roots.erase(it);
+    if (it != roots.end()) roots.erase(it);
+}
+
+MEditorSceneCameraEntity::~MEditorSceneCameraEntity()
+{
+    MViewManagement::removeCamera(this);
 }

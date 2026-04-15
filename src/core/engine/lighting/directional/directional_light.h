@@ -20,7 +20,7 @@ public:
     MDirectionalLight();
     ~MDirectionalLight() override = default;
     void onExit() override;
-    void onDrawGizmo() override;
+    void onDrawGizmo(SVector2 renderResolution) override;
 
 private:
     SDirectionalLightData lightData;

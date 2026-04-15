@@ -4,6 +4,7 @@
 
 #ifndef GIZMOS_H
 #define GIZMOS_H
+
 #include "core/object/object.h"
 #include "core/utils/color.h"
 #include "core/utils/glmhelper.h"
@@ -28,12 +29,15 @@ private:
 
     static unsigned int uiLineVAO;
     static unsigned int uiLineVBO;
+    static bool gizmosEnabled;
+
 private:
     static unsigned int createQuadVAO();
     static void createLineVAO();
 
 public:
 
+    static void enableGizmos(bool enable);
     static void requestGizmoDraws();
     static void recursiveGizmoDraws(MSpatialEntity* entity);
 };

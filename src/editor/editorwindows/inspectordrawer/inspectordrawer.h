@@ -5,27 +5,29 @@
 #ifndef METEOR_ENGINE_INSPECTORDRAWER_H
 #define METEOR_ENGINE_INSPECTORDRAWER_H
 
-#include <typeinfo>
-#include <map>
 #include <vector>
-
 #include "core/object/object.h"
 
 class MSpatialEntity;
 
 class MInspectorDrawer : public MObject {
-private:
-    static std::vector<MInspectorDrawer*> drawers;
-    static MInspectorDrawer* defaultDrawer;
 public:
     static void initialise();
     static void registerDrawer(MInspectorDrawer* drawer);
-    virtual SString getInspectorName() const=0;
-    void onDraw(MSpatialEntity* target);
-    virtual bool canDraw(MSpatialEntity* entity) = 0;
     static MInspectorDrawer* getDrawer(MSpatialEntity* entity);
+
+    // Entry point called by the inspector window
+    void onDraw(MSpatialEntity* target);
+
+    virtual SString getInspectorName() const = 0;
+    virtual bool    canDraw(MSpatialEntity* entity) = 0;
+
 protected:
-    virtual void onDrawInspector(MSpatialEntity* target)=0;
+    virtual void onDrawInspector(MSpatialEntity* target) = 0;
+
+private:
+    static std::vector<MInspectorDrawer*> drawers;
+    static MInspectorDrawer*              defaultDrawer;
 };
 
 #endif //METEOR_ENGINE_INSPECTORDRAWER_H

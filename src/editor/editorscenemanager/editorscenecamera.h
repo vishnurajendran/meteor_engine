@@ -12,6 +12,7 @@ private:
     const SString EDITOR_CAMERA_NAME = "_EditorSceneCamera";
 public:
     MEditorSceneCameraEntity();
+    ~MEditorSceneCameraEntity() override;
 };
 
 

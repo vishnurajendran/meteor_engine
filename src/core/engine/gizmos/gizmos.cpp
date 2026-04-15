@@ -2,20 +2,27 @@
 // Created by ssj5v on 22-04-2025.
 //
 
+#include "gizmos.h"
+
 #include "GL/glew.h"
 #include "GL/gl.h"
-#include "gizmos.h"
-#include "core/engine/3d/shader/shaderasset.h"
+
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/engine/texture/texture.h"
-#include "core/graphics/core/graphicsrenderer.h"
+#include "core/graphics/core/render-pipeline/render_pipeline.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h"
+#include "core/graphics/core/shader/shaderasset.h"
+
 
 unsigned int MGizmos::uiQuadVAO = 0;
 unsigned int MGizmos::uiLineVAO = 0;
 unsigned int MGizmos::uiLineVBO = 0;
+
+bool MGizmos::gizmosEnabled = false;
 
 MCameraEntity* MGizmos::getActiveCamera()
 {
@@ -34,7 +41,13 @@ MCameraEntity* MGizmos::getActiveCamera()
     return nullptr;
 }
 
-SVector2 MGizmos::getResolution() { return MGraphicsRenderer::getResolution(); }
+SVector2 MGizmos::getResolution()
+{
+    auto* pipeline = MRenderPipelineManager::getInstance();
+    if (pipeline == nullptr) return SVector2(0);
+
+    return pipeline->getRenderResolution();
+}
 
 void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor& color, const float& thickness, bool ignoreZDepth)
 {
@@ -305,8 +318,16 @@ void MGizmos::createLineVAO()
     glBindVertexArray(0);
 }
 
+void MGizmos::enableGizmos(bool enable)
+{
+    gizmosEnabled = enable;
+}
+
 void MGizmos::requestGizmoDraws()
 {
+    if (!gizmosEnabled)
+        return;
+
     auto sceneManager = MSceneManager::getSceneManagerInstance();
     if (sceneManager == nullptr) return;
 
@@ -321,13 +342,16 @@ void MGizmos::requestGizmoDraws()
 
 void MGizmos::recursiveGizmoDraws(MSpatialEntity* entity)
 {
+    if (!gizmosEnabled)
+        return;
+
     if (entity == nullptr)
     {
         return;
     }
 
     if (entity->getEnabled())
-        entity->onDrawGizmo();
+        entity->onDrawGizmo(getResolution());
 
     for (auto child : entity->getChildren())
     {

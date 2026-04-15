@@ -4,7 +4,7 @@
 
 #include "static_mesh_inspector.h"
 
-#include "core/engine/3d/material/MMaterialAsset.h"
+#include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
@@ -57,14 +57,41 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
     if (ImGui::CollapsingHeader("Static Mesh Entity"))
     {
-        if (staticMeshAssetReferenceControl->drawControl("Static Mesh Asset"))
+        constexpr float LABEL_COL_W = 120.0f;
+        if (ImGui::BeginTable("##sm_refs", 2, ImGuiTableFlags_None))
         {
-            staticMeshTarget->setStaticMeshAsset(dynamic_cast<MStaticMeshAsset*>(staticMeshAssetReferenceControl->getAssetReference()));
-        }
+            ImGui::TableSetupColumn("label",  ImGuiTableColumnFlags_WidthFixed,   LABEL_COL_W);
+            ImGui::TableSetupColumn("widget", ImGuiTableColumnFlags_WidthStretch);
 
-        if (materialAssetReferenceControl->drawControl("Material Asset"))
-        {
-            staticMeshTarget->setMaterialAsset(dynamic_cast<MMaterialAsset*>(materialAssetReferenceControl->getAssetReference()));
+            // ── Static Mesh Source ──────────────────────────────────────────
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Static Mesh:");
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            if (staticMeshAssetReferenceControl->drawControl(""))
+            {
+                staticMeshTarget->setStaticMeshAsset(
+                    dynamic_cast<MStaticMeshAsset*>(staticMeshAssetReferenceControl->getAssetReference()));
+            }
+
+            // ── Material ────────────────────────────────────────────────────
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Material Src:");
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            if (materialAssetReferenceControl->drawControl(""))
+            {
+                staticMeshTarget->setMaterialAsset(
+                    dynamic_cast<MMaterialAsset*>(materialAssetReferenceControl->getAssetReference()));
+            }
+
+            ImGui::EndTable();
         }
     }
 

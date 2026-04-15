@@ -5,20 +5,22 @@
 #pragma once
 #ifndef METEOR_ENGINE_APPLICATION_H
 #define METEOR_ENGINE_APPLICATION_H
-#include "core/meteor_core_minimal.h"
 #include "core/engine/scene/scenemanager.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
+#include "core/meteor_core_minimal.h"
 
 
 class MApplication : public MObject {
-protected:
 public:
     virtual bool isRunning() const = 0;
     virtual void initialise() = 0;
     virtual void run() = 0;
     virtual void cleanup() = 0;
+
 private:
     MSceneManager* sceneManagerInstance = nullptr;
     float startTime = 0;
+
 protected:
     float deltaTime = 0.0f;
     void startFrame();

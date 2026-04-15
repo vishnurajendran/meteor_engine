@@ -165,14 +165,14 @@ set(CORE_SOURCES
         src/core/utils/color.cpp
         src/core/utils/color.h
         src/core/utils/dpihelper.h
-        src/core/graphics/core/graphicsrenderer.cpp
-        src/core/graphics/core/graphicsrenderer.h
-        src/core/graphics/core/sfmldrawcall.cpp
-        src/core/graphics/core/sfmldrawcall.h
-        src/core/graphics/core/drawcall.cpp
-        src/core/graphics/core/drawcall.h
-        src/core/graphics/core/opengldrawcall.cpp
-        src/core/graphics/core/opengldrawcall.h
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.cpp
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/sfmldrawcall.cpp
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/sfmldrawcall.h
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/drawcall.cpp
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/drawcall.h
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.cpp
+        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.h
         src/core/utils/glmhelper.h
         src/core/utils/glmhelper.cpp
         src/core/engine/entities/spatial/spatial.cpp
@@ -220,16 +220,16 @@ set(CORE_SOURCES
         src/core/engine/3d/staticmesh/staticmesh.h
         src/core/engine/3d/staticmesh/staticmeshdrawcall.cpp
         src/core/engine/3d/staticmesh/staticmeshdrawcall.h
-        src/core/engine/3d/shader/shader.cpp
-        src/core/engine/3d/shader/shader.h
-        src/core/engine/3d/shader/shadercompiler.cpp
-        src/core/engine/3d/shader/shadercompiler.h
-        src/core/engine/3d/shader/shaderasset.cpp
-        src/core/engine/3d/shader/shaderasset.h
-        src/core/engine/3d/shader/shaderassetimporter.cpp
-        src/core/engine/3d/shader/shaderassetimporter.h
-        src/core/engine/3d/material/material.cpp
-        src/core/engine/3d/material/material.h
+        src/core/graphics/core/shader/shader.cpp
+        src/core/graphics/core/shader/shader.h
+        src/core/graphics/core/shader/shadercompiler.cpp
+        src/core/graphics/core/shader/shadercompiler.h
+        src/core/graphics/core/shader/shaderasset.cpp
+        src/core/graphics/core/shader/shaderasset.h
+        src/core/graphics/core/shader/shaderassetimporter.cpp
+        src/core/graphics/core/shader/shaderassetimporter.h
+        src/core/graphics/core/material/material.cpp
+        src/core/graphics/core/material/material.h
         src/core/engine/camera/camera.cpp
         src/core/engine/camera/camera.h
         src/core/engine/camera/viewmanagement.cpp
@@ -238,14 +238,14 @@ set(CORE_SOURCES
         src/core/engine/camera/cameradeserialiser.h
         src/core/engine/3d/staticmesh/staticmeshentity.cpp
         src/core/engine/3d/staticmesh/staticmeshentity.h
-        src/core/graphics/core/drawable_interface.h
-        src/core/graphics/core/render_queue.h
-        src/core/graphics/core/render_queue.cpp
-        src/core/engine/3d/material/MMaterialAsset.cpp
-        src/core/engine/3d/material/MMaterialAsset.h
+        src/core/graphics/core/render-pipeline/interfaces/drawable_interface.h
+        src/core/graphics/core/render-pipeline/render_queue.h
+        src/core/graphics/core/render-pipeline/render_queue.cpp
+        src/core/graphics/core/material/MMaterialAsset.cpp
+        src/core/graphics/core/material/MMaterialAsset.h
         src/core/engine/assetmanagement/asset/defferedloadableasset.h
-        src/core/engine/3d/material/materialassetimporter.cpp
-        src/core/engine/3d/material/materialassetimporter.h
+        src/core/graphics/core/material/materialassetimporter.cpp
+        src/core/graphics/core/material/materialassetimporter.h
         src/core/engine/3d/staticmesh/staticmeshentitydeserialiser.cpp
         src/core/engine/3d/staticmesh/staticmeshentitydeserialiser.h
         src/core/engine/texture/textureasset.cpp
@@ -271,8 +271,8 @@ set(CORE_SOURCES
         src/core/engine/skybox/cubemaptexture.h
         src/core/engine/skybox/skybox.cpp
         src/core/engine/skybox/skybox.h
-        src/core/engine/skybox/skyboxdrawcall.cpp
-        src/core/engine/skybox/skyboxdrawcall.h
+        src/core/graphics/core/render-pipeline/stages/skybox/skyboxdrawcall.cpp
+        src/core/graphics/core/render-pipeline/stages/skybox/skyboxdrawcall.h
         src/core/engine/skybox/cubemapasset.cpp
         src/core/engine/skybox/cubemapasset.h
         src/core/engine/skybox/cubemapassetimporter.cpp
@@ -304,6 +304,32 @@ set(CORE_SOURCES
         src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.h
         src/core/engine/lighting/dynamic_light_shader_container.h
         src/core/engine/lighting/light_shader_constants.h
+        src/core/graphics/core/render-pipeline/render_pipeline.cpp
+        src/core/graphics/core/render-pipeline/render_pipeline.h
+        src/core/graphics/core/render-pipeline/buffer_registry.cpp
+        src/core/graphics/core/render-pipeline/buffer_registry.h
+        src/core/graphics/core/render-pipeline/buffers/depth/depthbuffer.cpp
+        src/core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h
+        src/core/graphics/core/render-pipeline/buffer.h
+        src/core/graphics/core/render-pipeline/stages/render_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/render_stage.h
+        src/core/graphics/core/render-pipeline/stages/depth/depth_render_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/depth/depth_render_stage.h
+        src/core/graphics/core/render-pipeline/buffers/render/renderbuffer.cpp
+        src/core/graphics/core/render-pipeline/buffers/render/renderbuffer.h
+        src/core/graphics/core/render-pipeline/render_pipeline_manager.cpp
+        src/core/graphics/core/render-pipeline/render_pipeline_manager.h
+        src/core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h
+        src/core/graphics/core/render-pipeline/interfaces/render_stage_interface.h
+        src/core/graphics/core/render-pipeline/render_item.h
+        src/core/graphics/core/render-pipeline/interfaces/render_item_collector.h
+        src/core/graphics/core/render-pipeline/buffers/buffer_names.cpp
+        src/core/graphics/core/render-pipeline/stages/composite/composite_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/composite/composite_stage.h
+        src/core/graphics/core/render-pipeline/stages/skybox/skybox_queue.cpp
+        src/core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h
+        src/core/graphics/core/render-pipeline/stages/skybox/skybox_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/skybox/skybox_stage.h
 )
 
 set(EDITOR_SOURCES
@@ -384,6 +410,7 @@ set(EDITOR_SOURCES
 set(PLAYER_SOURCES
         src/player/app/playerapplication.cpp
         src/player/app/playerapplication.h
+        src/core/graphics/core/render-pipeline/buffers/buffer_names.h
 )
 
 # ---------------------------------------------------------------------------

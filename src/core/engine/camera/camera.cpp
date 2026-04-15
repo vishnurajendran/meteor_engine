@@ -8,7 +8,7 @@
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/engine/texture/textureasset.h"
-#include "core/graphics/core/graphicsrenderer.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h"
 #include "viewmanagement.h"
 
 
@@ -84,11 +84,9 @@ void MCameraEntity::setFov(const float &fov) {
 }
 
 float MCameraEntity::getFov() const { return this->fov; }
-void MCameraEntity::onDrawGizmo()
+void MCameraEntity::onDrawGizmo(SVector2 renderResolution)
 {
     const auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/camera.png");
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
-
-    const auto res = MGraphicsRenderer::getResolution();
-    MGizmos::drawWireFrustum(getViewMatrix(), getProjectionMatrix(res), SColor(1,1,1,1), 1.0f);
+    MGizmos::drawWireFrustum(getViewMatrix(), getProjectionMatrix(renderResolution), SColor(1,1,1,1), 1.0f);
 }

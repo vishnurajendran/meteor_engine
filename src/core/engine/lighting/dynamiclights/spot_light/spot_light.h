@@ -14,7 +14,7 @@ public:
     MSpotLight();
 
     void onExit() override;
-    void onDrawGizmo() override;
+    void onDrawGizmo(SVector2 renderResolution) override;
 
     [[nodiscard]] float getSpotAngle() const;
     void setSpotAngle(float angle);

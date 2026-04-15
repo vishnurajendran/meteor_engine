@@ -10,7 +10,6 @@
 #include "core/engine/lighting/light_shader_constants.h"
 #include "core/engine/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
-#include "core/graphics/core/render_queue.h"
 
 MAmbientLightEntity* MAmbientLightEntity::ambientLightInstance=nullptr;
 
@@ -67,7 +66,7 @@ void MAmbientLightEntity::onExit()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     ambientLightInstance = nullptr;
 }
-void MAmbientLightEntity::onDrawGizmo()
+void MAmbientLightEntity::onDrawGizmo(SVector2 renderResolution)
 {
     auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/arealight.png");
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());

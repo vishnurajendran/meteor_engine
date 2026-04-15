@@ -4,7 +4,7 @@
 
 #include "material.h"
 #include <map>
-#include "core/engine/3d/shader/shader.h"
+#include "core/graphics/core/shader/shader.h"
 #include "core/utils/logger.h"
 
 MMaterial::MMaterial(MShader *shader) : MObject(){

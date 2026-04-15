@@ -11,7 +11,7 @@ class MPointLight : public MDynamicLight {
 public:
     MPointLight();
     void onExit() override;
-    void onDrawGizmo() override;
+    void onDrawGizmo(SVector2 renderResolution) override;
 };
 
 #endif //POINT_LIGHT_H

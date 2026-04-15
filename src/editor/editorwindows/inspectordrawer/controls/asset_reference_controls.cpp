@@ -80,89 +80,118 @@ bool MAssetReferenceControl::defaultTestFuncCallback(MAsset* asset)
 
 bool MAssetReferenceControl::drawControl(const SString& label)
 {
-    bool modified=false;
-    const auto size = ImVec2(64, 64);
-    const auto containerY = 85;
-    sf::Texture* icon = nullptr;
-    if (assetIdReference.empty())
-        icon = getFileIcon(MAssetManager::getInstance(), nullptr);
-    else
-        icon = getFileIcon(MAssetManager::getInstance(), getAssetReference());
-
-    const auto& childId = STR("##ControlContainer") + getGUID();
-    if (ImGui::BeginChild(childId.c_str(), ImVec2(0, containerY), true, ImGuiChildFlags_Borders))
-    {
-
-        const auto& bttnId = STR("##AssetReferenceControl") + getGUID();
-        if (ImGui::ImageButton(bttnId.c_str(), *icon, size))
-        {
-
-        }
-
-        if (ImGui::IsItemHovered()) {
-            if (const auto asset = getAssetReference())
-                ImGui::SetTooltip("%s", asset->getPath().c_str());
-        }
-
-        if (ImGui::BeginDragDropTarget())
-        {
-            const ImGuiPayload* payload = ImGui::GetDragDropPayload();
-            SString tempAssetIdReference = "";
-            bool invalidRef = false;
-            if (payload && strcmp(payload->DataType,ASSET_REF_TARGET_KEY.c_str()) == 0)
-            {
-                tempAssetIdReference = *static_cast<SString*>(payload->Data);
-                if (canAcceptAssetFuncCallback && !canAcceptAssetFuncCallback(MAssetManager::getInstance()->getAssetById<MAsset>(tempAssetIdReference)))
-                {
-                    invalidRef = true;
-                    ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(1,0,0,1));
-                }
-            }
-
-            if (ImGui::AcceptDragDropPayload(ASSET_REF_TARGET_KEY.c_str()) && !invalidRef)
-            {
-                assetIdReference = tempAssetIdReference;
-                modified = true;
-            }
-
-            if (invalidRef)
-                ImGui::PopStyleColor();
-
-            ImGui::EndDragDropTarget();
-        }
-
-        ImGui::SameLine();
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));         // Red
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));  // Light Red
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.0f, 0.0f, 1.0f));   // Dark Red
-        const auto& closeButtonId = STR("X_") + getGUID();
-        ImGui::PushID(closeButtonId.c_str());
-        if (ImGui::Button("X", ImVec2(24,size.y+3)))
-        {
-            assetIdReference.clear();
-            modified = true;
-        }
-        ImGui::PopID();
-        ImGui::PopStyleColor(3);
-        ImGui::SameLine();
-
-        const auto& labelId = STR("LABEL_") + getGUID();
-        drawCenteredLabel(label, labelId);
-    }
-    ImGui::EndChild();
-    return modified;
+    return drawCompactControl(label);
 }
 
-void MAssetReferenceControl::drawCenteredLabel(SString label, const SString& id)
-{
-    auto containerY = ImGui::GetContentRegionAvail().y;
-    auto cursorPos = ImGui::GetCursorPos();
-    cursorPos.x += 16;
-    auto textSize = ImGui::CalcTextSize(label.c_str());
-    ImGui::SetCursorPos(ImVec2(cursorPos.x, (containerY-textSize.y)*0.5f));
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+// ─── Compact single-row control ───────────────────────────────────────────────
+// Layout: [32px thumbnail] [asset name or "(none)"]  [×]
+// Fits inside the material-properties table without breaking its row height.
 
-    ImGui::PushID(id.c_str());
-    ImGui::Text("%s", label.c_str());
+bool MAssetReferenceControl::drawCompactControl(const SString& label)
+{
+    static constexpr float THUMB_SIZE  = 28.0f;
+    static constexpr float ROW_H       = THUMB_SIZE + 8.0f;  // 36px total
+    static constexpr float CLEAR_BTN_W = 20.0f;
+
+    bool modified = false;
+    auto* am   = MAssetManager::getInstance();
+    auto* icon = assetIdReference.empty()
+                     ? getFileIcon(am, nullptr)
+                     : getFileIcon(am, getAssetReference());
+
+    MAsset* currentAsset = assetIdReference.empty() ? nullptr : getAssetReference();
+    const char* assetName = currentAsset ? currentAsset->getName().c_str() : "(none)";
+
+    ImDrawList* dl    = ImGui::GetWindowDrawList();
+    ImVec2      p     = ImGui::GetCursorScreenPos();
+    float       avail = ImGui::GetContentRegionAvail().x;
+
+    // ── Invisible button covers the whole row (drag-drop target + hover) ──
+    ImGui::PushID(getGUID().c_str());
+    const bool hovered = ImGui::IsMouseHoveringRect(p, { p.x + avail, p.y + ROW_H });
+
+    // Subtle hover highlight
+    if (hovered)
+        dl->AddRectFilled(p, { p.x + avail, p.y + ROW_H }, IM_COL32(255, 255, 255, 12), 4.0f);
+
+    // ── Thumbnail ─────────────────────────────────────────────────────────
+    ImGui::SetCursorScreenPos({ p.x + 2.0f, p.y + 4.0f });
+    if (icon)
+        ImGui::Image(*icon, { THUMB_SIZE, THUMB_SIZE });
+    else
+        ImGui::Dummy({ THUMB_SIZE, THUMB_SIZE });
+
+    // Make the thumbnail a drag-drop target
+    if (ImGui::BeginDragDropTarget())
+    {
+        const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+        bool invalidRef = false;
+        SString tempId;
+
+        if (payload && strcmp(payload->DataType, ASSET_REF_TARGET_KEY.c_str()) == 0)
+        {
+            tempId = SString(static_cast<const char*>(payload->Data));
+            if (canAcceptAssetFuncCallback &&
+                !canAcceptAssetFuncCallback(am->getAssetById<MAsset>(tempId)))
+            {
+                invalidRef = true;
+                ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(1, 0, 0, 1));
+            }
+        }
+        if (ImGui::AcceptDragDropPayload(ASSET_REF_TARGET_KEY.c_str()) && !invalidRef)
+        {
+            assetIdReference = tempId;
+            modified = true;
+        }
+        if (invalidRef) ImGui::PopStyleColor();
+        ImGui::EndDragDropTarget();
+    }
+
+    if (ImGui::IsItemHovered() && currentAsset)
+        ImGui::SetTooltip("%s", currentAsset->getPath().c_str());
+
+    // ── Asset name ────────────────────────────────────────────────────────
+    const float nameX   = p.x + THUMB_SIZE + 8.0f;
+    const float nameMaxW = avail - THUMB_SIZE - CLEAR_BTN_W - 16.0f;
+    ImGui::SetCursorScreenPos({ nameX, p.y + (ROW_H - ImGui::GetTextLineHeight()) * 0.5f });
+
+    if (currentAsset)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
+        ImGui::PushTextWrapPos(nameX + nameMaxW);
+        ImGui::TextUnformatted(assetName);
+        ImGui::PopTextWrapPos();
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+        ImGui::TextUnformatted("(none)");
+        ImGui::PopStyleColor();
+    }
+
+    // ── Clear (×) button — only when something is assigned ───────────────
+    ImGui::SetCursorScreenPos({ p.x + avail - CLEAR_BTN_W - 2.0f,
+                                p.y + (ROW_H - ImGui::GetFrameHeight()) * 0.5f });
+    ImGui::BeginDisabled(!currentAsset);
+    ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.10f, 0.10f, 0.80f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.80f, 0.20f, 0.20f, 1.00f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.40f, 0.05f, 0.05f, 1.00f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
+    if (ImGui::Button("×", { CLEAR_BTN_W, ImGui::GetFrameHeight() }))
+    {
+        assetIdReference.clear();
+        modified = true;
+    }
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor(3);
+    ImGui::EndDisabled();
+
     ImGui::PopID();
+
+    // Advance cursor past the row
+    ImGui::SetCursorScreenPos({ p.x, p.y + ROW_H + 2.0f });
+    ImGui::Dummy({ avail, 0.0f });
+
+    return modified;
 }

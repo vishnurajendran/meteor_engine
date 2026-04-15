@@ -9,16 +9,24 @@
 #include "SFML/Graphics.hpp"
 
 class MWindow : public MObject {
+public:
+    static const int DEFAULT_FPS;
+    static const SVector2 DEFAULT_WINDOW_SIZE;
+
 protected:
-    int targetFPS;
+    int targetFPS = 0;
     sf::Clock clock;
     sf::ContextSettings settings;
-    SString title;
+    SString title = "Window Instance";
     sf::RenderWindow coreWindow;
     sf::Clock deltaClock;
+    SVector2 windowSize;
+
 public:
-    MWindow(const SString& title);
-    MWindow(const SString& title, int sizeX, int sizeY, int fps);
+    MWindow() = default;
+    virtual ~MWindow() = default;
+
+    virtual bool initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps);
     virtual void clear();
     virtual void update(float deltaTime);
     virtual bool isOpen() const;

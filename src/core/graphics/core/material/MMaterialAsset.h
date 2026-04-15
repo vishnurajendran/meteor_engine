@@ -6,7 +6,7 @@
 #define MMATERIALASSET_H
 #include <map>
 
-#include "core/engine/3d/shader/shader.h"
+#include "core/graphics/core/shader/shader.h"
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/asset/defferedloadableasset.h"
 

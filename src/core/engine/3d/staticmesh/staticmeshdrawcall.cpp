@@ -5,8 +5,8 @@
 #include <GL/glew.h>
 #include "staticmeshdrawcall.h"
 
-#include "core/engine/3d/material/material.h"
-#include "core/engine/3d/shader/shader.h"
+#include "core/graphics/core/material/material.h"
+#include "core/graphics/core/shader/shader.h"
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/lighting/lighting_system_manager.h"
 #include "staticmesh.h"
@@ -21,6 +21,7 @@ void MStaticMeshDrawCall::setParams(const SStaticMeshDrawParams& params) {
 }
 
 void MStaticMeshDrawCall::draw() {
+
     if(!drawParams.materialInstance || !drawParams.meshAssetRefference) {
         MERROR("MStaticMeshDrawCall::draw: No mesh or material specified");
         return;

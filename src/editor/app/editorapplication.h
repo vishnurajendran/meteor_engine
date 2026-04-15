@@ -18,7 +18,7 @@ private:
     MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
     static MEditorApplication *editorInst;
-
+    MRenderPipelineManager pipelineManager;
     std::atomic<bool> splashShowing = true;
 
 public:

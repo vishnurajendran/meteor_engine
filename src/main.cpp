@@ -1,10 +1,8 @@
+#include <GL/glew.h>
 #include "core/meteor_core.h"
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "SFML/OpenGL.hpp"
-
-
-
 extern MApplication* getAppInstance();
 
 int main(){
@@ -16,8 +14,8 @@ int main(){
     }
 
     appInst->initialise();
-    MShaderCompiler::initialiseEngine();
     MSceneManager::getSceneManagerInstance()->loadScene(STR("assets/scenes/test_scene.scml"));
+
     while(appInst->isRunning()){
         appInst->run();
     }

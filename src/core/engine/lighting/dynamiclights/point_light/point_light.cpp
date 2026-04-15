@@ -23,7 +23,7 @@ void MPointLight::onExit()
     MLightSystemManager::getInstance()->unregisterLight(this);
 }
 
-void MPointLight::onDrawGizmo()
+void MPointLight::onDrawGizmo(SVector2 renderResolution)
 {
     auto icon =
         MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/point_light.png");

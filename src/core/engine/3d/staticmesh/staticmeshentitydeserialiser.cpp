@@ -5,7 +5,7 @@
 #include "staticmeshentitydeserialiser.h"
 
 #include "staticmeshentity.h"
-#include "core/engine/3d/material/MMaterialAsset.h"
+#include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"

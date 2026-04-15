@@ -22,7 +22,7 @@ void MSpotLight::onExit()
     MLightSystemManager::getInstance()->unregisterLight(this);
 }
 
-void MSpotLight::onDrawGizmo()
+void MSpotLight::onDrawGizmo(SVector2 renderResolution)
 {
     drawSpotLightGizmo();
     auto icon =

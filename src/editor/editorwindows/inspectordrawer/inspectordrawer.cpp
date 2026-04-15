@@ -4,37 +4,32 @@
 
 #include "inspectordrawer.h"
 #include "spatialentityinspectordrawer.h"
-#include "core/engine/camera/camera.h"
 
 std::vector<MInspectorDrawer*> MInspectorDrawer::drawers;
-MInspectorDrawer* MInspectorDrawer::defaultDrawer = nullptr;
+MInspectorDrawer*              MInspectorDrawer::defaultDrawer = nullptr;
 
 void MInspectorDrawer::initialise() {
     defaultDrawer = new MSpatialEntityInspectorDrawer();
 }
 
-void MInspectorDrawer::registerDrawer(MInspectorDrawer* drawer)
-{
+void MInspectorDrawer::registerDrawer(MInspectorDrawer* drawer) {
     if (!drawer)
         return;
-
     drawers.push_back(drawer);
 }
 
-void MInspectorDrawer::onDraw(MSpatialEntity* target)
-{
-    auto name = getName();
+// Delegates straight to the virtual; the unused getName() call has been removed.
+void MInspectorDrawer::onDraw(MSpatialEntity* target) {
     onDrawInspector(target);
 }
 
-MInspectorDrawer *MInspectorDrawer::getDrawer(MSpatialEntity *entity) {
-    if(!entity)
+MInspectorDrawer* MInspectorDrawer::getDrawer(MSpatialEntity* entity) {
+    if (!entity)
         return nullptr;
 
-    for(auto drawer : drawers) {
-        if(drawer->canDraw(entity)) {
+    for (auto* drawer : drawers) {
+        if (drawer->canDraw(entity))
             return drawer;
-        }
     }
     return defaultDrawer;
 }

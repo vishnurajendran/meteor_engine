@@ -2,29 +2,36 @@
 // Created by ssj5v on 27-03-2025.
 //
 
+#pragma once
 #ifndef SKYBOXENTITIY_H
 #define SKYBOXENTITIY_H
+
+#include "../../graphics/core/render-pipeline/stages/skybox/skyboxdrawcall.h"
 #include "core/engine/entities/spatial/spatial.h"
-#include "core/graphics/core/drawable_interface.h"
+#include "core/graphics/core/render-pipeline/interfaces/drawable_interface.h"
 #include "cubemapasset.h"
-#include "skyboxdrawcall.h"
 
-
-class MMaterial;
 class MCubemapAsset;
 
-class MSkyboxEntity : public MSpatialEntity, public IMeteorDrawable {
-private:
-    MSkyboxDrawCall* skyboxDrawCall;
-
+class MSkyboxEntity : public MSpatialEntity, public IMeteorDrawable
+{
 public:
     MSkyboxEntity();
-    void setCubemapAsset(MCubemapAsset* cubemap);
-    void prepareForDraw() override;
-    void raiseDrawCall() override;
-    bool canDraw() override { return getEnabled();}
+    ~MSkyboxEntity() override;
 
-    void onDrawGizmo() override;
+    void setCubemapAsset(MCubemapAsset* cubemap);
+
+    // ---- IMeteorDrawable ----------------------------------------------------
+    // Skybox does not produce an SRenderItem — it registers its draw call
+    // directly with MSkyboxQueue so MSkyboxStage can drive it with the correct
+    // depth state and cubemap binding.
+    void submitRenderItem(IRenderItemCollector* collector) override {}
+    bool canDraw() override { return getEnabled(); }
+
+    void onDrawGizmo(SVector2 renderResolution) override;
+
+private:
+    MSkyboxDrawCall* skyboxDrawCall = nullptr;
 };
 
-#endif //SKYBOXENTITIY_H
+#endif // SKYBOXENTITIY_H

@@ -4,8 +4,8 @@
 
 #include "playerapplication.h"
 
+#include "../../core/graphics/core/render-pipeline/render_queue.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/graphics/core/render_queue.h"
 
 MPlayerApplication::MPlayerApplication() : MApplication(){
     name = STR("MeteorPlayer");
@@ -18,7 +18,12 @@ void MPlayerApplication::run() {
     startFrame();
     window->clear();
     MSceneManager::getSceneManagerInstance()->update(deltaTime);
-    MRenderQueue::requestDrawCalls();
+
+    // runt the render pipeline
+    pipelineManager.preRender();
+    pipelineManager.render();
+    pipelineManager.postRender();
+
     window->update(deltaTime);
     endFrame();
 }
@@ -32,7 +37,8 @@ void MPlayerApplication::cleanup() {
 void MPlayerApplication::initialise() {
     //appRunning = true;
     MLOG(STR("Initialising Player"));
-    window = new MWindow(STR("Meteor Player"));
+    window = new MWindow();
+    window->initialiseWindow(STR("Meteor Player"), MWindow::DEFAULT_WINDOW_SIZE, MWindow::DEFAULT_FPS);
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));
 

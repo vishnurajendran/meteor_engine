@@ -6,7 +6,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 #include <map>
-#include "core/engine/3d/shader/shader.h"
+#include "core/graphics/core/shader/shader.h"
 #include "core/object/object.h"
 
 

@@ -6,7 +6,7 @@
 
 #include "material.h"
 #include "pugixml.hpp"
-#include "core/engine/3d/shader/shaderasset.h"
+#include "core/graphics/core/shader/shaderasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/utils/fileio.h"
 #include "core/utils/logger.h"

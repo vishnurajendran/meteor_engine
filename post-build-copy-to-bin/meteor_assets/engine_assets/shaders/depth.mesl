@@ -1,0 +1,25 @@
+<shader name="depth" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // No modifications — standard projection in applyProjection() handles transform.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        // Depth is written to the depth attachment automatically by the hardware.
+        // No colour attachment exists on the depth FBO so this output is discarded.
+        return vec4(0.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

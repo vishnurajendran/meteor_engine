@@ -5,9 +5,7 @@
 #ifndef EDITORSCENEMANAGER_H
 #define EDITORSCENEMANAGER_H
 #include "core/engine/scene/scenemanager.h"
-
-
-class MCameraEntity;
+#include "core/engine/camera/camera.h"  // full type needed by MObjectPtr
 
 class MEditorSceneManager : public MSceneManager {
 public:

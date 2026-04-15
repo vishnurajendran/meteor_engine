@@ -34,17 +34,17 @@ void MAssetManager::registerAssetManagerInstance(MAssetManager* instance)
 
 void MAssetManager::refresh() {
     cleanup();
+    MLOG(STR("AssetManager:: Starting Refresh"));
     for (auto path : ASSET_SEARCH_PATHS)
     {
         loadAssetRecursive(path);
     }
-
     for (auto asset: defferedLoadableAssetList) {
 
         if(asset)
             asset->defferedAssetLoad(false);
     }
-    MLOG("Successfully loaded asset manager");
+    MLOG(STR("AssetManager:: Refresh Completed"));
 }
 
 void MAssetManager::cleanup() {
@@ -78,7 +78,6 @@ void MAssetManager::loadAssetRecursive(SString path) {
             }
         }
     }
-    MLOG(STR("AssetManager:: Refresh Completed, Loaded " + std::to_string(assetCount) + " Assets"));
 }
 
 bool MAssetManager::loadAsset(SString path) {

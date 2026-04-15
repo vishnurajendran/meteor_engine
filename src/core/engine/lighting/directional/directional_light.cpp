@@ -48,7 +48,7 @@ void MDirectionalLight::onExit()
     lightInstance = nullptr;
 }
 
-void MDirectionalLight::onDrawGizmo()
+void MDirectionalLight::onDrawGizmo(SVector2 renderResolution)
 {
     auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/sun.png");
     MGizmos::drawRay(getWorldPosition(), -getForwardVector(), 2.0f, SColor(1,1,1,1), 3);

@@ -10,11 +10,14 @@
 
 class MImGuiWindow : public MWindow {
 private:
+    std::function<void(void)> graphicsFunction;
+
+private:
     void drawGUI(float deltaTime);
-    void createWindow();
+
 public:
-    MImGuiWindow(const SString& title);
-    MImGuiWindow(const SString& title, int sizeX, int sizeY, int fps);
+    bool initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps) override;
+
     void clear() override;
     void update(float deltaTime) override;
     void close() override;
@@ -22,6 +25,11 @@ public:
     void showDockSpace();
     void drawMenuBar();
     void drawControls();
+
+    void setGraphicsCall(std::function<void(void)> func)
+    {
+        graphicsFunction = func;
+    };
 
     //Todo:: move to asset manager
     void loadFontFile(const SString& pathToFile, float pointSize);

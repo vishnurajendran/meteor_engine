@@ -5,7 +5,7 @@
 #pragma once
 #ifndef STATICMESHDRAWCALL_H
 #define STATICMESHDRAWCALL_H
-#include "core/graphics/core/opengldrawcall.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.h"
 #include "core/utils/aabb.h"
 
 

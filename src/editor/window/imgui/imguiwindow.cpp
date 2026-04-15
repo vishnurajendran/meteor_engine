@@ -9,7 +9,6 @@
 
 #include "ImGuizmo.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "editor/app/editorapplication.h"
 #include "editor/window/menubar/menubartree.h"
 #include "editorcontrolsbuttons.h"
 #include "imgui_internal.h"
@@ -18,18 +17,39 @@
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
 
-MImGuiWindow::MImGuiWindow(const SString &title) : MImGuiWindow(title, 800, 600, 60) {
+bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)
+{
+    if (!MWindow::initialiseWindow(inTitle, inSize, inFps))
+    {
+        MERROR("Window::initialiseWindow Failed");
+        return false;
+    }
 
-}
+    if(!ImGui::SFML::Init(coreWindow)) {
+        MERROR(STR("Failed to initialize SFML" ));
+        return false;
+    }
 
-MImGuiWindow::MImGuiWindow(const SString &title, int sizeX, int sizeY, int fps) : MWindow(title, sizeX, sizeY, fps) {
-    this->targetFPS = fps;
-    this->settings = settings;
-    sf::ContextSettings settings;
-    settings.majorVersion = 4;
-    settings.minorVersion = 6;
-    settings.depthBits = 24;
-    createWindow();
+    if (!coreWindow.setActive(true))
+    {
+        MERROR(STR("Failed to activate Window Context" ));
+        return false;
+    }
+
+    ImGuiIO& io = ImGui::GetIO();
+    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
+
+    io.FontGlobalScale = 1;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    applyDeepDarkTheme();
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size
+    ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+
+    return true;
 }
 
 void MImGuiWindow::clear() {
@@ -37,7 +57,10 @@ void MImGuiWindow::clear() {
 }
 
 void MImGuiWindow::update(float deltaTime) {
+
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
+
+    // event loop
     std::optional<sf::Event> event;
     while (event = coreWindow.pollEvent()) {
         ImGui::SFML::ProcessEvent(coreWindow, event.value());
@@ -47,56 +70,35 @@ void MImGuiWindow::update(float deltaTime) {
         }
     }
 
-    //prepare all draw-calls, and setups and draw content.
-    MGraphicsRenderer::prepare();
-    MGraphicsRenderer::draw();
+    //Call the graphics systems to draw.
+    if (graphicsFunction)
+        graphicsFunction();
 
-    //ImGui::SFML::Update(coreWindow, deltaClock.restart());
-    ImGui::NewFrame();
-    ImGuizmo::BeginFrame();
     drawGUI(deltaTime);
-    ImGui::SFML::Render(coreWindow);
     coreWindow.display();
 
-    sf::Time elapsed = clock.getElapsedTime();
-    sf::Time sleepTime = frameTime - elapsed;
+    // sync with target FPS
+    const sf::Time elapsed = clock.getElapsedTime();
+    const sf::Time sleepTime = frameTime - elapsed;
     if (sleepTime > sf::Time::Zero) {
         sf::sleep(sleepTime);  // Sleep to limit the framerate
     }
+
     clock.restart();
 }
 
-void MImGuiWindow::drawGUI(float deltaTime)
+void MImGuiWindow::drawGUI(const float deltaTime)
 {
+    ImGui::SFML::Update(coreWindow, deltaClock.restart());
+    ImGuizmo::BeginFrame();
+
     drawMenuBar();
     showDockSpace();
     drawImGuiSubWindows(deltaTime);
-}
 
-void MImGuiWindow::createWindow()
-{
-    coreWindow.create(sf::VideoMode::getDesktopMode(), title.str(), sf::State::Windowed, settings);
-    coreWindow.setFramerateLimit(targetFPS);
+    // Force SFML/GL back to the default framebuffer before ImGui renders
     coreWindow.setActive(true);
-
-    if(!ImGui::SFML::Init(coreWindow)) {
-        MERROR(STR("Failed to initialize SFML" ));
-        return;
-    }
-    ImGuiIO& io = ImGui::GetIO();
-    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
-
-    io.FontGlobalScale = 1;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
-    deepDarkTheme();
-
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size
-    ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
-
-    MGraphicsRenderer::initialise(&coreWindow);
+    ImGui::SFML::Render(coreWindow);
 }
 
 void MImGuiWindow::close() {
@@ -107,7 +109,9 @@ void MImGuiWindow::close() {
 void MImGuiWindow::drawImGuiSubWindows(float deltaTime) {
     for(auto window : MImGuiSubWindowManager::getSubWindows()){
         if(window)
-            window->draw(deltaTime);
+        {
+           window->draw(deltaTime);
+        }
     }
 }
 

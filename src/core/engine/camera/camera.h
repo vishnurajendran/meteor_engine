@@ -34,7 +34,7 @@ public:
     void setFov(const float& fov);
     [[nodiscard]] float getFov() const;
 
-    void onDrawGizmo() override;
+    void onDrawGizmo(SVector2 renderResolution) override;
 };
 
 #endif //CAMERA_H

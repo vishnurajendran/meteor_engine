@@ -24,7 +24,7 @@ public:
     [[nodiscard]] float getIntensity() const override;
 
     virtual void onExit() override;
-    void onDrawGizmo() override;
+    void onDrawGizmo(SVector2 renderResolution) override;
 private:
     GLuint ambientLightDataBufferId=0;
     SAmbientLightData ambientLightData;

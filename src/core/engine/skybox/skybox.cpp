@@ -4,38 +4,54 @@
 
 #include "skybox.h"
 
-#include "core/engine/3d/shader/shaderasset.h"
+#include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
+#include "core/graphics/core/shader/shaderasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/graphics/core/graphicsrenderer.h"
-#include "core/graphics/core/render_queue.h"
+
 MSkyboxEntity::MSkyboxEntity()
 {
-    auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/skybox.mesl");
+    name = "Skybox";
+
+    auto* shaderAsset = MAssetManager::getInstance()
+                            ->getAsset<MShaderAsset>(
+                                "meteor_assets/engine_assets/shaders/skybox.mesl");
     if (!shaderAsset)
     {
-        MERROR("SkyboxEntity::Failed to load shader asset");
+        MERROR("MSkyboxEntity — failed to load skybox shader asset");
         return;
     }
+
     skyboxDrawCall = new MSkyboxDrawCall(nullptr, shaderAsset->getShader());
-    MRenderQueue::addToSubmitables(this);
-    name = "Skybox";
+
+    // Register with the skybox-specific queue so MSkyboxStage picks it up.
+    // The skybox does not go through MRenderQueue because it doesn't fit the
+    // standard SRenderItem contract (custom shader, cubemap, depth state).
+    MSkyboxQueue::add(skyboxDrawCall);
+}
+
+MSkyboxEntity::~MSkyboxEntity()
+{
+    if (skyboxDrawCall)
+    {
+        MSkyboxQueue::remove(skyboxDrawCall);
+        delete skyboxDrawCall;
+        skyboxDrawCall = nullptr;
+    }
 }
 
 void MSkyboxEntity::setCubemapAsset(MCubemapAsset* cubemap)
 {
-    if (!skyboxDrawCall) return;
-    this->skyboxDrawCall->setCubemapAsset(cubemap);
+    if (skyboxDrawCall)
+        skyboxDrawCall->setCubemapAsset(cubemap);
 }
 
-void MSkyboxEntity::prepareForDraw()
+void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)
 {
-    //nothing here
-}
-
-void MSkyboxEntity::raiseDrawCall() { MGraphicsRenderer::submit(skyboxDrawCall); }
-void MSkyboxEntity::onDrawGizmo()
-{
-    auto texture = MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox.png");
-    MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
+    auto* texture = MAssetManager::getInstance()
+                        ->getAsset<MTextureAsset>(
+                            "meteor_assets/engine_assets/icons/skybox.png");
+    if (texture)
+        MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f),
+                                 texture->getTexture());
 }

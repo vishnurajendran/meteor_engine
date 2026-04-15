@@ -13,7 +13,6 @@
 #define MERROR(...) MLogger::error(__VA_ARGS__)
 
 using LogEventHandler = std::function<void(SString)>;
-
 class MLogger {
 private:
     static std::map<int,LogEventHandler> listeners;

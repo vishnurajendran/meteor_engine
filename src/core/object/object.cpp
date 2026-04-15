@@ -1,27 +1,24 @@
-//
-// Created by Vishnu Rajendran on 2024-09-18.
-//
-
 #include "object.h"
 #include "core/utils/guid.h"
 #include "core/object/gc.h"
 
-MObject::MObject() {
+MObject::MObject()
+{
     guid = SGuid::newGUID();
     name = "MObject";
 }
 
-SString MObject::toString() {
-    return name + STR(" (GUID: ") + guid + STR(")");
-}
-
-bool MObject::equals(MObject *obj) {
-    if(obj != nullptr)
-        return obj->guid == guid;
-    return false;
-}
-
-SString MObject::getGUID() {
+SString MObject::getGUID() const
+{
     return guid;
 }
 
+SString MObject::toString() const
+{
+    return name + STR(" (GUID: ") + guid + STR(")");
+}
+
+bool MObject::equals(const MObject* obj) const
+{
+    return obj && obj->guid == guid;
+}

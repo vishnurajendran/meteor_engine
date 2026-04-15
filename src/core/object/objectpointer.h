@@ -1,120 +1,116 @@
-//
-// Created by Vishnu Rajendran on 2024-09-18.
-//
 #pragma once
 
-#ifndef METEOR_ENGINE_OBJECTPOINTER_H
-#define METEOR_ENGINE_OBJECTPOINTER_H
-
-
 #include "gc.h"
+#include "object.h"
 
 template<typename T>
-class MObjectPtr {
+class MObjectPtr
+{
     static_assert(std::is_base_of<MObject, T>::value, "T must derive from MObject");
 
-private:
-    T* ptr;
-
 public:
-    // Constructor
-    MObjectPtr(T *obj = nullptr) : ptr(obj) {
-        if (ptr != nullptr) {
-            MGarbageCollector::reference(ptr);
-        }
+    // ── Construction ──────────────────────────────────────────────────────────
+
+    MObjectPtr(T* obj = nullptr) : ptr(obj)
+    {
+        if (ptr) MGarbageCollector::reference(ptr);
     }
 
-    // Destructor
-    ~MObjectPtr() {
-        if (ptr != nullptr) {
-            MGarbageCollector::dereference(ptr);
-            reset();
-        }
+    ~MObjectPtr()
+    {
+        release();
+        // No reset() here — the MObjectPtr object itself is being destroyed,
+        // zeroing ptr afterwards serves no purpose and was confusing.
     }
 
-    // Copy constructor
-    MObjectPtr(const MObjectPtr &other) : ptr(other.ptr) {
-        if (ptr != nullptr) {
-            MGarbageCollector::reference(ptr);
-        }
+    // Copy
+    MObjectPtr(const MObjectPtr& other) : ptr(other.ptr)
+    {
+        if (ptr) MGarbageCollector::reference(ptr);
     }
 
-    // Move constructor
-    MObjectPtr(MObjectPtr &&other) noexcept: ptr(other.ptr) {
-        other.ptr = nullptr;  // Ensure the source pointer is nullified
+    // Move — ownership transfers; ref-count stays the same.
+    MObjectPtr(MObjectPtr&& other) noexcept : ptr(other.ptr)
+    {
+        other.ptr = nullptr;
     }
 
-    // Copy assignment operator
-    MObjectPtr &operator=(const MObjectPtr &other) {
-        if (this == &other) {
-            return *this;  // Handle self-assignment
-        }
+    // ── Assignment ────────────────────────────────────────────────────────────
 
-        // Dereference the current object
-        if (ptr != nullptr) {
-            MGarbageCollector::dereference(ptr);
-        }
-
-        ptr = other.ptr;
-
-        // Reference the new object
-        if (ptr != nullptr) {
-            MGarbageCollector::reference(ptr);
-        }
-
+    MObjectPtr& operator=(const MObjectPtr& other)
+    {
+        if (this != &other)
+            assign(other.ptr);
         return *this;
     }
 
-    // Move assignment operator
-    MObjectPtr &operator=(MObjectPtr &&other) noexcept {
-        if (this != &other) {
-            if (ptr != nullptr) {
-                MGarbageCollector::dereference(ptr);
-            }
-
-            ptr = other.ptr;
-            other.ptr = nullptr;  // Nullify the source pointer
+    MObjectPtr& operator=(MObjectPtr&& other) noexcept
+    {
+        if (this != &other)
+        {
+            release();
+            ptr       = other.ptr;
+            other.ptr = nullptr;
         }
-
         return *this;
     }
 
-    // Assign nullptr
-    MObjectPtr &operator=(std::nullptr_t) {
-        if (ptr != nullptr) {
+    // Assign from a raw pointer (e.g. MObjectPtr<Foo> p; p = new Foo();)
+    MObjectPtr& operator=(T* raw)
+    {
+        if (ptr != raw)
+            assign(raw);
+        return *this;
+    }
+
+    // Assign nullptr explicitly
+    MObjectPtr& operator=(std::nullptr_t)
+    {
+        release();
+        return *this;
+    }
+
+    // ── Accessors ─────────────────────────────────────────────────────────────
+
+    T* get() const                  { return ptr; }
+
+    T& operator*()  const           { return *ptr; }
+    T* operator->() const           { return ptr; }
+
+    explicit operator bool() const  { return ptr != nullptr; }
+
+    // ── Comparison ────────────────────────────────────────────────────────────
+
+    bool operator==(std::nullptr_t)             const { return ptr == nullptr; }
+    bool operator!=(std::nullptr_t)             const { return ptr != nullptr; }
+
+    bool operator==(const MObjectPtr& other)    const { return ptr == other.ptr; }
+    bool operator!=(const MObjectPtr& other)    const { return ptr != other.ptr; }
+
+    bool operator==(const T* raw)               const { return ptr == raw; }
+    bool operator!=(const T* raw)               const { return ptr != raw; }
+
+    void reset(T* newPtr = nullptr)
+    {
+        if (ptr != newPtr)
+            assign(newPtr);
+    }
+
+private:
+    T* ptr = nullptr;
+    void release()
+    {
+        if (ptr)
+        {
             MGarbageCollector::dereference(ptr);
-            reset();
             ptr = nullptr;
         }
-        return *this;
     }
 
-    // Overload dereference operator
-    T &operator*() const {
-        return *ptr;
-    }
-
-    // Overload arrow operator
-    T *operator->() const {
-        return ptr;
-    }
-
-    // Support comparison with nullptr
-    bool operator==(std::nullptr_t) const {
-        return ptr == nullptr;
-    }
-
-    bool operator!=(std::nullptr_t) const {
-        return ptr != nullptr;
-    }
-
-    void reset(){
-        ptr = nullptr;
-    }
-
-    T* obj(){
-        return ptr;
+    void assign(T* raw)
+    {
+        if (raw) MGarbageCollector::reference(raw);
+        release();
+        ptr = raw;
     }
 };
-
-#endif //METEOR_ENGINE_OBJECTPOINTER_H

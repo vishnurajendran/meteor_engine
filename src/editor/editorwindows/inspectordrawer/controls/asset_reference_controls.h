@@ -19,7 +19,6 @@ private:
 private:
     sf::Texture* getFileIcon(MAssetManager* assetManager, MAsset* asset) const;
     static bool defaultTestFuncCallback(MAsset* asset);
-    static void drawCenteredLabel(SString label, const SString& id);
 public:
     static const SString ASSET_REF_TARGET_KEY;
     MAssetReferenceControl();
@@ -27,6 +26,10 @@ public:
     MAsset* getAssetReference() const;
     void setAssetReference(MAsset* asset);
     bool drawControl(const SString& label);
+
+    // Single-row compact version — fits inside inspector table cells.
+    // Renders: [32px thumb] [asset name or "(none)"] [× clear]
+    bool drawCompactControl(const SString& label);
     std::function<bool(MAsset* asset)> canAcceptAssetFuncCallback;
 };
 

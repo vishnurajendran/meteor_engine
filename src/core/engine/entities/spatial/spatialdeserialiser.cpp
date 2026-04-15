@@ -12,7 +12,7 @@ const bool MSpatialDeserializer::registered = []() {
 }();
 
 MSpatialEntity* MSpatialDeserializer::deserialize(pugi::xml_node node) {
-    MSpatialEntity* entity = new MSpatialEntity();
+    MSpatialEntity* entity = MSpatialEntity::createInstance();
     parseSpatialData(node, entity);
     return entity;
 }

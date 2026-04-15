@@ -1,243 +1,315 @@
-//
-// Created by ssj5v on 26-09-2024.
-//
-
 #include "spatial.h"
 
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 
-std::map<SString, MSpatialEntity*> MSpatialEntity::allAliveEntities;
-std::vector<MSpatialEntity*> MSpatialEntity::markedForDestruction;
+// ─── Static member definitions ───────────────────────────────────────────────
 
-auto makeRootEntity(MSpatialEntity *entity) -> void {
-    if (entity->getParent() != nullptr) {
-        entity->getParent()->removeChild(entity);
-    }
+std::unordered_map<MObject*, MObjectPtr<MSpatialEntity>> MSpatialEntity::allAliveEntities;
+std::vector<MSpatialEntity*>                              MSpatialEntity::markedForDestruction;
 
-    MSceneManager::getSceneManagerInstance()->getActiveScene()->addToRoot(entity);
-}
+// ─── Internal scene-root helpers ─────────────────────────────────────────────
 
-void removeFromRoot(const MSpatialEntity *entity, MScene *scene) {
-    auto rootEntities = scene->getRootEntities();
-    const auto it = std::find(rootEntities.begin(), rootEntities.end(), entity);
-    if (it == rootEntities.end())
-        return;
-
-    rootEntities.erase(it);
-}
-
-MSpatialEntity::MSpatialEntity() : MSpatialEntity(nullptr)
+static MScene* activeScene()
 {
-    // defaults to an empty root level entity.
-    //clear before use
-    children.clear();
+    return MSceneManager::getSceneManagerInstance()->getActiveScene();
 }
 
-MSpatialEntity::MSpatialEntity(MSpatialEntity *parent) {
-    name = "Spatial";
-    relativeScale.x = relativeScale.y = 1;
-    if (parent == nullptr)
-        makeRootEntity(this);
-    else
-        parent->addChild(this);
-
-    addAliveEntity(this);
-
-    //call on start initialise any custom logic.
-    onStart();
-}
-
-void MSpatialEntity::addChild(MSpatialEntity *entity) {
-    auto it = std::ranges::find(children, entity);
-    if (it != children.end())
-        return;
-
+static void addToSceneRoot(MSpatialEntity* entity)
+{
     if (entity->getParent() != nullptr)
         entity->getParent()->removeChild(entity);
 
-    this->children.push_back(entity);
-    entity->setParent(this);
-
-    // remove from root
-    // this is a by-product of un-parenting an entity using removeChild.
-    // since the entity becomes an independent, it will be considered as a root entity
-    // and appended to the scene root list.
-    removeFromRoot(entity, MSceneManager::getSceneManagerInstance()->getActiveScene());
+    if (auto* scene = activeScene())
+        scene->addToRoot(entity);
 }
 
-void MSpatialEntity::removeChild(MSpatialEntity *entity) {
-    auto it = std::find(children.begin(), children.end(), entity);
-    if (it == children.end())
-        return;
+// NOTE: getRootEntities() must return a non-const reference for this to compile.
+// If it returns by value, add a removeFromRoot(MSpatialEntity*) method to MScene.
+static void removeFromSceneRoot(const MSpatialEntity* entity)
+{
+    auto* scene = activeScene();
+    if (!scene) return;
 
-    const int diff = it - children.begin();
-    children.erase(children.begin() + diff);
-    entity->setParent(nullptr);
-    makeRootEntity(entity);
+    auto& roots = scene->getRootEntities();          // reference, not a copy
+    auto  it    = std::find(roots.begin(), roots.end(), entity);
+    if (it != roots.end())
+        roots.erase(it);
 }
 
-SMatrix4 MSpatialEntity::getTransformMatrix() const {
-    auto modelMatrix = getModelMatrix();
-    if (parent) {
-        return parent->getModelMatrix() * modelMatrix;
+// ─── Factory ─────────────────────────────────────────────────────────────────
+
+MSpatialEntity* MSpatialEntity::createInstance(const SString& name)
+{
+    // Protected constructor → only reachable here and from subclass factories.
+    auto* entity = new MSpatialEntity(nullptr);
+    entity->setName(name.empty() ? generateName(STR("SpatialEntity")) : name);
+    addAliveEntity(entity);
+    return entity;
+}
+
+SString MSpatialEntity::generateName(const SString& base)
+{
+    // Check if plain base name is already taken; if so, append (1), (2), …
+    auto taken = [&](const SString& candidate) -> bool
+    {
+        for (const auto& [ptr, mop] : allAliveEntities)
+            if (mop->getName() == candidate) return true;
+        return false;
+    };
+
+    if (!taken(base)) return base;
+
+    for (int i = 1; ; ++i)
+    {
+        SString candidate = base + STR(" (") + SString::fromInt(i) + STR(")");
+        if (!taken(candidate)) return candidate;
     }
-    return modelMatrix;
 }
 
-SVector3 MSpatialEntity::getForwardVector() const
+// ─── Constructors / Destructor ────────────────────────────────────────────────
+
+MSpatialEntity::MSpatialEntity() : MSpatialEntity(nullptr) {}
+
+MSpatialEntity::MSpatialEntity(MSpatialEntity* parentEntity)
 {
-    return glm::normalize(getRelativeRotation() * SVector3(0.0f, 0.0f, -1.0f));
+    name = "SpatialEntity";
+
+    if (parentEntity)
+        parentEntity->addChild(this);      // addChild calls setParent internally
+    else
+        addToSceneRoot(this);
+
+    onStart();
 }
 
-SVector3 MSpatialEntity::getRightVector() const
+MSpatialEntity::~MSpatialEntity()
 {
-    return getRelativeRotation() * SVector3(1.0f, 0.0f, 0.0f);
+    // onExit is called by destroy() before queuing for deletion, so game-code
+    // cleanup always happens before the destructor runs.
 }
 
-SVector3 MSpatialEntity::getUpVector() const
+// ─── Hierarchy ────────────────────────────────────────────────────────────────
+
+void MSpatialEntity::setParent(MSpatialEntity* newParent)
 {
-    return getRelativeRotation() * SVector3(0.0f, 1.0f, 0.0f);
+    if (newParent == parent) return;
+
+    if (newParent)
+    {
+        // addChild handles detaching from the old parent and root list.
+        newParent->addChild(this);
+    }
+    else
+    {
+        // Detach from current parent → become a scene root.
+        if (parent)
+            parent->removeChild(this);   // removeChild calls addToSceneRoot
+    }
 }
 
-MSpatialEntity::~MSpatialEntity() {
+void MSpatialEntity::addChild(MSpatialEntity* entity)
+{
+    if (!entity || entity == this) return;
 
-    //call onExit to allow game-code to clean up.
+    // Already a child — nothing to do.
+    if (std::ranges::find(children, entity) != children.end()) return;
 
+    if (entity->parent)
+    {
+        // Silent detach from old parent: erase from sibling list and clear the
+        // parent pointer WITHOUT calling removeChild, which would promote the
+        // entity to a scene root and cause it to appear in both the root list
+        // and the new parent's children at the same time.
+        auto& siblings = entity->parent->children;
+        auto  it       = std::ranges::find(siblings, entity);
+        if (it != siblings.end()) siblings.erase(it);
+        entity->parent = nullptr;
+    }
+    else
+    {
+        // Entity was a scene root — remove it from that list before parenting.
+        removeFromSceneRoot(entity);
+    }
+
+    children.push_back(entity);
+    entity->parent = this;
+    entity->updateTransforms();
 }
 
-SVector3 MSpatialEntity::getWorldPosition() const {
-    return glm::vec3(modelMatrix[3]);
+void MSpatialEntity::removeChild(MSpatialEntity* entity)
+{
+    if (!entity) return;
+
+    auto it = std::ranges::find(children, entity);
+    if (it == children.end()) return;
+
+    children.erase(it);
+    entity->parent = nullptr;
+    addToSceneRoot(entity);             // promote to scene root
+    entity->updateTransforms();
 }
 
-SQuaternion MSpatialEntity::getWorldRotation() const {
-    // Extract the 3x3 rotation matrix (upper-left of the 4x4 matrix)
-    glm::mat3 rotationMatrix = glm::mat3(modelMatrix);
-    rotationMatrix[0] = glm::normalize(rotationMatrix[0]);  // X axis
-    rotationMatrix[1] = glm::normalize(rotationMatrix[1]);  // Y axis
-    rotationMatrix[2] = glm::normalize(rotationMatrix[2]);  // Z axis
-    return glm::quat_cast(rotationMatrix);
+// ─── Transform ───────────────────────────────────────────────────────────────
+
+SMatrix4 MSpatialEntity::computeLocalMatrix() const
+{
+    SMatrix4 T = glm::translate(SMatrix4(1.0f), relativePosition);
+    SMatrix4 R = glm::mat4_cast(relativeRotation);
+    SMatrix4 S = glm::scale(SMatrix4(1.0f), relativeScale);
+    return T * R * S;
 }
 
-SMatrix4 MSpatialEntity::getModelMatrix() const {
-    // Compute local model matrix from position, rotation, and scale
-    SMatrix4 scaleMatrix = glm::scale(SMatrix4(1.0f), relativeScale);
-    SMatrix4 rotationMatrix = glm::mat4_cast(relativeRotation);  // Convert quaternion to rotation matrix
-    SMatrix4 translationMatrix = glm::translate(SMatrix4(1.0f), relativePosition);
-    SMatrix4 localModelMatrix = translationMatrix * rotationMatrix * scaleMatrix;
-    return localModelMatrix;
+void MSpatialEntity::updateTransforms()
+{
+    // modelMatrix stores the WORLD-space transform so that getWorldPosition /
+    // getWorldRotation can read it cheaply without walking up the hierarchy.
+    SMatrix4 local = computeLocalMatrix();
+    modelMatrix = parent ? parent->modelMatrix * local : local;
+
+    for (auto* child : children)
+        if (child) child->updateTransforms();
 }
 
-void  MSpatialEntity::setWorldPosition(const SVector3& worldPosition) {
-    if (parent) {
-        // Get the inverse of the parent's transform to convert world position to local space
-        SMatrix4 parentTransform = parent->getTransformMatrix();
-        SMatrix4 inverseParentTransform = glm::inverse(parentTransform);
+SVector3 MSpatialEntity::getWorldPosition() const
+{
+    return SVector3(modelMatrix[3]);
+}
 
-        // Transform the world position to the parent's local space
-        SVector4 localPosition4 = inverseParentTransform * SVector4(worldPosition, 1.0f);
-        relativePosition = SVector3(localPosition4); // Convert back to 3D vector
-    } else {
-        // If no parent, directly set world position as relative
+SQuaternion MSpatialEntity::getWorldRotation() const
+{
+    // Strip scale from the upper-left 3×3 before converting to quaternion.
+    glm::mat3 rot = glm::mat3(modelMatrix);
+    rot[0] = glm::normalize(rot[0]);
+    rot[1] = glm::normalize(rot[1]);
+    rot[2] = glm::normalize(rot[2]);
+    return glm::quat_cast(rot);
+}
+
+void MSpatialEntity::setWorldPosition(const SVector3& worldPosition)
+{
+    if (parent)
+    {
+        SMatrix4 invParent    = glm::inverse(parent->modelMatrix);
+        SVector4 localPos4    = invParent * SVector4(worldPosition, 1.0f);
+        relativePosition      = SVector3(localPos4);
+    }
+    else
+    {
         relativePosition = worldPosition;
     }
     updateTransforms();
 }
 
-void MSpatialEntity::setWorldRotation(const SQuaternion& worldRotation) {
-    if (parent) {
-        // Calculate the relative rotation using the parent's world rotation
-        SQuaternion parentWorldRotation = parent->getWorldRotation();
-        relativeRotation = glm::inverse(parentWorldRotation) * worldRotation;
-    } else {
-        // If no parent, directly set world rotation as relative
+void MSpatialEntity::setWorldRotation(const SQuaternion& worldRotation)
+{
+    if (parent)
+        relativeRotation = glm::inverse(parent->getWorldRotation()) * worldRotation;
+    else
         relativeRotation = worldRotation;
-    }
+
     updateTransforms();
 }
 
-void MSpatialEntity::updateTransforms() {
-    // Update this entity's model matrix
-    modelMatrix = getModelMatrix();
-    // Recursively update children's transformations
-    for (auto child : children) {
-        if (child != nullptr) {
-            child->updateTransforms();
-        }
-    }
-    //MLOG("Updating children transforms");
-}
-
-void MSpatialEntity::onStart() {
-    //will be overriden for code
-}
-
-void MSpatialEntity::onUpdate(float deltaTime) {
-    //will be overriden for code
-}
-
-void MSpatialEntity::onExit()
+SVector3 MSpatialEntity::getForwardVector() const
 {
-    // will be overriden for code
+    return glm::normalize(getWorldRotation() * SVector3(0.0f, 0.0f, -1.0f));
 }
-void MSpatialEntity::onDrawGizmo()
+
+SVector3 MSpatialEntity::getRightVector() const
 {
-    // will be overriden for gizmos
+    return glm::normalize(getWorldRotation() * SVector3(1.0f, 0.0f, 0.0f));
 }
+
+SVector3 MSpatialEntity::getUpVector() const
+{
+    return glm::normalize(getWorldRotation() * SVector3(0.0f, 1.0f, 0.0f));
+}
+
+// ─── Update loop ─────────────────────────────────────────────────────────────
 
 void MSpatialEntity::updateAllSceneEntities(float deltaTime)
 {
-    for (const auto& pair : allAliveEntities)
+    // Snapshot the keys so that entities created/destroyed mid-update
+    // don't invalidate the iterator.
+    std::vector<MObject*> keys;
+    keys.reserve(allAliveEntities.size());
+    for (const auto& [ptr, _] : allAliveEntities)
+        keys.push_back(ptr);
+
+    for (auto* key : keys)
     {
-        pair.second->onUpdate(deltaTime);
+        auto it = allAliveEntities.find(key);
+        if (it != allAliveEntities.end())
+            it->second->onUpdate(deltaTime);
     }
 }
 
+// ─── Destroy ─────────────────────────────────────────────────────────────────
+
 void MSpatialEntity::destroy(MSpatialEntity* entity)
 {
-    if (entity == nullptr) return;
+    if (!entity) return;
 
     entity->onExit();
-    removeAliveEntity(entity);
-    if (entity->parent != nullptr) {
-        for (auto &child: entity->children) {
-            entity->parent->addChild(child);
-        }
+
+    // Re-parent or promote children before the entity disappears.
+    if (entity->parent)
+    {
+        for (auto* child : entity->children)
+            entity->parent->addChild(child);    // reparent up
+
         entity->parent->removeChild(entity);
-        //remove from scene roots.
-    } else {
-        for (auto &child: entity->children) {
-            makeRootEntity(child);
-        }
-        auto roots = MSceneManager::getSceneManagerInstance()->getActiveScene()->getRootEntities();
-        auto it = std::find(roots.begin(), roots.end(), entity);
-        if (it != roots.end())
+    }
+    else
+    {
+        for (auto* child : entity->children)
+            addToSceneRoot(child);              // promote each child to root
+
+        // Remove this entity from the scene root list.
+        // Use reference — NOT a copy.
+        auto* scene = activeScene();
+        if (scene)
         {
-            roots.erase(it);
+            auto& roots = scene->getRootEntities();
+            auto  it    = std::ranges::find(roots, entity);
+            if (it != roots.end()) roots.erase(it);
         }
     }
+
+    entity->children.clear();
+    entity->parent = nullptr;
 
     markedForDestruction.push_back(entity);
 }
 
 void MSpatialEntity::destroyMarked()
 {
-    for (auto marked : markedForDestruction)
+    for (auto* marked : markedForDestruction)
     {
-        delete marked;
+        // Erasing from the map drops the MObjectPtr, which decrements the GC
+        // ref-count. When it reaches zero the GC calls delete automatically.
+        removeFromAliveEntities(marked);
     }
     markedForDestruction.clear();
 }
 
+// ─── Alive-entity registry ────────────────────────────────────────────────────
+
 void MSpatialEntity::addAliveEntity(MSpatialEntity* entity)
 {
-    allAliveEntities[entity->getGUID()] = entity;
+    // Inserting an MObjectPtr calls MGarbageCollector::reference -> ref-count = 1.
+    allAliveEntities.emplace(entity, MObjectPtr<MSpatialEntity>(entity));
 }
 
-void MSpatialEntity::removeAliveEntity(MSpatialEntity* entity)
+void MSpatialEntity::removeFromAliveEntities(MSpatialEntity* entity)
 {
-    if (allAliveEntities.contains(entity->getGUID()))
-    {
-        allAliveEntities.erase(entity->getGUID());
-    }
+    // Erasing destroys the MObjectPtr -> MGarbageCollector::dereference.
+    // If ref-count hits zero the GC calls delete.
+    allAliveEntities.erase(entity);
 }
+
+void MSpatialEntity::onStart()  {}
+void MSpatialEntity::onUpdate(float) {}
+void MSpatialEntity::onExit()   {}
+void MSpatialEntity::onDrawGizmo(SVector2) {}

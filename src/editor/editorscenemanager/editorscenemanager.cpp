@@ -5,6 +5,7 @@
 #include "editorscenemanager.h"
 
 #include "core/engine/camera/camera.h"
+#include "core/engine/camera/viewmanagement.h"
 #include "editorscenecamera.h"
 
 bool MEditorSceneManager::loadEmptyScene()
@@ -42,7 +43,14 @@ MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const
 
 void MEditorSceneManager::createEditorSceneCamera()
 {
-    MSpatialEntity::destroy(editorSceneCamera);
-    editorSceneCamera = new MEditorSceneCameraEntity();
-    editorSceneCamera->setWorldPosition(SVector3(0, 0, 20));
+    if (editorSceneCamera != nullptr)
+    {
+        MViewManagement::removeCamera(editorSceneCamera);
+        MSpatialEntity::destroy(editorSceneCamera);
+        editorSceneCamera = nullptr;
+    }
+
+    auto* cam = new MEditorSceneCameraEntity();
+    cam->setWorldPosition(SVector3(0, 0, 20));
+    editorSceneCamera = cam;
 }

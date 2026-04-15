@@ -4,7 +4,8 @@
 
 #include "editorapplication.h"
 
-#include "core/graphics/core/render_queue.h"
+#include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include "core/engine/gizmos/gizmos.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/editorwindows/assetwindow/editorassetwindow.h"
@@ -52,7 +53,17 @@ void MEditorApplication::initialise() {
     editorInst = this;
     //appRunning = true;
     MLOG(STR("Initialising Editor"));
-    window = new MImGuiWindow(STR("Meteorite Editor"));
+    window = new MImGuiWindow();
+    window->initialiseWindow(STR("Meteorite Editor"), MWindow::DEFAULT_WINDOW_SIZE, MWindow::DEFAULT_FPS);
+
+    // call intialise before use
+    window->setGraphicsCall([this]()
+    {
+        pipelineManager.preRender();
+        pipelineManager.render();
+        pipelineManager.postRender();
+    });
+
     if(window == nullptr){
         MERROR(STR("Invalid Window Type"));
         return;
@@ -74,6 +85,8 @@ void MEditorApplication::initialise() {
 
     MMenubarTreeNode::buildTree();
     MLOG(STR("Built Menubar Items"));
+
+    MGizmos::enableGizmos(true);
 
     window->setVisible(true);
     splashShowing = false;
@@ -146,6 +159,9 @@ void MEditorApplication::loadPrerequisites()
     //setup scene manager
     sceneManagerRef = new MEditorSceneManager();
     MSceneManager::registerSceneManager(sceneManagerRef);
+
+    //load render pipeline
+    pipelineManager.initalise();
 }
 
 void MEditorApplication::exit()

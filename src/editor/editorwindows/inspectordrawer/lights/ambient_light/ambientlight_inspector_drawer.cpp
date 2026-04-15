@@ -3,53 +3,33 @@
 //
 
 #include "ambientlight_inspector_drawer.h"
-
 #include "core/engine/lighting/ambient/ambient_light.h"
-#include "core/utils/color.h"
-#include "core/utils/dpihelper.h"
 
-const bool MAmbientLightInspectorDrawer::registered = []()
-{
+const bool MAmbientLightInspectorDrawer::registered = []() {
     registerDrawer(new MAmbientLightInspectorDrawer());
     return true;
 }();
 
-void MAmbientLightInspectorDrawer::onDrawInspector(MSpatialEntity* target)
-{
-    //Draw TRF
+void MAmbientLightInspectorDrawer::onDrawInspector(MSpatialEntity* target) {
     MSpatialEntityInspectorDrawer::onDrawInspector(target);
-    //Draw Camera Controls
     drawALGui(dynamic_cast<MAmbientLightEntity*>(target));
 }
 
-bool MAmbientLightInspectorDrawer::canDraw(MSpatialEntity* entity)
-{
+bool MAmbientLightInspectorDrawer::canDraw(MSpatialEntity* entity) {
     return dynamic_cast<MAmbientLightEntity*>(entity) != nullptr;
 }
 
-void MAmbientLightInspectorDrawer::drawALGui(MAmbientLightEntity* light)
-{
-    if (light == nullptr)
+void MAmbientLightInspectorDrawer::drawALGui(MAmbientLightEntity* light) {
+    if (!light)
         return;
 
-    auto dpi = DPIHelper::GetDPIScaleFactor();
-    if (ImGui::CollapsingHeader("Ambient Light",ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::Text("Intensity");
-        auto intensity = light->getIntensity();
+    if (ImGui::CollapsingHeader("Ambient Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+        float  intensity = light->getIntensity();
+        SColor color     = light->getColor();
 
-        ImGui::SameLine();
-        // Make input float expand to fill remaining width
-        ImGui::PushItemWidth(-FLT_MIN);
-        ImGui::DragFloat("##Intensity", &intensity, 0.01f);
-        ImGui::PopItemWidth();
-        light->setIntensity(intensity);
-
-        ImGui::Text("Color");
-        auto color = light->getColor();
-        float cols[4] = {color.r, color.g, color.b, color.a};
-        ImGui::PushItemWidth(200.0f);
-        ImGui::ColorPicker4("##Picker", cols, ImGuiColorEditFlags_Float);
-        light->setColor(SColor(cols[0], cols[1], cols[2], cols[3]));
+        if (drawLightIntensityAndColor(intensity, color)) {
+            light->setIntensity(intensity);
+            light->setColor(color);
+        }
     }
 }

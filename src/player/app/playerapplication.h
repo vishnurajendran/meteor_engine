@@ -10,6 +10,7 @@
 class MPlayerApplication : public MApplication {
 private:
     MObjectPtr<MWindow> window;
+    MRenderPipelineManager pipelineManager;
 public:
     MPlayerApplication();
     void initialise() override;

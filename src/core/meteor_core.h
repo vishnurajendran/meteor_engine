@@ -4,17 +4,17 @@
 
 #pragma once
 // shaders
-#include "core/engine/3d/shader/shadercompiler.h"
-#include "core/engine/3d/shader/shader.h"
-#include "core/engine/3d/shader/shaderasset.h"
+#include "core/graphics/core/shader/shadercompiler.h"
+#include "core/graphics/core/shader/shader.h"
+#include "core/graphics/core/shader/shaderasset.h"
 
 #include "meteor_core_minimal.h"
 
 // graphics
-#include "core/graphics/core/graphicsrenderer.h"
-#include "core/graphics/core/drawcall.h"
-#include "core/graphics/core/sfmldrawcall.h"
-#include "core/graphics/core/opengldrawcall.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/drawcall.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/sfmldrawcall.h"
+#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.h"
 
 // scene
 #include "core/engine/scene/serialisation/sceneentitytypedeserializer.h"
@@ -29,8 +29,8 @@
 #include "core/engine/assetmanagement/textasset/textasset.h"
 
 // materials
-#include "core/engine/3d/material/material.h"
-#include "core/engine/3d/material/MMaterialAsset.h"
+#include "core/graphics/core/material/material.h"
+#include "core/graphics/core/material/MMaterialAsset.h"
 
 // static mesh
 #include "core/engine/3d/staticmesh/staticmesh.h"
