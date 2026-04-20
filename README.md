@@ -9,6 +9,8 @@ It’s currently in active development, focused on exploring rendering architect
 
 ## Current State (What Exists Right Now)
 
+![meteorite_editor](https://i.ibb.co/ccKXr9tC/Screenshot-2026-04-20-104203.png)
+
 ### Rendering
 - Custom **scalable render pipeline (WIP refactor ongoing)**
 - Basic forward rendering
@@ -93,12 +95,6 @@ Meteor is primarily a **learning + experimentation project**, with focus on:
 - pugixml
 
 *(Manual setup required depending on platform)*
-
----
-
-## Current Editor Snapshot
-
-![meteorite_editor](https://i.ibb.co/ccKXr9tC/Screenshot-2026-04-20-104203.png)
 
 ---
 
