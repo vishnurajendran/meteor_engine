@@ -13,7 +13,7 @@ It’s currently in active development, focused on exploring rendering architect
 
 ### Rendering
 - Custom **scalable render pipeline (WIP refactor ongoing)**
-- Basic forward rendering
+- Basic forward+ rendering
 - Procedural skybox
 - Shadow support (early stage / experimental)
 
