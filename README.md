@@ -18,12 +18,12 @@ It’s currently in active development, focused on exploring rendering architect
 - Shadow support (early stage / experimental)
 
 ### Assets
-- Model loading via **:contentReference[oaicite:0]{index=0}**
-- XML-based asset serialization using **:contentReference[oaicite:1]{index=1}**
+- Model loading via Assimp
+- XML-based asset serialization using **pugixml**
 - Path-based asset referencing *(moving to Asset ID system)*
 
 ### Editor
-- Immediate-mode editor built with **:contentReference[oaicite:2]{index=2}**
+- Immediate-mode editor built with **Imgui, SFML-Imgui**
 - Scene hierarchy (basic)
 - Inspector (early)
 - Scene viewport
