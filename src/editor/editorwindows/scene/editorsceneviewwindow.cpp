@@ -133,6 +133,20 @@ void MEditorSceneViewWindow::onGui()
     ImVec2 region = ImGui::GetContentRegionAvail();
     if (region.x <= 0 || region.y <= 0) return;
 
+
+    // ---- FPS accumulation (0.5 s smoothing window) -------------------------
+    const float dt = ImGui::GetIO().DeltaTime;
+    if (dt > 0.0f)
+    {
+        fpsAccum  += dt;
+        fpsFrames += 1;
+        if (fpsAccum >= 0.5f)
+        {
+            displayFps = static_cast<float>(fpsFrames) / fpsAccum;
+            fpsAccum   = 0.0f;
+            fpsFrames  = 0;
+        }
+    }
     if (renderTexture.getSize().x != (unsigned)region.x ||
         renderTexture.getSize().y != (unsigned)region.y)
     {
@@ -552,7 +566,7 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
     auto* camera = MEditorApplication::getSceneCamera();
     auto* sel    = MEditorApplication::Selected;
 
-    // Build content strings up front so the panel can be auto-sized
+    // Build content strings up front so the panel can be auto-sized.
     SString selLine  = sel ? sel->getName() : SString("Nothing selected");
     SString camLine  = "---";
     if (camera)
@@ -560,16 +574,14 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
         auto p  = camera->getWorldPosition();
         camLine = SString::format("({0:.1f}, {1:.1f}, {2:.1f})", p.x, p.y, p.z);
     }
-    const char* hintLine = "F \xc2\xb7 Focus   RMB \xc2\xb7 Orbit";  // "F · Focus   RMB · Orbit"
+    const char* hintLine = "F \xc2\xb7 Focus   RMB \xc2\xb7 Orbit";
 
-    // Panel width fits the widest line
     float textW = std::max({ ImGui::CalcTextSize(selLine.c_str()).x,
                              ImGui::CalcTextSize(camLine.c_str()).x,
                              ImGui::CalcTextSize(hintLine).x });
     float panelW = textW + OVL_PAD * 2.0f + 20.0f;
     float panelH = ImGui::GetTextLineHeightWithSpacing() * 3.0f + OVL_PAD * 2.0f;
-
-    float posY = viewportMin.y + viewportSize.y - panelH - margin;
+    float posY   = viewportMin.y + viewportSize.y - panelH - margin;
 
     beginOverlayPanel("##vp_info",
                       { viewportMin.x + margin, posY },
@@ -578,14 +590,12 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
         // ── Row 1: dot + entity name ─────────────────────────────────────
         if (sel)
         {
-            // Small accent dot before the name
             ImVec2 dotPos = ImGui::GetCursorScreenPos();
             dotPos.x += 2.0f;
             dotPos.y += ImGui::GetTextLineHeight() * 0.5f;
             ImGui::GetWindowDrawList()->AddCircleFilled(
                 dotPos, 3.5f, IM_COL32(100, 160, 255, 220));
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
-
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
             ImGui::TextUnformatted(selLine.c_str());
             ImGui::PopStyleColor();
@@ -610,9 +620,45 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
         ImGui::PopStyleColor();
     }
     endOverlayPanel();
-}
 
-// ─── Render target ────────────────────────────────────────────────────────────
+    // ── FPS overlay (bottom-right) ────────────────────────────────────────────
+    //
+    //  ┌──────────────┐
+    //  │  60 FPS      │  ← green when >= 60, yellow >= 30, red below 30
+    //  │  16.7 ms     │
+    //  └──────────────┘
+    {
+        const float fpsW = 90.0f;
+        const float fpsH = ImGui::GetTextLineHeightWithSpacing() * 2.0f + OVL_PAD * 2.0f;
+        float       fpsX = viewportMin.x + viewportSize.x - fpsW - margin;
+        float       fpsY = viewportMin.y + viewportSize.y - fpsH - margin;
+
+        beginOverlayPanel("##fps_ovl", { fpsX, fpsY }, { fpsW, fpsH });
+        {
+            // Colour codes: green >= 60, yellow >= 30, red below 30.
+            ImVec4 fpsColor;
+            if      (displayFps >= 60.0f) fpsColor = ImVec4(0.35f, 0.90f, 0.35f, 1.0f);
+            else if (displayFps >= 30.0f) fpsColor = ImVec4(0.95f, 0.80f, 0.20f, 1.0f);
+            else                          fpsColor = ImVec4(0.95f, 0.30f, 0.25f, 1.0f);
+
+            // Row 1: "XX FPS"
+            char fpsBuf[32];
+            std::snprintf(fpsBuf, sizeof(fpsBuf), "%.0f FPS", displayFps);
+            ImGui::PushStyleColor(ImGuiCol_Text, fpsColor);
+            ImGui::TextUnformatted(fpsBuf);
+            ImGui::PopStyleColor();
+
+            // Row 2: frame time in ms (dimmed)
+            char msBuf[32];
+            const float ms = displayFps > 0.0f ? 1000.0f / displayFps : 0.0f;
+            std::snprintf(msBuf, sizeof(msBuf), "%.1f ms", ms);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+            ImGui::TextUnformatted(msBuf);
+            ImGui::PopStyleColor();
+        }
+        endOverlayPanel();
+    }
+}
 
 void MEditorSceneViewWindow::updateRenderTarget()
 {

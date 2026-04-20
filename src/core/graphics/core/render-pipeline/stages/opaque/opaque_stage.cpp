@@ -27,11 +27,11 @@ void MOpaqueStage::init(IRenderPipeline* const pipeline)
     opaqueBuffer = pipeline->getBufferRegistry()
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer)
-        MERROR("MOpaqueStage::init — failed to create opaque buffer");
+        MERROR("MOpaqueStage::init failed to create opaque buffer");
 
     auto* asset = MAssetManager::getInstance()->getAsset<MShaderAsset>(ALBEDO_SHADER_PATH);
     if (!asset)
-        MERROR("MOpaqueStage::init — could not load albedo shader: " + SString(ALBEDO_SHADER_PATH));
+        MERROR("MOpaqueStage::init could not load albedo shader: " + SString(ALBEDO_SHADER_PATH));
     else
         albedoShader = asset->getShader();
 }

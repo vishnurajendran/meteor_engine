@@ -62,6 +62,11 @@ private:
     float cameraMoveSpeed   = 10.0f;
     float cameraSensitivity =  0.15f;
 
+    // FPS tracking (0.5s smoothing window)
+    float fpsAccum   = 0.0f;
+    int   fpsFrames  = 0;
+    float displayFps = 0.0f;
+
     // ── Icons ─────────────────────────────────────────────────────────────────
     sf::Texture translateIcon;
     sf::Texture rotateIcon;
