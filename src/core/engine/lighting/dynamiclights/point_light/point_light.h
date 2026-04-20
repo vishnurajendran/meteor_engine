@@ -12,6 +12,7 @@ public:
     MPointLight();
     void onExit() override;
     void onDrawGizmo(SVector2 renderResolution) override;
+    SString typeName() const override { return STR("point_light"); }
 };
 
 #endif //POINT_LIGHT_H

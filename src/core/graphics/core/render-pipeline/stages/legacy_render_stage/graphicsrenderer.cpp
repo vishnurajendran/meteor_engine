@@ -5,15 +5,15 @@
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "graphicsrenderer.h"
-#include "core/engine/gizmos/gizmos.h"
-#include "core/engine/lighting/lighting_system_manager.h"
-#include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
-#include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
-#include "core/graphics/core/render-pipeline/render_item.h"
-#include "core/graphics/core/material/material.h"
-#include "core/utils/logger.h"
+#include "../lighting/lighting_system_manager.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/material/material.h"
+#include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
+#include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
+#include "core/graphics/core/render-pipeline/render_item.h"
+#include "core/utils/logger.h"
+#include "graphicsrenderer.h"
 
 // ---------------------------------------------------------------------------
 // Lifecycle

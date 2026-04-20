@@ -181,10 +181,10 @@ set(CORE_SOURCES
         src/core/engine/scene/scene.cpp
         src/core/engine/scene/scene.h
         src/core/engine/scene/serialisation/xmlserialisable.h
-        src/core/engine/scene/serialisation/sceneentitytypemap.cpp
-        src/core/engine/scene/serialisation/sceneentitytypemap.h
         src/core/engine/scene/serialisation/sceneentitytypedeserializer.cpp
         src/core/engine/scene/serialisation/sceneentitytypedeserializer.h
+        src/core/engine/scene/serialisation/sceneentitytypemap.h
+        src/core/engine/scene/serialisation/sceneentitytypemap.cpp
         src/core/utils/str_extensions.h
         src/core/utils/serialisation_utils.h
         src/core/engine/scene/scenemanager.cpp
@@ -254,9 +254,9 @@ set(CORE_SOURCES
         src/core/engine/texture/textureassetimporter.h
         src/core/engine/lighting/light_entity.cpp
         src/core/engine/lighting/light_entity.h
-        src/core/engine/lighting/light_type.h
-        src/core/engine/lighting/lighting_system_manager.cpp
-        src/core/engine/lighting/lighting_system_manager.h
+        src/core/graphics/core/render-pipeline/stages/lighting/light_type.h
+        src/core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.cpp
+        src/core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h
         src/core/engine/lighting/ambient/ambient_light.cpp
         src/core/engine/lighting/ambient/ambient_light.h
         src/core/engine/lighting/ambient/ambient_light_gpu_struct.h
@@ -281,21 +281,21 @@ set(CORE_SOURCES
         src/core/engine/skybox/skyboxentitydeserialiser.h
         src/core/engine/gizmos/gizmos.cpp
         src/core/engine/gizmos/gizmos.h
-        src/core/engine/lighting/dynamiclights/lightbvh/light_bounds.h
+        src/core/graphics/core/render-pipeline/stages/lighting/lightbvh/light_bounds.h
         src/core/engine/lighting/dynamiclights/point_light/point_light.cpp
         src/core/engine/lighting/dynamiclights/point_light/point_light.h
-        src/core/engine/lighting/dynamiclights/lightbvh/light_bounds.h
-        src/core/engine/lighting/dynamiclights/lightbvh/light_bvh_node.h
+        src/core/graphics/core/render-pipeline/stages/lighting/lightbvh/light_bounds.h
+        src/core/graphics/core/render-pipeline/stages/lighting/lightbvh/light_bvh_node.h
         src/core/utils/aabb.h
         src/core/utils/aabb.cpp
-        src/core/engine/lighting/dynamiclights/lightbvh/lightscene.cpp
-        src/core/engine/lighting/dynamiclights/lightbvh/lightscene.h
+        src/core/graphics/core/render-pipeline/stages/lighting/lightbvh/lightscene.cpp
+        src/core/graphics/core/render-pipeline/stages/lighting/lightbvh/lightscene.h
         src/core/engine/lighting/dynamiclights/dynamic_light.cpp
         src/core/engine/lighting/dynamiclights/dynamic_light.h
         src/core/engine/lighting/dynamiclights/point_light/point_light.cpp
         src/core/engine/lighting/dynamiclights/point_light/point_light.h
-        src/core/engine/lighting/dynamiclights/dynamic_light_data.h
-        src/core/engine/lighting/dynamiclights/dynamic_light_datatype.h
+        src/core/graphics/core/render-pipeline/stages/lighting/dynamic_light_data.h
+        src/core/graphics/core/render-pipeline/stages/lighting/dynamic_light_datatype.h
         src/core/engine/lighting/dynamiclights/point_light/point_light_entity_deserialiser.cpp
         src/core/engine/lighting/dynamiclights/point_light/point_light_entity_deserialiser.h
         src/core/engine/lighting/dynamiclights/spot_light/spot_light.cpp
@@ -303,7 +303,7 @@ set(CORE_SOURCES
         src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.cpp
         src/core/engine/lighting/dynamiclights/spot_light/spot_light_entitydeserializer.h
         src/core/engine/lighting/dynamic_light_shader_container.h
-        src/core/engine/lighting/light_shader_constants.h
+        src/core/graphics/core/render-pipeline/stages/lighting/light_shader_constants.h
         src/core/graphics/core/render-pipeline/render_pipeline.cpp
         src/core/graphics/core/render-pipeline/render_pipeline.h
         src/core/graphics/core/render-pipeline/buffer_registry.cpp
@@ -330,6 +330,31 @@ set(CORE_SOURCES
         src/core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h
         src/core/graphics/core/render-pipeline/stages/skybox/skybox_stage.cpp
         src/core/graphics/core/render-pipeline/stages/skybox/skybox_stage.h
+        src/core/graphics/core/render-pipeline/buffers/buffer_names.h
+        src/core/graphics/core/render-pipeline/buffers/frame/frame_buffer.cpp
+        src/core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h
+        src/core/graphics/core/render-pipeline/stages/opaque/opaque_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h
+        src/core/graphics/core/render-pipeline/stages/lighting/lighting_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/lighting/lighting_stage.h
+        src/core/graphics/core/render-pipeline/buffers/shadow/shadow_buffer.cpp
+        src/core/graphics/core/render-pipeline/buffers/shadow/shadow_buffer.h
+        src/core/graphics/core/render-pipeline/stages/shadow/shadow_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/shadow/shadow_stage.h
+        src/core/engine/scene/serialisation/scene_serialisation_map.cpp
+        src/core/engine/scene/serialisation/scene_serialisation_map.h
+        src/core/engine/scene/scene_io.cpp
+        src/core/engine/scene/scene_io.h
+        src/core/engine/skybox/procedural_sky/procedural_sky.cpp
+        src/core/engine/skybox/procedural_sky/procedural_sky.h
+        src/core/engine/skybox/procedural_sky/procedural_skybox_drawcall.cpp
+        src/core/engine/skybox/procedural_sky/procedural_skybox_drawcall.h
+        src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.h
+        src/core/graphics/core/render-pipeline/stages/skybox/procedural_sky/procedural_sky_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/skybox/procedural_sky/procedural_sky_stage.h
+        src/core/engine/skybox/procedural_sky/procedural_skybox_queue.cpp
+        src/core/engine/skybox/procedural_sky/procedural_skybox_queue.h
 )
 
 set(EDITOR_SOURCES
@@ -405,12 +430,13 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/static_mesh/static_mesh_inspector.h
         src/editor/editorwindows/inspectordrawer/controls/material_properties_controls.cpp
         src/editor/editorwindows/inspectordrawer/controls/material_properties_controls.h
+        src/editor/window/menubar/default/add_entity/add_entity.cpp
+        src/editor/window/menubar/default/add_entity/add_entity.h
 )
 
 set(PLAYER_SOURCES
         src/player/app/playerapplication.cpp
         src/player/app/playerapplication.h
-        src/core/graphics/core/render-pipeline/buffers/buffer_names.h
 )
 
 # ---------------------------------------------------------------------------

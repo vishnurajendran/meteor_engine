@@ -39,21 +39,16 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
     auto staticMeshTarget = dynamic_cast<MStaticMeshEntity*>(target);
 
     MSpatialEntityInspectorDrawer::onDrawInspector(target);
-    auto assetRef = staticMeshAssetReferenceControl->getAssetReference();
-    auto targetAssetRef = staticMeshTarget->getStaticMeshAsset();
 
-    auto materialAssetRef = materialAssetReferenceControl->getAssetReference();
-    auto materialTargetAssetRef = staticMeshTarget->getMaterialAsset();
+    auto assetRef          = staticMeshAssetReferenceControl->getAssetReference();
+    auto targetAssetRef    = staticMeshTarget->getStaticMeshAsset();
+    auto materialAssetRef  = materialAssetReferenceControl->getAssetReference();
+    auto materialTargetRef = staticMeshTarget->getMaterialAsset();
 
     if (assetRef != targetAssetRef)
-    {
         staticMeshAssetReferenceControl->setAssetReference(targetAssetRef);
-    }
-
-    if (materialAssetRef != materialTargetAssetRef)
-    {
-        materialAssetReferenceControl->setAssetReference(materialTargetAssetRef);
-    }
+    if (materialAssetRef != materialTargetRef)
+        materialAssetReferenceControl->setAssetReference(materialTargetRef);
 
     if (ImGui::CollapsingHeader("Static Mesh Entity"))
     {
@@ -68,13 +63,13 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::TableSetColumnIndex(0);
             ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Static Mesh:");
-
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (staticMeshAssetReferenceControl->drawControl(""))
             {
                 staticMeshTarget->setStaticMeshAsset(
-                    dynamic_cast<MStaticMeshAsset*>(staticMeshAssetReferenceControl->getAssetReference()));
+                    dynamic_cast<MStaticMeshAsset*>(
+                        staticMeshAssetReferenceControl->getAssetReference()));
             }
 
             // ── Material ────────────────────────────────────────────────────
@@ -82,14 +77,24 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::TableSetColumnIndex(0);
             ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Material Src:");
-
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(-FLT_MIN);
             if (materialAssetReferenceControl->drawControl(""))
             {
                 staticMeshTarget->setMaterialAsset(
-                    dynamic_cast<MMaterialAsset*>(materialAssetReferenceControl->getAssetReference()));
+                    dynamic_cast<MMaterialAsset*>(
+                        materialAssetReferenceControl->getAssetReference()));
             }
+
+            // ── Cast Shadow ─────────────────────────────────────────────────
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Cast Shadow:");
+            ImGui::TableSetColumnIndex(1);
+            bool castsShadow = staticMeshTarget->getCastsShadow();
+            if (ImGui::Checkbox("##CastShadow", &castsShadow))
+                staticMeshTarget->setCastsShadow(castsShadow);
 
             ImGui::EndTable();
         }

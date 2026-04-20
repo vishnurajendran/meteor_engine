@@ -19,7 +19,6 @@ struct SVertex {
 class MStaticMesh : public MObject {
 public:
     MStaticMesh(std::vector<SVertex> vertices, std::vector<unsigned int> indices);
-
     [[nodiscard]] const std::vector<SVertex>&       getVertices() const { return vertices; }
     [[nodiscard]] const std::vector<unsigned int>&  getIndices()  const { return indices;  }
 

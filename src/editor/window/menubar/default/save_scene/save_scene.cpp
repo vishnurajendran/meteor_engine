@@ -1,10 +1,6 @@
-//
-// Created by ssj5v on 22-01-2025.
-//
-
 #include "save_scene.h"
 
-#include "core/engine/scene/scenemanager.h"
+#include "core/engine/scene/scene_io.h"
 #include "editor/window/menubar/menubartree.h"
 
 bool MSaveSceneMenubarItem::registered = []()
@@ -25,7 +21,8 @@ SString MSaveSceneMenubarItem::getPath() const
 
 void MSaveSceneMenubarItem::onSelect()
 {
-    //Todo: Add scene serialisation to MSceneManager
-    //MSceneManager::saveScene();
-
+    // Saves back to the file it was opened from.
+    // If no path is set yet (new unsaved scene), logs a warning —
+    // user should Save As first (or set a path via Open).
+    MSceneIO::saveCurrentScene();
 }

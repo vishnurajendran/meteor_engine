@@ -4,8 +4,12 @@
 
 #include "scenemanager.h"
 #include "scene.h"
+#include "core/engine/entities/spatial/spatial.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "sceneasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "functional"
 
 MScene* MSceneManager::activeScene = nullptr;
 MSceneManager* MSceneManager::sceneManagerInstance = nullptr;
@@ -14,8 +18,17 @@ bool MSceneManager::closeActiveScene() {
     if (activeScene == nullptr)
         return false;
 
+    // onClose() destroys all alive entities (calling onExit() on each, which
+    // unregisters lights, removes skybox draw calls, etc.) and then calls
+    // destroyMarked(). No need to repeat that work here.
+    activeScene->close();
 
-    activeScene->onClose();
+    // Belt-and-braces: explicitly reset the light manager in case any
+    // light forgot to call unregisterLight in its onExit.
+    auto* lightMgr = MLightSystemManager::getInstance();
+    for (auto* dl : std::vector<MDynamicLight*>(lightMgr->getDynamicLights()))
+        lightMgr->unregisterLight(dl);
+
     activeScene = nullptr;
     return true;
 }
@@ -30,6 +43,7 @@ bool MSceneManager::loadEmptyScene() {
     if (activeScene != nullptr)
         closeActiveScene();
     activeScene = new MScene();
+    informSceneLoadCallbackListeners(activeScene);
     return true;
 }
 
@@ -52,9 +66,9 @@ bool MSceneManager::loadScene(const SString& path) {
         return false;
     }
 
-
     if (activeScene->tryParse(asset->getSceneHierarchy())) {
         MLOG(STR("Scene Loaded Complete"));
+        informSceneLoadCallbackListeners(activeScene);
         return true;
     }
 
@@ -62,12 +76,23 @@ bool MSceneManager::loadScene(const SString& path) {
     return false;
 }
 
-void MSceneManager::update(float deltaTime) {
+void MSceneManager::update(float deltaTime)
+{
     if (activeScene == nullptr)
         return;
 
-    MSpatialEntity::destroyMarked();
     activeScene->update(deltaTime);
+}
+SString MSceneManager::registerOnLoadCallback(std::function<void(MScene*)> callback)
+{
+    auto id = SGuid::newGUID();
+    sceneLoadCallbackListeners[id] = callback;
+    return id;
+}
+void MSceneManager::deregisterOnLoadCallback(SString callbackId)
+{
+    if (sceneLoadCallbackListeners.contains(callbackId))
+        sceneLoadCallbackListeners.erase(callbackId);
 }
 
 void MSceneManager::registerSceneManager(MSceneManager* instance)
@@ -82,7 +107,12 @@ void MSceneManager::registerSceneManager(MSceneManager* instance)
     sceneManagerInstance = instance;
 }
 
-MSceneManager* MSceneManager::getSceneManagerInstance()
+MSceneManager* MSceneManager::getSceneManagerInstance() { return sceneManagerInstance; }
+
+void MSceneManager::informSceneLoadCallbackListeners(MScene* scene)
 {
-    return sceneManagerInstance;
+    for (auto listener : sceneLoadCallbackListeners)
+    {
+        listener.second(scene);
+    }
 }

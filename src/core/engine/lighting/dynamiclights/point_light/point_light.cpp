@@ -4,10 +4,10 @@
 
 #include "point_light.h"
 
+#include "../../../../graphics/core/render-pipeline/stages/lighting/dynamic_light_datatype.h"
+#include "../../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/engine/lighting/dynamiclights/dynamic_light_datatype.h"
-#include "core/engine/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
 
 MPointLight::MPointLight()

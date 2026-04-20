@@ -4,10 +4,12 @@
 
 #ifndef LIGHTING_MANAGER_H
 #define LIGHTING_MANAGER_H
-#include "core/object/object.h"
-#include "core/utils/glmhelper.h"
-#include "dynamic_light_shader_container.h"
-#include "dynamiclights/lightbvh/lightscene.h"
+#include "../../../../../engine/lighting/dynamic_light_shader_container.h"
+#include "../../../../../object/object.h"
+#include "../../../../../utils/glmhelper.h"
+#include "core/engine/lighting/dynamiclights/dynamic_light.h"
+#include "core/utils/aabb.h"
+#include "lightbvh/lightscene.h"
 
 
 class MLightEntity;
@@ -19,6 +21,12 @@ public:
     void prepareLights();
     void prepareDynamicLights(const AABB& bounds);
     void requestLightSceneRebuild();
+
+    // Shadow toggle and soft shadow mode — read by MShadowStage and MLightingStage each frame.
+    bool directionalShadowEnabled = true;
+    bool smoothShadows            = false;
+    MLightEntity* getDirectionalLight() const { return directionalLightInstance; }
+    const std::vector<MDynamicLight*>& getDynamicLights() const { return dynamicLights; }
 public:
     static MLightSystemManager* getInstance();
 private:

@@ -1,12 +1,6 @@
 #include "spatial.h"
-
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
-
-// ─── Static member definitions ───────────────────────────────────────────────
-
-std::unordered_map<MObject*, MObjectPtr<MSpatialEntity>> MSpatialEntity::allAliveEntities;
-std::vector<MSpatialEntity*>                              MSpatialEntity::markedForDestruction;
 
 // ─── Internal scene-root helpers ─────────────────────────────────────────────
 
@@ -44,16 +38,20 @@ MSpatialEntity* MSpatialEntity::createInstance(const SString& name)
     // Protected constructor → only reachable here and from subclass factories.
     auto* entity = new MSpatialEntity(nullptr);
     entity->setName(name.empty() ? generateName(STR("SpatialEntity")) : name);
-    addAliveEntity(entity);
+    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    entity->ownerScene = scene;
+    scene->registerEntity(entity);
+
     return entity;
 }
 
 SString MSpatialEntity::generateName(const SString& base)
 {
     // Check if plain base name is already taken; if so, append (1), (2), …
+    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
     auto taken = [&](const SString& candidate) -> bool
     {
-        for (const auto& [ptr, mop] : allAliveEntities)
+        for (const auto& [ptr, mop] : scene->getAllEntities())
             if (mop->getName() == candidate) return true;
         return false;
     };
@@ -69,24 +67,18 @@ SString MSpatialEntity::generateName(const SString& base)
 
 // ─── Constructors / Destructor ────────────────────────────────────────────────
 
-MSpatialEntity::MSpatialEntity() : MSpatialEntity(nullptr) {}
+MSpatialEntity::MSpatialEntity() : MSpatialEntity(nullptr)
+{
+
+}
 
 MSpatialEntity::MSpatialEntity(MSpatialEntity* parentEntity)
 {
     name = "SpatialEntity";
-
     if (parentEntity)
         parentEntity->addChild(this);      // addChild calls setParent internally
     else
         addToSceneRoot(this);
-
-    onStart();
-}
-
-MSpatialEntity::~MSpatialEntity()
-{
-    // onExit is called by destroy() before queuing for deletion, so game-code
-    // cleanup always happens before the destructor runs.
 }
 
 // ─── Hierarchy ────────────────────────────────────────────────────────────────
@@ -111,7 +103,6 @@ void MSpatialEntity::setParent(MSpatialEntity* newParent)
 void MSpatialEntity::addChild(MSpatialEntity* entity)
 {
     if (!entity || entity == this) return;
-
     // Already a child — nothing to do.
     if (std::ranges::find(children, entity) != children.end()) return;
 
@@ -226,90 +217,24 @@ SVector3 MSpatialEntity::getUpVector() const
     return glm::normalize(getWorldRotation() * SVector3(0.0f, 1.0f, 0.0f));
 }
 
-// ─── Update loop ─────────────────────────────────────────────────────────────
-
-void MSpatialEntity::updateAllSceneEntities(float deltaTime)
-{
-    // Snapshot the keys so that entities created/destroyed mid-update
-    // don't invalidate the iterator.
-    std::vector<MObject*> keys;
-    keys.reserve(allAliveEntities.size());
-    for (const auto& [ptr, _] : allAliveEntities)
-        keys.push_back(ptr);
-
-    for (auto* key : keys)
-    {
-        auto it = allAliveEntities.find(key);
-        if (it != allAliveEntities.end())
-            it->second->onUpdate(deltaTime);
-    }
-}
-
 // ─── Destroy ─────────────────────────────────────────────────────────────────
 
-void MSpatialEntity::destroy(MSpatialEntity* entity)
+void MSpatialEntity::destroy()
 {
-    if (!entity) return;
-
-    entity->onExit();
-
-    // Re-parent or promote children before the entity disappears.
-    if (entity->parent)
+    if (ownerScene == nullptr)
     {
-        for (auto* child : entity->children)
-            entity->parent->addChild(child);    // reparent up
-
-        entity->parent->removeChild(entity);
-    }
-    else
-    {
-        for (auto* child : entity->children)
-            addToSceneRoot(child);              // promote each child to root
-
-        // Remove this entity from the scene root list.
-        // Use reference — NOT a copy.
-        auto* scene = activeScene();
-        if (scene)
-        {
-            auto& roots = scene->getRootEntities();
-            auto  it    = std::ranges::find(roots, entity);
-            if (it != roots.end()) roots.erase(it);
-        }
+        auto msg = SString::format("MSpatialEntity:: Owner Scene is null for {0}. This object is an orphan, this should not happen. EVER", this->getName());
+        MERROR(msg);
+        return;
     }
 
-    entity->children.clear();
-    entity->parent = nullptr;
-
-    markedForDestruction.push_back(entity);
+    onExit();
+    ownerScene->markForDestroy(this);
 }
 
-void MSpatialEntity::destroyMarked()
-{
-    for (auto* marked : markedForDestruction)
-    {
-        // Erasing from the map drops the MObjectPtr, which decrements the GC
-        // ref-count. When it reaches zero the GC calls delete automatically.
-        removeFromAliveEntities(marked);
-    }
-    markedForDestruction.clear();
-}
+void MSpatialEntity::onCreate() {}
+void MSpatialEntity::onStart() { entityStarted = true; }
 
-// ─── Alive-entity registry ────────────────────────────────────────────────────
-
-void MSpatialEntity::addAliveEntity(MSpatialEntity* entity)
-{
-    // Inserting an MObjectPtr calls MGarbageCollector::reference -> ref-count = 1.
-    allAliveEntities.emplace(entity, MObjectPtr<MSpatialEntity>(entity));
-}
-
-void MSpatialEntity::removeFromAliveEntities(MSpatialEntity* entity)
-{
-    // Erasing destroys the MObjectPtr -> MGarbageCollector::dereference.
-    // If ref-count hits zero the GC calls delete.
-    allAliveEntities.erase(entity);
-}
-
-void MSpatialEntity::onStart()  {}
 void MSpatialEntity::onUpdate(float) {}
 void MSpatialEntity::onExit()   {}
 void MSpatialEntity::onDrawGizmo(SVector2) {}

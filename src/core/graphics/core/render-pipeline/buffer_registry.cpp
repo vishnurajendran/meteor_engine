@@ -20,6 +20,7 @@ void MBufferRegistery::resizeAll(int width, int height)
 {
     for (auto& [name, buf] : mBuffers)
     {
+        if (!buf->isResizeable()) continue;
         if (!buf->resize(width, height))
             MWARN("MBufferRegistery::resizeAll — buffer '" + name + "' resize failed");
     }

@@ -4,7 +4,10 @@
 #pragma once
 #ifndef SCENEMANAGER_H
 #define SCENEMANAGER_H
+
+#include "functional"
 #include "core/meteor_core_minimal.h"
+
 class MScene;
 /**
  * @brief Manages Scene loads and unloads.
@@ -17,9 +20,19 @@ public:
     virtual bool loadScene(const SString& path);
     virtual bool closeActiveScene();
     virtual void update(float deltaTime);
+
+    SString registerOnLoadCallback(std::function<void(MScene*)> callback);
+    void deregisterOnLoadCallback(SString callbackId);
+
     virtual MScene* getActiveScene() { return activeScene; }
+
+public:
     static void registerSceneManager(MSceneManager* sceneManagerInstance);
     static MSceneManager* getSceneManagerInstance();
+
+private:
+    std::unordered_map<SString, std::function<void(MScene*)>> sceneLoadCallbackListeners;
+    void informSceneLoadCallbackListeners(MScene* scene);
 private:
     static MScene* activeScene;
     static MSceneManager* sceneManagerInstance;

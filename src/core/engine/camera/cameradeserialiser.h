@@ -1,19 +1,13 @@
-//
-// Created by ssj5v on 05-10-2024.
-//
-
+#pragma once
 #ifndef CAMERADESERIALISER_H
 #define CAMERADESERIALISER_H
-#include "core/engine/entities/spatial/spatialdeserialiser.h"
-
+#include "core/engine/scene/serialisation/sceneentitytypedeserializer.h"
 
 class MCameraEntityDeserialiser : public MSceneEntityTypeDeserializer {
+public:
+    MSpatialEntity* deserialize(pugi::xml_node node) override;
+    pugi::xml_node  serialise(MSpatialEntity* entity, pugi::xml_node parent) override;
 private:
     static bool registered;
-public:
-    MSpatialEntity * deserialize(pugi::xml_node node) override;
 };
-
-
-
-#endif //CAMERADESERIALISER_H
+#endif

@@ -6,9 +6,10 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include <GL/gl.h>
 #include "core/utils/sstring.h"
 
+// Base buffer interface. No GL headers here — concrete buffers include
+// glew.h only in their .cpp files to avoid gl.h/glew.h ordering conflicts.
 struct SBuffer
 {
 public:
@@ -17,8 +18,11 @@ public:
 
     // Called by the buffer registry whenever the render resolution changes.
     // Override in concrete buffers that own GPU resources (FBOs, textures).
-    // Default is a no-op so simple or externally-managed buffers are unaffected.
     virtual bool resize(int width, int height) { return true; }
+
+    // Return false to opt out of MBufferRegistery::resizeAll().
+    // Used by fixed-resolution buffers like shadow maps.
+    virtual bool isResizeable() const { return true; }
 
     virtual bool makeBuffer(const SString& bufferName) = 0;
 
@@ -26,7 +30,8 @@ public:
     virtual ~SBuffer() = default;
 
 private:
-    GLuint bufferHandle = 0;
+    // Raw handle kept private; concrete types manage their own GL objects.
+    unsigned int bufferHandle = 0;
 };
 
 #endif // BUFFER_H

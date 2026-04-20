@@ -1,9 +1,6 @@
-//
-// Created by ssj5v on 01-05-2025.
-//
-
 #include "point_light_inspector_drawer.h"
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 
 bool MPointLightInspectorDrawer::registered = []() {
     registerDrawer(new MPointLightInspectorDrawer());
@@ -21,21 +18,28 @@ bool MPointLightInspectorDrawer::canDraw(MSpatialEntity* entity) {
 
 void MPointLightInspectorDrawer::drawPLGui(MSpatialEntity* target) {
     auto* light = dynamic_cast<MPointLight*>(target);
-    if (!light)
-        return;
+    if (!light) return;
 
     if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen)) {
-        float range     = light->getRange();
-        float intensity = light->getIntensity();
-        SColor color    = light->getColor();
-        bool changed    = false;
+        float  range       = light->getRange();
+        float  intensity   = light->getIntensity();
+        SColor color       = light->getColor();
+        bool   castsShadow = light->getCastsShadow();
+        bool   changed     = false;
 
         ImGui::Text("Range:");
         ImGui::SameLine();
         ImGui::PushItemWidth(-FLT_MIN);
         if (ImGui::DragFloat("##Range", &range, 0.01f, 0.0f, FLT_MAX, "%.2f"))
             changed = true;
-        ImGui::PopItemWidth();  // BUG FIX: was missing, leaked into ImGui width stack
+        ImGui::PopItemWidth();
+
+        if (ImGui::Checkbox("Cast Shadow", &castsShadow))
+            light->setCastsShadow(castsShadow);
+
+        bool smoothShadow = light->getSmoothShadow();
+        if (ImGui::Checkbox("Smooth Shadows", &smoothShadow))
+            light->setSmoothShadow(smoothShadow);
 
         if (drawLightIntensityAndColor(intensity, color))
             changed = true;

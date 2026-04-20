@@ -17,6 +17,7 @@ struct MBufferNames
     static const SString BUFFER_LIGHTS;
     static const SString BUFFER_SHADOW;
     static const SString BUFFER_TRANSPARENT;
+    static const SString BUFFER_COMPOSITE;
 };
 
 #endif // BUFFER_NAMES_H

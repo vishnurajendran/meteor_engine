@@ -4,9 +4,8 @@
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 
-MEditorSceneCameraEntity::MEditorSceneCameraEntity()
+void MEditorSceneCameraEntity::onCreate()
 {
-    name = EDITOR_CAMERA_NAME;
     setPriority(-9999);
     setClipPlanes(0.1f, 1000.0f);
     setEntityFlags(EEntityFlags::HideInEditor);

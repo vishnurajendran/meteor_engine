@@ -11,7 +11,8 @@ class MEditorSceneCameraEntity : public MCameraEntity {
 private:
     const SString EDITOR_CAMERA_NAME = "_EditorSceneCamera";
 public:
-    MEditorSceneCameraEntity();
+    void onCreate() override;
+    MEditorSceneCameraEntity() = default;
     ~MEditorSceneCameraEntity() override;
 };
 

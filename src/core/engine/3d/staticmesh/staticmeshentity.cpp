@@ -6,12 +6,11 @@
 
 #include <cmath>
 
-#include "../../../graphics/core/render-pipeline/render_queue.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
-#include "core/graphics/core/render-pipeline/interfaces/render_item_collector.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
+#include "core/graphics/core/render-pipeline/render_queue.h"
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 #include "staticmesh.h"
 #include "staticmeshasset.h"
@@ -30,7 +29,12 @@ MStaticMeshEntity::MStaticMeshEntity() : MSpatialEntity()
 
 MStaticMeshEntity::~MStaticMeshEntity()
 {
+    // Always unregister from the render queue in the destructor — not just in
+    // onExit() — so there is never a dangling pointer if onExit() was skipped
+    // (e.g. force-deletes, editor reloads). Mirrors the pattern used by
+    // MSkyboxEntity.
     MRenderQueue::removeFromSubmitables(this);
+
     if (materialInstance)
         delete materialInstance;
 }
@@ -70,6 +74,8 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
         item.vertexCount = mesh->getVertexCount();  // used only when ebo == 0
         item.transform   = currentMatrix;
         item.material    = materialInstance;
+        item.bounds      = bounds;
+        item.castsShadow = castsShadow;
         item.sortOrder   = static_cast<int>(ERenderStageOrder::RS_Opaque);
         collector->submitRenderItem(item);
     }
@@ -78,6 +84,12 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 // ---------------------------------------------------------------------------
 // Entity lifecycle
 // ---------------------------------------------------------------------------
+
+void MStaticMeshEntity::onExit()
+{
+    MSpatialEntity::onExit();
+    MRenderQueue::removeFromSubmitables(this);
+}
 
 void MStaticMeshEntity::onUpdate(float deltaTime)
 {

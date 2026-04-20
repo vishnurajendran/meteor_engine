@@ -1,0 +1,25 @@
+<shader name="shadow_pass" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // No modifications — model/view/projection are set to the light-space
+        // matrices by MShadowStage, so applyProjection() produces light-space NDC.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        // Depth written automatically — no colour output needed.
+        return vec4(0.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

@@ -23,7 +23,7 @@
                 <nearClip value="0.1"/>
                 <farClip value="100.0"/>
                 <priority value="0"/>
-                <orthographic value="1"/>
+                <orthographic value="0"/>
             </camera>
         </attrib>
     </camera>

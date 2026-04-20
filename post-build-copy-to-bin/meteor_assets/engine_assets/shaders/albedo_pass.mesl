@@ -1,0 +1,30 @@
+<shader name="albedo_pass" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+        <property key="_color"   type="col"   default="(1,1,1,1)"/>
+        <property key="_baseTex" type="tex2d" default=""/>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // No vertex modifications — standard projection handles everything.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform vec4      _color;
+    uniform sampler2D _baseTex;
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        // Pure albedo — no applyLighting() call.
+        // MLightingStage provides the light contribution separately.
+        return texture(_baseTex, v2fTexCoords) * _color;
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

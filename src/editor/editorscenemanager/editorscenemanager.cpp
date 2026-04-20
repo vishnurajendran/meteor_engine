@@ -30,7 +30,7 @@ bool MEditorSceneManager::loadScene(const SString& path)
 
 bool MEditorSceneManager::closeActiveScene()
 {
-    MSpatialEntity::destroy(editorSceneCamera);
+    editorSceneCamera->destroy();
     editorSceneCamera = nullptr;
 
     return MSceneManager::closeActiveScene();
@@ -46,11 +46,11 @@ void MEditorSceneManager::createEditorSceneCamera()
     if (editorSceneCamera != nullptr)
     {
         MViewManagement::removeCamera(editorSceneCamera);
-        MSpatialEntity::destroy(editorSceneCamera);
+            editorSceneCamera->destroy();
         editorSceneCamera = nullptr;
     }
 
-    auto* cam = new MEditorSceneCameraEntity();
+    auto* cam = MSpatialEntity::createInstance<MEditorSceneCameraEntity>(EDITOR_CAMERA_NAME);
     cam->setWorldPosition(SVector3(0, 0, 20));
     editorSceneCamera = cam;
 }

@@ -1,0 +1,63 @@
+<shader name="lighting_pass" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D shadowMap;
+    uniform mat4      lightSpaceMatrix;
+    uniform int       hasShadow;
+    uniform int       hasDirShadow;
+
+    // smoothShadows and poissonDisk are declared in meteor_lighting_utils.glsl
+
+    float computeShadow(vec3 worldPos)
+    {
+        if (hasDirShadow == 0) return 0.0;
+
+        vec4 fragPosLS  = lightSpaceMatrix * vec4(worldPos, 1.0);
+        vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
+        projCoords      = projCoords * 0.5 + 0.5;
+
+        if (projCoords.x < 0.0 || projCoords.x > 1.0 ||
+            projCoords.y < 0.0 || projCoords.y > 1.0 ||
+            projCoords.z < 0.0 || projCoords.z > 1.0)
+            return 0.0;
+
+        vec2  texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+        float bias      = texelSize.x * 0.5;
+
+        if (smoothShadows == 1)
+        {
+            float shadow = 0.0;
+            float spread = texelSize.x * 2.0;
+            for (int i = 0; i < 16; ++i)
+            {
+                float d = texture(shadowMap, projCoords.xy + poissonDisk[i] * spread).r;
+                shadow += (projCoords.z - bias > d) ? 1.0 : 0.0;
+            }
+            return shadow / 16.0;
+        }
+        else
+        {
+            float d = texture(shadowMap, projCoords.xy).r;
+            return (projCoords.z - bias > d) ? 1.0 : 0.0;
+        }
+    }
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        float shadow = computeShadow(getVertexPositionWorld());
+        vec3 ambient     = getAmbLightContrib();
+        vec3 directional = getDirLightContrib() * (1.0 - shadow);
+        vec3 dynamic     = getDynamicLightContrib();
+        return vec4(ambient + directional + dynamic, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

@@ -4,7 +4,7 @@
 
 #ifndef DYNAMIC_LIGHT_SHADER_CONTAINER_H
 #define DYNAMIC_LIGHT_SHADER_CONTAINER_H
-#include "dynamiclights/dynamic_light_data.h"
+#include "../../graphics/core/render-pipeline/stages/lighting/dynamic_light_data.h"
 
 static constexpr int MAX_DYN_LIGHTS = 8;
 struct alignas(16) SDynamicLightShaderContainer{

@@ -19,8 +19,6 @@ public:
     ~MObjectPtr()
     {
         release();
-        // No reset() here — the MObjectPtr object itself is being destroyed,
-        // zeroing ptr afterwards serves no purpose and was confusing.
     }
 
     // Copy
@@ -34,8 +32,6 @@ public:
     {
         other.ptr = nullptr;
     }
-
-    // ── Assignment ────────────────────────────────────────────────────────────
 
     MObjectPtr& operator=(const MObjectPtr& other)
     {

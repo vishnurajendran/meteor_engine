@@ -118,7 +118,6 @@ bool MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString
     }
 
     const auto properties = getShaderProperties(rootNode);
-    MLOG(STR("MShaderAsset::Creating Shader Object (") + name + ")");
     shader = new MShader(vertexSource, fragmentSource, properties);
     shader->setName(name);
     return true;
@@ -149,7 +148,6 @@ bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const
     vertexSource += rootNode.child(SHDR_VERTNODE.c_str()).text().get();
     fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
     const auto properties = getShaderProperties(rootNode);
-    MLOG(STR("MShaderAsset::Creating Shader Object (") + name + ")");
     shader = new MShader(vertexSource, fragmentSource, properties);
     shader->setName(name);
     return true;

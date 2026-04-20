@@ -19,6 +19,7 @@ void MGarbageCollector::dereference(MObject* obj)
 
     if (--it->second <= 0)
     {
+        MLOG(SString::format("GC: dereference {0}", obj->getName()));
         refMap.erase(it);
         delete obj;
     }

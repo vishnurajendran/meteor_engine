@@ -7,6 +7,8 @@
 #include <core/meteor_core_minimal.h>
 #include <vector>
 
+#include "core/engine/scene/scene.h"
+#include "core/engine/scene/scenemanager.h"
 #include "entityflags.h"
 
 class MSpatialEntity : public MObject
@@ -19,19 +21,22 @@ public:
 
     // Typed variant for subclasses: e.g. createInstance<MCamera>("MainCam")
     template<typename T>
-    static T* createInstance(const SString& name = {})
+    static T* createInstance(const SString& name, MScene* ownerScene=nullptr)
     {
         static_assert(std::is_base_of<MSpatialEntity, T>::value,
                       "T must derive from MSpatialEntity");
-        T* entity = new T(nullptr);
-        entity->setName(name.empty() ? generateName(T::staticTypeName()) : name);
-        addAliveEntity(entity);
+        T* entity = new T();
+        entity->setName(name);
+        if (ownerScene == nullptr)
+            ownerScene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+
+        ownerScene->registerEntity(entity);
+        entity->ownerScene = ownerScene;
         return entity;
     }
 
     // ── Lifetime ──────────────────────────────────────────────────────────────
-    static void destroy(MSpatialEntity* entity);
-    static void destroyMarked();
+    void destroy();
 
     // ── Flags / enable ────────────────────────────────────────────────────────
     [[nodiscard]] EEntityFlags getEntityFlags() const { return flags; }
@@ -86,6 +91,8 @@ public:
     [[nodiscard]] MSpatialEntity*              getParent()   { return parent; }
     [[nodiscard]] std::vector<MSpatialEntity*>& getChildren() { return children; }
 
+    void setParentScene(MScene* scene);
+
     // Reparent this entity. Pass nullptr to detach and promote to scene root.
     void setParent(MSpatialEntity* newParent);
 
@@ -118,19 +125,27 @@ public:
     // ── Update ────────────────────────────────────────────────────────────────
     void updateTransforms();
 
-    static void updateAllSceneEntities(float deltaTime);
-
     // ── Overridable callbacks ─────────────────────────────────────────────────
+    virtual void onCreate();
     virtual void onStart();
     virtual void onUpdate(float deltaTime);
     virtual void onExit();
     virtual void onDrawGizmo(SVector2 renderResolution);
 
+    [[nodiscard]] bool hasStarted() const {return entityStarted; }
+    [[nodiscard]] bool getCanTick() const { return canTick; }
+    void setCanTick(bool canTick) { this->canTick = canTick; }
+
     // Subclasses may override to provide a display name for auto-naming.
-    [[nodiscard]] virtual SString typeName() const { return STR("SpatialEntity"); }
+    [[nodiscard]] virtual SString typeName() const { return STR("spatial"); }
 
     // ── Destructor ────────────────────────────────────────────────────────────
-    ~MSpatialEntity() override;
+    ~MSpatialEntity() override = default;
+private:
+// Returns the local TRS matrix (does NOT include parent transforms).
+    [[nodiscard]] SMatrix4 computeLocalMatrix() const;
+private:
+    static SString generateName(const SString& base);
 
 protected:
     // Protected: use createInstance() from external code.
@@ -150,22 +165,11 @@ protected:
     bool         enabled = true;
     EEntityFlags flags   = EEntityFlags::Default;
 
+    MScene* ownerScene = nullptr;
+
 private:
-    // ── Private helpers ───────────────────────────────────────────────────────
-
-    // Returns the local TRS matrix (does NOT include parent transforms).
-    [[nodiscard]] SMatrix4 computeLocalMatrix() const;
-
-    static SString generateName(const SString& base);
-
-    // GC-aware alive-entity registry. MObjectPtr is the owning reference.
-    // Raw pointers in children/parent are non-owning and remain valid as long
-    // as the entity lives in this map.
-    static std::unordered_map<MObject*, MObjectPtr<MSpatialEntity>> allAliveEntities;
-    static void addAliveEntity(MSpatialEntity* entity);
-    static void removeFromAliveEntities(MSpatialEntity* entity);
-
-    static std::vector<MSpatialEntity*> markedForDestruction;
+    bool canTick = false;
+    bool entityStarted = false;
 };
 
 #endif //SPATIAL_H

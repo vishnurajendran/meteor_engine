@@ -1,5 +1,7 @@
-#include "imgui.h"  // must precede ImGuizmo.h and any header that pulls it in
 #include "editorhierarchywindow.h"
+#include "imgui.h" // must precede ImGuizmo.h and any header that pulls it in
+
+#include "core/engine/entities/spatial/spatial.h"
 #include "editor/app/editorapplication.h"
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
@@ -354,7 +356,7 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
         {
             if (MEditorApplication::Selected == target)
                 MEditorApplication::Selected = nullptr;
-            MSpatialEntity::destroy(target);
+            target->destroy();
             rightClickedEntity = nullptr;
         }
     }

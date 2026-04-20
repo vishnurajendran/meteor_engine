@@ -3,9 +3,9 @@
 //
 #include "lighting_system_manager.h"
 #include <GL/glew.h>
-#include "dynamiclights/dynamic_light.h"
-#include "dynamiclights/dynamic_light_datatype.h"
-#include "light_entity.h"
+#include "../../../../../engine/lighting/dynamiclights/dynamic_light.h"
+#include "../../../../../engine/lighting/light_entity.h"
+#include "dynamic_light_datatype.h"
 #include "light_shader_constants.h"
 
 MLightSystemManager* MLightSystemManager::lightingManagerInstance = nullptr;
@@ -122,14 +122,18 @@ void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
 
     const auto& lights = lightScene.queryLights(bounds, MAX_DYN_LIGHTS);
     dynLightsData.lightCount = lights.size();
-    for (int i = 0; i < lights.size(); i++)
+    for (int i = 0; i < (int)lights.size(); i++)
     {
-        //ignore disabled lights.
         if (!lights[i]->getEnabled())
             continue;
 
         lights[i]->prepareLightRender();
-        const auto& data = lights[i]->getLightData();
+        auto data = lights[i]->getLightData();
+
+        // Copy the shadowIndex that MShadowStage stamped onto the light entity
+        // so the shader knows which shadow map slot to sample.
+        data.shadowIndex  = lights[i]->getShadowIndex();
+        data.smoothShadow = lights[i]->getSmoothShadow() ? 1 : 0;
         dynLightsData.data[i] = data;
     }
 

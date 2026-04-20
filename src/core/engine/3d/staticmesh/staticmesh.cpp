@@ -9,7 +9,7 @@
 MStaticMesh::MStaticMesh(std::vector<SVertex> vertices, std::vector<unsigned int> indices)
 {
     this->vertices = std::move(vertices);
-    this->indices  = std::move(indices);
+    this->indices = std::move(indices);
     prepareMesh();
 }
 

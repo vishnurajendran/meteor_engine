@@ -1,19 +1,13 @@
-//
-// Created by ssj5v on 29-04-2025.
-//
+#pragma once
+#ifndef POINT_LIGHT_DESERIALISER_H
+#define POINT_LIGHT_DESERIALISER_H
+#include "core/engine/scene/serialisation/sceneentitytypedeserializer.h"
 
-#ifndef POINT_LIGHT_ENTITY_DESERIALISER_H
-#define POINT_LIGHT_ENTITY_DESERIALISER_H
-#include "core/engine/entities/spatial/spatialdeserialiser.h"
-
-
-class MPointLightEntityDeserializer : public MSceneEntityTypeDeserializer {
+class MPointLightDeserialiser : public MSceneEntityTypeDeserializer {
 public:
     MSpatialEntity* deserialize(pugi::xml_node node) override;
+    pugi::xml_node  serialise(MSpatialEntity* entity, pugi::xml_node parent) override;
 private:
     static bool registered;
 };
-
-
-
-#endif //POINT_LIGHT_ENTITY_DESERIALISER_H
+#endif

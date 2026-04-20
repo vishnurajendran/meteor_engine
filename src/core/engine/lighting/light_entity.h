@@ -4,7 +4,7 @@
 
 #ifndef LIGHT_ENTITY_H
 #define LIGHT_ENTITY_H
-#include "light_type.h"
+#include "../../graphics/core/render-pipeline/stages/lighting/light_type.h"
 #include "core/engine/entities/spatial/spatial.h"
 
 class MLightEntity : public MSpatialEntity {

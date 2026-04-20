@@ -17,6 +17,7 @@ private:
     void createEditorSceneCamera();
 private:
     MCameraEntity* editorSceneCamera = nullptr;
+    const SString EDITOR_CAMERA_NAME = "_EditorSceneCamera";
 };
 
 

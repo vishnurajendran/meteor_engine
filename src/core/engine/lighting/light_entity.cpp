@@ -4,5 +4,5 @@
 
 #include "light_entity.h"
 
-#include "lighting_system_manager.h"
+#include "../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 

@@ -70,7 +70,6 @@ bool MShaderCompiler::compileShader(const SString& name, const SString& vertexSo
     // Clean up shaders (they are no longer needed after linking)
     glDeleteShader(vertex);
     glDeleteShader(fragment);
-    MLOG(STR("ShadeCompiler:: Successfully compiled "));
     return true;
 }
 

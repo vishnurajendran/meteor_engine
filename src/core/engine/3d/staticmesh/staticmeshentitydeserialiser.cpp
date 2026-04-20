@@ -1,9 +1,4 @@
-//
-// Created by ssj5v on 06-10-2024.
-//
-
 #include "staticmeshentitydeserialiser.h"
-
 #include "staticmeshentity.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
@@ -15,36 +10,47 @@ bool MStaticMeshEntityDeserialiser::registered = []() {
     return true;
 }();
 
-MSpatialEntity * MStaticMeshEntityDeserialiser::deserialize(pugi::xml_node node) {
-    const auto entity = new MStaticMeshEntity();
+MSpatialEntity* MStaticMeshEntityDeserialiser::deserialize(pugi::xml_node node)
+{
+    const auto entity = MSpatialEntity::createInstance<MStaticMeshEntity>("StaticMeshEntity");
     parseSpatialData(node, entity);
 
-    const SString ATTRIB_MESH_ATTRIB_PATH = "static_mesh";
-    const SString MESH_ATTRIB_SRC = "src";
-    const SString MESH_ATTRIB_MATERIAL = "material";
-    const auto attribNode = node.child(ATTRIB_NODE.c_str());
-    if(!attribNode) {
-        return entity;
-    }
+    const auto attrib = node.child(ATTRIB_NODE.c_str());
+    if (!attrib) return entity;
+    const auto meshNode = attrib.child("static_mesh");
+    if (!meshNode) return entity;
 
-    const auto meshNode = attribNode.child(ATTRIB_MESH_ATTRIB_PATH.c_str());
-    if(!meshNode) {
-        return entity;
+    if (const auto n = meshNode.child("src")) {
+        if (const auto asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(
+                n.attribute(ATTRIB_VALUE_KEY.c_str()).value()))
+            entity->setStaticMeshAsset(asset);
+        else MERROR("Failed to load mesh asset");
     }
+    if (const auto n = meshNode.child("material")) {
+        if (const auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(
+                n.attribute(ATTRIB_VALUE_KEY.c_str()).value()))
+            entity->setMaterialAsset(asset);
+        else MERROR("Failed to load material asset");
+    }
+    if (const auto n = node.child("castsShadow"))
+        entity->setCastsShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
 
-    if(const auto meshSrcNode = meshNode.child(MESH_ATTRIB_SRC.c_str())) {
-        if(const auto meshAsset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshSrcNode.attribute(ATTRIB_VALUE_KEY.c_str()).value())) {
-            entity->setStaticMeshAsset(meshAsset);
-        }
-        else
-            MERROR("Failed to load mesh asset");
-    }
-    if(const auto meshMatNode = meshNode.child(MESH_ATTRIB_MATERIAL.c_str())) {
-        if(const auto material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(meshMatNode.attribute(ATTRIB_VALUE_KEY.c_str()).value())) {
-            entity->setMaterialAsset( material);
-        }
-        else
-            MERROR("Failed to load material asset");
-    }
     return entity;
+}
+
+pugi::xml_node MStaticMeshEntityDeserialiser::serialise(MSpatialEntity* entity,
+                                                         pugi::xml_node parent)
+{
+    auto* mesh = dynamic_cast<MStaticMeshEntity*>(entity);
+    pugi::xml_node node     = writeSpatialBase(entity, parent, "static_mesh");
+    pugi::xml_node attrib   = node.child(ATTRIB_NODE.c_str());
+    pugi::xml_node meshNode = attrib.append_child("static_mesh");
+
+    if (mesh->getStaticMeshAsset())
+        writeString(meshNode, "src", mesh->getStaticMeshAsset()->getPath());
+    if (mesh->getMaterialAsset())
+        writeString(meshNode, "material", mesh->getMaterialAsset()->getPath());
+
+    writeBool(attrib, "castsShadow", mesh->getCastsShadow());
+    return node;
 }

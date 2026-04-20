@@ -4,7 +4,7 @@
 
 #ifndef LIGHT_BVH_NODE_H
 #define LIGHT_BVH_NODE_H
-#include "../../../../utils/aabb.h"
+#include "core/utils/aabb.h"
 
 struct SLightBVHNode
 {

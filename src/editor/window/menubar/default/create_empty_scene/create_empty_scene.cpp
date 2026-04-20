@@ -4,6 +4,7 @@
 
 #include "create_empty_scene.h"
 
+#include "core/engine/scene/scene_io.h"
 #include "core/engine/scene/scenemanager.h"
 #include "editor/window/menubar/menubartree.h"
 
@@ -25,5 +26,5 @@ SString MCreateEmptySceneMenubarItem::getPath() const
 
 void MCreateEmptySceneMenubarItem::onSelect()
 {
-    MSceneManager::getSceneManagerInstance()->loadEmptyScene();
+    MSceneIO::newScene();
 }

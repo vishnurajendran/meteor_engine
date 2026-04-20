@@ -1,14 +1,17 @@
 //
 // Created by ssj5v on 21-03-2026.
 //
-#include <GL/glew.h>
 #include "render_pipeline.h"
+#include <GL/glew.h>
 #include "buffers/render/renderbuffer.h"
 #include "core/utils/logger.h"
 #include "render_queue.h"
 #include "stages/composite/composite_stage.h"
 #include "stages/depth/depth_render_stage.h"
-#include "stages/legacy_render_stage/graphicsrenderer.h"
+#include "stages/lighting/lighting_stage.h"
+#include "stages/opaque/opaque_stage.h"
+#include "stages/shadow/shadow_stage.h"
+#include "stages/skybox/procedural_sky/procedural_sky_stage.h"
 #include "stages/skybox/skybox_stage.h"
 
 MRenderPipeline::~MRenderPipeline()
@@ -25,10 +28,13 @@ void MRenderPipeline::init()
     if (initialised)
         return;
 
-    addStage<MDepthRenderStage>();
-    addStage<MGraphicsRenderer>();
-    addStage<MSkyboxStage>();      // after opaques, before transparents
-    addStage<MCompositeStage>();   // always last — composites whatever flags are set
+    addStage<MDepthRenderStage>();        // depth prepass
+    addStage<MShadowStage>();             // shadow map         -> BUFFER_SHADOW
+    addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE
+    addStage<MLightingStage>();           // light accumulation -> BUFFER_LIGHTS
+    addStage<MSkyboxStage>();             // cubemap skybox        (after opaques)
+    addStage<MProceduralSkyboxStage>();   // procedural skybox     (after opaques)
+    addStage<MCompositeStage>();          // blits all buffers  -> render target
 
     initialised = true;
 }
@@ -49,7 +55,6 @@ void MRenderPipeline::cleanup()
 
     renderItems.clear();
     compositeFlags = ECF_None;
-    // bufferRegistry destructor handles all named buffers.
 }
 
 // ---------------------------------------------------------------------------
@@ -63,8 +68,6 @@ void MRenderPipeline::setRenderBuffer(SRenderBuffer* renderBuffer)
 
     bufferRegistry.setRenderBuffer(renderBuffer);
 
-    // Resize every registered buffer to match the new render target immediately.
-    // This is the single resize trigger — stages never need to poll for changes.
     if (renderBuffer)
     {
         const auto res = renderBuffer->getResolution();
@@ -85,7 +88,7 @@ void MRenderPipeline::submitRenderItem(const SRenderItem& item)
 }
 
 // ---------------------------------------------------------------------------
-// Frame lifecycle — pure orchestration, no render logic
+// Frame lifecycle
 // ---------------------------------------------------------------------------
 
 void MRenderPipeline::preRender()
@@ -93,14 +96,10 @@ void MRenderPipeline::preRender()
     if (!initialised)
         return;
 
-    // Collect items every frame — drawables may submit before the render
-    // buffer is set and that is fine.
     renderItems.clear();
     clearCompositeFlags();
     MRenderQueue::collectAll(this);
 
-    // Do not drive stages until a render buffer is available — any GL call
-    // made with an uninitialised FBO (handle 0) triggers GL_INVALID_OPERATION.
     if (!bufferRegistry.getRenderBuffer())
         return;
 

@@ -5,10 +5,10 @@
 #include <GL/glew.h>
 #include "staticmeshdrawcall.h"
 
+#include "../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/engine/camera/viewmanagement.h"
 #include "core/graphics/core/material/material.h"
 #include "core/graphics/core/shader/shader.h"
-#include "core/engine/camera/viewmanagement.h"
-#include "core/engine/lighting/lighting_system_manager.h"
 #include "staticmesh.h"
 #include "staticmeshasset.h"
 

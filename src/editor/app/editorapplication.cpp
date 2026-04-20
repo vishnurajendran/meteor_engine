@@ -160,6 +160,11 @@ void MEditorApplication::loadPrerequisites()
     sceneManagerRef = new MEditorSceneManager();
     MSceneManager::registerSceneManager(sceneManagerRef);
 
+    sceneManagerRef->registerOnLoadCallback([this](MScene* scene)
+    {
+        Selected = nullptr;
+    });
+
     //load render pipeline
     pipelineManager.initalise();
 }

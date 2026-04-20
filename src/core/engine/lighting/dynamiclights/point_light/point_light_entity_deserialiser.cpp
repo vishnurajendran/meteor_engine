@@ -1,59 +1,52 @@
-//
-// Created by ssj5v on 29-04-2025.
-//
-
 #include "point_light_entity_deserialiser.h"
-
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 #include "point_light.h"
 
-bool MPointLightEntityDeserializer::registered = []()
-{
-    MSceneEntityTypeMap::registerDeserializer("point_light", new MPointLightEntityDeserializer());
+bool MPointLightDeserialiser::registered = []() {
+    MSceneEntityTypeMap::registerDeserializer("point_light", new MPointLightDeserialiser());
     return true;
 }();
 
-MSpatialEntity* MPointLightEntityDeserializer::deserialize(pugi::xml_node node)
+MSpatialEntity* MPointLightDeserialiser::deserialize(pugi::xml_node node)
 {
-    const auto entity = new MPointLight();
+    auto* entity = new MPointLight();
     parseSpatialData(node, entity);
 
-    const SString LIGHT_ATTRIB_NODE = "point_light";
-    const SString LIGHT_COLOR_ATTRIB = "color";
-    const SString LIGHT_INTENSITY_ATTRIB = "intensity";
-    const SString LIGHT_RANGE_ATTRIB = "range";
+    const auto attrib = node.child(ATTRIB_NODE.c_str());
+    if (!attrib) return entity;
+    const auto ln = attrib.child("point_light");
+    if (!ln) return entity;
 
-    const auto attribNode = node.child(ATTRIB_NODE.c_str());
+    SVector4 color = {1,1,1,1};
+    float intensity = 1.0f, range = 10.0f;
 
-    float intensity = 0.1f; //default value
-    SVector4 color = {1,1,1, 1}; //default value
-    float range = 10.0f;
+    if (const auto n = ln.child("color"))     parseVector4(n.attribute(ATTRIB_VALUE_KEY.c_str()).value(), color);
+    if (const auto n = ln.child("intensity")) intensity = std::stof(n.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    if (const auto n = ln.child("range"))     range     = std::stof(n.attribute(ATTRIB_VALUE_KEY.c_str()).value());
 
-    //set defaults
-    entity->setIntensity(intensity);
     entity->setColor(SColor(color.x, color.y, color.z, color.w));
-
-    const auto lightAttribNode = attribNode.child(LIGHT_ATTRIB_NODE.c_str());
-    if(!lightAttribNode) {
-        return entity;
-    }
-
-    if (const auto colorNode = lightAttribNode.child(LIGHT_COLOR_ATTRIB.c_str())) {
-        parseVector4(colorNode.attribute(ATTRIB_VALUE_KEY.c_str()).value(), color);
-    }
-
-    if (const auto intensityNode = lightAttribNode.child(LIGHT_INTENSITY_ATTRIB.c_str())) {
-        intensity = std::stof(intensityNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
-    }
-
-    if (const auto rangeNode = lightAttribNode.child(LIGHT_RANGE_ATTRIB.c_str())) {
-        range = std::stof(rangeNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
-    }
-
-    //set new values.
     entity->setIntensity(intensity);
-    entity->setColor(SColor(color.x, color.y, color.z, color.w));
     entity->setRange(range);
 
+    if (const auto n = ln.child("castsShadow"))
+        entity->setCastsShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
+    if (const auto n = ln.child("smoothShadow"))
+        entity->setSmoothShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
+
     return entity;
+}
+
+pugi::xml_node MPointLightDeserialiser::serialise(MSpatialEntity* entity,
+                                                   pugi::xml_node parent)
+{
+    auto* light = dynamic_cast<MPointLight*>(entity);
+    pugi::xml_node node   = writeSpatialBase(entity, parent, "point_light");
+    pugi::xml_node attrib = node.child(ATTRIB_NODE.c_str());
+    pugi::xml_node ln     = attrib.append_child("point_light");
+    writeColor(ln, "color",        light->getColor());
+    writeFloat(ln, "intensity",    light->getIntensity());
+    writeFloat(ln, "range",        light->getRange());
+    writeBool (ln, "castsShadow",  light->getCastsShadow());
+    writeBool (ln, "smoothShadow", light->getSmoothShadow());
+    return node;
 }

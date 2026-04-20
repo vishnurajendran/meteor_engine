@@ -1,14 +1,9 @@
-//
-// Created by ssj5v on 27-01-2025.
-//
-
 #include "directional_light_entity_deserialiser.h"
-
-#include "directional_light.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "directional_light.h"
 
-bool MDirectionalLightEntityDeserialiser::registered = []()
-{
+bool MDirectionalLightEntityDeserialiser::registered = []() {
     MSceneEntityTypeMap::registerDeserializer("directional_light", new MDirectionalLightEntityDeserialiser());
     return true;
 }();
@@ -18,34 +13,43 @@ MSpatialEntity* MDirectionalLightEntityDeserialiser::deserialize(pugi::xml_node 
     const auto entity = new MDirectionalLight();
     parseSpatialData(node, entity);
 
-    const SString LIGHT_ATTRIB_NODE = "directional_light";
-    const SString LIGHT_COLOR_ATTRIB = "color";
-    const SString LIGHT_INTENSITY_ATTRIB = "intensity";
-    const auto attribNode = node.child(ATTRIB_NODE.c_str());
+    entity->setIntensity(1.0f);
+    entity->setColor(SColor(1,1,1,1));
 
-    float intensity = 0.1f; //default value
-    SVector4 color = {1,1,1, 1}; //default value
+    const auto attrib = node.child(ATTRIB_NODE.c_str());
+    if (!attrib) return entity;
+    const auto ln = attrib.child("directional_light");
+    if (!ln) return entity;
 
-    //set defaults
+    SVector4 color = {1,1,1,1};
+    float intensity = 1.0f;
+
+    if (const auto n = ln.child("color"))     parseVector4(n.attribute(ATTRIB_VALUE_KEY.c_str()).value(), color);
+    if (const auto n = ln.child("intensity")) intensity = std::stof(n.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+
     entity->setIntensity(intensity);
     entity->setColor(SColor(color.x, color.y, color.z, color.w));
 
-    const auto lightAttribNode = attribNode.child(LIGHT_ATTRIB_NODE.c_str());
-    if(!lightAttribNode) {
-        return entity;
-    }
-
-    if (const auto colorNode = lightAttribNode.child(LIGHT_COLOR_ATTRIB.c_str())) {
-        parseVector4(colorNode.attribute(ATTRIB_VALUE_KEY.c_str()).value(), color);
-    }
-
-    if (const auto intensityNode = lightAttribNode.child(LIGHT_INTENSITY_ATTRIB.c_str())) {
-        intensity = std::stof(intensityNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
-    }
-
-    //set new values.
-    entity->setIntensity(intensity);
-    entity->setColor(SColor(color.x, color.y, color.z, color.w));
+    auto* mgr = MLightSystemManager::getInstance();
+    if (const auto n = ln.child("castsShadow"))
+        mgr->directionalShadowEnabled = std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0";
+    if (const auto n = ln.child("smoothShadow"))
+        mgr->smoothShadows = std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0";
 
     return entity;
+}
+
+pugi::xml_node MDirectionalLightEntityDeserialiser::serialise(MSpatialEntity* entity,
+                                                               pugi::xml_node parent)
+{
+    auto* light = dynamic_cast<MDirectionalLight*>(entity);
+    auto* mgr   = MLightSystemManager::getInstance();
+    pugi::xml_node node   = writeSpatialBase(entity, parent, "directional_light");
+    pugi::xml_node attrib = node.child(ATTRIB_NODE.c_str());
+    pugi::xml_node ln     = attrib.append_child("directional_light");
+    writeColor(ln, "color",        light->getColor());
+    writeFloat(ln, "intensity",    light->getIntensity());
+    writeBool (ln, "castsShadow",  mgr->directionalShadowEnabled);
+    writeBool (ln, "smoothShadow", mgr->smoothShadows);
+    return node;
 }

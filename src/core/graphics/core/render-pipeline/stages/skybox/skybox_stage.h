@@ -8,15 +8,14 @@
 
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 
+class SFrameBuffer;
+
 // Skybox stage — runs just before transparents (RS_Transparent - 1 = 2999).
 //
-// Iterates MSkyboxQueue and calls draw() on each registered MSkyboxDrawCall.
-// The draw call owns all skybox-specific GL state (shader bind, cubemap bind,
-// glDepthMask(false), GL_LEQUAL), so this stage stays thin.
-//
-// The skybox does NOT produce an SRenderItem and does NOT go through
-// MRenderQueue — its shader and cubemap binding don't map to the standard
-// material/VAO contract.
+// Renders into BUFFER_OPAQUE so it sits in the same colour buffer as the
+// opaque geometry.  The skybox draw call uses GL_LEQUAL depth so it only
+// fills pixels where no geometry was drawn.
+// MCompositeStage blits the finished BUFFER_OPAQUE to the render target.
 class MSkyboxStage : public MRenderStage
 {
 public:
@@ -29,7 +28,7 @@ public:
     void postRender(IRenderPipeline* const pipeline) override;
 
 private:
-    sf::RenderTarget* renderTarget = nullptr;
+    SFrameBuffer* opaqueBuffer = nullptr;
 };
 
 #endif // SKYBOX_STAGE_H

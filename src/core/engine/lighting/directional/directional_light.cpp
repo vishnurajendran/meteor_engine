@@ -4,10 +4,10 @@
 
 #include "directional_light.h"
 
+#include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/engine/lighting/light_shader_constants.h"
-#include "core/engine/lighting/lighting_system_manager.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
 
 MDirectionalLight* MDirectionalLight::lightInstance = nullptr;
@@ -18,7 +18,7 @@ MDirectionalLight::MDirectionalLight()
     {
         MERROR(STR("Meteor only support 1 directional light node in scenes. "
                   "Please modify current ambient light entity, or delete and create again"));
-        destroy(this);
+        destroy();
         return;
     }
 

@@ -4,7 +4,7 @@
 
 #include "dynamic_light.h"
 
-#include "core/engine/lighting/lighting_system_manager.h"
+#include "../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 void MDynamicLight::setColor(const SColor& color)
 {
     lightData.color = {color.r, color.g, color.b};

@@ -24,6 +24,7 @@ private:
 public:
     MSkyboxDrawCall(MCubemapAsset* texture, MShader* shader);
     void setCubemapAsset(MCubemapAsset* texture);
+    MCubemapAsset* getCubemapAsset() const { return cubemapTexture; }
     void draw() override;
     int getSortinOrder() override;
 };

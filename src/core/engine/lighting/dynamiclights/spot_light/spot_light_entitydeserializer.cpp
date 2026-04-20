@@ -1,67 +1,55 @@
-//
-// Created by ssj5v on 30-04-2025.
-//
-
 #include "spot_light_entitydeserializer.h"
-
-#include "core/engine/lighting/lighting_system_manager.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 #include "spot_light.h"
 
-bool MSpotLightEntityDeserializer::registered = []()
-{
-    MSceneEntityTypeMap::registerDeserializer("spot_light", new MSpotLightEntityDeserializer());
+bool MSpotLightDeserialiser::registered = []() {
+    MSceneEntityTypeMap::registerDeserializer("spot_light", new MSpotLightDeserialiser());
     return true;
 }();
 
-MSpatialEntity* MSpotLightEntityDeserializer::deserialize(pugi::xml_node node)
+MSpatialEntity* MSpotLightDeserialiser::deserialize(pugi::xml_node node)
 {
-    const auto entity = new MSpotLight();
+    auto* entity = new MSpotLight();
     parseSpatialData(node, entity);
 
-    const SString LIGHT_ATTRIB_NODE = "spot_light";
-    const SString LIGHT_COLOR_ATTRIB = "color";
-    const SString LIGHT_INTENSITY_ATTRIB = "intensity";
-    const SString LIGHT_RANGE_ATTRIB = "range";
-    const SString LIGHT_ANGLE_ATTRIB = "angle";
+    const auto attrib = node.child(ATTRIB_NODE.c_str());
+    if (!attrib) return entity;
+    const auto ln = attrib.child("spot_light");
+    if (!ln) return entity;
 
-    const auto attribNode = node.child(ATTRIB_NODE.c_str());
+    SVector4 color = {1,1,1,1};
+    float intensity = 1.0f, range = 10.0f, angle = 30.0f;
 
-    float intensity = 0.1f; //default value
-    SVector4 color = {1,1,1, 1}; //default value
-    float range = 10.0f;
-    float angle = 45.0f;
+    if (const auto n = ln.child("color"))     parseVector4(n.attribute(ATTRIB_VALUE_KEY.c_str()).value(), color);
+    if (const auto n = ln.child("intensity")) intensity = std::stof(n.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    if (const auto n = ln.child("range"))     range     = std::stof(n.attribute(ATTRIB_VALUE_KEY.c_str()).value());
+    if (const auto n = ln.child("angle"))     angle     = std::stof(n.attribute(ATTRIB_VALUE_KEY.c_str()).value());
 
-    //set defaults
-    entity->setIntensity(intensity);
     entity->setColor(SColor(color.x, color.y, color.z, color.w));
-
-    const auto lightAttribNode = attribNode.child(LIGHT_ATTRIB_NODE.c_str());
-    if(!lightAttribNode) {
-        return entity;
-    }
-
-    if (const auto colorNode = lightAttribNode.child(LIGHT_COLOR_ATTRIB.c_str())) {
-        parseVector4(colorNode.attribute(ATTRIB_VALUE_KEY.c_str()).value(), color);
-    }
-
-    if (const auto intensityNode = lightAttribNode.child(LIGHT_INTENSITY_ATTRIB.c_str())) {
-        intensity = std::stof(intensityNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
-    }
-
-    if (const auto rangeNode = lightAttribNode.child(LIGHT_RANGE_ATTRIB.c_str())) {
-        range = std::stof(rangeNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
-    }
-
-    if (const auto angleNode = lightAttribNode.child(LIGHT_ANGLE_ATTRIB.c_str())) {
-        angle = std::stof(angleNode.attribute(ATTRIB_VALUE_KEY.c_str()).value());
-    }
-
-    //set new values.
     entity->setIntensity(intensity);
-    entity->setColor(SColor(color.x, color.y, color.z, color.w));
     entity->setRange(range);
     entity->setSpotAngle(angle);
 
+    if (const auto n = ln.child("castsShadow"))
+        entity->setCastsShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
+    if (const auto n = ln.child("smoothShadow"))
+        entity->setSmoothShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
+
     return entity;
+}
+
+pugi::xml_node MSpotLightDeserialiser::serialise(MSpatialEntity* entity,
+                                                  pugi::xml_node parent)
+{
+    auto* light = dynamic_cast<MSpotLight*>(entity);
+    pugi::xml_node node   = writeSpatialBase(entity, parent, "spot_light");
+    pugi::xml_node attrib = node.child(ATTRIB_NODE.c_str());
+    pugi::xml_node ln     = attrib.append_child("spot_light");
+    writeColor(ln, "color",        light->getColor());
+    writeFloat(ln, "intensity",    light->getIntensity());
+    writeFloat(ln, "range",        light->getRange());
+    writeFloat(ln, "angle",        light->getSpotAngle());
+    writeBool (ln, "castsShadow",  light->getCastsShadow());
+    writeBool (ln, "smoothShadow", light->getSmoothShadow());
+    return node;
 }

@@ -1,0 +1,28 @@
+<shader name="lights_composite" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Vertices are already in NDC. model/view/projection are set to identity
+        // so applyProjection() passes them through unchanged.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    // Declared as a raw uniform — not a shader property — so the asset system
+    // does not pre-bind a default texture and interfere with our explicit bind.
+    uniform sampler2D _lightsTex;
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        return texture(_lightsTex, v2fTexCoords);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

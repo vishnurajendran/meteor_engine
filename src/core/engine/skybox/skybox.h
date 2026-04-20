@@ -19,6 +19,8 @@ public:
     MSkyboxEntity();
     ~MSkyboxEntity() override;
 
+    MCubemapAsset* getCubemapAsset() const { return cubemapAsset; }
+    SString typeName() const override { return STR("skybox"); }
     void setCubemapAsset(MCubemapAsset* cubemap);
 
     // ---- IMeteorDrawable ----------------------------------------------------
@@ -28,10 +30,12 @@ public:
     void submitRenderItem(IRenderItemCollector* collector) override {}
     bool canDraw() override { return getEnabled(); }
 
+    void onExit() override;
     void onDrawGizmo(SVector2 renderResolution) override;
 
 private:
     MSkyboxDrawCall* skyboxDrawCall = nullptr;
+    MCubemapAsset*   cubemapAsset   = nullptr;
 };
 
 #endif // SKYBOXENTITIY_H

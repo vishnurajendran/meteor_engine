@@ -3,7 +3,6 @@
 //
 
 #include "skybox.h"
-
 #include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
@@ -40,8 +39,16 @@ MSkyboxEntity::~MSkyboxEntity()
     }
 }
 
+void MSkyboxEntity::onExit()
+{
+    MSpatialEntity::onExit();   // was missing — keeps base-class state consistent
+    if (skyboxDrawCall)
+        MSkyboxQueue::remove(skyboxDrawCall);
+}
+
 void MSkyboxEntity::setCubemapAsset(MCubemapAsset* cubemap)
 {
+    cubemapAsset = cubemap;
     if (skyboxDrawCall)
         skyboxDrawCall->setCubemapAsset(cubemap);
 }
