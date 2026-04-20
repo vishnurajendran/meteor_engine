@@ -1,78 +1,114 @@
+# Meteor Engine (Work in Progress)
 
-# ☄️Meteor Game Engine (Work in Progress)
+Meteor is an experimental custom game engine built in C++20.  
+It’s currently in active development, focused on exploring rendering architecture, tooling, and engine design.
 
-Meteor is a custom game engine built in C++20, featuring a player and an editor. It leverages modern C++ and various libraries to provide a robust and flexible environment for game development.
-![meteorite_editor](https://i.ibb.co/SDHy5721/Screenshot-2025-05-07-143253.png)
-## Features
+> This project is **not ready for building games yet**. Expect breaking changes, missing systems and features, and rough edges.
 
-- Built with **C++20** using the **STL**.
-- Uses **OpenGL** for rendering and **GLEW** for OpenGL extensions.
-- Supports model loading with **Assimp**.
-- Incorporates **ImGui** for creating user interfaces in the editor.
-- Integrated with **SFML** for windowing and input handling.
-- XML parsing with **pugixml**.
+---
 
-## Getting Started
+## Current State (What Exists Right Now)
 
-### Prerequisites
+### Rendering
+- Custom **scalable render pipeline (WIP refactor ongoing)**
+- Basic forward rendering
+- Procedural skybox
+- Shadow support (early stage / experimental)
 
-- **C++20** compatible compiler (e.g., GCC, Clang, MSVC).
-- **CMake** (version 3.26 or higher) for project configuration.
-- **CLion** (optional) for an integrated development environment.
+### Assets
+- Model loading via **:contentReference[oaicite:0]{index=0}**
+- XML-based asset serialization using **:contentReference[oaicite:1]{index=1}**
+- Path-based asset referencing *(moving to Asset ID system)*
+
+### Editor
+- Immediate-mode editor built with **:contentReference[oaicite:2]{index=2}**
+- Scene hierarchy (basic)
+- Inspector (early)
+- Scene viewport
+- Debug tooling (in progress)
+
+### Core
+- Scene system with spatial entities
+- Basic engine loop (Editor + Player separation)
+- Plugin system (early design phase)
+
+---
+
+## In Progress / Actively Being Worked On
+
+- Render pipeline rewrite (modular render passes)
+- Scene picking (currently naive, will move to physics-based raycast)
+- Asset system overhaul (Asset IDs, dependency tracking)
+- Editor UX improvements (layout, tooling polish)
+
+---
+
+## Missing Systems (Not Implemented Yet)
+
+- Physics system
+- Scripting layer (planned DSL / runtime scripting)
+- Audio system
+- Animation system
+- Build pipeline / packaging
+- Extending engine with plugins
+- Networking
+
+---
+
+## Tech Stack
+
+- **Language:** C++20  
+- **Rendering:** OpenGL
+- **Windowing:** SFML, SFML-ImGui
+- **GUI:** : ImGui
+- **Model Loading:** : Assimp 
+- **XML:** : pugixml
+
+---
+
+## Goals
+
+Meteor is primarily a **learning + experimentation project**, with focus on:
+
+- Modular rendering architecture
+- Clean engine/editor separation
+- Scalable asset pipeline
+- Tooling-first workflow
+
+---
+
+## Building the Project
+
+> Build instructions may break as the project evolves.
+
+### Requirements
+- C++20 compiler
+- CMake (3.26+)
 
 ### Dependencies
+- Assimp
+- GLEW
+- SFML
+- ImGui-SFML
+- pugixml
 
-- [**pugixml**](https://pugixml.org/)
-- [**Assimp**](https://github.com/assimp/assimp)
-- [**GLEW**](http://glew.sourceforge.net/)
-- [**OpenGL**](https://www.opengl.org/)
-- [**SFML**](https://www.sfml-dev.org/)
-- [**imgui-sfml**](https://github.com/SFML/imgui-sfml)
+*(Manual setup required depending on platform)*
 
-### Installation
+---
 
-#### 1. Installing Assimp
+## Current Editor Snapshot
 
-To install Assimp on your system, follow these steps:
+![meteorite_editor](https://i.ibb.co/ccKXr9tC/Screenshot-2026-04-20-104203.png)
 
-- **Linux (Ubuntu/Debian):**
-  ```bash
-  sudo apt-get update
-  sudo apt-get install libassimp-dev
-  ```
+---
 
-- **macOS:**
-  ```bash
-  brew install assimp
-  ```
+## Notes
 
-- **Windows:**
-  1. Download the Assimp binaries from the [Assimp GitHub Releases](https://github.com/assimp/assimp/releases).
-  2. Extract the contents and add the \`include\` and \`lib\` directories to your CMake configuration:
-     - Add the path to the \`include\` directory using \`include_directories\`.
-     - Ensure the \`lib\` path is available in the \`CMakeLists.txt\` or your compiler’s library path.
+- Editor performance and memory usage are **not optimized yet**
+- APIs and systems are **subject to change frequently**
+- Many systems are being rewritten as the architecture evolves
 
-#### 2. Installing GLEW
+---
 
-To install GLEW, follow these steps:
-
-- **Linux (Ubuntu/Debian):**
-  ```bash
-  sudo apt-get update
-  sudo apt-get install libglew-dev
-  ```
-
-- **macOS:**
-  ```bash
-  brew install glew
-  ```
-
-- **Windows:**
-  1. Download the GLEW binary package from the [GLEW website](http://glew.sourceforge.net/).
-  2. Extract the downloaded ZIP file to a directory (e.g., `C:\glew`).
-  3. Add the `include` path (`C:\glew\include`) and the library path (`C:\glew\lib\Release\x64`) in CMake:
-     - Add the path to the `include` directory using `include_directories`.
-     - Add the path to the `lib` directory using `link_directories`.
-
-### License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## License
+MIT License
