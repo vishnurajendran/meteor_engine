@@ -37,6 +37,7 @@ void MRenderPipeline::init()
     addStage<MCompositeStage>();          // blits all buffers  -> render target
 
     initialised = true;
+    MLOG("MRenderPipeline:: Initialised");
 }
 
 void MRenderPipeline::cleanup()

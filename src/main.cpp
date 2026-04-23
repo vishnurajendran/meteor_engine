@@ -1,8 +1,11 @@
 #include <GL/glew.h>
-#include "core/meteor_core.h"
-#include "imgui.h"
-#include "imgui-SFML.h"
 #include "SFML/OpenGL.hpp"
+#include "core/engine/engine_statics.h"
+#include "core/meteor_core.h"
+#include "data/serialized_class_base.h"
+#include "imgui-SFML.h"
+#include "imgui.h"
+
 extern MApplication* getAppInstance();
 
 int main(){
@@ -13,12 +16,15 @@ int main(){
         return 0;
     }
 
+    MEngineStatics::init();
     appInst->initialise();
     MSceneManager::getSceneManagerInstance()->loadScene(STR("assets/scenes/test_scene.scml"));
 
     while(appInst->isRunning()){
         appInst->run();
     }
+
+    MEngineStatics::saveAll();
     appInst->cleanup();
     return 0;
 }

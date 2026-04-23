@@ -62,6 +62,16 @@ option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
 FetchContent_MakeAvailable(imgui-sfml)
 
 # ---------------------------------------------------------------------------
+# SERIALIZED-CLASS
+# ---------------------------------------------------------------------------
+FetchContent_Declare(
+        serialized_class
+        GIT_REPOSITORY  https://github.com/vishnurajendran/serialized_class.git
+        GIT_TAG  master
+)
+FetchContent_MakeAvailable(serialized_class)
+
+# ---------------------------------------------------------------------------
 # SPDLOG
 # ---------------------------------------------------------------------------
 FetchContent_Declare(
@@ -349,12 +359,14 @@ set(CORE_SOURCES
         src/core/engine/skybox/procedural_sky/procedural_sky.h
         src/core/engine/skybox/procedural_sky/procedural_skybox_drawcall.cpp
         src/core/engine/skybox/procedural_sky/procedural_skybox_drawcall.h
-        src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.cpp
-        src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.h
         src/core/graphics/core/render-pipeline/stages/skybox/procedural_sky/procedural_sky_stage.cpp
         src/core/graphics/core/render-pipeline/stages/skybox/procedural_sky/procedural_sky_stage.h
         src/core/engine/skybox/procedural_sky/procedural_skybox_queue.cpp
         src/core/engine/skybox/procedural_sky/procedural_skybox_queue.h
+        src/core/engine/settings/engine_settings.cpp
+        src/core/engine/settings/engine_settings.h
+        src/core/engine/engine_statics.cpp
+        src/core/engine/engine_statics.h
 )
 
 set(EDITOR_SOURCES
@@ -432,6 +444,8 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/controls/material_properties_controls.h
         src/editor/window/menubar/default/add_entity/add_entity.cpp
         src/editor/window/menubar/default/add_entity/add_entity.h
+        src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.h
 )
 
 set(PLAYER_SOURCES
@@ -465,6 +479,7 @@ if (BUILD_EDITOR)
             ${GLEW_LIBRARY}
             ${ASSIMP_LIBRARY}
             pugixml
+            serialized_class
     )
 endif()
 
@@ -493,6 +508,7 @@ if (BUILD_PLAYER)
             ${GLEW_LIBRARY}
             ${ASSIMP_LIBRARY}
             pugixml
+            serialized_class
     )
 endif()
 

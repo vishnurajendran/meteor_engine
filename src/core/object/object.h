@@ -24,6 +24,8 @@ public:
 
     void    setName(const SString& newName) { name = newName; }
     SString getName() const                 { return name; }
+
+    virtual MObject* clone() const {};
 };
 
 #endif //METEOR_ENGINE_OBJECT_H

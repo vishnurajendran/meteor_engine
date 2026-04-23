@@ -50,6 +50,11 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
     coreWindow.create(videoMode, this->title.str(),  sf::State::Windowed, this->settings);
     coreWindow.setFramerateLimit(this->targetFPS);
 
+    if (!SRenderBuffer::makeFromRenderTarget(&coreWindow, renderBuffer))
+    {
+        MERROR(SString::format("Failed to create render buffer for window {0}", this->title));
+    }
+
     // initialise glew.
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {

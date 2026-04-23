@@ -18,12 +18,6 @@ void MPlayerApplication::run() {
     startFrame();
     window->clear();
     MSceneManager::getSceneManagerInstance()->update(deltaTime);
-
-    // runt the render pipeline
-    pipelineManager.preRender();
-    pipelineManager.render();
-    pipelineManager.postRender();
-
     window->update(deltaTime);
     endFrame();
 }
@@ -39,12 +33,18 @@ void MPlayerApplication::initialise() {
     MLOG(STR("Initialising Player"));
     window = new MWindow();
     window->initialiseWindow(STR("Meteor Player"), MWindow::DEFAULT_WINDOW_SIZE, MWindow::DEFAULT_FPS);
+
+
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));
 
     MSceneManager::registerSceneManager(new MSceneManager());
     MAssetManager::registerAssetManagerInstance(new MAssetManager());
     MAssetManager::getInstance()->refresh();
+
+    pipelineManager.initalise();
+    pipelineManager.setRenderTarget(window.get()->getRenderBuffer());
+
     MLOG(STR("Player Initialised"));
 }
 

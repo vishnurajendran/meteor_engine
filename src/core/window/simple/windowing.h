@@ -22,9 +22,11 @@ protected:
     sf::Clock deltaClock;
     SVector2 windowSize;
 
+private:
+    SRenderBuffer* renderBuffer = nullptr;
 public:
     MWindow() = default;
-    virtual ~MWindow() = default;
+    virtual ~MWindow() { delete renderBuffer; }
 
     virtual bool initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps);
     virtual void clear();
@@ -33,6 +35,7 @@ public:
     virtual void close();
 
     void setVisible(bool visible);
+    SRenderBuffer* getRenderBuffer() { return renderBuffer; }
 };
 
 #endif //METEOR_ENGINE_WINDOWING_H
