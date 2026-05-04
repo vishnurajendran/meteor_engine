@@ -17,7 +17,7 @@
 #include "depth_render_stage.h"
 
 static constexpr const char* DEPTH_SHADER_PATH =
-    "meteor_assets/engine_assets/shaders/depth.mesl";
+    "meteor_assets/engine_assets/shaders/internal/depth.mesl";
 
 // ---------------------------------------------------------------------------
 // Lifecycle

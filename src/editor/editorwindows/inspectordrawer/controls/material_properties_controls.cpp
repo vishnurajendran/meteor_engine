@@ -3,16 +3,13 @@
 //
 
 #include "material_properties_controls.h"
-
-#include <vector>
-
 #include "asset_reference_controls.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
-#include "glm/ext/vector_common.hpp"
+#include <vector>
 #include "imgui.h"
 
 
@@ -36,8 +33,16 @@ void MMaterialPropertyControl::draw(MMaterialAsset* asset)
     ImGui::TableSetupColumn("widget", ImGuiTableColumnFlags_WidthStretch);
 
     // Snapshot so setProperty() calls inside draw helpers don't invalidate the iterator.
+    const auto& props = target->getProperties();
+    if (props.empty())
+    {
+        ImGui::EndTable();
+        return;
+    }
+
+    MLOG(SString::format("MMaterialPropertyControl:: PROPERTY COUNT {0}", props.size()));
     std::vector<std::pair<SString, SShaderPropertyValue>> snapshot(
-        target->getProperties().begin(), target->getProperties().end());
+        props.begin(), props.end());
 
     for (auto& [key, val] : snapshot)
         drawProperty(key, val, target);
@@ -217,7 +222,7 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
     }
 
     // Use the compact single-row control so it fits inside the table without
-    // breaking the row height.  The full drawControl (85px) was only needed
+    // breaking the row height. The full drawControl (85px) was only needed
     // for the standalone Static Mesh inspector panels.
     if (texRefControl->drawCompactControl(label))
     {

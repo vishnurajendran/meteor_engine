@@ -11,6 +11,9 @@ class MTextAssetImporter : public MAssetImporter {
 private:
     static bool registered;
 public:
+    MTextAssetImporter() = default;
+    ~MTextAssetImporter() override = default;
+
     bool canImport(SString fileExtension) override;
     MAsset * importAsset(SString path, const pugi::xml_document& metaData) override;
     [[nodiscard]] SString getIconPath() const override { return "meteor_assets/engine_assets/icons/file-text.png";}

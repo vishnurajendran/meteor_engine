@@ -497,6 +497,10 @@ set(PLAYER_SOURCES
 # ---------------------------------------------------------------------------
 if (BUILD_EDITOR)
 
+    add_compile_definitions(
+            METEOR_EDITOR=1
+    )
+
     add_executable(${EDITOR_NAME}
             ${CORE_SOURCES}
             ${EDITOR_SOURCES}
@@ -528,6 +532,10 @@ endif()
 # ---------------------------------------------------------------------------
 if (BUILD_PLAYER)
 
+    add_compile_definitions(
+            METEOR_PLAYER=1
+    )
+
     add_executable(${PLAYER_NAME}
             ${CORE_SOURCES}
             ${PLAYER_SOURCES}
@@ -551,6 +559,14 @@ if (BUILD_PLAYER)
             serialized_class
     )
 endif()
+
+# ---------------------------------------------------------------------------
+# Common Defines
+# ---------------------------------------------------------------------------
+add_compile_definitions(
+        VERBOSE_LOGGING=1
+)
+
 
 # ---------------------------------------------------------------------------
 # Platform-specific

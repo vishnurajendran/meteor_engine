@@ -6,6 +6,8 @@ MObject::MObject()
 {
     guid = SGuid::newGUID();
     name = "MObject";
+
+    MVERBOSE(SString::format("Created MObject {0} ({1})", name, guid));
 }
 
 SString MObject::getGUID() const
@@ -21,4 +23,16 @@ SString MObject::toString() const
 bool MObject::equals(const MObject* obj) const
 {
     return obj && obj->guid == guid;
+}
+
+void MObject::operator delete(void* ptr)
+{
+    // Record object delete operation.
+    auto inst = static_cast<MObject*>(ptr);
+    if (inst != nullptr)
+    {
+        MVERBOSE(SString::format("Deleting MObject {0} ({1})", inst->getName(), inst->getGUID()));
+    }
+
+    ::operator delete(ptr);
 }

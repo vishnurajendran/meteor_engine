@@ -14,7 +14,7 @@ MSkyboxEntity::MSkyboxEntity()
     name = "Skybox";
 
     auto* shaderAsset = MAssetManager::getInstance()
-        ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/skybox.mesl");
+        ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/skybox.mesl");
     if (!shaderAsset)
     {
         MERROR("MSkyboxEntity — failed to load skybox shader asset");
@@ -45,8 +45,6 @@ void MSkyboxEntity::setCubemapAsset(MCubemapAsset* cubemap)
         skyboxDrawCall->setCubemapAsset(cubemap);
 }
 
-// ── Serialization ─────────────────────────────────────────────────────────────
-
 void MSkyboxEntity::onDeserialise(const pugi::xml_node& node)
 {
     // Let base class load fields (including cubemapAssetPath)
@@ -63,8 +61,6 @@ void MSkyboxEntity::onDeserialise(const pugi::xml_node& node)
             MWARN(STR("MSkyboxEntity: could not load cubemap asset at path: ") + path);
     }
 }
-
-// ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 void MSkyboxEntity::onExit()
 {

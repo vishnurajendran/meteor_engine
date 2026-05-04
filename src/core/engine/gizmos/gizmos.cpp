@@ -95,7 +95,7 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
 
 void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture)
 {
-    auto uiShader = MAssetManager::getInstance()->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/gizmo.mesl");
+    auto uiShader = MAssetManager::getInstance()->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/gizmo.mesl");
     if (!texture || !uiShader)
     {
         MLOG("Shader or Texture NULL");

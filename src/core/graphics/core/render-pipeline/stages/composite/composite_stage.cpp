@@ -15,7 +15,7 @@
 #include "core/utils/logger.h"
 
 static constexpr const char* FINAL_COMPOSITE_SHADER_PATH =
-    "meteor_assets/engine_assets/shaders/final_composite.mesl";
+    "meteor_assets/engine_assets/shaders/internal/final_composite.mesl";
 
 static const float k_quadVerts[] = {
     -1.f,-1.f,0.f, 0.f,0.f,  1.f,-1.f,0.f, 1.f,0.f,

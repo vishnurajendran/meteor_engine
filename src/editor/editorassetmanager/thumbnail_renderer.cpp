@@ -278,7 +278,6 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
                 break;
             }
         }
-        delete mat;
     }
 
     // Clamp so thumbnails are never pure-black or blown-out.

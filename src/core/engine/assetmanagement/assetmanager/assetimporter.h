@@ -11,9 +11,14 @@
 #include "pugixml.hpp"
 
 
-class MAssetImporter : MObject {
+class MAssetImporter : public MObject {
 private:
     static std::vector<MAssetImporter*>* importers;
+
+public:
+    MAssetImporter() = default;
+    ~MAssetImporter() override = default;
+
 public:
     static void addImporter(MAssetImporter* importer);
     static std::vector<MAssetImporter*>* getImporters();

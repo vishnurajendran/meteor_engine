@@ -42,6 +42,11 @@ static std::vector<SShaderEntry> buildShaderList()
             // Check if it's a shader asset by dynamic_cast.
             if (dynamic_cast<MShaderAsset*>(node->assetReference))
             {
+                // ignore all internal shaders, since they are not meant to be use to render
+                // meshes or game geometry
+                if (node->assetReference->getPath().contains("/internal/"))
+                    continue;
+
                 SShaderEntry e;
                 e.path  = node->assetReference->getPath().str();
                 e.label = node->assetReference->getName().str()

@@ -15,7 +15,7 @@
 #include "core/utils/logger.h"
 
 static constexpr const char* LIGHTING_SHADER_PATH =
-    "meteor_assets/engine_assets/shaders/lighting_pass.mesl";
+    "meteor_assets/engine_assets/shaders/internal/lighting_pass.mesl";
 
 // Texture unit layout (must match lighting_pass.mesl):
 //   0  = directional shadow map

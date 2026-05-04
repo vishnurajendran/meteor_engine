@@ -12,16 +12,21 @@
 #define MWARN(...) MLogger::warn(__VA_ARGS__)
 #define MERROR(...) MLogger::error(__VA_ARGS__)
 
+#define MVERBOSE(...) MLogger::verbose(__VA_ARGS__)
+
 using LogEventHandler = std::function<void(SString)>;
 class MLogger {
 private:
-    static std::map<int,LogEventHandler> listeners;
-    static int nextId;
-    static SString lastMsg;
+    // Construct-on-first-use accessors — avoids static initialization order
+    // fiasco when MObject (or any other static-init code) logs before main().
+    static std::map<int,LogEventHandler>& getListeners();
+    static int& getNextId();
+    static SString& getLastMsg();
 
     static void notify(SString msg);
 public:
     static void log(SString msg);
+    static void verbose(SString msg);
     static void warn(SString warning);
     static void error(SString error);
 

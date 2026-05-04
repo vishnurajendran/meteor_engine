@@ -1,5 +1,5 @@
 <material name="StandardLit" mode="lit">
-    <shader path="meteor_assets/engine_assets/shaders/lit.mesl"/>
+    <shader path="meteor_assets/engine_assets/shaders/default/lit.mesl"/>
     <properties>
         <property key = "_color" type="col" value = "(1,1,1,1)"/>
         <property key = "_baseTex" type="tex2D" value = "meteor_assets/engine_assets/textures/default_tex.png"/>

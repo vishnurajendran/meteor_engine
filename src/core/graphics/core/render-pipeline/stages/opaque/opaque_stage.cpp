@@ -20,7 +20,7 @@
 #include "core/utils/logger.h"
 
 static constexpr const char* ALBEDO_SHADER_PATH =
-    "meteor_assets/engine_assets/shaders/albedo_pass.mesl";
+    "meteor_assets/engine_assets/shaders/internal/albedo_pass.mesl";
 
 void MOpaqueStage::init(IRenderPipeline* const pipeline)
 {

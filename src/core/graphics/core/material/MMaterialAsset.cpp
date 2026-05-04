@@ -231,7 +231,9 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
         return false;
     }
     auto shaderInstance = shaderAsset->getShader();
-    if (shaderAsset == nullptr)
+    // FIX: was checking shaderAsset (already confirmed non-null above)
+    //      instead of shaderInstance — null dereference on getProperties()
+    if (shaderInstance == nullptr)
     {
         MERROR(SString::format("Invalid Shader {0}", shaderPath));
         return false;

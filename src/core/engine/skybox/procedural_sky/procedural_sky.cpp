@@ -18,7 +18,7 @@ MProceduralSkyboxEntity::MProceduralSkyboxEntity()
 {
     name = "ProceduralSkybox";
     auto* shaderAsset = MAssetManager::getInstance()
-        ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/proceduralskybox.mesl");
+        ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/proceduralskybox.mesl");
     if (!shaderAsset)
     {
         MERROR("MProceduralSkyboxEntity — failed to load procedural skybox shader");

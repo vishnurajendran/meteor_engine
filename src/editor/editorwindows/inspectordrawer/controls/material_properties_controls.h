@@ -16,7 +16,7 @@ class MAssetReferenceControl;
 class MMaterial;
 class MMaterialAsset;
 
-class MMaterialPropertyControl : MObject {
+class MMaterialPropertyControl : public MObject {
 public:
     // Takes MMaterialAsset* and resolves getMaterial() fresh each call —
     // never caches the raw MMaterial* which can become dangling.

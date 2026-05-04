@@ -17,7 +17,7 @@
 #include "shadow_stage.h"
 
 static constexpr const char* SHADOW_SHADER_PATH =
-    "meteor_assets/engine_assets/shaders/shadow_pass.mesl";
+    "meteor_assets/engine_assets/shaders/internal/shadow_pass.mesl";
 
 // ---------------------------------------------------------------------------
 // Point light shadow shader — writes LINEAR distance / far as gl_FragDepth.

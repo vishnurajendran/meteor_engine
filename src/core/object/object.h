@@ -5,8 +5,12 @@
 #ifndef METEOR_ENGINE_OBJECT_H
 #define METEOR_ENGINE_OBJECT_H
 
+#include <cassert>
+
+
+#include "core/utils/logger.h"
 #include "core/utils/sstring.h"
-#include "object_class_macros.h"   // DEFINE_MOBJECT_CLASS
+#include "object_class_macros.h" // DEFINE_MOBJECT_CLASS
 
 class MObject
 {
@@ -22,6 +26,9 @@ public:
 
     void setName(const SString& newName) { name = newName; }
     [[nodiscard]] SString getName() const { return name; }
+
+    // delete operation
+    void operator delete(void* ptr);
 
 protected:
     SString guid;
