@@ -44,7 +44,7 @@ void MEditorConsoleWindow::onLogReceived(SString raw) {
 
 // ─── onGui ────────────────────────────────────────────────────────────────────
 
-void MEditorConsoleWindow::onGui() {
+void MEditorConsoleWindow::onGui(float deltaTime) {
     drawToolbar();
     ImGui::Separator();
     drawLogList();

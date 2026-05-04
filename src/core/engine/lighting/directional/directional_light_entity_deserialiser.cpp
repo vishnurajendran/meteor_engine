@@ -10,7 +10,7 @@ bool MDirectionalLightEntityDeserialiser::registered = []() {
 
 MSpatialEntity* MDirectionalLightEntityDeserialiser::deserialize(pugi::xml_node node)
 {
-    const auto entity = new MDirectionalLight();
+    const auto entity = MSpatialEntity::createInstance<MDirectionalLight>("DirectionalLight");
     parseSpatialData(node, entity);
 
     entity->setIntensity(1.0f);

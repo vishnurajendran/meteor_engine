@@ -13,6 +13,8 @@ private:
 public:
     MTextAsset(const SString& path);
     SString getText() const;
+
+    bool requestReload() override { loadFromPath(path); return true; };
 private:
     bool loadFromPath(const SString& path);
 };

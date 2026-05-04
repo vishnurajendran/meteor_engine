@@ -33,7 +33,7 @@ void MImGuiSubWindow::draw(float deltaTime)
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
         handleInput(deltaTime);
 
-    onGui();
+    onGui(deltaTime);
     ImGui::PopStyleVar();
     ImGui::End();
 }

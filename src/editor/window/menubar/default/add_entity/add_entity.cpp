@@ -1,7 +1,4 @@
 #include "add_entity.h"
-
-#include "core/engine/3d/staticmesh/staticmeshasset.h"
-#include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/camera.h"
 #include "core/engine/entities/spatial/spatial.h"
@@ -10,23 +7,40 @@
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
+#include "core/engine/3d/staticmesh/staticmeshasset.h"
+#include "core/engine/3d/staticmesh/staticmeshentity.h"
+#include "core/graphics/core/material/MMaterialAsset.h"
 #include "editor/window/menubar/menubartree.h"
 
 // Mesh asset paths
-static constexpr const char* MESH_CUBE     = "meteor_assets/engine_assets/meshes/cube.obj";
-static constexpr const char* MESH_SPHERE   = "meteor_assets/engine_assets/meshes/sphere.obj";
-static constexpr const char* MESH_CYLINDER = "meteor_assets/engine_assets/meshes/cylinder.obj";
-static constexpr const char* MESH_PLANE    = "meteor_assets/engine_assets/meshes/plane.obj";
-static constexpr const char* MESH_CONE     = "meteor_assets/engine_assets/meshes/cone.obj";
-static constexpr const char* MESH_CAPSULE  = "meteor_assets/engine_assets/meshes/capsule.obj";
+static constexpr const char* MAT_DEFAULT     = "meteor_assets/engine_assets/materials/lit_default.material";
+
+static constexpr const char* MESH_CUBE     = "meteor_assets/engine_assets/mesh/primitive/box.glb";
+static constexpr const char* MESH_SPHERE   = "meteor_assets/engine_assets/mesh/primitive/sphere.glb";
+static constexpr const char* MESH_CYLINDER = "meteor_assets/engine_assets/mesh/primitive/cylinder.glb";
+static constexpr const char* MESH_PLANE    = "meteor_assets/engine_assets/mesh/primitive/plane.glb";
+static constexpr const char* MESH_CONE     = "meteor_assets/engine_assets/mesh/primitive/cone.glb";
+static constexpr const char* MESH_CAPSULE  = "meteor_assets/engine_assets/mesh/primitive/capsule.glb";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 static void spawnPrimitive(const char* meshAssetPath, const char* name)
 {
     auto* entity = MSpatialEntity::createInstance<MStaticMeshEntity>(name);
-    if (auto* mesh = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshAssetPath))
+    auto* mesh = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshAssetPath);
+    auto* material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(MAT_DEFAULT);
+    if (mesh != nullptr && material != nullptr)
+    {
+        entity->setMaterialAsset(material);
         entity->setStaticMeshAsset(mesh);
+    }
+    else
+    {
+        MERROR("Failed to load mesh asset");
+        if (mesh == nullptr) MERROR("Missing Mesh Asset");
+        if (material == nullptr) MERROR("Missing Material Asset");
+        entity->destroy();
+    }
 }
 
 // ── Primitives ────────────────────────────────────────────────────────────────
@@ -66,6 +80,14 @@ bool MAddCapsuleItem::registered = []() {
     return true;
 }();
 void MAddCapsuleItem::onSelect() { spawnPrimitive(MESH_CAPSULE, "Capsule"); }
+
+
+// Static Mesh
+bool MAddStaticMeshItem::registered = []() {
+    MMenubarTreeNode::registerItem(new MAddStaticMeshItem());
+    return true;
+}();
+void MAddStaticMeshItem::onSelect() {  MSpatialEntity::createInstance<MStaticMeshEntity>("StaticMesh"); }
 
 // ── Lights ────────────────────────────────────────────────────────────────────
 

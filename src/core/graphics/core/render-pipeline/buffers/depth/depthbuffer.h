@@ -5,7 +5,6 @@
 #ifndef DEPTHBUFFER_H
 #define DEPTHBUFFER_H
 
-#include <GL/glew.h>
 #include "core/graphics/core/render-pipeline/buffer.h"
 #include "core/utils/glmhelper.h"
 
@@ -22,11 +21,11 @@ public:
 
     // (Re)allocates the FBO and depth texture at the given dimensions.
     // Safe to call multiple times — destroys previous GL objects first.
-    bool resize(int width, int height);
+    bool resize(int width, int height) override;
 
-    GLuint    getFBOHandle()          const { return fboHandle; }
-    GLuint    getDepthTextureHandle() const { return depthTextureHandle; }
-    SVector2  getResolution()         const { return resolution; }
+    [[nodiscard]] GLuint    getFBOHandle()          const { return fboHandle; }
+    [[nodiscard]] GLuint    getDepthTextureHandle() const { return depthTextureHandle; }
+    [[nodiscard]] SVector2  getResolution()         const { return resolution; }
 
 private:
     void destroyGL();

@@ -7,178 +7,198 @@
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
-#include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/texture/textureasset.h"
-#include "imgui.h"
+#include "core/utils/fileio.h"
+#include "editor/editorassetmanager/editorassetmanager.h"
 #include "imgui-SFML.h"
+#include "imgui.h"
 
 const SString MAssetReferenceControl::ASSET_REF_TARGET_KEY = "_AssetFileRef";
 
-MAssetReferenceControl::MAssetReferenceControl() : MAssetReferenceControl(nullptr)
-{
+MAssetReferenceControl::MAssetReferenceControl() : MAssetReferenceControl(nullptr) {}
 
-}
-
-MAssetReferenceControl::MAssetReferenceControl(MAsset* asset)
+MAssetReferenceControl::MAssetReferenceControl(TAssetHandle<MAsset> asset)
 {
-    this->assetIdReference = "";
+    assetIdReference           = "";
     canAcceptAssetFuncCallback = defaultTestFuncCallback;
-
-    if (!asset)
-        return;
-
-    this->assetIdReference = asset->getAssetId();
+    if (!asset) return;
+    assetIdReference = asset->getAssetId();
 }
+
 MAsset* MAssetReferenceControl::getAssetReference() const
 {
-    if (assetIdReference.empty())
-        return nullptr;
-    auto asset = MAssetManager::getInstance()->getAssetById<MAsset>(assetIdReference);
-    if (!asset)
-        return nullptr;
-    return asset;
+    if (assetIdReference.empty()) return nullptr;
+    return MAssetManager::getInstance()->getAssetById<MAsset>(assetIdReference);
 }
+
 void MAssetReferenceControl::setAssetReference(MAsset* asset)
 {
-    if (asset)
-        assetIdReference = asset->getAssetId();
+    if (asset) assetIdReference = asset->getAssetId();
 }
 
-sf::Texture* MAssetReferenceControl::getFileIcon(MAssetManager* assetManager, MAsset* asset) const
+sf::Texture* MAssetReferenceControl::getFileIcon(MAssetManager* am, TAssetHandle<MAsset> asset) const
 {
-    // default
-    auto defaultFileTextureAsset =
-        assetManager->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/file-default.png")
-            ->getTexture()
-            ->getCoreTexture();
+    // Guard every asset + texture lookup — any of these can be null if the
+    // asset hasn't loaded yet or the icon file is missing.
+    sf::Texture* defaultIcon = nullptr;
+    if (auto* iconAsset = am->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/file-default.png"))
+        if (auto* tex = iconAsset->getTexture())
+            defaultIcon = tex->getCoreTexture();
 
-    if (asset == nullptr)
-        return defaultFileTextureAsset;
+    if (!asset) return defaultIcon;
 
-    const auto& textureAsset = dynamic_cast<MTextureAsset*>(asset);
-    if (textureAsset && textureAsset->getTexture()->getCoreTexture())
+    if (auto* tex = dynamic_cast<MTextureAsset*>(asset.get()))
+        if (tex->getTexture() && tex->getTexture()->getCoreTexture())
+            return tex->getTexture()->getCoreTexture();
+
+    for (const auto& imp : *MAssetImporter::getImporters())
     {
-        return textureAsset->getTexture()->getCoreTexture();
-    }
-
-    for (const auto& importer : *MAssetImporter::getImporters())
-    {
-        auto extension = FileIO::getFileExtension(asset->getPath());
-        if (importer->canImport(extension))
+        auto ext = FileIO::getFileExtension(asset->getPath());
+        if (imp->canImport(ext))
         {
-            auto iconPath = importer->getIconPath();
-            return MAssetManager::getInstance()->getAsset<MTextureAsset>(iconPath)->getTexture()->getCoreTexture();
+            auto* iconAsset = am->getAsset<MTextureAsset>(imp->getIconPath());
+            if (iconAsset && iconAsset->getTexture())
+                if (auto* core = iconAsset->getTexture()->getCoreTexture())
+                    return core;
         }
     }
-    return defaultFileTextureAsset;
+    return defaultIcon;
 }
 
-bool MAssetReferenceControl::defaultTestFuncCallback(MAsset* asset)
-{
-    return true;
-}
+bool MAssetReferenceControl::defaultTestFuncCallback(TAssetHandle<MAsset>) { return true; }
 
 bool MAssetReferenceControl::drawControl(const SString& label)
 {
     return drawCompactControl(label);
 }
 
-// ─── Compact single-row control ───────────────────────────────────────────────
-// Layout: [32px thumbnail] [asset name or "(none)"]  [×]
-// Fits inside the material-properties table without breaking its row height.
-
+// drawCompactControl
+//
+// Layout:  [← dropZoneW ─────────────────────────] [×]
+//          [32px thumb] [asset name / "(none)"]     [×]
+//
+// The InvisibleButton covers the entire drop zone so drag-drop works anywhere
+// on the row, not just the thumbnail.  It also handles hover detection.
+//
+// Visual feedback while dragging:
+//   green tint = payload type matches this control's filter (canAccept)
+//   red   tint = payload rejected by canAcceptAssetFuncCallback
 bool MAssetReferenceControl::drawCompactControl(const SString& label)
 {
-    static constexpr float THUMB_SIZE  = 28.0f;
-    static constexpr float ROW_H       = THUMB_SIZE + 8.0f;  // 36px total
-    static constexpr float CLEAR_BTN_W = 20.0f;
+    static constexpr float THUMB_SIZE   = 28.0f;
+    static constexpr float ROW_H        = THUMB_SIZE + 8.0f;   // 36 px
+    static constexpr float CLEAR_BTN_W  = 20.0f;
+    static constexpr float GAP          = 4.0f;
 
     bool modified = false;
-    auto* am   = MAssetManager::getInstance();
-    auto* icon = assetIdReference.empty()
-                     ? getFileIcon(am, nullptr)
-                     : getFileIcon(am, getAssetReference());
-
-    MAsset* currentAsset = assetIdReference.empty() ? nullptr : getAssetReference();
-    const char* assetName = currentAsset ? currentAsset->getName().c_str() : "(none)";
+    auto* am      = MAssetManager::getInstance();
+    MAsset* current   = assetIdReference.empty() ? nullptr : getAssetReference();
+    sf::Texture* icon = getFileIcon(am, current);
 
     ImDrawList* dl    = ImGui::GetWindowDrawList();
     ImVec2      p     = ImGui::GetCursorScreenPos();
     float       avail = ImGui::GetContentRegionAvail().x;
+    const float dropW = std::max(avail - CLEAR_BTN_W - GAP, 10.f);
 
-    // ── Invisible button covers the whole row (drag-drop target + hover) ──
     ImGui::PushID(getGUID().c_str());
-    const bool hovered = ImGui::IsMouseHoveringRect(p, { p.x + avail, p.y + ROW_H });
 
-    // Subtle hover highlight
-    if (hovered)
-        dl->AddRectFilled(p, { p.x + avail, p.y + ROW_H }, IM_COL32(255, 255, 255, 12), 4.0f);
+    // It must be the last item when BeginDragDropTarget() is called, so we
+    // add it first and draw everything else on top with SetCursorScreenPos.
+    ImGui::InvisibleButton("##dropzone", ImVec2(dropW, ROW_H));
+    const bool hovered = ImGui::IsItemHovered();
 
-    // ── Thumbnail ─────────────────────────────────────────────────────────
-    ImGui::SetCursorScreenPos({ p.x + 2.0f, p.y + 4.0f });
-    if (icon)
-        ImGui::Image(*icon, { THUMB_SIZE, THUMB_SIZE });
-    else
-        ImGui::Dummy({ THUMB_SIZE, THUMB_SIZE });
-
-    // Make the thumbnail a drag-drop target
+    bool dragHovering = false;
+    bool dragValid    = false;
     if (ImGui::BeginDragDropTarget())
     {
-        const ImGuiPayload* payload = ImGui::GetDragDropPayload();
-        bool invalidRef = false;
+        const ImGuiPayload* peek = ImGui::GetDragDropPayload();
         SString tempId;
 
-        if (payload && strcmp(payload->DataType, ASSET_REF_TARGET_KEY.c_str()) == 0)
+        if (peek && strcmp(peek->DataType, ASSET_REF_TARGET_KEY.c_str()) == 0)
         {
-            tempId = SString(static_cast<const char*>(payload->Data));
-            if (canAcceptAssetFuncCallback &&
-                !canAcceptAssetFuncCallback(am->getAssetById<MAsset>(tempId)))
+            tempId      = SString(static_cast<const char*>(peek->Data));
+            dragHovering = true;
+            dragValid    = !canAcceptAssetFuncCallback ||
+                            canAcceptAssetFuncCallback(am->getAssetById<MAsset>(tempId));
+
+            if (!dragValid)
+                ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0.8f, 0.1f, 0.1f, 0.5f));
+        }
+
+        // AcceptDragDropPayload fires on mouse-release.
+        if (const ImGuiPayload* payload =
+                ImGui::AcceptDragDropPayload(ASSET_REF_TARGET_KEY.c_str()))
+        {
+            SString droppedId(static_cast<const char*>(payload->Data));
+            bool accept = !canAcceptAssetFuncCallback ||
+                           canAcceptAssetFuncCallback(am->getAssetById<MAsset>(droppedId));
+            if (accept)
             {
-                invalidRef = true;
-                ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(1, 0, 0, 1));
+                assetIdReference = droppedId;
+                modified         = true;
             }
         }
-        if (ImGui::AcceptDragDropPayload(ASSET_REF_TARGET_KEY.c_str()) && !invalidRef)
-        {
-            assetIdReference = tempId;
-            modified = true;
-        }
-        if (invalidRef) ImGui::PopStyleColor();
+
+        if (dragHovering && !dragValid) ImGui::PopStyleColor();
         ImGui::EndDragDropTarget();
     }
 
-    if (ImGui::IsItemHovered() && currentAsset)
-        ImGui::SetTooltip("%s", currentAsset->getPath().c_str());
-
-    // ── Asset name ────────────────────────────────────────────────────────
-    const float nameX   = p.x + THUMB_SIZE + 8.0f;
-    const float nameMaxW = avail - THUMB_SIZE - CLEAR_BTN_W - 16.0f;
-    ImGui::SetCursorScreenPos({ nameX, p.y + (ROW_H - ImGui::GetTextLineHeight()) * 0.5f });
-
-    if (currentAsset)
+    // IsItemClicked fires on mouse-down; at that instant IsMouseDragging is
+    // always false so this is a reliable click-not-drag check.
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && current)
     {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
-        ImGui::PushTextWrapPos(nameX + nameMaxW);
-        ImGui::TextUnformatted(assetName);
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+        if (editorAM) editorAM->pingAsset(current->getAssetId());
+    }
+
+    if (dragHovering)
+    {
+        ImU32 tint = dragValid ? IM_COL32(50, 180, 80, 100) : IM_COL32(180, 50, 50, 100);
+        dl->AddRectFilled(p, {p.x + dropW, p.y + ROW_H}, tint, 4.f);
+    }
+    else if (hovered)
+    {
+        dl->AddRectFilled(p, {p.x + avail, p.y + ROW_H}, IM_COL32(255, 255, 255, 12), 4.f);
+    }
+
+    ImGui::SetCursorScreenPos({p.x + 2.f, p.y + 4.f});
+    if (icon) ImGui::Image(*icon, {THUMB_SIZE, THUMB_SIZE});
+    else      ImGui::Dummy({THUMB_SIZE, THUMB_SIZE});
+
+    if (ImGui::IsItemHovered() && current)
+        ImGui::SetTooltip("%s", current->getPath().c_str());
+
+    const float nameX = p.x + THUMB_SIZE + 8.f;
+    ImGui::SetCursorScreenPos({nameX, p.y + (ROW_H - ImGui::GetTextLineHeight()) * 0.5f});
+
+    if (current)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.f));
+        ImGui::PushTextWrapPos(p.x + dropW - 2.f);
+        ImGui::TextUnformatted(current->getName().c_str());
         ImGui::PopTextWrapPos();
         ImGui::PopStyleColor();
     }
     else
     {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-        ImGui::TextUnformatted("(none)");
+        // Show the asset type hint while dragging so the user knows what to drop.
+        ImGui::PushStyleColor(ImGuiCol_Text,
+                              dragHovering ? ImVec4(0.8f, 0.8f, 0.8f, 1.f)
+                                           : ImVec4(0.4f, 0.4f, 0.4f, 1.f));
+        ImGui::TextUnformatted(dragHovering
+                               ? (dragValid ? "Drop here" : "Invalid type")
+                               : "(none)");
         ImGui::PopStyleColor();
     }
 
-    // ── Clear (×) button — only when something is assigned ───────────────
-    ImGui::SetCursorScreenPos({ p.x + avail - CLEAR_BTN_W - 2.0f,
-                                p.y + (ROW_H - ImGui::GetFrameHeight()) * 0.5f });
-    ImGui::BeginDisabled(!currentAsset);
+    ImGui::SetCursorScreenPos({p.x + avail - CLEAR_BTN_W - 2.f,
+                               p.y + (ROW_H - ImGui::GetFrameHeight()) * 0.5f});
+    ImGui::BeginDisabled(!current);
     ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.10f, 0.10f, 0.80f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.80f, 0.20f, 0.20f, 1.00f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.40f, 0.05f, 0.05f, 1.00f));
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
-    if (ImGui::Button("×", { CLEAR_BTN_W, ImGui::GetFrameHeight() }))
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.f, 2.f));
+    if (ImGui::Button("x", {CLEAR_BTN_W, ImGui::GetFrameHeight()}))
     {
         assetIdReference.clear();
         modified = true;
@@ -189,9 +209,9 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
 
     ImGui::PopID();
 
-    // Advance cursor past the row
-    ImGui::SetCursorScreenPos({ p.x, p.y + ROW_H + 2.0f });
-    ImGui::Dummy({ avail, 0.0f });
+    // Advance the cursor past the row.
+    ImGui::SetCursorScreenPos({p.x, p.y + ROW_H + 2.f});
+    ImGui::Dummy({avail, 0.f});
 
     return modified;
 }

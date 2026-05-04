@@ -1,0 +1,24 @@
+<shader name="error_shader" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Standard transform, no vertex deformation.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        // return error color
+        return vec4(1.0, 0.0, 0.63, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

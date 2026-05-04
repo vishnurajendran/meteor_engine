@@ -9,7 +9,6 @@
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 
 class SFrameBuffer;
-class MShader;
 
 // Lighting stage — RS_Lighting (4000).
 //
@@ -31,7 +30,8 @@ public:
 
 private:
     SFrameBuffer* lightsBuffer   = nullptr;
-    MShader*      lightingShader = nullptr; // owned by MShaderAsset
+    // No cached MShader* — looked up fresh each render() to survive refresh().
+    SString       lightingShaderPath;
 };
 
 #endif // LIGHTING_STAGE_H

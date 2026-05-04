@@ -15,6 +15,7 @@ public:
     explicit MTextureAsset(const SString& path);
     virtual MTexture* getTexture();
 
+    bool requestReload() override { valid = texture.loadFromPath(path); return valid; };
 };
 
 

@@ -6,33 +6,36 @@
 #include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 
-// constants
-const SString MEngineStatics::engineSettingsFileName = "engine_settings.xml";
-
 // fields
 MEngineSettings MEngineStatics::engineSettings;
+SString MEngineStatics::engineSettingsPath = SString();
 
-void MEngineStatics::init()
+
+void MEngineStatics::init(const SString& inEngineSettingsPath)
 {
-    MLOG("MEngineStatics:: initialising");
-    loadEngineSettings();
+    MLOG("MEngineStatics:: Initialising");
+
+    // engine settings
+    engineSettingsPath = inEngineSettingsPath;
+    loadEngineSettings(engineSettingsPath);
 }
 
 void MEngineStatics::saveAll()
 {
-    MLOG("MEngineStatics:: saving data");
+    MLOG("MEngineStatics:: Saving data");
 
     // save engine data
-    engineSettings.Serialise(engineSettingsFileName);
+    if (!engineSettingsPath.empty())
+        engineSettings.serialiseToFile(engineSettingsPath);
 }
 
 
-void MEngineStatics::loadEngineSettings()
+void MEngineStatics::loadEngineSettings(const SString& path)
 {
-    if (FileIO::hasFile(engineSettingsFileName))
+    if (FileIO::hasFile(path))
     {
-        pugi::xml_document engineSettingsDoc;
-        engineSettingsDoc.load_file(engineSettingsFileName.c_str());
-        engineSettings.Deserialize(engineSettingsDoc);
+        engineSettings.deserialiseFromFile(path);
     }
+    else
+        MWARN(SString::format("MEngineStatics:: Failed to load engine settings file: {0}", path));
 }

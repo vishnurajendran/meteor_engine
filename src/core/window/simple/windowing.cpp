@@ -41,10 +41,8 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
     this->settings = settings;
 
     const auto& size = sf::Vector2u(inSize.x, inSize.y);
-    MLOG(STR("INIT WINDOW: ") + STR(inTitle) + " | " +
-            std::to_string(size.x) + " x " + std::to_string(size.y)
-            + " @ " + std::to_string(inFps) + " FPS"
-            );
+    MLOG(SString::format("INIT WINDOW {0} | {1}x{2} | {3} FPS", inTitle, static_cast<int>(inSize.x)
+                                                                    , static_cast<int>(inSize.y), inFps));
 
     auto videoMode = sf::VideoMode(size, 32);
     coreWindow.create(videoMode, this->title.str(),  sf::State::Windowed, this->settings);
@@ -96,12 +94,12 @@ void MWindow::update(float deltaTime) {
     }
 
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
+
+    // poll event loop
     std::optional<sf::Event> event;
-    while (event = coreWindow.pollEvent()) {
-        if (event.has_value() && event->is<sf::Event::Closed>()) {
-            close();
-            return;
-        }
+    while (event = coreWindow.pollEvent())
+    {
+        handleWindowEvents(event);
     }
 
     coreWindow.clear();
@@ -123,3 +121,26 @@ void MWindow::update(float deltaTime) {
     }
     clock.restart();
 }
+
+void MWindow::handleWindowEvents(const std::optional<sf::Event>& event)
+{
+    if (event.has_value()) {
+
+        // close event
+        if (event->is<sf::Event::Closed>())
+        {
+            close();
+            return;
+        }
+
+        // resize event
+        if (event->is<sf::Event::Resized>())
+        {
+            const auto size = coreWindow.getSize();
+            windowResizeCallback(SVector2(size.x, size.y));
+            return;
+        }
+    }
+}
+
+

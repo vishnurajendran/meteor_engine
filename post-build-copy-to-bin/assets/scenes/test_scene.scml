@@ -1,163 +1,90 @@
-<mscene name = "Test Scene">
-    <skybox name="Skybox">
-        <attrib>
-            <transform>
-                <localPosition value="(0,0,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <skybox>
-                <src value="assets/skybox/sky_basic/basic_skybox.skybox"/>
-            </skybox>
-        </attrib>
-    </skybox>
-    <camera name="Main Camera">
-        <attrib>
-            <transform>
-                <localPosition value="(0,0,10)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <camera>
-                <fov value="60"/>
-                <nearClip value="0.1"/>
-                <farClip value="100.0"/>
-                <priority value="0"/>
-                <orthographic value="0"/>
-            </camera>
-        </attrib>
-    </camera>
-    <point_light name="Test Point Light">
-        <attrib>
-            <transform>
-                <localPosition value="(0,5,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <point_light>
-                <intensity value="10"/>
-                <range value="10"/>
-                <color value="(1.0,1.0,1.0,1.0)"/>
-            </point_light>
-        </attrib>
-    </point_light>
-    <spot_light name="Test Spot Light">
-        <attrib>
-            <transform>
-                <localPosition value="(0,5,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <spot_light>
-                <intensity value="10"/>
-                <range value="10"/>
-                <color value="(1.0,1.0,1.0,1.0)"/>
-                <angle value="35"/>
-            </spot_light>
-        </attrib>
-    </spot_light>
-    <ambient_light name="Test Ambient Light">
-        <attrib>
-            <transform>
-                <localPosition value="(0,0,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <ambient_light>
-                <intensity value="0.45"/>
-                <color value="(0.50,0.80,0.92,1.0)"/>
-            </ambient_light>
-        </attrib>
-    </ambient_light>
-    <directional_light name="Test Directional Light">
-        <attrib>
-            <transform>
-                <localPosition value="(0,5,0)"/>
-                <localRotation value="(0.5709415,0.1675188,0.5709415,0.5656758)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <directional_light>
-                <intensity value="1"/>
-                <color value="(1.0,1.0,1.0,1.0)"/>
-            </directional_light>
-        </attrib>
-    </directional_light>
-    <static_mesh name="Sphere">
-        <attrib>
-            <transform>
-                <localPosition value="(0,5,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <static_mesh>
-                <src value="assets/mesh/primitive/sphere.glb"/>
-                <material value="assets/materials/mat1.material"/>
-            </static_mesh>
-        </attrib>
-    </static_mesh>
-    <static_mesh name="GlbCharacter">
-        <attrib>
-            <transform>
-                <localPosition value="(5,5,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <static_mesh>
-                <src value="assets/mesh/test/source/Dayo.glb"/>
-                <material value="assets/materials/mat_lit.material"/>
-            </static_mesh>
-        </attrib>
-    </static_mesh>
-    <static_mesh name="Plane">
-        <attrib>
-            <transform>
-                <localPosition value="(0,-10,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(100,1,100)"/>
-            </transform>
-            <static_mesh>
-                <src value="assets/mesh/primitive/plane.glb"/>
-                <material value="assets/materials/plane_mat.material"/>
-            </static_mesh>
-        </attrib>
-    </static_mesh>
-    <static_mesh name="Cylinder">
-        <attrib>
-            <transform>
-                <localPosition value="(-7,0,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <static_mesh>
-                <src value="assets/mesh/primitive/cylinder.glb"/>
-                <material value="assets/materials/mat1.material"/>
-            </static_mesh>
-        </attrib>
-    </static_mesh>
-    <static_mesh name="Cone">
-        <attrib>
-            <transform>
-                <localPosition value="(7,0,0)"/>
-                <localRotation value="(0,0,0,0)"/>
-                <localScale value="(1,1,1)"/>
-            </transform>
-            <static_mesh>
-                <src value="assets/mesh/primitive/cone.glb"/>
-                <material value="assets/materials/mat1.material"/>
-            </static_mesh>
-        </attrib>
-    </static_mesh>
-    <static_mesh name="Box">
-            <attrib>
-                <transform>
-                    <localPosition value="(0,0,0)"/>
-                    <localRotation value="(0.846,0.369,0.338,0.184)"/>
-                    <localScale value="(3,3,3)"/>
-                </transform>
-                <static_mesh>
-                    <src value="assets/mesh/primitive/box.glb"/>
-                    <material value="assets/materials/mat2.material"/>
-                </static_mesh>
-            </attrib>
-    </static_mesh>
-</mscene>
+<?xml version="1.0" encoding="UTF-8"?>
+<scene name="Test Scene">
+    <entity type="MSkyboxEntity" name="Skybox" enabled="true">
+        <relativePosition><x>0</x><y>0</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <cubemapAssetPath>assets/skybox/sky_basic/basic_skybox.skybox</cubemapAssetPath>
+    </entity>
+    <entity type="MCameraEntity" name="Main Camera" enabled="true">
+        <relativePosition><x>0</x><y>0</y><z>10</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <fov>60</fov>
+        <nearPlane>0.1</nearPlane>
+        <farPlane>100</farPlane>
+        <priority>0</priority>
+        <isOrthographic>false</isOrthographic>
+    </entity>
+    <entity type="MPointLight" name="Test Point Light" enabled="true">
+        <relativePosition><x>0</x><y>5</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <intensity>10</intensity>
+        <color><x>1</x><y>1</y><z>1</z></color>
+    </entity>
+    <entity type="MSpotLight" name="Test Spot Light" enabled="true">
+        <relativePosition><x>0</x><y>5</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <intensity>10</intensity>
+        <color><x>1</x><y>1</y><z>1</z></color>
+        <spotAngleDeg>35</spotAngleDeg>
+    </entity>
+    <entity type="MAmbientLightEntity" name="Test Ambient Light" enabled="true">
+        <relativePosition><x>0</x><y>0</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <intensity>0.45</intensity>
+        <color><x>0.5</x><y>0.8</y><z>0.92</z></color>
+    </entity>
+    <entity type="MDirectionalLight" name="Test Directional Light" enabled="true">
+        <relativePosition><x>0</x><y>5</y><z>0</z></relativePosition>
+        <relativeRotation><x>0.5709415</x><y>0.1675188</y><z>0.5709415</z><w>0.5656758</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <intensity>1</intensity>
+        <color><x>1</x><y>1</y><z>1</z></color>
+    </entity>
+    <entity type="MStaticMeshEntity" name="Sphere" enabled="true">
+        <relativePosition><x>0</x><y>5</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <meshAssetPath>meteor_assets/engine_assets/mesh/primitive/sphere.glb</meshAssetPath>
+        <materialAssetPath>meteor_assets/engine_assets/materials/lit_default.material</materialAssetPath>
+    </entity>
+    <entity type="MStaticMeshEntity" name="GlbCharacter" enabled="true">
+        <relativePosition><x>5</x><y>5</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <meshAssetPath>assets/mesh/test/source/Dayo.glb</meshAssetPath>
+        <materialAssetPath>assets/materials/mat_lit.material</materialAssetPath>
+    </entity>
+    <entity type="MStaticMeshEntity" name="Plane" enabled="true">
+        <relativePosition><x>0</x><y>-10</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>100</x><y>1</y><z>100</z></relativeScale>
+        <meshAssetPath>meteor_assets/engine_assets/mesh/primitive/plane.glb</meshAssetPath>
+        <materialAssetPath>meteor_assets/engine_assets/materials/lit_default.material</materialAssetPath>
+    </entity>
+    <entity type="MStaticMeshEntity" name="Cylinder" enabled="true">
+        <relativePosition><x>-7</x><y>0</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <meshAssetPath>meteor_assets/engine_assets/mesh/primitive/cylinder.glb</meshAssetPath>
+        <materialAssetPath>meteor_assets/engine_assets/materials/lit_default.material</materialAssetPath>
+    </entity>
+    <entity type="MStaticMeshEntity" name="Cone" enabled="true">
+        <relativePosition><x>7</x><y>0</y><z>0</z></relativePosition>
+        <relativeRotation><x>0</x><y>0</y><z>0</z><w>1</w></relativeRotation>
+        <relativeScale><x>1</x><y>1</y><z>1</z></relativeScale>
+        <meshAssetPath>meteor_assets/engine_assets/mesh/primitive/cone.glb</meshAssetPath>
+        <materialAssetPath>meteor_assets/engine_assets/materials/lit_default.material</materialAssetPath>
+    </entity>
+    <entity type="MStaticMeshEntity" name="Box" enabled="true">
+        <relativePosition><x>0</x><y>0</y><z>0</z></relativePosition>
+        <relativeRotation><x>0.846</x><y>0.369</y><z>0.338</z><w>0.184</w></relativeRotation>
+        <relativeScale><x>3</x><y>3</y><z>3</z></relativeScale>
+        <meshAssetPath>meteor_assets/engine_assets/mesh/primitive/box.glb</meshAssetPath>
+        <materialAssetPath>meteor_assets/engine_assets/materials/lit_default.material</materialAssetPath>
+    </entity>
+</scene>

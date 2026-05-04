@@ -24,6 +24,11 @@ protected:
 
 private:
     SRenderBuffer* renderBuffer = nullptr;
+    std::function<void(SVector2)> windowResizeCallback;
+
+protected:
+    void handleWindowEvents(const std::optional<sf::Event>& event);
+
 public:
     MWindow() = default;
     virtual ~MWindow() { delete renderBuffer; }
@@ -34,6 +39,7 @@ public:
     virtual bool isOpen() const;
     virtual void close();
 
+    void setWindowResizeCallback(std::function<void(SVector2)> inCallback) { windowResizeCallback = inCallback; }
     void setVisible(bool visible);
     SRenderBuffer* getRenderBuffer() { return renderBuffer; }
 };

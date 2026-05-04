@@ -16,9 +16,8 @@ int main(){
         return 0;
     }
 
-    MEngineStatics::init();
+    MEngineStatics::init(appInst->getEngineSettingsPath());
     appInst->initialise();
-    MSceneManager::getSceneManagerInstance()->loadScene(STR("assets/scenes/test_scene.scml"));
 
     while(appInst->isRunning()){
         appInst->run();

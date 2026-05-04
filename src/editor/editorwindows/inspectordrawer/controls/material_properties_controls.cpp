@@ -4,7 +4,10 @@
 
 #include "material_properties_controls.h"
 
+#include <vector>
+
 #include "asset_reference_controls.h"
+#include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/texture/textureasset.h"
@@ -13,13 +16,18 @@
 #include "imgui.h"
 
 
-void MMaterialPropertyControl::draw(MMaterial* target)
+void MMaterialPropertyControl::draw(MMaterialAsset* asset)
 {
+    if (!asset) return;
+
+    // Resolve fresh every call — never store the raw MMaterial* which can
+    // become dangling between frames if the asset is hot-reloaded.
+    MMaterial* target = asset->getMaterial();
+    if (!target) return;
+
     if (!ImGui::CollapsingHeader("Material Properties"))
         return;
 
-    // Two-column table: fixed label col + stretching widget col.
-    // Same pattern as drawLightIntensityAndColor in the spatial inspector.
     constexpr float LABEL_COL_W = 120.0f;
     if (!ImGui::BeginTable("##mat_props", 2, ImGuiTableFlags_None))
         return;
@@ -27,11 +35,12 @@ void MMaterialPropertyControl::draw(MMaterial* target)
     ImGui::TableSetupColumn("label",  ImGuiTableColumnFlags_WidthFixed,   LABEL_COL_W);
     ImGui::TableSetupColumn("widget", ImGuiTableColumnFlags_WidthStretch);
 
-    for (const auto& kv : target->getProperties())
-    {
-        auto property = kv.second;
-        drawProperty(kv.first, property, target);
-    }
+    // Snapshot so setProperty() calls inside draw helpers don't invalidate the iterator.
+    std::vector<std::pair<SString, SShaderPropertyValue>> snapshot(
+        target->getProperties().begin(), target->getProperties().end());
+
+    for (auto& [key, val] : snapshot)
+        drawProperty(key, val, target);
 
     ImGui::EndTable();
 }
@@ -40,13 +49,14 @@ void MMaterialPropertyControl::drawProperty(const SString& label,
                                              SShaderPropertyValue& propertyValue,
                                              MMaterial* target)
 {
-    // Skip entirely for types we don't render — avoids an empty table row.
+    // Skip entirely for types we don't render - avoids an empty table row.
     const auto type = propertyValue.getType();
     if (type != Int && type != Float &&
         type != UniformVec2 && type != UniformVec3 && type != UniformVec4 &&
         type != Color && type != Texture)
         return;
 
+    // TableNextRow only after we know we have something to draw.
     ImGui::TableNextRow();
 
     // Label column
@@ -54,11 +64,11 @@ void MMaterialPropertyControl::drawProperty(const SString& label,
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(label.c_str());
 
-    // Widget column
+    // Widget column - always fill it so ImGui table state stays consistent.
     ImGui::TableSetColumnIndex(1);
     ImGui::SetNextItemWidth(-FLT_MIN);
 
-    switch (propertyValue.getType())
+    switch (type)
     {
         case Int:           drawIntParameter(label, propertyValue, target);      break;
         case Float:         drawFloatParameter(label, propertyValue, target);    break;
@@ -67,7 +77,7 @@ void MMaterialPropertyControl::drawProperty(const SString& label,
         case UniformVec4:   drawVec4Parameter(label, propertyValue, target);     break;
         case Color:         drawColorParameter(label, propertyValue, target);    break;
         case Texture:       drawTextureParameter(label, propertyValue, target);  break;
-        default:            return;
+        default:            ImGui::TextDisabled("(unsupported type)");           break;
     }
 }
 
@@ -165,22 +175,45 @@ void MMaterialPropertyControl::drawColorParameter(const SString& label, SShaderP
 }
 void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
 {
-    auto controlRefId = target->getGUID() + "_tex_" + label;
+    // Key by property label only — stable across material rebuilds.
+    // target->getGUID() changes every time MMaterial is reconstructed
+    // (deferred load, hot reload), which would cause the cache to miss
+    // every time and show "(none)" for all texture slots.
+    const SString controlRefId = label;
 
     MAssetReferenceControl* texRefControl = nullptr;
     if (textureReferences.contains(controlRefId))
     {
         texRefControl = textureReferences[controlRefId];
+        // Sync the control if the material's property changed externally
+        // (e.g. loaded from disk). Only update if the stored ID differs
+        // from what the property says.
+        const auto assetPath = value.getTexAssetReference();
+        if (!assetPath.empty())
+        {
+            auto* current = texRefControl->getAssetReference();
+            if (!current || current->getPath() != assetPath)
+            {
+                auto* texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
+                if (texAsset)
+                    texRefControl->setAssetReference(texAsset);
+            }
+        }
     }
     else
     {
         texRefControl = new MAssetReferenceControl();
         textureReferences[controlRefId] = texRefControl;
-        texRefControl->canAcceptAssetFuncCallback = canAcceptTextureAsset;
+        texRefControl->canAcceptAssetFuncCallback = [](MAsset* asset)
+        { return dynamic_cast<MTextureAsset*>(asset) != nullptr; };
 
         const auto assetPath = value.getTexAssetReference();
         if (!assetPath.empty())
-            texRefControl->setAssetReference(MAssetManager::getInstance()->getAsset<MAsset>(assetPath));
+        {
+            auto* texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
+            if (texAsset)
+                texRefControl->setAssetReference(texAsset);
+        }
     }
 
     // Use the compact single-row control so it fits inside the table without
@@ -192,4 +225,11 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
         value.setTextureReference(asset ? asset->getPath() : SString(""));
         target->setProperty(label, SShaderPropertyValue(value));
     }
+}
+void MMaterialPropertyControl::clearTextureReferences()
+{
+    for (auto& [id, ctrl] : textureReferences)
+        delete ctrl;
+    textureReferences.clear();
+    lastPropertyCount = -1;
 }

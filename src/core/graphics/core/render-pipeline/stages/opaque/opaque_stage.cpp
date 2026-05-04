@@ -29,17 +29,18 @@ void MOpaqueStage::init(IRenderPipeline* const pipeline)
     if (!opaqueBuffer)
         MERROR("MOpaqueStage::init failed to create opaque buffer");
 
-    auto* asset = MAssetManager::getInstance()->getAsset<MShaderAsset>(ALBEDO_SHADER_PATH);
-    if (!asset)
-        MERROR("MOpaqueStage::init could not load albedo shader: " + SString(ALBEDO_SHADER_PATH));
+    // Store the path only — the raw MShader* is looked up fresh each frame
+    // so it survives asset manager refresh() without dangling.
+    if (MAssetManager::getInstance()->getAsset<MShaderAsset>(ALBEDO_SHADER_PATH))
+        albedoShaderPath = ALBEDO_SHADER_PATH;
     else
-        albedoShader = asset->getShader();
+        MERROR("MOpaqueStage::init could not find albedo shader: " + SString(ALBEDO_SHADER_PATH));
 }
 
 void MOpaqueStage::cleanup(IRenderPipeline* const pipeline)
 {
-    opaqueBuffer = nullptr;
-    albedoShader = nullptr;
+    opaqueBuffer     = nullptr;
+    albedoShaderPath = "";
 }
 
 void MOpaqueStage::preRender(IRenderPipeline* const pipeline)
@@ -49,6 +50,11 @@ void MOpaqueStage::preRender(IRenderPipeline* const pipeline)
 
 void MOpaqueStage::render(IRenderPipeline* const pipeline)
 {
+    // Resolve albedo shader fresh each frame — survives asset manager refresh().
+    auto* albedoAsset = MAssetManager::getInstance()
+                            ->getAsset<MShaderAsset>(albedoShaderPath.c_str());
+    MShader* albedoShader = albedoAsset ? albedoAsset->getShader() : nullptr;
+
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0 || !albedoShader) return;
 
     opaqueBuffer->bindAsActive();
@@ -65,30 +71,57 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     for (auto* c : MViewManagement::getCameras())
         if (c && c->getEnabled()) { camera = c; break; }
 
+    const glm::mat4 viewMat = camera ? camera->getViewMatrix()          : glm::mat4(1.f);
+    const glm::mat4 projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
+
+    // Helper: set model/view/projection on whatever program is currently bound.
+    // Works for both the albedo shader and any custom material shader.
+    auto setMVP = [&](const glm::mat4& model)
+    {
+        GLint prog = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
+        if (prog == 0) return;
+
+        GLint loc;
+        loc = glGetUniformLocation(prog, "model");
+        if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model));
+        loc = glGetUniformLocation(prog, "view");
+        if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(viewMat));
+        loc = glGetUniformLocation(prog, "projection");
+        if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projMat));
+    };
+
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0 || !item.material) continue;
 
-        albedoShader->bind();
-
-        for (auto& [key, val] : item.material->getProperties())
-            albedoShader->setPropertyValue(key, val);
-
-        SShaderPropertyValue modelVal;
-        modelVal.setMat4Val(item.transform);
-        albedoShader->setPropertyValue("model", modelVal);
-
-        if (camera)
+        if (item.getShadingMode() == MMaterial::ShadingMode::Unlit)
         {
-            SShaderPropertyValue viewVal, projVal;
-            viewVal.setMat4Val(camera->getViewMatrix());
-            projVal.setMat4Val(camera->getProjectionMatrix(res));
-            albedoShader->setPropertyValue("view",       viewVal);
-            albedoShader->setPropertyValue("projection", projVal);
+            // Unlit — the material's own shader runs in full.
+            // bindMaterial() calls glUseProgram + uploads all properties.
+            // BUFFER_LIGHTS is cleared to white so the composite stage
+            // produces:  materialOutput × white = materialOutput (correct).
+            item.material->bindMaterial();
+        }
+        else
+        {
+            // Lit (deferred) — albedo-only pass. The lighting stage renders
+            // the same geometry again into BUFFER_LIGHTS, then composite
+            // multiplies:  albedo × lighting = final shaded colour.
+            albedoShader->bind();
+            for (auto& [key, val] : item.material->getProperties())
+                albedoShader->setPropertyValue(key, val);
         }
 
-        // Expand bounds by a small margin so flat geometry (planes)
-        // with a near-zero height AABB can still intersect light spheres.
+        setMVP(item.transform);
+
+        // Re-assert depth state before every draw — bindMaterial() may change
+        // glDepthMask or glDepthFunc if the material's shader has side effects,
+        // causing subsequent items to render incorrectly (e.g. plane over cube).
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDepthMask(GL_TRUE);
+
         AABB queryBounds  = item.bounds;
         queryBounds.min  -= SVector3(5.0f);
         queryBounds.max  += SVector3(5.0f);

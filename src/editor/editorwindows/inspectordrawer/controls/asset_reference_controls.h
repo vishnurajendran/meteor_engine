@@ -8,6 +8,7 @@
 
 
 #include "SFML/Graphics/Texture.hpp"
+#include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/object/object.h"
 
 
@@ -17,12 +18,12 @@ class MAssetReferenceControl : MObject {
 private:
     SString assetIdReference = "";
 private:
-    sf::Texture* getFileIcon(MAssetManager* assetManager, MAsset* asset) const;
-    static bool defaultTestFuncCallback(MAsset* asset);
+    sf::Texture* getFileIcon(MAssetManager* assetManager, TAssetHandle<MAsset> asset) const;
+    static bool defaultTestFuncCallback(TAssetHandle<MAsset> asset);
 public:
     static const SString ASSET_REF_TARGET_KEY;
     MAssetReferenceControl();
-    explicit MAssetReferenceControl(MAsset* asset);
+    explicit MAssetReferenceControl(TAssetHandle<MAsset> asset);
     MAsset* getAssetReference() const;
     void setAssetReference(MAsset* asset);
     bool drawControl(const SString& label);

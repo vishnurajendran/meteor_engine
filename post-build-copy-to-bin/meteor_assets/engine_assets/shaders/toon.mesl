@@ -1,0 +1,169 @@
+<shader name="toon" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+        <property key="_albedo"             type="tex2d" default=""/>
+        <property key="_color"              type="col"   default="(1,1,1,1)"/>
+
+        <property key="_bands"              type="i"     default="4"/>
+        <property key="_bandSmoothness"     type="f"     default="0.03"/>
+        <property key="_shadowColor"        type="col"   default="(0.15,0.15,0.2,1)"/>
+
+        <property key="_specColor"          type="col"   default="(1,1,1,1)"/>
+        <property key="_specSize"           type="f"     default="0.12"/>
+        <property key="_specSmoothness"     type="f"     default="0.02"/>
+
+        <property key="_rimColor"           type="col"   default="(1,1,1,1)"/>
+        <property key="_rimSize"            type="f"     default="0.25"/>
+        <property key="_rimSmoothness"      type="f"     default="0.02"/>
+        <property key="_rimIntensity"       type="f"     default="1.0"/>
+
+        <property key="_outlineColor"       type="col"   default="(0,0,0,1)"/>
+        <property key="_outlineThickness"   type="f"     default="0.8"/>
+        <property key="_useOutline"         type="i"     default="1"/>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Standard transform.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _albedo;
+    uniform vec4      _color;
+
+    uniform int       _bands;
+    uniform float     _bandSmoothness;
+    uniform vec4      _shadowColor;
+
+    uniform vec4      _specColor;
+    uniform float     _specSize;
+    uniform float     _specSmoothness;
+
+    uniform vec4      _rimColor;
+    uniform float     _rimSize;
+    uniform float     _rimSmoothness;
+    uniform float     _rimIntensity;
+
+    uniform vec4      _outlineColor;
+    uniform float     _outlineThickness;
+    uniform int       _useOutline;
+
+    vec3 getCameraWorldPos()
+    {
+        return -(transpose(mat3(view)) * vec3(view[3]));
+    }
+
+    // Quantise NdotL into discrete bands with a soft transition at each edge.
+    float stepDiffuse(float NdotL, int bands, float smoothness)
+    {
+        float b   = float(max(bands, 1));
+        float t   = NdotL * b;
+        float lo  = floor(t) / b;
+        float hi  = (floor(t) + 1.0) / b;
+        float fr  = fract(t);
+        float blend = smoothstep(0.0, smoothness * b, fr);
+        return mix(lo, hi, blend) * step(0.001, NdotL);
+    }
+
+    // Screen-space outline: detect silhouette edges via rapid normal change.
+    float computeOutline(float thickness)
+    {
+        vec3  N    = getVertexNormalWorld();
+        float edge = length(vec2(length(dFdx(N)), length(dFdy(N))));
+        return smoothstep(0.3, 0.3 + thickness * 0.5, edge * (4.0 + thickness * 6.0));
+    }
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv     = v2fTexCoords;
+        vec4 albedo = texture(_albedo, uv) * _color;
+        vec3 N      = normalize(getVertexNormalWorld());
+        vec3 wp     = getVertexPositionWorld();
+        vec3 camPos = getCameraWorldPos();
+        vec3 V      = normalize(camPos - wp);
+
+        // Ambient (unchanged, not banded)
+        vec3 ambient = getAmbLightContrib();
+
+        // Directional diffuse (banded)
+        float dirNdotL   = max(dot(N, normalize(uDirectionalLight.forward)), 0.0);
+        float dirStepped = stepDiffuse(dirNdotL, _bands, _bandSmoothness);
+        vec3  dirLight   = dirStepped * uDirectionalLight.color
+                           * uDirectionalLight.intensity
+                           * float(uDirectionalLight.enabled);
+
+        // Dynamic lights (banded per source)
+        vec3 dynLight = vec3(0.0);
+        for (int i = 0; i < uDynamicLights.dynLightCount; i++)
+        {
+            DynamicLightData light = uDynamicLights.lights[i];
+            if (light.type == 0) continue;
+
+            vec3  lv   = light.position - wp;
+            float dist = length(lv);
+            if (dist > light.range) continue;
+
+            vec3  Ld    = normalize(lv);
+            float atten = pow(1.0 - clamp(dist / light.range, 0.0, 1.0), 2.0);
+            float ndotl = max(dot(N, Ld), 0.0);
+
+            if (light.type == 2)
+            {
+                float sc = dot(normalize(light.direction), Ld);
+                if (sc < cos(light.angle)) continue;
+                atten *= smoothstep(cos(light.angle), 1.0, sc);
+            }
+
+            float shadow = 0.0;
+            if (light.shadowIndex >= 0)
+            {
+                if (light.type == 2)
+                    shadow = computeSpotShadow(light.shadowIndex, wp, light.smoothShadow);
+                else if (light.type == 1)
+                    shadow = computePointShadow(light.shadowIndex, wp, light.position, light.smoothShadow);
+            }
+
+            float stepped = stepDiffuse(ndotl, _bands, _bandSmoothness);
+            dynLight += stepped * atten * light.color * light.intensity * (1.0 - shadow);
+        }
+
+        // Blend shadow colour into unlit areas
+        vec3  totalLight = ambient + dirLight + dynLight;
+        float lightness  = clamp(dot(totalLight, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+        float litBlend   = smoothstep(0.0, _bandSmoothness * 2.0, lightness);
+        vec3  litColor   = mix(_shadowColor.rgb, albedo.rgb * totalLight, litBlend);
+
+        // Specular (hard step)
+        vec3  H       = normalize(normalize(uDirectionalLight.forward) + V);
+        float NdotH   = max(dot(N, H), 0.0);
+        float specMask = smoothstep(_specSize, _specSize + _specSmoothness, NdotH)
+                         * float(uDirectionalLight.enabled);
+        vec3  specular = specMask * _specColor.rgb
+                         * uDirectionalLight.color * uDirectionalLight.intensity;
+
+        // Rim (hard step)
+        float fresnel  = 1.0 - max(dot(N, V), 0.0);
+        float rimMask  = smoothstep(1.0 - _rimSize,
+                                    1.0 - _rimSize + _rimSmoothness, fresnel)
+                         * _rimIntensity;
+        vec3  rimLight = rimMask * _rimColor.rgb;
+
+        vec3 finalColor = litColor + specular + rimLight;
+
+        // Screen-space outline
+        if (_useOutline == 1)
+        {
+            float outline = computeOutline(_outlineThickness);
+            finalColor    = mix(finalColor, _outlineColor.rgb, outline);
+        }
+
+        return vec4(finalColor, albedo.a);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

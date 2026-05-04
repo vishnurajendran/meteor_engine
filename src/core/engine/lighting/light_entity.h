@@ -1,25 +1,27 @@
 //
-// Created by ssj5v on 27-01-2025.
+// light_entity.h
 //
-
 #ifndef LIGHT_ENTITY_H
 #define LIGHT_ENTITY_H
 #include "../../graphics/core/render-pipeline/stages/lighting/light_type.h"
 #include "core/engine/entities/spatial/spatial.h"
 
-class MLightEntity : public MSpatialEntity {
+class MLightEntity : public MSpatialEntity
+{
+    DEFINE_ABSTRACT_CLASS(MLightEntity)
+
 public:
     virtual void prepareLightRender() = 0;
-    ELightType getLightType() {return lightType;};
 
-    virtual void setColor(const SColor& color)=0;
-    virtual SColor getColor() const = 0;
+    ELightType getLightType() const { return lightType; }
 
-    virtual void setIntensity(const float& intensity)=0;
-    virtual float getIntensity() const = 0;
+    virtual void setColor(const SColor& color)      = 0;
+    virtual SColor getColor() const                  = 0;
+    virtual void setIntensity(const float& intensity) = 0;
+    virtual float getIntensity() const                = 0;
 
 protected:
     ELightType lightType = ELightType::Ambient;
 };
 
-#endif //LIGHT_ENTITY_H
+#endif // LIGHT_ENTITY_H

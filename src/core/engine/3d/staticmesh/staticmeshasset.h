@@ -23,6 +23,9 @@ public:
     explicit MStaticMeshAsset(const SString& path);
     ~MStaticMeshAsset() override;
     [[nodiscard]] std::vector<MStaticMesh*> getMeshes() const;
+
+    bool requestReload() override { loadMesh(path); return valid; }
+
 private:
     MStaticMesh* processMesh(aiMesh *mesh);
     void processNode(aiNode *node, const aiScene *scene,std::vector<MStaticMesh*>& meshes);

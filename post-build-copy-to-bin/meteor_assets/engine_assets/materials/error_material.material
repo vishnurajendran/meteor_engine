@@ -1,0 +1,5 @@
+<material name="ErrorMaterial" mode="unlit">
+    <shader path="meteor_assets/engine_assets/shaders/error_shader.mesl"/>
+    <properties>
+    </properties>
+</material>

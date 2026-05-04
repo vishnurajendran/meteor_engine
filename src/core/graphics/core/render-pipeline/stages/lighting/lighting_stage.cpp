@@ -1,7 +1,6 @@
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
 #include "lighting_stage.h"
-
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/viewmanagement.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
@@ -32,17 +31,16 @@ void MLightingStage::init(IRenderPipeline* const pipeline)
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
     if (lightsBuffer) lightsBuffer->setColorFormat(0x881A); // GL_RGBA16F
 
-    auto* asset = MAssetManager::getInstance()->getAsset<MShaderAsset>(LIGHTING_SHADER_PATH);
-    if (!asset)
-        MERROR("MLightingStage::init — could not load: " + SString(LIGHTING_SHADER_PATH));
+    if (MAssetManager::getInstance()->getAsset<MShaderAsset>(LIGHTING_SHADER_PATH))
+        lightingShaderPath = LIGHTING_SHADER_PATH;
     else
-        lightingShader = asset->getShader();
+        MERROR("MLightingStage::init — could not find: " + SString(LIGHTING_SHADER_PATH));
 }
 
 void MLightingStage::cleanup(IRenderPipeline* const pipeline)
 {
-    lightsBuffer   = nullptr;
-    lightingShader = nullptr;
+    lightsBuffer      = nullptr;
+    lightingShaderPath = "";
 }
 
 void MLightingStage::preRender(IRenderPipeline* const pipeline) {}
@@ -59,24 +57,48 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     lightsBuffer->bindAsActive();
 
     const SVector2 res = pipeline->getRenderResolution();
-    glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
+    const int w = static_cast<int>(res.x);
+    const int h = static_cast<int>(res.y);
+
+    glViewport(0, 0, w, h);
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.f, 0.f, 0.f, 0.f);
+
+    // Blit BUFFER_OPAQUE depth into BUFFER_LIGHTS so the lighting pass
+    // depth-tests against the same values the opaque pass wrote.
+    // Without this, BUFFER_LIGHTS starts with a fresh depth buffer and
+    // geometry submitted in scene-graph order can overwrite pixels that
+    // the opaque stage had correctly occluded (e.g. plane over cube).
+    auto* opaqueBuffer = pipeline->getBufferRegistry()
+                                  .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
+    if (opaqueBuffer && opaqueBuffer->getFBOHandle() != 0)
+    {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, opaqueBuffer->getFBOHandle());
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lightsBuffer->getFBOHandle());
+        glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    }
+
     lightsBuffer->unbind();
+
+    // Resolve lighting shader fresh each frame — survives asset manager refresh().
+    auto* lightingAsset = MAssetManager::getInstance()
+                              ->getAsset<MShaderAsset>(lightingShaderPath.c_str());
+    MShader* lightingShader = lightingAsset ? lightingAsset->getShader() : nullptr;
 
     if (!lightingShader)
     {
         MWARN("MLightingStage::render — lightingShader is null, rendering without lighting");
-        // ECF_Lights not set → composite falls back to opaque-only blit.
         return;
     }
 
     lightsBuffer->bindAsActive();
-    glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
+    glViewport(0, 0, w, h);
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glDepthMask(GL_TRUE);
+    // GL_LEQUAL because we blitted the exact depth values from the opaque pass --
+    // geometry at the same position will have equal depth, not strictly less.
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_FALSE); // lighting pass must not overwrite depth
     glEnable(GL_CULL_FACE);
 
     MCameraEntity* camera = nullptr;
@@ -186,6 +208,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
+        if (item.getShadingMode() == MMaterial::ShadingMode::Unlit) continue;
 
         SShaderPropertyValue modelVal;
         modelVal.setMat4Val(item.transform);
@@ -211,6 +234,10 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     glBindVertexArray(0);
     glUseProgram(0);
+
+    // Restore depth state before unbinding so the next stage starts clean.
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
 
     // Unbind all shadow textures.
     for (int i = 0; i < 9; ++i)

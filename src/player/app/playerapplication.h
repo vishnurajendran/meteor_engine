@@ -17,5 +17,6 @@ public:
     void run() override;
     void cleanup() override;
     bool isRunning() const override;
+    SString getEngineSettingsPath() const override { return "PlayerSettings.xml"; }
 };
 #endif //METEOR_ENGINE_PLAYERAPPLICATION_H

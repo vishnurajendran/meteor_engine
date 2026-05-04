@@ -64,11 +64,14 @@ void MImGuiWindow::update(float deltaTime) {
     std::optional<sf::Event> event;
     while (event = coreWindow.pollEvent()) {
         ImGui::SFML::ProcessEvent(coreWindow, event.value());
-        if (event.has_value() && event->is<sf::Event::Closed>()) {
-            close();
-            return;
-        }
+        handleWindowEvents(event);
     }
+
+    // The close event handler shuts down ImGui and closes coreWindow.
+    // If the window is no longer open, bail out now — calling graphicsFunction()
+    // or drawGUI() after ImGui::SFML::Shutdown() would crash or silently fail.
+    if (!coreWindow.isOpen())
+        return;
 
     //Call the graphics systems to draw.
     if (graphicsFunction)
@@ -93,6 +96,7 @@ void MImGuiWindow::drawGUI(const float deltaTime)
     ImGuizmo::BeginFrame();
 
     drawMenuBar();
+    MMenubarTreeNode::drawAllPopups();  // render file dialogs and any other item popups
     showDockSpace();
     drawImGuiSubWindows(deltaTime);
 
@@ -170,5 +174,3 @@ void MImGuiWindow::loadFontFile(const SString& pathToFile, float pointSize)
     }
     ImGui::GetIO().FontDefault = font;
 }
-
-

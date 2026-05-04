@@ -1,0 +1,212 @@
+<shader name="standard_lit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+        <property key="_albedo"             type="tex2d" default=""/>
+        <property key="_color"              type="col"   default="(1,1,1,1)"/>
+
+        <property key="_normalMap"          type="tex2d" default=""/>
+        <property key="_useNormalMap"       type="i"     default="0"/>
+        <property key="_normalStrength"     type="f"     default="1.0"/>
+
+        <property key="_specularMap"        type="tex2d" default=""/>
+        <property key="_useSpecularMap"     type="i"     default="0"/>
+        <property key="_specularColor"      type="col"   default="(1,1,1,1)"/>
+        <property key="_specularStrength"   type="f"     default="0.5"/>
+        <property key="_shininess"          type="f"     default="64.0"/>
+
+        <property key="_emissionTex"        type="tex2d" default=""/>
+        <property key="_useEmission"        type="i"     default="0"/>
+        <property key="_emissionColor"      type="col"   default="(1,1,1,1)"/>
+        <property key="_emissionIntensity"  type="f"     default="1.0"/>
+
+        <property key="_rimColor"           type="col"   default="(1,1,1,1)"/>
+        <property key="_rimPower"           type="f"     default="3.0"/>
+        <property key="_rimIntensity"       type="f"     default="0.0"/>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Standard transform, no vertex deformation.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _albedo;
+    uniform vec4      _color;
+
+    uniform sampler2D _normalMap;
+    uniform int       _useNormalMap;
+    uniform float     _normalStrength;
+
+    uniform sampler2D _specularMap;
+    uniform int       _useSpecularMap;
+    uniform vec4      _specularColor;
+    uniform float     _specularStrength;
+    uniform float     _shininess;
+
+    uniform sampler2D _emissionTex;
+    uniform int       _useEmission;
+    uniform vec4      _emissionColor;
+    uniform float     _emissionIntensity;
+
+    uniform vec4  _rimColor;
+    uniform float _rimPower;
+    uniform float _rimIntensity;
+
+    // Extract camera world position from the view matrix.
+    // view = [R | -R*eye], so eye = -R^T * translation column.
+    vec3 getCameraWorldPos()
+    {
+        return -(transpose(mat3(view)) * vec3(view[3]));
+    }
+
+    // Reconstruct TBN from screen-space derivatives.
+    // No tangent vertex attribute required.
+    mat3 cotangentFrame(vec3 N, vec3 worldPos, vec2 uv)
+    {
+        vec3 dp1  = dFdx(worldPos);
+        vec3 dp2  = dFdy(worldPos);
+        vec2 duv1 = dFdx(uv);
+        vec2 duv2 = dFdy(uv);
+
+        vec3 dp2perp = cross(dp2, N);
+        vec3 dp1perp = cross(N, dp1);
+        vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+        vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+        float scale = inversesqrt(max(dot(T, T), dot(B, B)));
+        return mat3(T * scale, B * scale, N);
+    }
+
+    vec3 applyNormalMap(vec3 geoNormal, vec2 uv)
+    {
+        vec3 mapN = texture(_normalMap, uv).rgb * 2.0 - 1.0;
+        mapN.xy  *= _normalStrength;
+        mat3 TBN  = cotangentFrame(normalize(geoNormal), getVertexPositionWorld(), uv);
+        return normalize(TBN * mapN);
+    }
+
+    // Blinn-Phong specular over directional + dynamic lights.
+    vec3 computeSpecular(vec3 N, vec3 V, vec3 wp)
+    {
+        float specMap = (_useSpecularMap == 1)
+                        ? texture(_specularMap, getTexCoords()).r
+                        : 1.0;
+
+        // Directional
+        vec3  L     = normalize(uDirectionalLight.forward);
+        vec3  H     = normalize(L + V);
+        float spec  = pow(max(dot(N, H), 0.0), max(_shininess, 1.0))
+                      * float(uDirectionalLight.enabled);
+        vec3 result = spec * _specularColor.rgb * _specularStrength * specMap
+                      * uDirectionalLight.color * uDirectionalLight.intensity;
+
+        // Dynamic lights
+        for (int i = 0; i < uDynamicLights.dynLightCount; i++)
+        {
+            DynamicLightData light = uDynamicLights.lights[i];
+            if (light.type == 0) continue;
+
+            vec3  lv    = light.position - wp;
+            float dist  = length(lv);
+            if (dist > light.range) continue;
+
+            vec3  Ld    = normalize(lv);
+            float atten = pow(1.0 - clamp(dist / light.range, 0.0, 1.0), 2.0);
+
+            if (light.type == 2)
+            {
+                float sc = dot(normalize(light.direction), Ld);
+                if (sc < cos(light.angle)) continue;
+                atten *= smoothstep(cos(light.angle), 1.0, sc);
+            }
+
+            vec3  Hd    = normalize(Ld + V);
+            float sd    = pow(max(dot(N, Hd), 0.0), max(_shininess, 1.0));
+            result     += sd * _specularColor.rgb * _specularStrength * specMap
+                          * light.color * light.intensity * atten;
+        }
+        return result;
+    }
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv     = v2fTexCoords;
+        vec4 albedo = texture(_albedo, uv) * _color;
+        vec3 wp     = getVertexPositionWorld();
+
+        // Resolve surface normal (geometry or normal-mapped).
+        vec3 N = (_useNormalMap == 1)
+                 ? applyNormalMap(getVertexNormalWorld(), uv)
+                 : normalize(getVertexNormalWorld());
+
+        // Diffuse: re-implement manually so perturbed N is used throughout.
+        vec3 ambient = getAmbLightContrib();
+
+        float dirNdotL = max(dot(N, normalize(uDirectionalLight.forward)), 0.0);
+        vec3  dirDiff  = dirNdotL * uDirectionalLight.color
+                         * uDirectionalLight.intensity
+                         * float(uDirectionalLight.enabled);
+
+        vec3 dynDiff = vec3(0.0);
+        for (int i = 0; i < uDynamicLights.dynLightCount; i++)
+        {
+            DynamicLightData light = uDynamicLights.lights[i];
+            if (light.type == 0) continue;
+
+            vec3  lv    = light.position - wp;
+            float dist  = length(lv);
+            if (dist > light.range) continue;
+
+            vec3  Ld    = normalize(lv);
+            float atten = pow(1.0 - clamp(dist / light.range, 0.0, 1.0), 2.0);
+            float ndotl = max(dot(N, Ld), 0.0);
+
+            if (light.type == 2)
+            {
+                float sc = dot(normalize(light.direction), Ld);
+                if (sc < cos(light.angle)) continue;
+                atten *= smoothstep(cos(light.angle), 1.0, sc);
+            }
+
+            float shadow = 0.0;
+            if (light.shadowIndex >= 0)
+            {
+                if (light.type == 2)
+                    shadow = computeSpotShadow(light.shadowIndex, wp, light.smoothShadow);
+                else if (light.type == 1)
+                    shadow = computePointShadow(light.shadowIndex, wp, light.position, light.smoothShadow);
+            }
+
+            dynDiff += ndotl * atten * light.color * light.intensity * (1.0 - shadow);
+        }
+
+        vec3 lit = (ambient + dirDiff + dynDiff) * albedo.rgb;
+
+        // Specular
+        vec3 camPos = getCameraWorldPos();
+        vec3 V      = normalize(camPos - wp);
+        lit        += computeSpecular(N, V, wp);
+
+        // Rim light
+        if (_rimIntensity > 0.001)
+        {
+            float fresnel = pow(1.0 - max(dot(N, V), 0.0), _rimPower);
+            lit          += fresnel * _rimColor.rgb * _rimIntensity;
+        }
+
+        // Emission
+        if (_useEmission == 1)
+        {
+            lit += texture(_emissionTex, uv).rgb * _emissionColor.rgb * _emissionIntensity;
+        }
+
+        return vec4(lit, albedo.a);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

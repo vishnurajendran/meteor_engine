@@ -9,7 +9,7 @@ bool MPointLightDeserialiser::registered = []() {
 
 MSpatialEntity* MPointLightDeserialiser::deserialize(pugi::xml_node node)
 {
-    auto* entity = new MPointLight();
+    const auto entity = MSpatialEntity::createInstance<MPointLight>("PointLight");
     parseSpatialData(node, entity);
 
     const auto attrib = node.child(ATTRIB_NODE.c_str());

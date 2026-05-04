@@ -13,7 +13,7 @@ public:
     MEditorSceneViewWindow();
     explicit MEditorSceneViewWindow(int x, int y);
 
-    void onGui()               override;
+    void onGui(float deltaTime) override;
     void handleInput(float dt) override;
 
 private:

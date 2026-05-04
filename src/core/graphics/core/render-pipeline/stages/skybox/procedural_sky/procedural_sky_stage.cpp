@@ -2,8 +2,6 @@
 // MProceduralSkyboxStage
 //
 #include "procedural_sky_stage.h"
-#include <GL/glew.h>
-
 #include "core/engine/skybox/procedural_sky/procedural_skybox_drawcall.h"
 #include "core/engine/skybox/procedural_sky/procedural_skybox_queue.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"

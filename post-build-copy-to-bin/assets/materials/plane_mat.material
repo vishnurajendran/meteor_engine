@@ -1,7 +1,0 @@
-<material name="Mat1">
-    <shader path="assets/shaders/lit.mesl"/>
-    <properties>
-        <property key = "_color" type="col" value = "(1,1,1,1)"/>
-        <property key = "_baseTex" type="tex2D" value = "assets/textures/prototype_dark.png"/>
-    </properties>
-</material>

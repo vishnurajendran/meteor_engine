@@ -9,7 +9,7 @@ bool MAmbientLightEntityDeserialiser::registered = []() {
 
 MSpatialEntity* MAmbientLightEntityDeserialiser::deserialize(pugi::xml_node node)
 {
-    const auto entity = new MAmbientLightEntity();
+    const auto entity = MSpatialEntity::createInstance<MAmbientLightEntity>("AmbientLight");;
     parseSpatialData(node, entity);
 
     entity->setIntensity(0.1f);

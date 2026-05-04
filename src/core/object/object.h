@@ -1,31 +1,31 @@
 //
-// Created by Vishnu Rajendran on 2024-09-18.
+// object.h
 //
 #pragma once
-
 #ifndef METEOR_ENGINE_OBJECT_H
 #define METEOR_ENGINE_OBJECT_H
 
 #include "core/utils/sstring.h"
+#include "object_class_macros.h"   // DEFINE_MOBJECT_CLASS
 
 class MObject
 {
-protected:
-    SString guid;
-    SString name;
+    DEFINE_OBJECT_CLASS(MObject)  // introduces virtual MTypeInfo typeInfo() const
 
 public:
     MObject();
     virtual ~MObject() = default;
 
-    SString getGUID()  const;               // was non-const
-    virtual SString toString() const;       // was non-const
-    virtual bool    equals(const MObject* obj) const;  // was non-const, non-const param
+    [[nodiscard]] SString getGUID() const;
+    [[nodiscard]] virtual SString toString() const;
+    [[nodiscard]] virtual bool equals(const MObject* obj) const;
 
-    void    setName(const SString& newName) { name = newName; }
-    SString getName() const                 { return name; }
+    void setName(const SString& newName) { name = newName; }
+    [[nodiscard]] SString getName() const { return name; }
 
-    virtual MObject* clone() const {};
+protected:
+    SString guid;
+    SString name;
 };
 
-#endif //METEOR_ENGINE_OBJECT_H
+#endif // METEOR_ENGINE_OBJECT_H

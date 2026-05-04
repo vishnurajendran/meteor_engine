@@ -27,7 +27,7 @@ class MEditorHierarchyWindow : public MImGuiSubWindow
 public:
     MEditorHierarchyWindow();
     explicit MEditorHierarchyWindow(int x, int y);
-    void onGui() override;
+    void onGui(float deltaTime) override;
 
 private:
     sf::Texture sceneTex;

@@ -36,6 +36,7 @@ MStaticMesh* MStaticMeshAsset::processMesh(aiMesh *mesh) {
             vertex.TexCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         vertices.push_back(vertex);
     }
+
     // Process faces to retrieve indices
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
@@ -60,8 +61,15 @@ void MStaticMeshAsset::processNode(aiNode *node, const aiScene *scene, std::vect
 }
 
 void MStaticMeshAsset::loadMesh(SString path) {
+
+    for (auto mesh : meshes)
+    {
+        delete mesh;
+    }
+    meshes.clear();
+
     Assimp::Importer importer;
-    constexpr auto flags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals;
+    constexpr auto flags = aiProcess_Triangulate | aiProcess_GenNormals;
     const aiScene* scene = importer.ReadFile(path, flags);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         MERROR(STR("Error (Assimp) ") + importer.GetErrorString());

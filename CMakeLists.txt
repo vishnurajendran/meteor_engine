@@ -103,6 +103,26 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
+# ---------------------------------------------------------------------------
+# IMGUI-File Dialog  (aiekick/ImGuiFileDialog)
+# ---------------------------------------------------------------------------
+# The library has its own CMakeLists.txt that produces the ImGuiFileDialog
+# target, but its find_package(imgui) check fails in a FetchContent setup.
+# We point it at our already-fetched imgui source before MakeAvailable so
+# the include path resolves correctly.
+set(IMGUI_INCLUDE_DIR ${imgui_SOURCE_DIR} CACHE PATH "" FORCE)
+
+FetchContent_Declare(
+        imgui-file-dialog
+        GIT_REPOSITORY "https://github.com/aiekick/ImGuiFileDialog.git"
+        GIT_TAG master
+        GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(imgui-file-dialog)
+
+# Ensure imgui headers are visible even if the library's find_package missed them.
+target_include_directories(ImGuiFileDialog PUBLIC ${imgui_SOURCE_DIR})
+
 add_library(stb INTERFACE)
 target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 
@@ -116,12 +136,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imguizmo)
 
-add_library(imguizmo STATIC ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp)
+# ImGuizmo now ships its own CMakeLists.txt that creates the target automatically.
+# We just patch the existing target with the extra includes/links we need.
 target_include_directories(imguizmo PUBLIC
         ${imguizmo_SOURCE_DIR}
         ${imgui_SOURCE_DIR}
 )
-
 target_link_libraries(imguizmo PRIVATE ImGui-SFML::ImGui-SFML)
 
 # ---------------------------------------------------------------------------
@@ -262,7 +282,6 @@ set(CORE_SOURCES
         src/core/engine/texture/textureasset.h
         src/core/engine/texture/textureassetimporter.cpp
         src/core/engine/texture/textureassetimporter.h
-        src/core/engine/lighting/light_entity.cpp
         src/core/engine/lighting/light_entity.h
         src/core/graphics/core/render-pipeline/stages/lighting/light_type.h
         src/core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.cpp
@@ -353,8 +372,6 @@ set(CORE_SOURCES
         src/core/graphics/core/render-pipeline/stages/shadow/shadow_stage.h
         src/core/engine/scene/serialisation/scene_serialisation_map.cpp
         src/core/engine/scene/serialisation/scene_serialisation_map.h
-        src/core/engine/scene/scene_io.cpp
-        src/core/engine/scene/scene_io.h
         src/core/engine/skybox/procedural_sky/procedural_sky.cpp
         src/core/engine/skybox/procedural_sky/procedural_sky.h
         src/core/engine/skybox/procedural_sky/procedural_skybox_drawcall.cpp
@@ -367,6 +384,15 @@ set(CORE_SOURCES
         src/core/engine/settings/engine_settings.h
         src/core/engine/engine_statics.cpp
         src/core/engine/engine_statics.h
+        src/core/engine/entities/spatial/spatial_class_macros.h
+        src/core/engine/entities/entity_type_registry.h
+        src/core/engine/scene/serialisation/scene_serialiser.cpp
+        src/core/engine/scene/serialisation/scene_serialiser.h
+        src/core/object/type_info.h
+        src/core/object/object_class_macros.h
+        src/core/utils/field_engine_types.h
+        src/core/engine/assetmanagement/asset/asset_handle.h
+        src/core/graphics/core/shader/shader_utils.h
 )
 
 set(EDITOR_SOURCES
@@ -446,6 +472,19 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/add_entity/add_entity.h
         src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.cpp
         src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.h
+        src/editor/helper/scene_io.cpp
+        src/editor/helper/scene_io.h
+        src/editor/editorassetmanager/hotreloadwatcher.cpp
+        src/editor/editorassetmanager/hotreloadwatcher.h
+        src/editor/editorassetmanager/asset_thumbnail_request.h
+        src/editor/editorassetmanager/thumbnail_cache.h
+        src/editor/editorassetmanager/thumbnail_cache.cpp
+        src/editor/editorassetmanager/thumbnail_renderer.cpp
+        src/editor/editorassetmanager/thumbnail_renderer.h
+        src/editor/editorwindows/inspector/asset_inspector.cpp
+        src/editor/editorwindows/inspector/asset_inspector.h
+        src/editor/window/menubar/default/create_asset_items.cpp
+        src/editor/window/menubar/default/create_asset_items.h
 )
 
 set(PLAYER_SOURCES
@@ -480,6 +519,7 @@ if (BUILD_EDITOR)
             ${ASSIMP_LIBRARY}
             pugixml
             serialized_class
+            ImGuiFileDialog
     )
 endif()
 

@@ -34,7 +34,7 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
 
 // ─── Top-level ────────────────────────────────────────────────────────────────
 
-void MEditorHierarchyWindow::onGui()
+void MEditorHierarchyWindow::onGui(float deltaTime)
 {
     auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
 
@@ -64,7 +64,7 @@ void MEditorHierarchyWindow::onGui()
         ImGui::IsMouseClicked(ImGuiMouseButton_Left) &&
         !ImGui::IsAnyItemHovered())
     {
-        MEditorApplication::Selected = nullptr;
+        MEditorApplication::SelectedObject = nullptr;
     }
 
     ImGui::EndChild();
@@ -84,7 +84,7 @@ void MEditorHierarchyWindow::onGui()
     if (scene)
     {
         int n = countVisibleEntities(scene);
-        auto* sel = MEditorApplication::Selected;
+        auto* sel = MEditorApplication::SelectedObject;
         if (sel) ImGui::Text("%d entities  |  %s", n, sel->getName().c_str());
         else     ImGui::Text("%d entities", n);
     }
@@ -152,8 +152,6 @@ void MEditorHierarchyWindow::drawSceneRoot(MScene* scene)
     }
 }
 
-// ─── Entity row ──────────────────────────────────────────────────────────────
-//
 //  Design rules that keep the UI clean and artefact-free:
 //
 //  1. Never call SetCursorScreenPos inside a tree — ImGui's layout tracking
@@ -182,7 +180,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
     const bool searching  = strlen(searchBuffer) > 0;
     if (searching && !subtreeMatchesSearch(entity)) return;
 
-    const bool isSelected = (MEditorApplication::Selected == entity);
+    const bool isSelected = (MEditorApplication::SelectedObject == entity);
     const bool isLeaf     = entity->getChildren().empty();
     const bool isRenaming = (renamingEntity == entity);
 
@@ -211,9 +209,11 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
     // Pop colours immediately — they must not bleed into sibling widgets
     ImGui::PopStyleColor(3);
 
-    // ── Interaction ───────────────────────────────────────────────────────
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen())
-        MEditorApplication::Selected = entity;
+    {
+        MEditorApplication::SelectedObject        = entity;
+         // clear asset selection
+    }
 
     if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
     {
@@ -225,12 +225,12 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
         rightClickedEntity = entity;
-        MEditorApplication::Selected = entity;
+        MEditorApplication::SelectedObject = entity;
+         // clear asset selection
         ImGui::OpenPopup("##entity_ctx");
     }
     openContextMenu(entity);
 
-    // ── Drag source ───────────────────────────────────────────────────────
     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
     {
         draggedEntity = entity;
@@ -241,7 +241,6 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         ImGui::EndDragDropSource();
     }
 
-    // ── Drop target ───────────────────────────────────────────────────────
     if (ImGui::BeginDragDropTarget())
     {
         // Draw the outline using the item rect captured before AcceptDragDropPayload
@@ -261,7 +260,6 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         ImGui::EndDragDropTarget();
     }
 
-    // ── Icon + label via SameLine — no cursor position arithmetic ─────────
     ImGui::SameLine(0, 4);
     ImGui::Image(entityTex, entityTexSize);
     ImGui::SameLine(0, 5);
@@ -321,7 +319,8 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
 void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
 {
-    if (!ImGui::BeginPopup("##entity_ctx")) return;
+    if (!ImGui::BeginPopup("##entity_ctx"))
+        return;
 
     auto* target = rightClickedEntity ? rightClickedEntity : entity;
     ImGui::TextDisabled("%s", target ? target->getName().c_str() : "Entity");
@@ -329,14 +328,14 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
 
     if (ImGui::MenuItem("Rename"))
     {
-        renamingEntity     = target;
+        renamingEntity = target;
         pendingFocusRename = true;
         std::strncpy(renameBuffer, target->getName().c_str(), sizeof(renameBuffer) - 1);
     }
 
     if (ImGui::MenuItem("Duplicate"))
     {
-        //TODO: Add duplication logic here later
+        // TODO: Add duplication logic here later
     }
 
     ImGui::Separator();
@@ -346,7 +345,8 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
         if (scene && target)
         {
             auto* child = MSpatialEntity::createInstance("New Entity");
-            if (child) child->setParent(target);
+            if (child)
+                child->setParent(target);
         }
     }
     ImGui::Separator();
@@ -354,13 +354,17 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
     {
         if (target)
         {
-            if (MEditorApplication::Selected == target)
-                MEditorApplication::Selected = nullptr;
+            if (MEditorApplication::SelectedObject == target)
+                MEditorApplication::SelectedObject = nullptr;
             target->destroy();
             rightClickedEntity = nullptr;
         }
     }
     ImGui::EndPopup();
+}
+void MEditorHierarchyWindow::handleDragDrop(MSpatialEntity* entity)
+{
+
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

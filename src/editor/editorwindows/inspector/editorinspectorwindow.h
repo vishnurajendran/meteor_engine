@@ -11,7 +11,7 @@ class MEditorInspectorWindow : public MImGuiSubWindow{
 public:
     MEditorInspectorWindow();
     MEditorInspectorWindow(int x, int y);
-    void onGui() override;
+    void onGui(float deltaTime) override;
 };
 
 

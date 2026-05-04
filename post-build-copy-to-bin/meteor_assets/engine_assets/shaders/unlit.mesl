@@ -1,0 +1,109 @@
+<shader name="unlit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+        <property key="_albedo"             type="tex2d" default=""/>
+        <property key="_color"              type="col"   default="(1,1,1,1)"/>
+
+        <property key="_detailTex"          type="tex2d" default=""/>
+        <property key="_useDetail"          type="i"     default="0"/>
+        <property key="_detailTiling"       type="f"     default="4.0"/>
+        <property key="_detailStrength"     type="f"     default="0.5"/>
+
+        <property key="_emissionTex"        type="tex2d" default=""/>
+        <property key="_useEmission"        type="i"     default="0"/>
+        <property key="_emissionColor"      type="col"   default="(1,1,1,1)"/>
+        <property key="_emissionIntensity"  type="f"     default="1.0"/>
+
+        <property key="_useCutout"          type="i"     default="0"/>
+        <property key="_cutoutThreshold"    type="f"     default="0.5"/>
+
+        <property key="_rimColor"           type="col"   default="(0.5,0.8,1.0,1)"/>
+        <property key="_rimPower"           type="f"     default="3.0"/>
+        <property key="_rimIntensity"       type="f"     default="0.0"/>
+
+        <property key="_opacity"            type="f"     default="1.0"/>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Standard transform, no vertex deformation.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _albedo;
+    uniform vec4      _color;
+
+    uniform sampler2D _detailTex;
+    uniform int       _useDetail;
+    uniform float     _detailTiling;
+    uniform float     _detailStrength;
+
+    uniform sampler2D _emissionTex;
+    uniform int       _useEmission;
+    uniform vec4      _emissionColor;
+    uniform float     _emissionIntensity;
+
+    uniform int       _useCutout;
+    uniform float     _cutoutThreshold;
+
+    uniform vec4      _rimColor;
+    uniform float     _rimPower;
+    uniform float     _rimIntensity;
+
+    uniform float     _opacity;
+
+    vec3 getCameraWorldPos()
+    {
+        return -(transpose(mat3(view)) * vec3(view[3]));
+    }
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv     = v2fTexCoords;
+        vec4 albedo = texture(_albedo, uv) * _color;
+
+        // Alpha cutout -- discard early so the GPU can optimise depth.
+        if (_useCutout == 1 && albedo.a < _cutoutThreshold)
+            discard;
+
+        vec3  finalColor = albedo.rgb;
+        float finalAlpha = albedo.a * _opacity;
+
+        // Detail overlay -- samples a second texture at higher tiling,
+        // blended as an overlay (0.5 = neutral, darker below, lighter above).
+        if (_useDetail == 1)
+        {
+            vec3 detail  = texture(_detailTex, uv * _detailTiling).rgb;
+            vec3 overlay = finalColor * detail * 2.0;
+            finalColor   = mix(finalColor, overlay, _detailStrength);
+        }
+
+        // Emission -- additive on top of the surface colour.
+        if (_useEmission == 1)
+        {
+            finalColor += texture(_emissionTex, uv).rgb
+                          * _emissionColor.rgb
+                          * _emissionIntensity;
+        }
+
+        // Fresnel rim -- view-dependent edge glow.
+        if (_rimIntensity > 0.001)
+        {
+            vec3  wp      = getVertexPositionWorld();
+            vec3  camPos  = getCameraWorldPos();
+            vec3  N       = normalize(getVertexNormalWorld());
+            vec3  V       = normalize(camPos - wp);
+            float fresnel = pow(1.0 - max(dot(N, V), 0.0), _rimPower);
+            finalColor   += fresnel * _rimColor.rgb * _rimIntensity;
+        }
+
+        return vec4(finalColor, finalAlpha);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

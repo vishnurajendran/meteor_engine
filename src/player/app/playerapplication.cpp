@@ -5,6 +5,7 @@
 #include "playerapplication.h"
 
 #include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 
 MPlayerApplication::MPlayerApplication() : MApplication(){
@@ -32,8 +33,12 @@ void MPlayerApplication::initialise() {
     //appRunning = true;
     MLOG(STR("Initialising Player"));
     window = new MWindow();
-    window->initialiseWindow(STR("Meteor Player"), MWindow::DEFAULT_WINDOW_SIZE, MWindow::DEFAULT_FPS);
 
+
+    const auto winX = MEngineStatics::getEngineSettings().resX.get();
+    const auto winY = MEngineStatics::getEngineSettings().resY.get();
+    const auto fps= MEngineStatics::getEngineSettings().fps.get();
+    window->initialiseWindow(STR("Meteor Player"), SVector2(winX, winY), fps);
 
     if(!window->isOpen())
         MERROR(STR("Failed to open window"));

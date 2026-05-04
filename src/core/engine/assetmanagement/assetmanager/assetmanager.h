@@ -39,11 +39,11 @@ public:
     }
 
     template <typename T>
-    T* getAssetById(SString path) {
-        static_assert(std::is_base_of<MAsset, T>::value,"T must inherit from MAsset");
+    T* getAssetById(const SString& assetId) {
+        static_assert(std::is_base_of_v<MAsset, T>,"T must inherit from MAsset");
 
-        if(assetMapByAssetId.contains(path)) {
-            return dynamic_cast<T*>(assetMapByAssetId[path]);
+        if(assetMapByAssetId.contains(assetId)) {
+            return dynamic_cast<T*>(assetMapByAssetId[assetId]);
         }
 
         return nullptr;
@@ -54,12 +54,12 @@ protected:
     std::map<SString, MAsset*> assetMap;
     std::map<SString, MAsset*> assetMapByAssetId;
 
-    std::vector<IDefferedLoadableAsset*> defferedLoadableAssetList;
+    std::vector<MAsset*> defferedLoadableAssetList;  // MAsset* — no cast needed, deferredAssetLoad is virtual on MAsset
 
     static MAssetManager* managerInstance;
     virtual void loadAssetRecursive(SString path);
     virtual bool loadAsset(SString path);
-    virtual void addToDeferedLoadableAssetList(IDefferedLoadableAsset* asset);
+    virtual void addToDeferredLoadableAssetList(MAsset* asset);
 
     void createMetaFile(const SString& filePath);
     bool loadMetaData(const SString& path, pugi::xml_document& metaData);

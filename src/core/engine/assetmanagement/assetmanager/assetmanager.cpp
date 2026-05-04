@@ -8,10 +8,8 @@
 #include <filesystem>
 #include <iostream>
 #include "assetimporter.h"
-#include "core/engine/assetmanagement/asset/defferedloadableasset.h"
 #include "pugixml.hpp"
 #include "core/utils/guid.h"
-
 
 MAssetManager* MAssetManager::managerInstance = nullptr;
 
@@ -34,15 +32,17 @@ void MAssetManager::registerAssetManagerInstance(MAssetManager* instance)
 
 void MAssetManager::refresh() {
     cleanup();
+    defferedLoadableAssetList.clear(); // redundant but better to have.
     MLOG(STR("AssetManager:: Starting Refresh"));
     for (auto path : ASSET_SEARCH_PATHS)
     {
         loadAssetRecursive(path);
     }
+    MLOG(STR("AssetManager:: Loading Deferred Assets"));
     for (auto asset: defferedLoadableAssetList) {
 
         if(asset)
-            asset->defferedAssetLoad(false);
+            asset->deferredAssetLoad(false);
     }
     MLOG(STR("AssetManager:: Refresh Completed"));
 }
@@ -55,6 +55,10 @@ void MAssetManager::cleanup() {
 
     assetMap.clear();
     assetMapByAssetId.clear();
+    // Clear the deferred list so stale pointers from deleted assets are not
+    // called on the next refresh(). Failing to clear this causes defferedAssetLoad()
+    // to be called through dangling pointers, corrupting the heap.
+    defferedLoadableAssetList.clear();
 }
 
 void MAssetManager::loadAssetRecursive(SString path) {
@@ -96,9 +100,12 @@ bool MAssetManager::loadAsset(SString path) {
         if(!importer->canImport(extension))
             continue;
 
-        const auto asset = importer->importAsset(path, metaDataDoc);
+        auto* asset = importer->importAsset(path, metaDataDoc);
         if (asset == nullptr)
             continue;
+
+        if (asset->hasDeferredLoad())
+            addToDeferredLoadableAssetList(asset);  // MAsset* — virtual dispatch is correct, no cast
 
         assetMap[path] = asset;
         const auto tag = metaDataDoc.child(ASSET_FILE_TAG.c_str());
@@ -115,7 +122,7 @@ bool MAssetManager::loadAsset(SString path) {
     return false;
 }
 
-void MAssetManager::addToDeferedLoadableAssetList(IDefferedLoadableAsset* asset)
+void MAssetManager::addToDeferredLoadableAssetList(MAsset* asset)
 {
     defferedLoadableAssetList.push_back(asset);
 }

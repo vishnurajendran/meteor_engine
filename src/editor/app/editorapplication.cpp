@@ -5,6 +5,7 @@
 #include "editorapplication.h"
 
 #include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
@@ -13,7 +14,7 @@
 #include "editor/window/menubar/menubartree.h"
 
 
-MSpatialEntity* MEditorApplication::Selected = nullptr;
+MObject* MEditorApplication::SelectedObject = nullptr;
 MEditorApplication* MEditorApplication::editorInst = nullptr;
 
 
@@ -28,8 +29,13 @@ void MEditorApplication::run() {
     startFrame();
     window->clear();
 
-    //Todo: set real delta time here
-    MSceneManager::getSceneManagerInstance()->update(deltaTime);
+    if (sceneManagerRef)
+        sceneManagerRef->update(deltaTime);
+
+    // tick-hot reload system.
+    if (assetManagerRef)
+        assetManagerRef->tickHotReload();
+
     window->update(deltaTime);
     endFrame();
 }
@@ -54,7 +60,18 @@ void MEditorApplication::initialise() {
     //appRunning = true;
     MLOG(STR("Initialising Editor"));
     window = new MImGuiWindow();
-    window->initialiseWindow(STR("Meteorite Editor"), MWindow::DEFAULT_WINDOW_SIZE, MWindow::DEFAULT_FPS);
+    const auto winX = MEngineStatics::getEngineSettings().resX.get();
+    const auto winY = MEngineStatics::getEngineSettings().resY.get();
+    const auto fps= MEngineStatics::getEngineSettings().fps.get();
+    window->initialiseWindow(STR("Meteorite Editor"), SVector2(winX, winY), fps);
+    window->setWindowResizeCallback([this](const SVector2& size)
+    {
+        MLOG(STR("Meteorite:: Resized Window"));
+        MEngineStatics::getEngineSettings().resX.set(size.x);
+        MEngineStatics::getEngineSettings().resY.set(size.y);
+        MEngineStatics::saveAll();
+    });
+
 
     // call intialise before use
     window->setGraphicsCall([this]()
@@ -105,6 +122,7 @@ void MEditorApplication::showSplashScreen()
 {
     sf::RenderWindow splashWindow(sf::VideoMode(sf::Vector2u(960, 540)), "Meteorite-Splash", sf::Style::None);
     splashWindow.setFramerateLimit(60);
+
     splashWindow.setActive(true);
     splashWindow.setVisible(true);
     splashWindow.requestFocus();
@@ -139,7 +157,6 @@ void MEditorApplication::showSplashScreen()
         }
 
         text.setString(MLogger::getLastMessage().c_str());
-
         splashWindow.clear();
         splashWindow.draw(sprite);
         splashWindow.draw(text);
@@ -153,16 +170,16 @@ void MEditorApplication::showSplashScreen()
 void MEditorApplication::loadPrerequisites()
 {
     //Refresh Asset Manager
-    MAssetManager::registerAssetManagerInstance(new MEditorAssetManager());
+    assetManagerRef = new MEditorAssetManager();
+    MAssetManager::registerAssetManagerInstance(assetManagerRef);
     MAssetManager::getInstance()->refresh();
 
     //setup scene manager
     sceneManagerRef = new MEditorSceneManager();
     MSceneManager::registerSceneManager(sceneManagerRef);
-
     sceneManagerRef->registerOnLoadCallback([this](MScene* scene)
     {
-        Selected = nullptr;
+        SelectedObject = nullptr;
     });
 
     //load render pipeline

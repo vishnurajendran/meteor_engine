@@ -7,6 +7,8 @@
 #define RENDER_ITEM_H
 
 #include <glm/mat4x4.hpp>
+
+#include "core/graphics/core/material/material.h"
 #include "core/utils/aabb.h"
 
 class MMaterial;
@@ -48,6 +50,9 @@ struct SRenderItem
 
     // Sorting hint — stages may sort items before drawing.
     int       sortOrder    = 0;
+
+    [[nodiscard]] MMaterial::ShadingMode getShadingMode() const { return material == nullptr ?
+                                                MMaterial::ShadingMode::Unlit : material->getShadingMode(); }
 };
 
 #endif // RENDER_ITEM_H

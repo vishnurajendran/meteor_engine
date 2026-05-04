@@ -16,6 +16,7 @@ public:
     virtual void initialise() = 0;
     virtual void run() = 0;
     virtual void cleanup() = 0;
+    virtual SString getEngineSettingsPath() const = 0;
 
 private:
     MSceneManager* sceneManagerInstance = nullptr;

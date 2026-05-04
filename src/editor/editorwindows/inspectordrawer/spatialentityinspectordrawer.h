@@ -9,6 +9,7 @@
 #include "core/utils/glmhelper.h"
 #include "imgui.h"
 #include "inspectordrawer.h"
+#include <unordered_map>
 
 class MSpatialEntityInspectorDrawer : public MInspectorDrawer {
 public:
@@ -30,6 +31,13 @@ protected:
 private:
     bool drawTextField(const SString& label, SString& text);
     void drawTransformField(MSpatialEntity* target);
+
+    struct EulerCache
+    {
+        SQuaternion lastQuat { glm::identity<SQuaternion>() };
+        SVector3    euler    { 0.0f };
+    };
+    std::unordered_map<MSpatialEntity*, EulerCache> eulerCache_;
 };
 
 #endif //METEOR_ENGINE_SPATIALENTITYINSPECTORDRAWER_H

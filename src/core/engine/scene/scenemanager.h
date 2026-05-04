@@ -16,6 +16,7 @@ class MSceneManager : public MObject {
 public:
     MSceneManager() = default;
     ~MSceneManager() override;
+    virtual void init() { loadEmptyScene(); }
     virtual bool loadEmptyScene();
     virtual bool loadScene(const SString& path);
     virtual bool closeActiveScene();
@@ -24,7 +25,9 @@ public:
     SString registerOnLoadCallback(std::function<void(MScene*)> callback);
     void deregisterOnLoadCallback(SString callbackId);
 
+
     virtual MScene* getActiveScene() { return activeScene; }
+    virtual SString getActiveScenePath() { return currentScenePath; }
 
 public:
     static void registerSceneManager(MSceneManager* sceneManagerInstance);
@@ -33,8 +36,12 @@ public:
 private:
     std::unordered_map<SString, std::function<void(MScene*)>> sceneLoadCallbackListeners;
     void informSceneLoadCallbackListeners(MScene* scene);
+
+protected:
+    MScene* activeScene;
+    SString currentScenePath;
+
 private:
-    static MScene* activeScene;
     static MSceneManager* sceneManagerInstance;
 };
 

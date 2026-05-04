@@ -1,19 +1,19 @@
 //
-// Created by ssj5v on 29-04-2025.
+// point_light.cpp
 //
-
 #include "point_light.h"
-
 #include "../../../../graphics/core/render-pipeline/stages/lighting/dynamic_light_datatype.h"
 #include "../../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/texture/textureasset.h"
 
+IMPLEMENT_CLASS(MPointLight)
+
 MPointLight::MPointLight()
 {
     lightData.type = EDynamicLightDataType::Point;
-    lightType = ELightType::Point;
+    lightType      = ELightType::Point;
     MLightSystemManager::getInstance()->registerLight(this);
 }
 
@@ -25,11 +25,10 @@ void MPointLight::onExit()
 
 void MPointLight::onDrawGizmo(SVector2 renderResolution)
 {
-    auto icon =
-        MAssetManager::getInstance()->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/point_light.png");
-    if (icon != nullptr)
+    auto icon = MAssetManager::getInstance()
+        ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/point_light.png");
+    if (icon)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f), icon->getTexture());
 
     MGizmos::drawWireSphere(getWorldPosition(), lightData.range, SColor::skyBlue(), 0.1f);
 }
-

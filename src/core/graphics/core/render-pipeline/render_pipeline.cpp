@@ -1,8 +1,8 @@
 //
 // Created by ssj5v on 21-03-2026.
 //
-#include "render_pipeline.h"
 #include <GL/glew.h>
+#include "render_pipeline.h"
 #include "buffers/render/renderbuffer.h"
 #include "core/utils/logger.h"
 #include "render_queue.h"

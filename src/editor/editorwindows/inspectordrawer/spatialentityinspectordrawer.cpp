@@ -117,8 +117,6 @@ bool MSpatialEntityInspectorDrawer::drawLightIntensityAndColor(float& intensity,
 void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char* label,
                                                             ImVec4 boxColor,
                                                             float boxWidth) {
-    // Draw a rounded filled badge sized to the current frame height,
-    // then render the label centred on top of it.
     const float  frameH  = ImGui::GetFrameHeight();
     ImDrawList*  dl      = ImGui::GetWindowDrawList();
     ImVec2       pos     = ImGui::GetCursorScreenPos();
@@ -127,15 +125,13 @@ void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char* label,
     dl->AddRectFilled(pos,
                       ImVec2(pos.x + boxWidth, pos.y + frameH),
                       col32,
-                      3.0f);  // corner radius — matches Unity's subtle rounding
+                      3.0f);
 
-    // Centre the text inside the badge
     ImVec2 textSize = ImGui::CalcTextSize(label);
     ImVec2 textPos  = ImVec2(pos.x + (boxWidth  - textSize.x) * 0.5f,
                              pos.y + (frameH - textSize.y) * 0.5f);
     dl->AddText(textPos, IM_COL32_WHITE, label);
 
-    // Advance cursor by the badge width so the next SameLine lands correctly
     ImGui::Dummy(ImVec2(boxWidth, frameH));
 }
 
@@ -160,26 +156,60 @@ bool MSpatialEntityInspectorDrawer::drawTextField(const SString& label, SString&
     return res;
 }
 
-void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity* target) {
+void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity* target)
+{
     if (!ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
         return;
 
-    auto pos      = target->getRelativePosition();
-    auto rotQuat  = target->getRelativeRotation();
-    // Compute euler once; keep a copy for delta calculation.
-    auto rotEuler = quaternionToEuler(rotQuat);
-    auto oldRotEuler = rotEuler;
-    auto scale    = target->getRelativeScale();
+    auto pos     = target->getRelativePosition();
+    auto rotQuat = target->getRelativeRotation();
+    auto scale   = target->getRelativeScale();
+
+    // --- Euler cache lookup ---------------------------------------------------
+    EulerCache& cache = eulerCache_[target];
+
+    // q and -q represent the same rotation; normalise sign before comparing.
+    auto canonicalise = [](SQuaternion q) -> SQuaternion {
+        return q.w < 0.0f ? -q : q;
+    };
+
+    auto quatsEqual = [&](const SQuaternion& a, const SQuaternion& b) -> bool {
+        constexpr float eps = 1e-6f;
+        SQuaternion ca = canonicalise(a);
+        SQuaternion cb = canonicalise(b);
+        return std::abs(ca.x - cb.x) < eps
+            && std::abs(ca.y - cb.y) < eps
+            && std::abs(ca.z - cb.z) < eps
+            && std::abs(ca.w - cb.w) < eps;
+    };
+
+    // Only re-derive Euler when the entity was moved by something other than
+    // this inspector (external change).
+    if (!quatsEqual(cache.lastQuat, rotQuat))
+    {
+        cache.euler   = quaternionToEuler(rotQuat);
+        cache.lastQuat = rotQuat;
+    }
+
+    // --- Draw fields ----------------------------------------------------------
 
     if (drawXYZComponent("Position", pos))
         target->setRelativePosition(pos);
 
-    if (drawXYZComponent("Rotation", rotEuler)) {
-        const auto deltaEuler = rotEuler - oldRotEuler;
-        const glm::quat deltaX = glm::angleAxis(glm::radians(deltaEuler.x), glm::vec3(1, 0, 0));
-        const glm::quat deltaY = glm::angleAxis(glm::radians(deltaEuler.y), glm::vec3(0, 1, 0));
-        const glm::quat deltaZ = glm::angleAxis(glm::radians(deltaEuler.z), glm::vec3(0, 0, 1));
-        target->setRelativeRotation(rotQuat * (deltaX * deltaY * deltaZ));
+    if (drawXYZComponent("Rotation", cache.euler))
+    {
+        // Rebuild quaternion from the absolute cached Euler angles (YXZ order).
+        // This is a direct construction — no delta, no re-read from the entity —
+        // so there is nothing to round-trip through quat → Euler.
+        const SQuaternion qY = glm::angleAxis(glm::radians(cache.euler.y), SVector3(0, 1, 0));
+        const SQuaternion qX = glm::angleAxis(glm::radians(cache.euler.x), SVector3(1, 0, 0));
+        const SQuaternion qZ = glm::angleAxis(glm::radians(cache.euler.z), SVector3(0, 0, 1));
+        const SQuaternion newQuat = qY * qX * qZ;
+
+        // Keep the cache consistent so next frame we don't misidentify this as
+        // an external change and overwrite the Euler values we just edited.
+        cache.lastQuat = newQuat;
+        target->setRelativeRotation(newQuat);
     }
 
     if (drawXYZComponent("Scale", scale))
@@ -188,10 +218,8 @@ void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity* target) {
 
 bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVector3& value) {
     const float dpi      = DPIHelper::GetDPIScaleFactor();
-    // Badge is a square: frame height wide so it looks like Unity's coloured buttons
     const float badgeW   = ImGui::GetFrameHeight();
 
-    // Vertical padding of 5*dpi gives the same row breathing room as Unity's inspector
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f * dpi, 5.0f * dpi));
 
     const ImGuiTableFlags flags = ImGuiTableFlags_None;
@@ -200,19 +228,16 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
         return false;
     }
 
-    // Fixed label column, three equal-stretch value columns
     ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f * dpi);
     ImGui::TableSetupColumn("x",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableSetupColumn("y",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableSetupColumn("z",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableNextRow();
 
-    // Row label — no colon, plain weight, vertically centred
     ImGui::TableSetColumnIndex(0);
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(label.c_str());
 
-    // Draws badge + drag float inside the current table column
     auto drawAxis = [&](int col, const char* badge, ImVec4 badgeColor,
                         float& component, const char* id) -> bool {
         ImGui::TableSetColumnIndex(col);

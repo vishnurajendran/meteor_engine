@@ -52,8 +52,7 @@ public:
     ~MShaderAsset() override;
     [[nodiscard]] MShader* getShader() const;
 
-    static SShaderPropertyType parsePropertyType(const SString& str);
-    static void parseValue(const SString& str, SShaderPropertyValue& value, const SShaderPropertyType& type);
+    bool requestReload() override { loadShader(path); return valid; }
 };
 
 

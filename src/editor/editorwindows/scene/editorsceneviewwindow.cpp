@@ -128,14 +128,14 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
 
 // ─── onGui ────────────────────────────────────────────────────────────────────
 
-void MEditorSceneViewWindow::onGui()
+void MEditorSceneViewWindow::onGui(float deltaTime)
 {
     ImVec2 region = ImGui::GetContentRegionAvail();
     if (region.x <= 0 || region.y <= 0) return;
 
 
     // ---- FPS accumulation (0.5 s smoothing window) -------------------------
-    const float dt = ImGui::GetIO().DeltaTime;
+    const float dt = deltaTime;
     if (dt > 0.0f)
     {
         fpsAccum  += dt;
@@ -165,7 +165,6 @@ void MEditorSceneViewWindow::onGui()
         /*clip=*/false);
 
     drawTransformHandles();
-
     drawOverlayToolbar();
     drawCameraSpeedOverlay();
     drawViewportInfoOverlay();
@@ -265,10 +264,13 @@ void MEditorSceneViewWindow::handleCameraKeyboardInputs(MCameraEntity* camera, f
 
 void MEditorSceneViewWindow::focusOnSelected(MCameraEntity* camera)
 {
-    auto* sel = MEditorApplication::Selected;
+    auto* sel = MEditorApplication::SelectedObject;
     if (!sel) return;
 
-    SVector3 target   = sel->getWorldPosition();
+    auto spatial = dynamic_cast<MSpatialEntity*>(sel);
+    if (spatial == nullptr) return;
+
+    SVector3 target   = spatial->getWorldPosition();
     SVector3 backward = -camera->getForwardVector();
     camera->setWorldPosition(target + backward * 5.0f);
 }
@@ -289,7 +291,7 @@ void MEditorSceneViewWindow::trySelectEntity(MCameraEntity* camera)
         return;
 
     MSpatialEntity* hit = pickEntity(camera, rayOrigin, rayDir);
-    MEditorApplication::Selected = hit;
+    MEditorApplication::SelectedObject = hit;
 }
 
 bool MEditorSceneViewWindow::screenPointToRay(MCameraEntity*   camera,
@@ -382,7 +384,7 @@ MSpatialEntity* MEditorSceneViewWindow::pickEntity(MCameraEntity*  camera,
 void MEditorSceneViewWindow::drawTransformHandles()
 {
     if (!gizmosEnabled)                  return;
-    if (!MEditorApplication::Selected)   return;
+    if (!MEditorApplication::SelectedObject)   return;
 
     auto cameras = MViewManagement::getCameras();
     if (cameras.empty()) return;
@@ -390,7 +392,9 @@ void MEditorSceneViewWindow::drawTransformHandles()
     auto* primaryCamera = cameras[0];
     if (!primaryCamera) return;
 
-    auto* selected = MEditorApplication::Selected;
+    auto* selected = MEditorApplication::SelectedObject;
+    auto* spatial = dynamic_cast<MSpatialEntity*>(selected);
+    if (spatial == nullptr) return;
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::SetDrawlist();
@@ -399,7 +403,7 @@ void MEditorSceneViewWindow::drawTransformHandles()
     SMatrix4 view      = primaryCamera->getViewMatrix();
     SMatrix4 proj      = primaryCamera->getProjectionMatrix(
                              SVector2(viewportSize.x, viewportSize.y));
-    SMatrix4 transform = selected->getTransformMatrix();
+    SMatrix4 transform = spatial->getTransformMatrix();
 
     ImGui::SetNextItemAllowOverlap();
     ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(proj),
@@ -414,17 +418,17 @@ void MEditorSceneViewWindow::drawTransformHandles()
                                           glm::value_ptr(newWorldRotEuler),
                                           glm::value_ptr(newWorldScale));
 
-    selected->setWorldRotation(eulerToQuaternion(newWorldRotEuler));
-    selected->setWorldPosition(newWorldPos);
+    spatial->setWorldRotation(eulerToQuaternion(newWorldRotEuler));
+    spatial->setWorldPosition(newWorldPos);
 
     SVector3 parentScale(1.0f);
-    auto* parent = selected->getParent();
+    auto* parent = spatial->getParent();
     while (parent)
     {
         parentScale *= parent->getRelativeScale();
         parent       = parent->getParent();
     }
-    selected->setRelativeScale(selected->getParent()
+    spatial->setRelativeScale(spatial->getParent()
                                ? newWorldScale / parentScale
                                : newWorldScale);
 }
@@ -564,7 +568,7 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
     const float margin = 10.0f;
 
     auto* camera = MEditorApplication::getSceneCamera();
-    auto* sel    = MEditorApplication::Selected;
+    auto* sel    = MEditorApplication::SelectedObject;
 
     // Build content strings up front so the panel can be auto-sized.
     SString selLine  = sel ? sel->getName() : SString("Nothing selected");

@@ -30,7 +30,9 @@ public:
 
 private:
     SFrameBuffer* opaqueBuffer  = nullptr;
-    MShader*      albedoShader  = nullptr; // owned by MShaderAsset
+    // No cached MShader* — raw shader pointers are invalidated on refresh().
+    // The path is used to look up the shader fresh each render() call.
+    SString       albedoShaderPath;
 };
 
 #endif // OPAQUE_STAGE_H

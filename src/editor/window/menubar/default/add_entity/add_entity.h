@@ -10,7 +10,7 @@
 class ClassName : public MMenubarItem { \
 public: \
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; } \
-    [[nodiscard]] SString getPath()     const override { return "Add/3D Object/" ItemName; } \
+    [[nodiscard]] SString getPath()     const override { return "Add/3D Object/Primitives/" ItemName; } \
     void onSelect() override; \
 private: \
     static bool registered; \
@@ -24,6 +24,17 @@ DECLARE_PRIMITIVE_ITEM(MAddConeItem,     "Cone",     "")
 DECLARE_PRIMITIVE_ITEM(MAddCapsuleItem,  "Capsule",  "")
 
 #undef DECLARE_PRIMITIVE_ITEM
+
+// ── Static Mesh ───────────────────────────────────────────────────────────────
+
+class MAddStaticMeshItem : public MMenubarItem {
+public:
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] SString getPath()     const override { return "Add/3D Object/New Static Mesh"; }
+    void onSelect() override;
+private:
+    static bool registered;
+};
 
 // ── Lights ────────────────────────────────────────────────────────────────────
 

@@ -26,12 +26,15 @@ SString MAlignObjectToViewMenubarItem::getPath() const
 void MAlignObjectToViewMenubarItem::onSelect()
 {
     const auto camera = MEditorApplication::getSceneCamera();
-    const auto selected = MEditorApplication::Selected;
+    const auto selected = MEditorApplication::SelectedObject;
     if (selected == nullptr)
         return;
     if (camera == nullptr)
         return;
 
-    selected->setWorldPosition(camera->getWorldPosition());
-    selected->setWorldRotation(camera->getWorldRotation());
+    auto spatial = dynamic_cast<MSpatialEntity*>(selected);
+    if (spatial == nullptr) return;
+
+    spatial->setWorldPosition(camera->getWorldPosition());
+    spatial->setWorldRotation(camera->getWorldRotation());
 }

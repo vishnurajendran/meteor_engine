@@ -3,9 +3,8 @@
 //
 
 #include "create_empty_scene.h"
-
-#include "core/engine/scene/scene_io.h"
 #include "core/engine/scene/scenemanager.h"
+#include "editor/helper/scene_io.h"
 #include "editor/window/menubar/menubartree.h"
 
 bool MCreateEmptySceneMenubarItem::registered = []()

@@ -21,7 +21,7 @@ public:
     void setWindowConstraints(float minx, float miny, float maxx, float maxy);
     void draw(float deltaTime);
     virtual void handleInput(float deltaTime);
-    virtual void onGui()=0;
+    virtual void onGui(float deltaTime)=0;
 };
 
 

@@ -1,5 +1,4 @@
 #include "scene_serialisation_map.h"
-#include "sceneentitytypedeserializer.h"
 
 std::unordered_map<std::string, MSceneEntityTypeSerialiser*>&
 MSceneSerialiserMap::registry()

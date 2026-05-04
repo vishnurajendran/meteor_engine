@@ -44,7 +44,7 @@ const SString MScene::SCENE_NAME_TAG = "name";
 
 	void MScene::close()
 	{
-	    MLOG(SString::format("Initiating scene closure...", name));
+	    MLOG(SString::format("Initiating scene closure...{0}", name));
 		sceneClosing = true;
 		// Destroy all alive entities — this calls onExit() on each, which
 		// unregisters lights from MLightSystemManager, removes skybox from

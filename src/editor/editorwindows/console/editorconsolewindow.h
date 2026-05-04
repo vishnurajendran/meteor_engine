@@ -14,7 +14,7 @@ public:
     MEditorConsoleWindow();
     explicit MEditorConsoleWindow(int x, int y);
     ~MEditorConsoleWindow();
-    void onGui() override;
+    void onGui(float deltaTime) override;
 
 private:
     // ── Log storage ───────────────────────────────────────────────────────────

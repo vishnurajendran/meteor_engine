@@ -7,7 +7,8 @@
 
 class IDefferedLoadableAsset {
 public:
-    virtual void defferedAssetLoad(bool forced=false) = 0;
+    virtual bool hasDeferredLoad() const = 0;
+    virtual void deferredAssetLoad(bool forced=false) = 0;
 };
 
 #endif //DEFFEREDLOADABLEASSET_H

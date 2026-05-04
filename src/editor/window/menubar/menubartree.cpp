@@ -1,7 +1,6 @@
 //
-// Created by ssj5v on 21-01-2025.
+// menubartree.cpp
 //
-
 #include "menubartree.h"
 #include "ImGui.h"
 #include "menubaritem.h"
@@ -10,7 +9,7 @@
 MMenubarTreeNode* MMenubarTreeNode::root = nullptr;
 std::vector<MMenubarItem*> MMenubarTreeNode::registeredMenuItems;
 
-MMenubarTreeNode::MMenubarTreeNode(): children()
+MMenubarTreeNode::MMenubarTreeNode() : children()
 {
     this->itemInstance = nullptr;
     nodeType = EMenubarTreeNodeType::Node;
@@ -31,52 +30,39 @@ void MMenubarTreeNode::renderMenubar() const
     if (nodeType == EMenubarTreeNodeType::Root)
     {
         for (const auto& childKey : orderedChildrenKeys)
-        {
             children.at(childKey)->renderMenubar();
-        }
         return;
     }
 
     ImGui::PushID(this);
     if (itemInstance != nullptr)
     {
-        //get the last item from the path and display as the menu title
         if (ImGui::MenuItem(menuTreeNodeTitle.c_str()))
-        {
             itemInstance->onSelect();
-        }
     }
     else if (!children.empty())
     {
-        //recursively render the sub-menus
         if (ImGui::BeginMenu(menuTreeNodeTitle.c_str()))
         {
             for (const auto& childKey : orderedChildrenKeys)
-            {
                 children.at(childKey)->renderMenubar();
-            }
             ImGui::EndMenu();
         }
     }
     ImGui::PopID();
 }
 
-
 void MMenubarTreeNode::registerItem(MMenubarItem* itemInstance)
 {
-    if (itemInstance == nullptr)
-        return;
-
+    if (itemInstance == nullptr) return;
     registeredMenuItems.push_back(itemInstance);
 }
 
-// depth index is used to check, how deep into the path we are, while parsing the tree
 void MMenubarTreeNode::registerItemInternal(MMenubarItem* itemInstance, const int depth)
 {
     const auto nameSplit = itemInstance->getPath().split("/");
-    if (depth >= nameSplit.size()-1)
+    if (depth >= nameSplit.size() - 1)
     {
-        //add as leaf.
         const auto childTreeLeaf = new MMenubarTreeNode();
         const auto& leafTitle = nameSplit.back();
         childTreeLeaf->itemInstance = itemInstance;
@@ -86,7 +72,6 @@ void MMenubarTreeNode::registerItemInternal(MMenubarItem* itemInstance, const in
     }
     else
     {
-        //recursively add to children
         const auto& nodeTitle = nameSplit[depth];
 
         if (children.contains(nodeTitle))
@@ -112,15 +97,69 @@ MMenubarTreeNode* MMenubarTreeNode::getRoot()
 
 void MMenubarTreeNode::buildTree()
 {
-    //sort the items according to their priorities.
-    std::sort(registeredMenuItems.begin(), registeredMenuItems.end(), [](MMenubarItem* a, MMenubarItem* b)
-    {
-        return a->getPriority() <= b->getPriority();
-    });
+    std::sort(registeredMenuItems.begin(), registeredMenuItems.end(),
+        [](MMenubarItem* a, MMenubarItem* b) {
+            return a->getPriority() <= b->getPriority();
+        });
 
     for (const auto itemInstance : registeredMenuItems)
-    {
         getRoot()->registerItemInternal(itemInstance, 0);
-    }
+
     MLOG("Registered Menubar items : " + std::to_string(registeredMenuItems.size()));
+}
+
+void MMenubarTreeNode::drawAllPopups()
+{
+    for (auto* item : registeredMenuItems)
+        item->drawPopup();
+}
+// ── getNodeAtPath ─────────────────────────────────────────────────────────────
+// Walk the tree following each path segment. Returns the node at the end of
+// the path, or nullptr if any segment is missing.
+
+MMenubarTreeNode* MMenubarTreeNode::getNodeAtPath(const SString& path)
+{
+    MMenubarTreeNode* current = getRoot();
+    const auto segments = path.split("/");
+
+    for (const auto& seg : segments)
+    {
+        if (seg.empty()) continue;
+        auto it = current->children.find(seg);
+        if (it == current->children.end()) return nullptr;
+        current = it->second;
+    }
+    return current;
+}
+
+// ── renderAsContextMenu ───────────────────────────────────────────────────────
+// Renders this node's children as a flat list of ImGui menu items / submenus.
+// Leaf nodes (itemInstance != nullptr) become MenuItem; branch nodes become BeginMenu.
+// Mirrors renderMenubar() but works outside the main menu bar context.
+
+void MMenubarTreeNode::renderAsContextMenu() const
+{
+    for (const auto& childKey : orderedChildrenKeys)
+    {
+        MMenubarTreeNode* child = children.at(childKey);
+        ImGui::PushID(child);
+
+        if (child->itemInstance != nullptr)
+        {
+            // Leaf — clicking it fires onSelect() just like the menubar.
+            if (ImGui::MenuItem(child->menuTreeNodeTitle.c_str()))
+                child->itemInstance->onSelect();
+        }
+        else if (!child->children.empty())
+        {
+            // Branch — recurse into a submenu.
+            if (ImGui::BeginMenu(child->menuTreeNodeTitle.c_str()))
+            {
+                child->renderAsContextMenu();
+                ImGui::EndMenu();
+            }
+        }
+
+        ImGui::PopID();
+    }
 }

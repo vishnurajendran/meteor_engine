@@ -27,14 +27,18 @@ SString MAlignViewToSelectedMenubarItem::getPath() const
 void MAlignViewToSelectedMenubarItem::onSelect()
 {
     const auto camera = MEditorApplication::getSceneCamera();
-    const auto selected = MEditorApplication::Selected;
+    const auto selected = MEditorApplication::SelectedObject;
     if (selected == nullptr)
         return;
     if (camera == nullptr)
         return;
 
-    MLOG(STR("COMMAND: Align View to Selected - SELECTED:" + std::to_string(selected->getWorldPosition().z)));
-    camera->setWorldPosition(selected->getWorldPosition());
-    camera->setWorldRotation(selected->getWorldRotation());
+    auto spatial = dynamic_cast<MSpatialEntity*>(selected);
+    if (spatial == nullptr)
+        return;
+
+    MLOG(STR("COMMAND: Align View to Selected - SELECTED:" + std::to_string(spatial->getWorldPosition().z)));
+    camera->setWorldPosition(spatial->getWorldPosition());
+    camera->setWorldRotation(spatial->getWorldRotation());
     MLOG("COMMAND: Align View to Selected");
 }

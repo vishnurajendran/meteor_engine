@@ -9,8 +9,13 @@
 
 class MEditorSceneManager : public MSceneManager {
 public:
+    MEditorSceneManager() = default;
+    ~MEditorSceneManager() override = default;
+
     bool loadEmptyScene() override;
     bool loadScene(const SString& path) override;
+    bool saveCurrentScene(const SString& pathOverride="");
+
     bool closeActiveScene() override;
     MCameraEntity* getEditorSceneCamera() const;
 private:

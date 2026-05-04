@@ -3,15 +3,15 @@
 //
 
 #include "scenemanager.h"
-#include "scene.h"
-#include "core/engine/entities/spatial/spatial.h"
-#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
-#include "core/engine/lighting/dynamiclights/dynamic_light.h"
-#include "sceneasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/entities/spatial/spatial.h"
+#include "core/engine/lighting/dynamiclights/dynamic_light.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "functional"
+#include "scene.h"
+#include "sceneasset.h"
+#include "serialisation/scene_serialiser.h"
 
-MScene* MSceneManager::activeScene = nullptr;
 MSceneManager* MSceneManager::sceneManagerInstance = nullptr;
 
 bool MSceneManager::closeActiveScene() {
@@ -43,13 +43,14 @@ bool MSceneManager::loadEmptyScene() {
     if (activeScene != nullptr)
         closeActiveScene();
     activeScene = new MScene();
+    currentScenePath = SString();
     informSceneLoadCallbackListeners(activeScene);
     return true;
 }
 
 bool MSceneManager::loadScene(const SString& path) {
     if (path.empty()) {
-        MLOG(STR("Loading Empty Scene"));
+        MLOG(STR("MSceneManager:: Loading Empty Scene"));
         loadEmptyScene();
         return false;
     }
@@ -57,7 +58,7 @@ bool MSceneManager::loadScene(const SString& path) {
     loadEmptyScene();
     auto asset = MAssetManager::getInstance()->getAsset<MSceneAsset>(path);
     if(asset == nullptr) {
-        MLOG(STR("Failed to load Scene Asset"));
+        MLOG(STR("MSceneManager:: Failed to load Scene Asset"));
         return false;
     }
 
@@ -66,13 +67,14 @@ bool MSceneManager::loadScene(const SString& path) {
         return false;
     }
 
-    if (activeScene->tryParse(asset->getSceneHierarchy())) {
-        MLOG(STR("Scene Loaded Complete"));
-        informSceneLoadCallbackListeners(activeScene);
-        return true;
-    }
+   if (MSceneSerializer::load(path, activeScene))
+   {
+       currentScenePath= asset->getPath();
+       MLOG("MSceneManager:: Scene Loaded");
+       return true;
+   };
 
-    MLOG(STR("Failed to load Scene"));
+    MLOG(STR("MSceneManager:: Failed to load Scene"));
     return false;
 }
 
@@ -105,6 +107,7 @@ void MSceneManager::registerSceneManager(MSceneManager* instance)
         delete sceneManagerInstance;
 
     sceneManagerInstance = instance;
+    instance->init();
 }
 
 MSceneManager* MSceneManager::getSceneManagerInstance() { return sceneManagerInstance; }

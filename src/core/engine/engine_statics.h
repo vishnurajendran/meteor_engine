@@ -8,21 +8,20 @@
 #include "settings/engine_settings.h"
 
 class MEngineStatics : MObject {
-private:
-    static const SString engineSettingsFileName;
-
 public:
-    static void init();
+    static void init(const SString& inEngineSettingsPath);
     static void saveAll();
+
 // API
 public:
     static MEngineSettings& getEngineSettings() { return engineSettings; }
 
 private:
-    static void loadEngineSettings();
+    static void loadEngineSettings(const SString& path);
 
 private:
     static MEngineSettings engineSettings;
+    static SString engineSettingsPath;
 };
 
 
