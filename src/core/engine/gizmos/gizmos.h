@@ -13,7 +13,7 @@
 class MSpatialEntity;
 class MCameraEntity;
 class MTexture;
-class MGizmos : MObject {
+class MGizmos : public MObject {
     DEFINE_OBJECT_SUBCLASS(MGizmos)
 public:
     static void drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture);

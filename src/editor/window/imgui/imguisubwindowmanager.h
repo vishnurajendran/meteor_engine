@@ -10,7 +10,7 @@
 
 class MImGuiSubWindow;
 
-class MImGuiSubWindowManager : MObject {
+class MImGuiSubWindowManager : public MObject {
     DEFINE_OBJECT_SUBCLASS(MImGuiSubWindowManager)
 private:
     static std::vector<MImGuiSubWindow*> windows;

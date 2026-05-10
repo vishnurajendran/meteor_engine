@@ -10,7 +10,7 @@
 #include "core/object/object.h"
 
 
-class MViewManagement : MObject {
+class MViewManagement : public MObject {
     DEFINE_OBJECT_SUBCLASS(MViewManagement)
 private:
     static std::vector<MCameraEntity*> cameras;

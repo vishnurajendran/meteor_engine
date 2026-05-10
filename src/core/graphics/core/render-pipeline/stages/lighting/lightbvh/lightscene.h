@@ -10,7 +10,7 @@
 #include "light_bvh_node.h"
 
 class MDynamicLight;
-class MLightScene : MObject {
+class MLightScene : public MObject {
     DEFINE_OBJECT_SUBCLASS(MLightScene)
 public:
     ~MLightScene();
