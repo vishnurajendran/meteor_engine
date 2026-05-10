@@ -15,6 +15,7 @@ class SFrameBuffer;
 
 class MProceduralSkyboxStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Transparent - 1; }
 

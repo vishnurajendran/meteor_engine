@@ -10,10 +10,13 @@
 
 #include <vector>
 
+#include "core/object/object.h"
+
 class MProceduralSkyboxDrawCall;
 
-class MProceduralSkyboxQueue
+class MProceduralSkyboxQueue : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxDrawCall)
 public:
     static void add   (MProceduralSkyboxDrawCall* drawCall);
     static void remove(MProceduralSkyboxDrawCall* drawCall);

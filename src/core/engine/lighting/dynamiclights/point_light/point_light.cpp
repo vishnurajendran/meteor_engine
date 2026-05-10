@@ -8,7 +8,7 @@
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/texture/textureasset.h"
 
-IMPLEMENT_CLASS(MPointLight)
+IMPLEMENT_SPATIAL_CLASS(MPointLight)
 
 MPointLight::MPointLight()
 {

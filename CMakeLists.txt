@@ -191,18 +191,13 @@ set(CORE_SOURCES
         src/core/meteor_core.h
         src/core/application/application.cpp
         src/core/application/application.h
-        src/editor/window/imgui/imguistyles.h
         src/core/utils/color.cpp
         src/core/utils/color.h
         src/core/utils/dpihelper.h
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.cpp
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/sfmldrawcall.cpp
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/sfmldrawcall.h
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/drawcall.cpp
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/drawcall.h
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.cpp
-        src/core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.h
+        src/core/graphics/core/render-pipeline/draw_calls/drawcall.cpp
+        src/core/graphics/core/render-pipeline/draw_calls/drawcall.h
+        src/core/graphics/core/render-pipeline/draw_calls/opengldrawcall.cpp
+        src/core/graphics/core/render-pipeline/draw_calls/opengldrawcall.h
         src/core/utils/glmhelper.h
         src/core/utils/glmhelper.cpp
         src/core/engine/entities/spatial/spatial.cpp
@@ -248,8 +243,6 @@ set(CORE_SOURCES
         src/core/engine/3d/staticmesh/MStaticMeshAssetImporter.h
         src/core/engine/3d/staticmesh/staticmesh.cpp
         src/core/engine/3d/staticmesh/staticmesh.h
-        src/core/engine/3d/staticmesh/staticmeshdrawcall.cpp
-        src/core/engine/3d/staticmesh/staticmeshdrawcall.h
         src/core/graphics/core/shader/shader.cpp
         src/core/graphics/core/shader/shader.h
         src/core/graphics/core/shader/shadercompiler.cpp
@@ -260,8 +253,8 @@ set(CORE_SOURCES
         src/core/graphics/core/shader/shaderassetimporter.h
         src/core/graphics/core/material/material.cpp
         src/core/graphics/core/material/material.h
-        src/core/engine/camera/camera.cpp
-        src/core/engine/camera/camera.h
+        src/core/engine/camera/camera_spatial_entity.cpp
+        src/core/engine/camera/camera_spatial_entity.h
         src/core/engine/camera/viewmanagement.cpp
         src/core/engine/camera/viewmanagement.h
         src/core/engine/camera/cameradeserialiser.cpp
@@ -410,6 +403,8 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/console/editorconsolewindow.cpp
         src/editor/editorwindows/console/editorconsolewindow.h
         src/editor/meteorite.h
+        src/editor/window/imgui/imguistyles.cpp
+        src/editor/window/imgui/imguistyles.h
         src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
         src/editor/editorwindows/hierarchy/editorhierarchywindow.h
         src/editor/editorwindows/inspector/editorinspectorwindow.cpp
@@ -485,6 +480,8 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspector/asset_inspector.h
         src/editor/window/menubar/default/create_asset_items.cpp
         src/editor/window/menubar/default/create_asset_items.h
+        src/editor/editorwindows/inspectordrawer/skybox/cubemap/skybox_inspector_drawer.cpp
+        src/editor/editorwindows/inspectordrawer/skybox/cubemap/skybox_inspector_drawer.h
 )
 
 set(PLAYER_SOURCES
@@ -564,7 +561,6 @@ endif()
 # Common Defines
 # ---------------------------------------------------------------------------
 add_compile_definitions(
-        VERBOSE_LOGGING=1
 )
 
 

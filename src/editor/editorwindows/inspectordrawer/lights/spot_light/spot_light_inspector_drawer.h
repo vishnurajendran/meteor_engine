@@ -8,6 +8,7 @@
 #include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
 
 class MSpotLightInspectorDrawer : public MSpatialEntityInspectorDrawer {
+    DEFINE_OBJECT_SUBCLASS(MSpotLightInspectorDrawer)
 public:
     SString getInspectorName() const override { return "Spot Light"; }
     bool    canDraw(MSpatialEntity* entity) override;

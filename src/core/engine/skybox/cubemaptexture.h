@@ -6,8 +6,10 @@
 #define CUBEMAPTEXTURE_H
 #include "core/engine/texture/texture.h"
 
+class MTextureAsset;
 
 class MCubemapTexture : public MTexture {
+    DEFINE_OBJECT_SUBCLASS(MCubemapTexture)
 private:
     unsigned int textureId;
 public:
@@ -19,7 +21,7 @@ public:
     unsigned int getTextureID() override {return textureId;};
     void bind(const unsigned int& location, const unsigned int& index) override;
 
-    static MCubemapTexture* createCubeMap(std::vector<SString> files);
+    static MCubemapTexture* createCubeMap(std::vector<MTextureAsset*> textureAssets);
 };
 
 

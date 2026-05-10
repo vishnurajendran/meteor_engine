@@ -4,7 +4,7 @@
 
 #include "align_view_to_selected.h"
 
-#include "core/engine/camera/camera.h"
+#include "core/engine/camera/camera_spatial_entity.h"
 #include "editor/app/editorapplication.h"
 #include "editor/window/menubar/menubartree.h"
 

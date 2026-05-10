@@ -2,15 +2,18 @@
 #ifndef SCENE_SERIALISER_MAP_H
 #define SCENE_SERIALISER_MAP_H
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
+
+#include "core/object/object.h"
 
 class MSceneEntityTypeSerialiser;
 
 // Registry: type-name → serialiser instance.
 // Parallel to MSceneEntityTypeMap but for writing.
-class MSceneSerialiserMap
+class MSceneSerialiserMap : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MSceneSerialiserMap)
 public:
     static void registerSerialiser(const std::string& typeName,
                                    MSceneEntityTypeSerialiser* serialiser);

@@ -7,7 +7,7 @@
 
 class MSpotLight : public MDynamicLight
 {
-    DEFINE_CLASS(MSpotLight)
+    DEFINE_SPATIAL_CLASS(MSpotLight)
     // spotAngle lives in lightData.angle (stored in radians, exposed in degrees via API).
     // If MDynamicLight does not DECLARE_FIELD it, add: DECLARE_FIELD(spotAngleDeg, float, 30.0f)
     // and sync in onDeserialise / prepareLightRender.

@@ -2,13 +2,14 @@
 #ifndef METEOR_ENGINE_EDITORSCENEVIEWWINDOW_H
 #define METEOR_ENGINE_EDITORSCENEVIEWWINDOW_H
 
-#include "ImGuizmo.h"
 #include "editor/meteorite_minimal.h"
+#include "ImGuizmo.h"
 
 class MCameraEntity;
 
 class MEditorSceneViewWindow : public MImGuiSubWindow
 {
+    DEFINE_OBJECT_SUBCLASS(MEditorSceneViewWindow)
 public:
     MEditorSceneViewWindow();
     explicit MEditorSceneViewWindow(int x, int y);

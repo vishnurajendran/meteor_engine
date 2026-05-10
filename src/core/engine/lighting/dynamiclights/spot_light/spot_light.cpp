@@ -8,7 +8,7 @@
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/texture/textureasset.h"
 
-IMPLEMENT_CLASS(MSpotLight)
+IMPLEMENT_SPATIAL_CLASS(MSpotLight)
 
 MSpotLight::MSpotLight()
 {

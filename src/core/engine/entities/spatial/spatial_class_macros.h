@@ -42,7 +42,7 @@
 // _classRegistered. The matching IMPLEMENT_CLASS in the .cpp provides the
 // definition.
 //
-#define DEFINE_CLASS(ClassName)                                                \
+#define DEFINE_SPATIAL_CLASS(ClassName)                                                \
 public:                                                                        \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \
@@ -65,7 +65,7 @@ private:                                                                       \
 // At this point the class is complete, so ClassName* → MSpatialEntity* is
 // valid and the factory lambda compiles without the "incomplete type" error.
 //
-#define IMPLEMENT_CLASS(ClassName)                                             \
+#define IMPLEMENT_SPATIAL_CLASS(ClassName)                                             \
     const bool ClassName::_classRegistered = []() {                            \
         MEntityTypeRegistry::get().registerType(                               \
             ClassName::staticTypeInfo(),                                       \
@@ -79,7 +79,7 @@ private:                                                                       \
 // Provides typeInfo() and staticTypeInfo() but no factory and no registry
 // entry — abstract classes cannot be directly instantiated.
 //
-#define DEFINE_ABSTRACT_CLASS(ClassName)                                       \
+#define DEFINE_ABSTRACT_SPATIAL_CLASS(ClassName)                                       \
 public:                                                                        \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \

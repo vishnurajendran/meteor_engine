@@ -1,5 +1,5 @@
 #include "cameradeserialiser.h"
-#include "camera.h"
+#include "camera_spatial_entity.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 
 bool MCameraEntityDeserialiser::registered = []() {

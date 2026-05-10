@@ -1,16 +1,17 @@
+#include <GL/glew.h>
 #include "add_entity.h"
+#include "core/engine/3d/staticmesh/staticmeshasset.h"
+#include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
-#include "core/engine/camera/camera.h"
+#include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/entities/spatial/spatial.h"
-#include "core/engine/lighting/ambient/ambient_light.h"
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
-#include "core/engine/3d/staticmesh/staticmeshasset.h"
-#include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/engine/lighting/ambient/ambient_light.h"
 
 // Mesh asset paths
 static constexpr const char* MAT_DEFAULT     = "meteor_assets/engine_assets/materials/lit_default.material";

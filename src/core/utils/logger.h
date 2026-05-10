@@ -4,9 +4,10 @@
 #pragma once
 #ifndef METEOR_ENGINE_LOGGER_H
 #define METEOR_ENGINE_LOGGER_H
+#include "core/object/object.h"
+#include "map"
 #include "spdlog/spdlog.h"
 #include "sstring.h"
-#include "map"
 
 #define MLOG(...) MLogger::log(__VA_ARGS__)
 #define MWARN(...) MLogger::warn(__VA_ARGS__)

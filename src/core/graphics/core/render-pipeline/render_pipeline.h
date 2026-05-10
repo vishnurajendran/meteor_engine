@@ -24,6 +24,7 @@ class MRenderPipeline : public MObject,
                         public IRenderPipeline,
                         public IRenderItemCollector
 {
+    DEFINE_OBJECT_SUBCLASS(MRenderPipeline)
 public:
     MRenderPipeline() = default;
     ~MRenderPipeline() override;

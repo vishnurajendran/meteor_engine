@@ -10,6 +10,7 @@
 class MTextureAsset;
 
 class MTextureAssetImporter : public MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MTextureAssetImporter)
 private:
     static const bool registered;
 public:

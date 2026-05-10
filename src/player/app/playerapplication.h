@@ -8,6 +8,7 @@
 #include "core/meteor_core.h"
 
 class MPlayerApplication : public MApplication {
+    DEFINE_OBJECT_SUBCLASS(MPlayerApplication)
 private:
     MObjectPtr<MWindow> window;
     MRenderPipelineManager pipelineManager;

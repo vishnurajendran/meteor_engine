@@ -7,8 +7,9 @@
 #include "core/engine/gizmos/gizmos.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
+#include <GL/glew.h>
 
-IMPLEMENT_CLASS(MDirectionalLight)
+IMPLEMENT_SPATIAL_CLASS(MDirectionalLight)
 
 MDirectionalLight* MDirectionalLight::lightInstance = nullptr;
 

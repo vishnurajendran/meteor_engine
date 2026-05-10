@@ -7,7 +7,7 @@
 #include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
 #include "core/graphics/core/shader/shaderasset.h"
 
-IMPLEMENT_CLASS(MSkyboxEntity)
+IMPLEMENT_SPATIAL_CLASS(MSkyboxEntity)
 
 MSkyboxEntity::MSkyboxEntity()
 {

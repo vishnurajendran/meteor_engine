@@ -12,6 +12,7 @@
 class MShader;
 
 class MMaterial : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MMaterial)
 public:
     enum class ShadingMode { Lit, Unlit };
 

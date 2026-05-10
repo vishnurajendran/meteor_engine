@@ -14,7 +14,8 @@
 
 class MObject
 {
-    DEFINE_OBJECT_CLASS(MObject)  // introduces virtual MTypeInfo typeInfo() const
+    // introduces virtual MTypeInfo typeInfo() const
+    DEFINE_OBJECT_CLASS(MObject)
 
 public:
     MObject();

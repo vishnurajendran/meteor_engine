@@ -2,6 +2,7 @@
 #ifndef SCENEENTITYTYPEDESERIALIZER_H
 #define SCENEENTITYTYPEDESERIALIZER_H
 
+#include "core/object/object.h"
 #include "core/utils/color.h"
 #include "core/utils/glmhelper.h"
 #include "core/utils/sstring.h"
@@ -9,8 +10,9 @@
 
 class MSpatialEntity;
 
-class MSceneEntityTypeDeserializer
+class MSceneEntityTypeDeserializer : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MSceneEntityTypeDeserializer);
 public:
     virtual ~MSceneEntityTypeDeserializer() = default;
 

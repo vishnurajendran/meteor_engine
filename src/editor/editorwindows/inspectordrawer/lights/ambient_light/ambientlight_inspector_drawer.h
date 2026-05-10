@@ -10,6 +10,7 @@
 class MAmbientLightEntity;
 
 class MAmbientLightInspectorDrawer : public MSpatialEntityInspectorDrawer {
+    DEFINE_OBJECT_SUBCLASS(MAmbientLightInspectorDrawer)
 public:
     SString getInspectorName() const override { return "Ambient Light"; }
     bool    canDraw(MSpatialEntity* entity) override;

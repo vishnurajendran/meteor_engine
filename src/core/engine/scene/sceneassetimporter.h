@@ -8,6 +8,7 @@
 
 
 class MSceneAssetImporter : public MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MSceneAssetImporter)
 private:
     static bool registered;
 public:

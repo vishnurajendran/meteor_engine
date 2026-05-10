@@ -14,6 +14,7 @@ namespace pugi {
 class MShader;
 
 class MShaderAsset : public MAsset {
+    DEFINE_OBJECT_SUBCLASS(MShaderAsset)
 private:
     static const SString SHDR_ROOTNODE;
     static const SString SHDR_ATTRIB_BASE_SOURCE;

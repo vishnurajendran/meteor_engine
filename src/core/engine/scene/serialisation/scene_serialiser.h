@@ -38,8 +38,9 @@
 
 class MScene;
 
-class MSceneSerializer
+class MSceneSerializer : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MSceneSerializer)
 public:
     // Write `scene` to `asset`. Overwrites any existing file.
     // Returns true on success.

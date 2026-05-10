@@ -7,7 +7,7 @@
 
 #include "sstring.h"
 
-class SGuid {
+struct SGuid {
 public:
    static SString newGUID();
 };

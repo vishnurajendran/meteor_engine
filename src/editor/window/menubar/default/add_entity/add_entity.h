@@ -28,6 +28,7 @@ DECLARE_PRIMITIVE_ITEM(MAddCapsuleItem,  "Capsule",  "")
 // ── Static Mesh ───────────────────────────────────────────────────────────────
 
 class MAddStaticMeshItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddStaticMeshItem)
 public:
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
     [[nodiscard]] SString getPath()     const override { return "Add/3D Object/New Static Mesh"; }
@@ -40,6 +41,7 @@ private:
 
 #define DECLARE_LIGHT_ITEM(ClassName, ItemName) \
 class ClassName : public MMenubarItem { \
+DEFINE_OBJECT_SUBCLASS(ClassName) \
 public: \
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; } \
     [[nodiscard]] SString getPath()     const override { return "Add/Light/" ItemName; } \
@@ -58,6 +60,7 @@ DECLARE_LIGHT_ITEM(MAddAmbientLightItem,     "Ambient Light")
 // ── Sky ───────────────────────────────────────────────────────────────────────
 
 class MAddProceduralSkyboxItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddProceduralSkyboxItem)
 public:
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
     [[nodiscard]] SString getPath()     const override { return "Add/Sky/Procedural Skybox"; }
@@ -69,6 +72,7 @@ private:
 // ── Misc ──────────────────────────────────────────────────────────────────────
 
 class MAddCameraItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddCameraItem)
 public:
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
     [[nodiscard]] SString getPath()     const override { return "Add/Camera"; }
@@ -78,6 +82,7 @@ private:
 };
 
 class MAddEmptySpatialItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddEmptySpatialItem)
 public:
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
     [[nodiscard]] SString getPath()     const override { return "Add/Empty Spatial"; }

@@ -8,6 +8,7 @@
 
 
 class MShaderAssetImporter : public MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MShaderAssetImporter)
 private:
     static bool registered;
 public:

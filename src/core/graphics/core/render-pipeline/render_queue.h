@@ -15,6 +15,7 @@ class IMeteorDrawable;
 
 class MRenderQueue : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MRenderQueue)
 public:
     static void addToSubmitables     (IMeteorDrawable* instance);
     static void removeFromSubmitables(IMeteorDrawable* instance);

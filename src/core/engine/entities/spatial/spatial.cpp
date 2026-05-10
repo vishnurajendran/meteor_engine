@@ -3,7 +3,7 @@
 #include "core/engine/scene/scenemanager.h"
 
 
-IMPLEMENT_CLASS(MSpatialEntity)
+IMPLEMENT_SPATIAL_CLASS(MSpatialEntity)
 
 static MScene* activeScene()
 {

@@ -14,6 +14,7 @@ class MShader;
 // BUFFER_COMPOSITE and MPostProcessStage will do the final SFML blit.
 class MCompositeStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MCompositeStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Composite; }
 

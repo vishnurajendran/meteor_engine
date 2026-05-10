@@ -7,7 +7,8 @@
 #include "editor/meteorite_minimal.h"
 #include "editor/window/imgui/imguisubwindow.h"
 
-class MEditorInspectorWindow : public MImGuiSubWindow{
+class MEditorInspectorWindow : public MImGuiSubWindow {
+    DEFINE_OBJECT_SUBCLASS(MEditorInspectorWindow)
 public:
     MEditorInspectorWindow();
     MEditorInspectorWindow(int x, int y);

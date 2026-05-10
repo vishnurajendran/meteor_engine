@@ -6,11 +6,12 @@
 #define VIEWMANAGEMENT_H
 #include <vector>
 
-#include "camera.h"
+#include "camera_spatial_entity.h"
 #include "core/object/object.h"
 
 
 class MViewManagement : MObject {
+    DEFINE_OBJECT_SUBCLASS(MViewManagement)
 private:
     static std::vector<MCameraEntity*> cameras;
 public:

@@ -11,6 +11,7 @@
 
 class MDynamicLight;
 class MLightScene : MObject {
+    DEFINE_OBJECT_SUBCLASS(MLightScene)
 public:
     ~MLightScene();
     void build(std::vector<MDynamicLight*> lights);

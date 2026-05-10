@@ -12,6 +12,7 @@
 #include <unordered_map>
 
 class MSpatialEntityInspectorDrawer : public MInspectorDrawer {
+    DEFINE_OBJECT_SUBCLASS(MSpatialEntityInspectorDrawer)
 public:
     MSpatialEntityInspectorDrawer();
     SString getInspectorName() const override { return "Transform"; }

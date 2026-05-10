@@ -17,6 +17,7 @@ class MSkyboxDrawCall;
 // shader, cubemap binding, and depth state that MSkyboxStage owns entirely.
 class MSkyboxQueue : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MSkyboxQueue)
 public:
     static void add   (MSkyboxDrawCall* drawCall);
     static void remove(MSkyboxDrawCall* drawCall);

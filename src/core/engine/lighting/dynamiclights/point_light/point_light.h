@@ -8,7 +8,7 @@
 
 class MPointLight : public MDynamicLight
 {
-    DEFINE_CLASS(MPointLight)
+    DEFINE_SPATIAL_CLASS(MPointLight)
     // Note: range and attenuation live in MDynamicLight's lightData.
     // Add DECLARE_FIELDs here for any MPointLight-specific serializable properties.
 

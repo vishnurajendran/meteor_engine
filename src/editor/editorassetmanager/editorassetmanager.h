@@ -15,6 +15,7 @@
 
 class MEditorAssetManager : public MAssetManager
 {
+    DEFINE_OBJECT_SUBCLASS(MEditorAssetManager)
 public:
     void refresh() override;
     void openAsset(MAsset* asset);

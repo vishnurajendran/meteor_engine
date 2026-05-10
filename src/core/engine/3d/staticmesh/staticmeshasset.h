@@ -17,6 +17,7 @@ struct aiNode;
 struct aiMesh;
 
 class MStaticMeshAsset : public MAsset {
+    DEFINE_OBJECT_SUBCLASS(MStaticMeshAsset)
 private:
     std::vector<MStaticMesh*> meshes;
 public:

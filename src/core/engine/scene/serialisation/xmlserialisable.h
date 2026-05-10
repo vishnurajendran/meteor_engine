@@ -8,8 +8,9 @@
 #include <pugixml.hpp>
 #include "core/meteor_core_minimal.h"
 
-class IMXmlSerializable : MObject {
+class IMXmlSerializable {
 public:
+    virtual ~IMXmlSerializable() = default;
     virtual pugi::xml_document* serializeToXml()=0;
 };
 

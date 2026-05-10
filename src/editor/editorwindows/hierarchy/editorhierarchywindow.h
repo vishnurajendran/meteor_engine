@@ -10,6 +10,7 @@
 
 class MEditorHierarchyWindow : public MImGuiSubWindow
 {
+    DEFINE_OBJECT_SUBCLASS(MEditorHierarchyWindow)
     // ── Top bar ───────────────────────────────────────────────────────────────
     void drawToolbar();
 

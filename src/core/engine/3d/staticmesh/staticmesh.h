@@ -19,7 +19,7 @@ class MStaticMesh : public MObject
 {
     // Non-spatial, non-serialized — just needs typeInfo() for editor/reflection.
     // Mesh data comes from asset loading, not XML fields.
-    DEFINE_OBJECT_CLASS(MStaticMesh);
+    DEFINE_OBJECT_SUBCLASS(MStaticMesh);
 
 public:
     MStaticMesh(std::vector<SVertex> vertices, std::vector<unsigned int> indices);

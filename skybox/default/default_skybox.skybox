@@ -1,0 +1,8 @@
+<cubemap name="Default">
+    <left src="meteor_assets/engine_assets/skybox/default/imgs/default_left.png"/>
+    <right src="meteor_assets/engine_assets/skybox/default/imgs/default_right.png"/>
+    <top src= "meteor_assets/engine_assets/skybox/default/imgs/default_top.png"/>
+    <bottom src="meteor_assets/engine_assets/skybox/default/imgs/default_bottom.png"/>
+    <front src="meteor_assets/engine_assets/skybox/default/imgs/default_front.png"/>
+    <back src="meteor_assets/engine_assets/skybox/default/imgs/default_back.png"/>
+</cubemap>

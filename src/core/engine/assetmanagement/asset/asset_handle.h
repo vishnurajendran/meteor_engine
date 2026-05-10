@@ -31,7 +31,6 @@ template<typename T>
 class TAssetHandle
 {
     static_assert(std::is_base_of_v<MAsset, T>, "T must inherit from MAsset");
-
     SString assetId;
 
 public:

@@ -1,10 +1,10 @@
-#include "imgui.h"
 #include "editorsceneviewwindow.h"
-#include "core/engine/camera/camera.h"
+#include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/scene/scenemanager.h"
 #include "editor/app/editorapplication.h"
+#include "imgui.h"
 
 // ─── Style constants ──────────────────────────────────────────────────────────
 static constexpr ImU32  OVL_BG          = IM_COL32(22,  22,  22,  210);

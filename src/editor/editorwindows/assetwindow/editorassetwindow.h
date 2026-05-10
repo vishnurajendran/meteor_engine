@@ -27,6 +27,8 @@ enum class EAssetSortMode
 
 class MEditorAssetWindow : public MImGuiSubWindow
 {
+    DEFINE_OBJECT_SUBCLASS(MEditorAssetWindow)
+
     // ── Left panel ────────────────────────────────────────────────────────────
     void drawSourcesPanel();
     void drawDirectoryTree(SAssetDirectoryNode* node, int depth = 0);

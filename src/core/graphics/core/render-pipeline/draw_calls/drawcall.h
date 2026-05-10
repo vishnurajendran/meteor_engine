@@ -9,6 +9,7 @@
 #include "core/meteor_core_minimal.h"
 
 class MDrawCall : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MDrawCall)
 public:
     MDrawCall() = default;
     virtual void draw()=0;

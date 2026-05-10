@@ -7,6 +7,7 @@
 
 class MMenubarItem : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MMenubarItem)
 public:
     [[nodiscard]] virtual int     getPriority() const = 0;
     [[nodiscard]] virtual SString getPath()     const = 0;

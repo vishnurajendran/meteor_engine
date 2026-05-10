@@ -14,7 +14,7 @@ class MCubemapAsset;
 
 class MSkyboxEntity : public MSpatialEntity, public IMeteorDrawable
 {
-    DEFINE_CLASS(MSkyboxEntity)
+    DEFINE_SPATIAL_CLASS(MSkyboxEntity)
 
     // Asset reference serialized as a path string.
     // onDeserialise loads the actual asset from this path.

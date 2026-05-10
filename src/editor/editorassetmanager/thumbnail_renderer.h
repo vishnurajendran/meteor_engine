@@ -42,8 +42,9 @@
 class MStaticMeshAsset;
 class MMaterialAsset;
 
-class MThumbnailRenderer
+class MThumbnailRenderer : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MThumbnailRenderer)
 public:
     static constexpr int         THUMBNAIL_SIZE = 128;
     static constexpr const char* CACHE_DIR     = ".engine_data/thumbnail_cache/";

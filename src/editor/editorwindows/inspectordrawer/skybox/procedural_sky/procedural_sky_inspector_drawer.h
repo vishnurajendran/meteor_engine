@@ -12,6 +12,7 @@
 
 class MProceduralSkyInspectorDrawer : public MSpatialEntityInspectorDrawer
 {
+    DEFINE_OBJECT_SUBCLASS(MProceduralSkyInspectorDrawer)
 public:
     SString getInspectorName() const override { return "Procedural Skybox"; }
     bool    canDraw(MSpatialEntity* entity)   override;

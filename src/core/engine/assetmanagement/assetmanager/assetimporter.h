@@ -12,6 +12,7 @@
 
 
 class MAssetImporter : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MAssetImporter)
 private:
     static std::vector<MAssetImporter*>* importers;
 

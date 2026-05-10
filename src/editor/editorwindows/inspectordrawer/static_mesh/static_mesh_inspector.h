@@ -9,6 +9,7 @@ class MAssetReferenceControl;
 
 class MStaticMeshInspectorDrawer : public MSpatialEntityInspectorDrawer
 {
+    DEFINE_OBJECT_SUBCLASS(MStaticMeshInspectorDrawer)
 public:
     SString getInspectorName() const override { return "Static Mesh"; }
     bool    canDraw(MSpatialEntity* entity) override;

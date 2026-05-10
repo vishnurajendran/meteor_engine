@@ -38,15 +38,21 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
     settings.majorVersion = 4;
     settings.minorVersion = 6;
     settings.depthBits = 24;
+    settings.antiAliasingLevel = 2;
     this->settings = settings;
 
     const auto& size = sf::Vector2u(inSize.x, inSize.y);
-    MLOG(SString::format("INIT WINDOW {0} | {1}x{2} | {3} FPS", inTitle, static_cast<int>(inSize.x)
-                                                                    , static_cast<int>(inSize.y), inFps));
-
     auto videoMode = sf::VideoMode(size, 32);
     coreWindow.create(videoMode, this->title.str(),  sf::State::Windowed, this->settings);
     coreWindow.setFramerateLimit(this->targetFPS);
+
+    auto apiVersion = SString::format("OpenGL v{0}.{1}", settings.majorVersion, settings.minorVersion);
+    MLOG(SString::format("INIT WINDOW {0} | {1}x{2} | {3} FPS | API {4}",
+        inTitle,
+        static_cast<int>(inSize.x),static_cast<int>(inSize.y),
+        inFps,
+        apiVersion
+    ));
 
     if (!SRenderBuffer::makeFromRenderTarget(&coreWindow, renderBuffer))
     {
@@ -59,6 +65,9 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
         MERROR(STR("Failed to initialize GLEW" ));
         return false;
     }
+
+    // update window title.
+    coreWindow.setTitle(SString::format("{0} - {1}", this->title, apiVersion).c_str());
 
     auto* pipelineManagerInstance = MRenderPipelineManager::getInstance();
     if (pipelineManagerInstance == nullptr) return false;

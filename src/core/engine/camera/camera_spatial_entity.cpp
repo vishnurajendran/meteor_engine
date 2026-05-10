@@ -1,13 +1,13 @@
 //
 // camera.cpp
 //
-#include "camera.h"
+#include "camera_spatial_entity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/texture/textureasset.h"
 #include "viewmanagement.h"
 
-IMPLEMENT_CLASS(MCameraEntity)
+IMPLEMENT_SPATIAL_CLASS(MCameraEntity)
 
 MCameraEntity::MCameraEntity()
 {

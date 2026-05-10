@@ -8,6 +8,7 @@
 
 
 class MAlignViewToSelectedMenubarItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAlignViewToSelectedMenubarItem)
 public:
     [[nodiscard]] int getPriority() const override;
     [[nodiscard]] SString getPath() const override;

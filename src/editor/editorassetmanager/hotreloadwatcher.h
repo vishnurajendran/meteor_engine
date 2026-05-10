@@ -21,8 +21,9 @@ struct SWatchEntry
     bool                                  hasPendingChange    = false;
 };
 
-class MHotReloadWatcher
+class MHotReloadWatcher : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MHotReloadWatcher)
 public:
     static constexpr double POLL_INTERVAL_SECONDS = 1.0;
     static constexpr double DEBOUNCE_SECONDS      = 0.5;

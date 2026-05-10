@@ -8,6 +8,7 @@
 
 
 class MTextAsset : public MAsset {
+    DEFINE_OBJECT_SUBCLASS(MTextAsset)
 private:
     SString text;
 public:

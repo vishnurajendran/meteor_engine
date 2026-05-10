@@ -11,10 +11,8 @@
 #include "meteor_core_minimal.h"
 
 // graphics
-#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h"
-#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/drawcall.h"
-#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/sfmldrawcall.h"
-#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/opengldrawcall.h"
+#include "core/graphics/core/render-pipeline/draw_calls/drawcall.h"
+#include "core/graphics/core/render-pipeline/draw_calls/opengldrawcall.h"
 
 // scene
 #include "core/engine/scene/serialisation/sceneentitytypedeserializer.h"
@@ -35,7 +33,6 @@
 // static mesh
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
-#include "core/engine/3d/staticmesh/staticmeshdrawcall.h"
 
 // scene entity deserialiser
 

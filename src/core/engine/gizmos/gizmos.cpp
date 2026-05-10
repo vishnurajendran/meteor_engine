@@ -14,7 +14,6 @@
 #include "core/engine/texture/texture.h"
 #include "core/graphics/core/render-pipeline/render_pipeline.h"
 #include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
-#include "core/graphics/core/render-pipeline/stages/legacy_render_stage/graphicsrenderer.h"
 #include "core/graphics/core/shader/shaderasset.h"
 
 

@@ -12,6 +12,7 @@
 
 class MSpatialEntity;
 class MScene : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MScene)
     friend class MSpatialEntity;
 public:
 

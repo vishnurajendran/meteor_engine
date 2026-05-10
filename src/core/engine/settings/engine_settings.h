@@ -4,9 +4,11 @@
 
 #ifndef ENGINE_SETTINGS_H
 #define ENGINE_SETTINGS_H
+#include "core/object/object.h"
 #include "data/serialized_class_base.h"
 
-class MEngineSettings : public SerializedClassBase {
+class MEngineSettings : public SerializedClassBase, public MObject {
+    DEFINE_OBJECT_SUBCLASS(MEngineSettings);
 
     // Window and presentation
     DECLARE_FIELD(resX, int, 800);

@@ -4,8 +4,7 @@
 #include "GL/glew.h"
 #include "cubemaptexture.h"
 
-#include "core/utils/fileio.h"
-#include "SFML/System/InputStream.hpp"
+#include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
 
 
@@ -34,35 +33,56 @@ void MCubemapTexture::bind(const unsigned int& location, const unsigned int& ind
 }
 
 MCubemapTexture* MCubemapTexture::
-createCubeMap(std::vector<SString> files)
+createCubeMap(std::vector<MTextureAsset*> textureAssets)
 {
-    MCubemapTexture* cubemap = new MCubemapTexture();
-    int width, height, channels;
-    unsigned int textureId=0;
-    unsigned char *data = nullptr;
-
-    if (files.size() == 0)
+    if (textureAssets.size() != 6)
     {
-        MERROR(STR("CubeMap Textures not defined"));
+        MERROR(STR("CubeMap requires exactly 6 texture assets, got ") + std::to_string(textureAssets.size()));
         return nullptr;
     }
 
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, textureId);
-    for(unsigned int i = 0; i < files.size(); i++)
+    // Validate all assets and their textures
+    for (unsigned int i = 0; i < 6; i++)
     {
-        data = stbi_load(files[i].c_str(), &width, &height, &channels, 0);
-        if (data == nullptr)
+        if (!textureAssets[i] || !textureAssets[i]->getTexture() || !textureAssets[i]->getTexture()->getCoreTexture())
         {
-            MERROR(STR("Problem loading CubeMapTexture file ") + files[i] + " issue: File not found or cannot be read");
+            MERROR(STR("CubeMap face ") + std::to_string(i) + " has an invalid or null texture asset");
             return nullptr;
         }
+    }
 
-        auto colorFormat = channels == 4 ? GL_RGBA : GL_RGB;
+    // Use the first face to determine cubemap dimensions
+    auto refSize = textureAssets[0]->getTexture()->getCoreTexture()->getSize();
+    unsigned int width  = refSize.x;
+    unsigned int height = refSize.y;
 
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            0, colorFormat, width, height, 0, colorFormat, GL_UNSIGNED_BYTE, data
+    // Verify all faces share the same dimensions
+    for (unsigned int i = 1; i < 6; i++)
+    {
+        auto faceSize = textureAssets[i]->getTexture()->getCoreTexture()->getSize();
+        if (faceSize.x != width || faceSize.y != height)
+        {
+            MERROR(STR("CubeMap face ") + std::to_string(i)
+                   + " size (" + std::to_string(faceSize.x) + "x" + std::to_string(faceSize.y)
+                   + ") does not match face 0 (" + std::to_string(width) + "x" + std::to_string(height) + ")");
+            return nullptr;
+        }
+    }
+
+    // Allocate cubemap with immutable storage (SFML uses RGBA8 internally)
+    unsigned int cubemapId = 0;
+    glGenTextures(1, &cubemapId);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
+    glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, width, height);
+
+    // Copy each face from its source 2D texture directly on the GPU
+    for (unsigned int i = 0; i < 6; i++)
+    {
+        unsigned int srcId = textureAssets[i]->getTexture()->getTextureID();
+        glCopyImageSubData(
+            srcId,      GL_TEXTURE_2D,       0, 0, 0, 0,
+            cubemapId,  GL_TEXTURE_CUBE_MAP, 0, 0, 0, i,
+            width, height, 1
         );
     }
 
@@ -72,8 +92,7 @@ createCubeMap(std::vector<SString> files)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    cubemap->textureId = textureId;
+    MCubemapTexture* cubemap = new MCubemapTexture();
+    cubemap->textureId = cubemapId;
     return cubemap;
 }
-
-

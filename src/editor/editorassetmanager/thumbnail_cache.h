@@ -29,8 +29,9 @@
 //
 // Thread-safety: single-threaded (editor main thread only).
 // ─────────────────────────────────────────────────────────────────────────────
-class MThumbnailCache
+class MThumbnailCache : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MThumbnailCache)
 public:
     // All cache PNGs live under this directory (created automatically).
     static constexpr const char* CACHE_DIR = ".engine_data/thumbnail_cache";

@@ -8,6 +8,7 @@
 
 
 class MAlignObjectToViewMenubarItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAlignObjectToViewMenubarItem)
 public:
     [[nodiscard]] int getPriority() const override;
     [[nodiscard]] SString getPath() const override;

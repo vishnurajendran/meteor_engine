@@ -10,6 +10,7 @@
 #include "sceneentitytypedeserializer.h"
 
 class MSceneEntityTypeMap : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MSceneEntityTypeMap)
 public:
     static void registerDeserializer(const SString& type, MSceneEntityTypeDeserializer* deserializer);
     static MSceneEntityTypeDeserializer* getDeserializer(const SString& type);

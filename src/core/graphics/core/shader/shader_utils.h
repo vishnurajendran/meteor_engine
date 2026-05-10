@@ -7,8 +7,9 @@
 
 #include "core/utils/serialisation_utils.h"
 
-class MShaderUtility
+class MShaderUtility : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MShaderUtility)
 public:
     // Helpers
     static SString getTypeStr(SShaderPropertyType type)

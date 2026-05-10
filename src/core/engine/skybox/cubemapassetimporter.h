@@ -8,6 +8,7 @@
 
 
 class MCubemapAssetImporter : public MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MCubemapAssetImporter)
 public:
     bool canImport(SString fileExtension) override;
     MAsset* importAsset(SString path, const pugi::xml_document& metaData) override;

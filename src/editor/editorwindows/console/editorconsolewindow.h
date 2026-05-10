@@ -10,6 +10,7 @@
 #include "editor/window/imgui/imguisubwindow.h"
 
 class MEditorConsoleWindow : public MImGuiSubWindow {
+    DEFINE_OBJECT_SUBCLASS(MEditorConsoleWindow)
 public:
     MEditorConsoleWindow();
     explicit MEditorConsoleWindow(int x, int y);

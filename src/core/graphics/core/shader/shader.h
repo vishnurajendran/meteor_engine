@@ -58,6 +58,7 @@ public:
 };
 
 class MShader : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MShader)
 private:
     GLuint shaderProgram;
     GLint getUniformLocation(const SString& name) const;

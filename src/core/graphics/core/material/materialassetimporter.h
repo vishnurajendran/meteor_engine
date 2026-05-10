@@ -8,6 +8,7 @@
 
 
 class MMaterialAsserImporter : MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MMaterialAsserImporter)
     const static bool registered;
 public:
     bool canImport(SString fileExtension) override;

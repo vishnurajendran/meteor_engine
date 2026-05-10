@@ -15,6 +15,7 @@
 
 class MBufferRegistery : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MBufferRegistery)
 public:
     ~MBufferRegistery() override;
 

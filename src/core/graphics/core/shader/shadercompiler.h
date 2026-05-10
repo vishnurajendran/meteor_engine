@@ -10,6 +10,7 @@
 
 
 class MShaderCompiler : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MShaderCompiler)
 public:
     static bool initialiseEngine();
     static bool compileShader(const SString& name, const SString& vertexSource, const SString& fragmentSource, GLuint& shaderProgramHandle);

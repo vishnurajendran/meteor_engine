@@ -3,14 +3,15 @@
 //
 #ifndef AMBIENT_LIGHTS_H
 #define AMBIENT_LIGHTS_H
-#include "GL/glew.h"
+
 #include "ambient_light_gpu_struct.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/light_entity.h"
+#include "GL/glew.h"
 
 class MAmbientLightEntity : public MLightEntity
 {
-    DEFINE_CLASS(MAmbientLightEntity)
+    DEFINE_SPATIAL_CLASS(MAmbientLightEntity)
 
     // Serialized — color as RGB, intensity as float.
     // prepareLightRender() pushes these into the GPU struct each frame.
@@ -32,7 +33,7 @@ public:
     void onDrawGizmo(SVector2 renderResolution) override;
 
 private:
-    GLuint ambientLightDataBufferId = 0;
+    unsigned int ambientLightDataBufferId = 0;
     SAmbientLightData ambientLightData;             // GPU-side struct; synced in prepareLightRender()
     static MAmbientLightEntity* ambientLightInstance;
 };

@@ -18,6 +18,7 @@ namespace pugi {
 
 class MAssetManager : public MObject
 {
+    DEFINE_OBJECT_CLASS(MAssetManager)
 private:
     const SString META_FILE_EXTENSION = "meta";
     const SString ASSET_FILE_TAG = "asset_id";

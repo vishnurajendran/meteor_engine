@@ -17,6 +17,7 @@ class MMaterial;
 class MMaterialAsset;
 
 class MMaterialPropertyControl : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MMaterialPropertyControl)
 public:
     // Takes MMaterialAsset* and resolves getMaterial() fresh each call —
     // never caches the raw MMaterial* which can become dangling.

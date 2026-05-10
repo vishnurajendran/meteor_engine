@@ -12,7 +12,7 @@
 
 class MStaticMeshEntity : public MSpatialEntity, public IMeteorDrawable
 {
-    DEFINE_CLASS(MStaticMeshEntity)
+    DEFINE_SPATIAL_CLASS(MStaticMeshEntity)
 
     DECLARE_FIELD(meshAssetPath,     std::string, "")
     DECLARE_FIELD(materialAssetPath, std::string, "")  // slot 0 path for scene serialisation

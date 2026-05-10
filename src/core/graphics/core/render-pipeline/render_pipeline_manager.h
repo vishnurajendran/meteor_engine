@@ -8,6 +8,7 @@
 #include "render_pipeline.h"
 #include "core/object/object.h"
 class MRenderPipelineManager : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MRenderPipelineManager)
 public:
     MRenderPipelineManager();
     ~MRenderPipelineManager() override;

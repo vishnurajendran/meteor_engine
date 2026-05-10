@@ -11,6 +11,7 @@ class MLightEntity;
 
 class MShadowStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MShadowStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Shadow; }
 

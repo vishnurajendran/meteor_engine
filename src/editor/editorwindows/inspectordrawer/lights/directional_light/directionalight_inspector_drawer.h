@@ -12,6 +12,7 @@ class MDirectionalLight;
 // BUG FIX: was `class MDirecionalLightInspectorDrawer : MSpatialEntityInspectorDrawer`
 // (private inheritance), which silently broke registerDrawer() access.
 class MDirecionalLightInspectorDrawer : public MSpatialEntityInspectorDrawer {
+    DEFINE_OBJECT_SUBCLASS(MDirecionalLightInspectorDrawer)
 public:
     SString getInspectorName() const override { return "Directional Light"; }
     bool    canDraw(MSpatialEntity* entity) override;

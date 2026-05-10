@@ -12,8 +12,9 @@
 #include "sstring.h"
 #include "core/object/object.h"
 
-class FileIO : MObject {
-    public:
+class FileIO : public MObject {
+    DEFINE_OBJECT_SUBCLASS(FileIO);
+public:
     static bool hasFile(const SString& path);
     static bool readFile(const SString& path, SString& data);
     static bool writeFile(const SString& path, SString& data);

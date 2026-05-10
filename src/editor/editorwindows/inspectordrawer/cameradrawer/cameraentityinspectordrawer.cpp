@@ -3,7 +3,7 @@
 //
 
 #include "cameraentityinspectordrawer.h"
-#include "core/engine/camera/camera.h"
+#include "core/engine/camera/camera_spatial_entity.h"
 
 const bool MCameraEntityInspectorDrawer::registered = []() {
     registerDrawer(new MCameraEntityInspectorDrawer());

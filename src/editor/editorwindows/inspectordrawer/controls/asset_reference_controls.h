@@ -15,6 +15,7 @@
 class MAssetManager;
 class MAsset;
 class MAssetReferenceControl : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MAssetReferenceControl)
 private:
     SString assetIdReference = "";
 private:

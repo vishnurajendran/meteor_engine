@@ -3,13 +3,13 @@
 //
 #include "ambient_light.h"
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
-#include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
+#include "GL/glew.h"
 
-IMPLEMENT_CLASS(MAmbientLightEntity)
+IMPLEMENT_SPATIAL_CLASS(MAmbientLightEntity)
 
 MAmbientLightEntity* MAmbientLightEntity::ambientLightInstance = nullptr;
 

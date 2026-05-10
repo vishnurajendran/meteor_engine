@@ -8,12 +8,14 @@
 #ifndef PROCEDURAL_SKYBOX_DRAW_CALL_H
 #define PROCEDURAL_SKYBOX_DRAW_CALL_H
 
+#include "core/object/object.h"
 #include "core/utils/glmhelper.h"
 
 class MShader;
 
-class MProceduralSkyboxDrawCall
+class MProceduralSkyboxDrawCall : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxDrawCall)
 public:
     explicit MProceduralSkyboxDrawCall(MShader* shader);
     ~MProceduralSkyboxDrawCall();

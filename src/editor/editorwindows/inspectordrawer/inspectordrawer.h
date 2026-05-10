@@ -11,6 +11,7 @@
 class MSpatialEntity;
 
 class MInspectorDrawer : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MInspectorDrawer)
 public:
     static void initialise();
     static void registerDrawer(MInspectorDrawer* drawer);

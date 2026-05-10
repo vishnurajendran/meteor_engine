@@ -15,7 +15,7 @@ class MAmbientLightEntity;
 
 class MProceduralSkyboxEntity : public MSpatialEntity, public IMeteorDrawable
 {
-    DEFINE_CLASS(MProceduralSkyboxEntity)
+    DEFINE_SPATIAL_CLASS(MProceduralSkyboxEntity)
 
     // ── Serialized sky parameters ─────────────────────────────────────────────
     DECLARE_FIELD(elevationDeg,        float,    55.0f)

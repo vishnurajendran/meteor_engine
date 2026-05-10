@@ -7,7 +7,8 @@
 #include "core/object/object.h"
 #include "SFML/Graphics.hpp"
 
-class MEditorControlsButtons : MObject {
+class MEditorControlsButtons : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MEditorControlsButtons)
 private:
     static sf::Texture playTexture;
     static void playButton();

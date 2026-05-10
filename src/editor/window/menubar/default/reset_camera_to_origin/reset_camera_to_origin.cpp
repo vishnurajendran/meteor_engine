@@ -4,7 +4,7 @@
 
 #include "reset_camera_to_origin.h"
 
-#include "core/engine/camera/camera.h"
+#include "core/engine/camera/camera_spatial_entity.h"
 #include "editor/app/editorapplication.h"
 #include "editor/window/menubar/menubartree.h"
 

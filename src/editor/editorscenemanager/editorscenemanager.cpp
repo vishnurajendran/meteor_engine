@@ -4,7 +4,7 @@
 
 #include "editorscenemanager.h"
 
-#include "core/engine/camera/camera.h"
+#include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/scene/serialisation/scene_serialiser.h"
 #include "editorscenecamera.h"

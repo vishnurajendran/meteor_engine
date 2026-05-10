@@ -8,6 +8,7 @@
 
 
 class MResetCameraToOriginMenubarItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MResetCameraToOriginMenubarItem)
 public:
     [[nodiscard]] int getPriority() const override;
     [[nodiscard]] SString getPath() const override;

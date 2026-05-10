@@ -9,6 +9,7 @@
 #include "SFML/Graphics.hpp"
 
 class MWindow : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MWindow)
 public:
     static const int DEFAULT_FPS;
     static const SVector2 DEFAULT_WINDOW_SIZE;

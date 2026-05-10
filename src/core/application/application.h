@@ -11,6 +11,7 @@
 
 
 class MApplication : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MApplication)
 public:
     virtual bool isRunning() const = 0;
     virtual void initialise() = 0;

@@ -19,6 +19,7 @@ class MShader;
 // the light contribution, and MCompositeStage multiplies them together.
 class MOpaqueStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MOpaqueStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Opaque; }
 

@@ -20,6 +20,7 @@ enum class EMenubarTreeNodeType
 
 class MMenubarTreeNode : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MMenubarTreeNode)
 public:
     MMenubarTreeNode();
     MMenubarTreeNode(EMenubarTreeNodeType type);

@@ -13,6 +13,7 @@ class MScene;
  * @brief Manages Scene loads and unloads.
 */
 class MSceneManager : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MSceneManager)
 public:
     MSceneManager() = default;
     ~MSceneManager() override;

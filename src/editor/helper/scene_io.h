@@ -2,10 +2,12 @@
 #ifndef SCENE_IO_H
 #define SCENE_IO_H
 
+#include "core/object/object.h"
 #include "core/utils/sstring.h"
 
-class MSceneIO
+class MSceneIO : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MSceneIO)
 public:
     // Save to the path the scene was last opened from / saved to.
     static bool saveCurrentScene();

@@ -15,6 +15,7 @@
 class MLightEntity;
 
 class MLightSystemManager : MObject {
+    DEFINE_OBJECT_SUBCLASS(MLightSystemManager)
 public:
     void registerLight(MLightEntity* light);
     void unregisterLight(MLightEntity* light);

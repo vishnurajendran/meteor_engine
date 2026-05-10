@@ -12,6 +12,7 @@
 #include "SFML/Graphics/Texture.hpp"
 
 class MTexture : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MTexture)
 private:
     sf::Texture coreTexture;
 public:

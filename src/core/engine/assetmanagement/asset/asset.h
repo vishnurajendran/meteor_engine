@@ -9,7 +9,7 @@
 
 class MAsset : public MObject, IDefferedLoadableAsset
 {
-    DEFINE_OBJECT_CLASS(MAsset)
+    DEFINE_OBJECT_SUBCLASS(MAsset)
 protected:
     SString path;
     SString assetId;

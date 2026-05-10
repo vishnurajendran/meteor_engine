@@ -9,6 +9,7 @@
 #include "core/meteor_core_minimal.h"
 
 class MImGuiSubWindow : public MObject{
+    DEFINE_OBJECT_SUBCLASS(MImGuiSubWindow)
 protected:
     SString title;
     ImVec2 minSize = ImVec2(0, 0);

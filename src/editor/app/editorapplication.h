@@ -11,6 +11,7 @@ class MImGuiSubWindow;
 class MImGuiWindow;
 
 class MEditorApplication : public MApplication {
+    DEFINE_OBJECT_SUBCLASS(MEditorApplication)
 private:
     MEditorSceneManager* sceneManagerRef;
     MEditorAssetManager* assetManagerRef;

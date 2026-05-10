@@ -40,7 +40,6 @@ void MMaterialPropertyControl::draw(MMaterialAsset* asset)
         return;
     }
 
-    MLOG(SString::format("MMaterialPropertyControl:: PROPERTY COUNT {0}", props.size()));
     std::vector<std::pair<SString, SShaderPropertyValue>> snapshot(
         props.begin(), props.end());
 

@@ -2,4 +2,5 @@ cmake-build-debug/
 cmake-build-editor_debug/
 cmake-build-player_debug/
 bin/
+documentation/
 

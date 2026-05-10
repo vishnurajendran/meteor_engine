@@ -7,6 +7,7 @@
 #include "drawcall.h"
 
 class MOpenGlDrawCall : public MDrawCall {
+    DEFINE_OBJECT_SUBCLASS(MOpenGlDrawCall)
 protected:
     SVector2 resolution;
 public:

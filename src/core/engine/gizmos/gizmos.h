@@ -14,6 +14,7 @@ class MSpatialEntity;
 class MCameraEntity;
 class MTexture;
 class MGizmos : MObject {
+    DEFINE_OBJECT_SUBCLASS(MGizmos)
 public:
     static void drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture);
     static void drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness);

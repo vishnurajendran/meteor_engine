@@ -7,7 +7,7 @@
 
 class MCameraEntity : public MSpatialEntity
 {
-    DEFINE_CLASS(MCameraEntity)
+    DEFINE_SPATIAL_CLASS(MCameraEntity)
 
     DECLARE_FIELD(priority,       int,   0)
     DECLARE_FIELD(isOrthographic, bool,  false)

@@ -8,7 +8,7 @@
 
 class MLightEntity : public MSpatialEntity
 {
-    DEFINE_ABSTRACT_CLASS(MLightEntity)
+    DEFINE_ABSTRACT_SPATIAL_CLASS(MLightEntity)
 
 public:
     virtual void prepareLightRender() = 0;

@@ -11,7 +11,7 @@
 #include "core/graphics/core/shader/shaderasset.h"
 #include "procedural_skybox_queue.h"
 
-IMPLEMENT_CLASS(MProceduralSkyboxEntity)
+IMPLEMENT_SPATIAL_CLASS(MProceduralSkyboxEntity)
 
 // Construction / destruction
 MProceduralSkyboxEntity::MProceduralSkyboxEntity()

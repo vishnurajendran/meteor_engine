@@ -8,7 +8,7 @@
 #include "staticmesh.h"
 #include "staticmeshasset.h"
 
-IMPLEMENT_CLASS(MStaticMeshEntity)
+IMPLEMENT_SPATIAL_CLASS(MStaticMeshEntity)
 
 MStaticMeshEntity::MStaticMeshEntity()
 {

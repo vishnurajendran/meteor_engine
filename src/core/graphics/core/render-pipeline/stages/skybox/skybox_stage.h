@@ -18,6 +18,7 @@ class SFrameBuffer;
 // MCompositeStage blits the finished BUFFER_OPAQUE to the render target.
 class MSkyboxStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MSkyboxStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Transparent - 1; }
 

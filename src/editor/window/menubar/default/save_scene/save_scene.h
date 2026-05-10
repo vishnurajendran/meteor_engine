@@ -12,6 +12,7 @@
 
 class MSaveSceneMenubarItem : public MMenubarItem
 {
+    DEFINE_OBJECT_SUBCLASS(MSaveSceneMenubarItem)
 public:
     [[nodiscard]] int     getPriority() const override;
     [[nodiscard]] SString getPath()     const override;
@@ -27,6 +28,7 @@ private:
 
 class MSaveSceneAsMenubarItem : public MMenubarItem
 {
+    DEFINE_OBJECT_CLASS(MSaveSceneAsMenubarItem)
 public:
     [[nodiscard]] int     getPriority() const override;
     [[nodiscard]] SString getPath()     const override;

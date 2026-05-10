@@ -28,6 +28,7 @@ enum ERenderStageOrder
 
 class MRenderStage : public MObject, public IRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MRenderStage)
 public:
     MRenderStage()          = default;
     ~MRenderStage() override = default;

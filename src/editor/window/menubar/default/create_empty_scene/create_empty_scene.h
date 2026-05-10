@@ -8,6 +8,7 @@
 
 
 class MCreateEmptySceneMenubarItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MCreateEmptySceneMenubarItem)
 public:
     [[nodiscard]] int getPriority() const override;
     [[nodiscard]] SString getPath() const override;

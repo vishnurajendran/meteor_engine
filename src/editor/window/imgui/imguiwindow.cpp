@@ -43,7 +43,7 @@ bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    applyDeepDarkTheme();
+    MEditorThemes::applyDeepDarkTheme();
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size
@@ -122,8 +122,9 @@ void MImGuiWindow::drawImGuiSubWindows(float deltaTime) {
 void MImGuiWindow::showDockSpace() {
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     // Create a full-screen window with no decoration or background
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(viewport->Size);
+    constexpr auto menuBarOffset = 10.0f;
+    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x, viewport->Pos.y + menuBarOffset));
+    ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, viewport->Size.y - menuBarOffset));
     ImGui::SetNextWindowViewport(viewport->ID);
 
     // Set window flags for no decoration, background, or inputs
@@ -133,7 +134,7 @@ void MImGuiWindow::showDockSpace() {
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 40.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 20.0f));
 
    ImGui::Begin(MAIN_DOCKSPACE_ID.c_str(), nullptr, windowFlags);
    ImGui::PopStyleVar(3);

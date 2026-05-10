@@ -9,6 +9,7 @@
 #include "core/window/simple/windowing.h"
 
 class MImGuiWindow : public MWindow {
+    DEFINE_OBJECT_SUBCLASS(MImGuiWindow)
 private:
     std::function<void(void)> graphicsFunction;
 

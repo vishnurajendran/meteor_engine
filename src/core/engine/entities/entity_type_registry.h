@@ -16,8 +16,9 @@
 #include "core/object/type_info.h"
 
 class MSpatialEntity;
-class MEntityTypeRegistry
+class MEntityTypeRegistry : public MObject
 {
+    DEFINE_OBJECT_SUBCLASS(MEntityTypeRegistry);
 public:
     using FactoryFn = std::function<MSpatialEntity*()>;
 

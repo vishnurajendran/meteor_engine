@@ -4,10 +4,11 @@
 
 #ifndef EDITORSCENEMANAGER_H
 #define EDITORSCENEMANAGER_H
+#include "core/engine/camera/camera_spatial_entity.h" // full type needed by MObjectPtr
 #include "core/engine/scene/scenemanager.h"
-#include "core/engine/camera/camera.h"  // full type needed by MObjectPtr
 
 class MEditorSceneManager : public MSceneManager {
+    DEFINE_OBJECT_SUBCLASS(MEditorSceneManager)
 public:
     MEditorSceneManager() = default;
     ~MEditorSceneManager() override = default;

@@ -11,6 +11,7 @@
 class MCameraEntity;
 
 class MCameraEntityInspectorDrawer : MSpatialEntityInspectorDrawer {
+    DEFINE_OBJECT_SUBCLASS(MCameraEntityInspectorDrawer)
 private:
     static const bool registered;
     MAssetReferenceControl refrenceControl;

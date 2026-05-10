@@ -6,6 +6,7 @@
 
 class MOpenSceneMenubarItem : public MMenubarItem
 {
+    DEFINE_OBJECT_SUBCLASS(MOpenSceneMenubarItem)
 public:
     [[nodiscard]] int     getPriority() const override;
     [[nodiscard]] SString getPath()     const override;

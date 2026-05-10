@@ -7,7 +7,8 @@
 #include "core/object/object.h"
 #include "settings/engine_settings.h"
 
-class MEngineStatics : MObject {
+class MEngineStatics : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MEngineStatics)
 public:
     static void init(const SString& inEngineSettingsPath);
     static void saveAll();

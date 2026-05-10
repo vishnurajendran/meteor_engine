@@ -4,14 +4,15 @@
 
 #ifndef SKYBOXDRAWCALL_H
 #define SKYBOXDRAWCALL_H
-#include "../../../shader/shader.h"
-#include "../legacy_render_stage/opengldrawcall.h"
+#include "core/graphics/core/shader/shader.h"
+#include "core/graphics/core/render-pipeline/draw_calls/opengldrawcall.h"
 
 
 class MCubemapAsset;
 class MMaterial;
 class MCubemapTexture;
 class MSkyboxDrawCall : public MOpenGlDrawCall {
+    DEFINE_OBJECT_SUBCLASS(MSkyboxDrawCall)
 private:
     unsigned int skyboxVAO, skyboxVBO;
     MCubemapAsset* cubemapTexture;

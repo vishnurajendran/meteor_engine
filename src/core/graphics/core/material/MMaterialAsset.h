@@ -16,6 +16,7 @@ class MMaterial;
 
 class MMaterialAsset : public MAsset, public SerializedClassBase
 {
+    DEFINE_OBJECT_SUBCLASS(MMaterialAsset)
 public:
     bool hasDeferredLoad() const override { return true; }
     void deferredAssetLoad(bool forced) override;

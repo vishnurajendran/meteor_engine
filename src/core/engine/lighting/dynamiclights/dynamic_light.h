@@ -9,6 +9,7 @@
 
 
 class MDynamicLight : public MLightEntity {
+    DEFINE_OBJECT_SUBCLASS(MDynamicLight)
 protected:
     SDynamicLightDataStruct lightData;
 public:

@@ -8,6 +8,7 @@
 
 
 class MTextAssetImporter : public MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MTextAssetImporter)
 private:
     static bool registered;
 public:

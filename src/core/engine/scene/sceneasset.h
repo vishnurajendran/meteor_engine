@@ -9,6 +9,7 @@
 #include "pugixml.hpp"
 
 class MSceneAsset : public MAsset {
+    DEFINE_OBJECT_SUBCLASS(MSceneAsset)
 private:
     pugi::xml_document* sceneHierarchy;
 public:

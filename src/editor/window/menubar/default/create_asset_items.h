@@ -29,6 +29,7 @@ struct SShaderEntry
 
 class MCreateMaterialItem : public MMenubarItem
 {
+    DEFINE_OBJECT_SUBCLASS(MCreateMaterialItem)
 public:
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR; }
     [[nodiscard]] SString getPath()     const override { return "Assets/Create/Material"; }

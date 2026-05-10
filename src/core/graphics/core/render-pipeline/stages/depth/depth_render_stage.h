@@ -19,6 +19,7 @@ class MShader;
 // so no GLSL lives in engine source code.
 class MDepthRenderStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MDepthRenderStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Depth; }
 

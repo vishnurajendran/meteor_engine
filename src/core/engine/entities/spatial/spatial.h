@@ -22,7 +22,7 @@ class MSpatialEntity : public MObject, public SerializedClassBase
 {
     // MSpatialEntity declares itself so it participates in the registry too.
     // Any plain "MSpatialEntity" node in a scene file deserializes to this type.
-    DEFINE_CLASS(MSpatialEntity)
+    DEFINE_SPATIAL_CLASS(MSpatialEntity)
 
 public:
     // createInstance is still needed by the templated factory in DEFINE_CLASS.

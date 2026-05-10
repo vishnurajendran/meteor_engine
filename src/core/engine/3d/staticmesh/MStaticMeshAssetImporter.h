@@ -8,6 +8,7 @@
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 
 class MStaticMeshAssetImporter : public MAssetImporter {
+    DEFINE_OBJECT_SUBCLASS(MStaticMeshAssetImporter)
 private:
     static bool registered;
 public:

@@ -19,6 +19,7 @@ class SFrameBuffer;
 // final lit image:  albedo × (ambient + directional + spot/point) = result.
 class MLightingStage : public MRenderStage
 {
+    DEFINE_OBJECT_SUBCLASS(MLightingStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Lighting; }
 
