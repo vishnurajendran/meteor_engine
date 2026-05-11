@@ -16,6 +16,8 @@ struct aiScene;
 struct aiNode;
 struct aiMesh;
 
+/// This Asset holds the reference for static meshes. An asset can
+/// hold multiple static mesh instances.
 class MStaticMeshAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MStaticMeshAsset)
 private:
@@ -23,6 +25,8 @@ private:
 public:
     explicit MStaticMeshAsset(const SString& path);
     ~MStaticMeshAsset() override;
+
+    /// Returns all static meshes within the asset.
     [[nodiscard]] std::vector<MStaticMesh*> getMeshes() const;
 
     bool requestReload() override { loadMesh(path); return valid; }

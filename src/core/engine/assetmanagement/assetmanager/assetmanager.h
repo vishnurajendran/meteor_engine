@@ -16,6 +16,9 @@ namespace pugi {
     class xml_document;
 }
 
+/// The Asset Manager is the central repository for all assets in the engine.
+/// Any asset reference needed will be retrieved through this class instance.
+/// At any point during engine runtime, there is only one instance of the asset-manager.
 class MAssetManager : public MObject
 {
     DEFINE_OBJECT_CLASS(MAssetManager)
@@ -24,10 +27,17 @@ private:
     const SString ASSET_FILE_TAG = "asset_id";
     const SString ASSET_ID_ATTRIB = "id";
 public:
+
+    /// Get instance of asset-manager singleton
     static MAssetManager* getInstance();
     static void registerAssetManagerInstance(MAssetManager* instance);
+
+    /// Refresh the asset-manager
     virtual void refresh();
+    /// Cleanup asset-manager
     virtual void cleanup();
+
+    /// Get an asset using relative path.
     template <typename T>
     T* getAsset(SString path) {
         static_assert(std::is_base_of<MAsset, T>::value,"T must inherit from MAsset");
@@ -39,6 +49,7 @@ public:
         return nullptr;
     }
 
+    /// Get an asset using Asset-Id
     template <typename T>
     T* getAssetById(const SString& assetId) {
         static_assert(std::is_base_of_v<MAsset, T>,"T must inherit from MAsset");

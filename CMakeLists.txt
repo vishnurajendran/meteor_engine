@@ -393,8 +393,8 @@ set(EDITOR_SOURCES
         src/editor/editorscenemanager/editorscenemanager.h
         src/editor/app/editorapplication.cpp
         src/editor/app/editorapplication.h
-        src/editor/window/imgui/imguiwindow.cpp
         src/editor/window/imgui/imguiwindow.h
+        src/editor/window/imgui/imguiwindow.cpp
         src/editor/window/imgui/imguisubwindow.cpp
         src/editor/window/imgui/imguisubwindow.h
         src/editor/window/imgui/imguisubwindowmanager.cpp
@@ -403,8 +403,6 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/console/editorconsolewindow.cpp
         src/editor/editorwindows/console/editorconsolewindow.h
         src/editor/meteorite.h
-        src/editor/window/imgui/imguistyles.cpp
-        src/editor/window/imgui/imguistyles.h
         src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
         src/editor/editorwindows/hierarchy/editorhierarchywindow.h
         src/editor/editorwindows/inspector/editorinspectorwindow.cpp
@@ -482,6 +480,10 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/create_asset_items.h
         src/editor/editorwindows/inspectordrawer/skybox/cubemap/skybox_inspector_drawer.cpp
         src/editor/editorwindows/inspectordrawer/skybox/cubemap/skybox_inspector_drawer.h
+        src/editor/settings/editor_settings.cpp
+        src/editor/settings/editor_settings.h
+        src/editor/themes/editor_themes.cpp
+        src/editor/themes/editor_themes.h
 )
 
 set(PLAYER_SOURCES

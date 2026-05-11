@@ -30,6 +30,10 @@ void MPlayerApplication::cleanup() {
 }
 
 void MPlayerApplication::initialise() {
+
+    // init engine settings.
+    MEngineStatics::loadEngineSettings<MEngineSettings>(getEngineSettingsPath());
+
     //appRunning = true;
     MLOG(STR("Initialising Player"));
     window = new MWindow();

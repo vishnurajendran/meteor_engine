@@ -19,17 +19,24 @@ public:
     MAsset(const SString& path);
     ~MAsset() override = default;
 
+    /// Get relative path to the asset.
     SString getPath() const;
+
+    /// Get absolute path to the asset.
     SString getFullPath() const;
+
+    /// Returns true, if the asset is Valid, and use-able.
     bool isValid() const;
 
+    /// Get the unique persistent id for this asset on disk
     SString getAssetId() const { return assetId; }
     void internal_SetAssetId(const SString& assetId);
 
     // tries handling of asset open request.
     virtual bool openAsset() { return false; }
 
-    // force a reload on asset
+    /// Force a reload for this asset, it will re-import the asset
+    /// redo any processes required for the asset.
     virtual bool requestReload() = 0;
 
     /// Inform that this asset needs deferred loading.\n\n

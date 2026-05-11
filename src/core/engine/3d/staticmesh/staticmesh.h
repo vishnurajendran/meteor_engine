@@ -9,12 +9,14 @@
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
 
+/// Vertex info struct for mesh
 struct SVertex {
     SVector3 Position;
     SVector3 Normal;
     SVector2 TexCoords;
 };
 
+/// Represents a static mesh, in the meteor engine.
 class MStaticMesh : public MObject
 {
     // Non-spatial, non-serialized — just needs typeInfo() for editor/reflection.
