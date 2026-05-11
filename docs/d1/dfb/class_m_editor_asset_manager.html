@@ -136,6 +136,7 @@ Inheritance diagram for MEditorAssetManager:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:acc65b37069a2c2d50fc9f073148de4d9" id="r_acc65b37069a2c2d50fc9f073148de4d9"><td class="memItemLeft">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="#acc65b37069a2c2d50fc9f073148de4d9">typeInfo</a> () const override</td></tr>
 <tr class="memitem:a9086169c0f20289889461641c2b4b093" id="r_a9086169c0f20289889461641c2b4b093"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a9086169c0f20289889461641c2b4b093">refresh</a> () override</td></tr>
+<tr class="memdesc:a9086169c0f20289889461641c2b4b093"><td class="mdescLeft">&#160;</td><td class="mdescRight">Refresh the asset-manager.  <br /></td></tr>
 <tr class="memitem:ab69843046bb8481491c6f1fc055e318c" id="r_ab69843046bb8481491c6f1fc055e318c"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ab69843046bb8481491c6f1fc055e318c">openAsset</a> (<a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> *asset)</td></tr>
 <tr class="memitem:a86318412f4eead27cef5f54c8e3b8334" id="r_a86318412f4eead27cef5f54c8e3b8334"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#a86318412f4eead27cef5f54c8e3b8334">tickHotReload</a> ()</td></tr>
 <tr class="memitem:a9fdbe8a3912daa9d50bc0464a58fef7a" id="r_a9fdbe8a3912daa9d50bc0464a58fef7a"><td class="memItemLeft">int&#160;</td><td class="memItemRight"><a class="el" href="#a9fdbe8a3912daa9d50bc0464a58fef7a">getTotalHotReloadCount</a> () const</td></tr>
@@ -144,97 +145,61 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a916c64b155863fcf2bc30bb7479f4963" id="r_a916c64b155863fcf2bc30bb7479f4963"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="#a916c64b155863fcf2bc30bb7479f4963">consumePendingPing</a> ()</td></tr>
 <tr class="memitem:a23024b2ee4de8a16ba1cb341f1f3d0a1" id="r_a23024b2ee4de8a16ba1cb341f1f3d0a1"><td class="memItemLeft">sf::Texture *&#160;</td><td class="memItemRight"><a class="el" href="#a23024b2ee4de8a16ba1cb341f1f3d0a1">getThumbnail</a> (<a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> *asset)</td></tr>
 <tr class="memitem:a0db101233d5803a990ff80f30bfafc0d" id="r_a0db101233d5803a990ff80f30bfafc0d"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a0db101233d5803a990ff80f30bfafc0d">requestThumbnail</a> (<a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> *asset)</td></tr>
-<tr class="memitem:a8ed608bc6e1f6b43d17c1526e9dbc397" id="r_a8ed608bc6e1f6b43d17c1526e9dbc397"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a8ed608bc6e1f6b43d17c1526e9dbc397">cleanup</a> ()</td></tr>
-<tr class="memitem:a6471a0e76629abb2d821a76da41a2d9a" id="r_a6471a0e76629abb2d821a76da41a2d9a"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
-<tr class="memitem:a6471a0e76629abb2d821a76da41a2d9a template"><td class="memItemLeft">T *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a6471a0e76629abb2d821a76da41a2d9a">getAsset</a> (<a class="el" href="../../dc/d54/struct_s_string.html">SString</a> path)</td></tr>
-<tr class="memitem:a3d93390be22fe327a5f0824ac5c7172e" id="r_a3d93390be22fe327a5f0824ac5c7172e"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
-<tr class="memitem:a3d93390be22fe327a5f0824ac5c7172e template"><td class="memItemLeft">T *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a3d93390be22fe327a5f0824ac5c7172e">getAssetById</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;assetId)</td></tr>
-<tr class="memitem:a89a6495b6e98746e0e1945caae839a84" id="r_a89a6495b6e98746e0e1945caae839a84"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a89a6495b6e98746e0e1945caae839a84">getGUID</a> () const</td></tr>
-<tr class="memitem:a3700c35f75e3119ec8e930503cdff1d0" id="r_a3700c35f75e3119ec8e930503cdff1d0"><td class="memItemLeft">virtual <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a3700c35f75e3119ec8e930503cdff1d0">toString</a> () const</td></tr>
-<tr class="memitem:a53b6baf76db4e7f66b7aa08198195799" id="r_a53b6baf76db4e7f66b7aa08198195799"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a53b6baf76db4e7f66b7aa08198195799">equals</a> (const <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a> *obj) const</td></tr>
-<tr class="memitem:a662e9483ef27e9e77fc1048e86b4efca" id="r_a662e9483ef27e9e77fc1048e86b4efca"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a662e9483ef27e9e77fc1048e86b4efca">setName</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;newName)</td></tr>
-<tr class="memitem:aad84df3702d86545be9720c387493c29" id="r_aad84df3702d86545be9720c387493c29"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aad84df3702d86545be9720c387493c29">getName</a> () const</td></tr>
-<tr class="memitem:a1a86c190e85749ea7385c5c210b4b79e" id="r_a1a86c190e85749ea7385c5c210b4b79e"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a1a86c190e85749ea7385c5c210b4b79e">operator delete</a> (void *ptr)</td></tr>
+<tr class="inherit_header pub_methods_class_m_asset_manager"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a></td></tr>
+<tr class="memitem:a8ed608bc6e1f6b43d17c1526e9dbc397 pub_methods_class_m_asset_manager" id="r_a8ed608bc6e1f6b43d17c1526e9dbc397"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a8ed608bc6e1f6b43d17c1526e9dbc397">cleanup</a> ()</td></tr>
+<tr class="memdesc:a8ed608bc6e1f6b43d17c1526e9dbc397 pub_methods_class_m_asset_manager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cleanup asset-manager.  <br /></td></tr>
+<tr class="memitem:a6471a0e76629abb2d821a76da41a2d9a pub_methods_class_m_asset_manager" id="r_a6471a0e76629abb2d821a76da41a2d9a"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a6471a0e76629abb2d821a76da41a2d9a pub_methods_class_m_asset_manager template"><td class="memItemLeft">T *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a6471a0e76629abb2d821a76da41a2d9a">getAsset</a> (<a class="el" href="../../dc/d54/struct_s_string.html">SString</a> path)</td></tr>
+<tr class="memdesc:a6471a0e76629abb2d821a76da41a2d9a pub_methods_class_m_asset_manager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an asset using relative path.  <br /></td></tr>
+<tr class="memitem:a3d93390be22fe327a5f0824ac5c7172e pub_methods_class_m_asset_manager" id="r_a3d93390be22fe327a5f0824ac5c7172e"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a3d93390be22fe327a5f0824ac5c7172e pub_methods_class_m_asset_manager template"><td class="memItemLeft">T *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a3d93390be22fe327a5f0824ac5c7172e">getAssetById</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;assetId)</td></tr>
+<tr class="memdesc:a3d93390be22fe327a5f0824ac5c7172e pub_methods_class_m_asset_manager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get an asset using Asset-Id.  <br /></td></tr>
+<tr class="inherit_header pub_methods_class_m_object"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
+<tr class="memitem:a48fd4059be176487607315d88d715a97 pub_methods_class_m_object" id="r_a48fd4059be176487607315d88d715a97"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a48fd4059be176487607315d88d715a97">MObject</a> ()</td></tr>
+<tr class="memitem:a276f6c0aac01aaa700636a399000a954 pub_methods_class_m_object" id="r_a276f6c0aac01aaa700636a399000a954"><td class="memItemLeft">virtual&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a276f6c0aac01aaa700636a399000a954">~MObject</a> ()=default</td></tr>
+<tr class="memitem:a89a6495b6e98746e0e1945caae839a84 pub_methods_class_m_object" id="r_a89a6495b6e98746e0e1945caae839a84"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a89a6495b6e98746e0e1945caae839a84">getGUID</a> () const</td></tr>
+<tr class="memdesc:a89a6495b6e98746e0e1945caae839a84 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the unique instance id for this object  <br /></td></tr>
+<tr class="memitem:a3700c35f75e3119ec8e930503cdff1d0 pub_methods_class_m_object" id="r_a3700c35f75e3119ec8e930503cdff1d0"><td class="memItemLeft">virtual <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a3700c35f75e3119ec8e930503cdff1d0">toString</a> () const</td></tr>
+<tr class="memdesc:a3700c35f75e3119ec8e930503cdff1d0 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns string representation of this object.  <br /></td></tr>
+<tr class="memitem:a53b6baf76db4e7f66b7aa08198195799 pub_methods_class_m_object" id="r_a53b6baf76db4e7f66b7aa08198195799"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a53b6baf76db4e7f66b7aa08198195799">equals</a> (const <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a> *obj) const</td></tr>
+<tr class="memdesc:a53b6baf76db4e7f66b7aa08198195799 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks if two object instances are equal. default impl check guid equality  <br /></td></tr>
+<tr class="memitem:a662e9483ef27e9e77fc1048e86b4efca pub_methods_class_m_object" id="r_a662e9483ef27e9e77fc1048e86b4efca"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a662e9483ef27e9e77fc1048e86b4efca">setName</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;newName)</td></tr>
+<tr class="memdesc:a662e9483ef27e9e77fc1048e86b4efca pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets the name of this object  <br /></td></tr>
+<tr class="memitem:aad84df3702d86545be9720c387493c29 pub_methods_class_m_object" id="r_aad84df3702d86545be9720c387493c29"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aad84df3702d86545be9720c387493c29">getName</a> () const</td></tr>
+<tr class="memdesc:aad84df3702d86545be9720c387493c29 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the name of this object  <br /></td></tr>
+<tr class="memitem:a1a86c190e85749ea7385c5c210b4b79e pub_methods_class_m_object" id="r_a1a86c190e85749ea7385c5c210b4b79e"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a1a86c190e85749ea7385c5c210b4b79e">operator delete</a> (void *ptr)</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ae3d61ba8af4b2b2aa46a48e604ea8ca2" id="r_ae3d61ba8af4b2b2aa46a48e604ea8ca2"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="#ae3d61ba8af4b2b2aa46a48e604ea8ca2">staticTypeInfo</a> ()</td></tr>
-<tr class="memitem:a66452e34a5c33368e3ddd388fff6b3c0" id="r_a66452e34a5c33368e3ddd388fff6b3c0"><td class="memItemLeft">static <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a66452e34a5c33368e3ddd388fff6b3c0">getInstance</a> ()</td></tr>
-<tr class="memitem:a4a39e8a989e35a175d5363cb24a5c41e" id="r_a4a39e8a989e35a175d5363cb24a5c41e"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a4a39e8a989e35a175d5363cb24a5c41e">registerAssetManagerInstance</a> (<a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *instance)</td></tr>
+<tr class="inherit_header pub_static_methods_class_m_asset_manager"><td colspan="2">Static Public Member Functions inherited from <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a></td></tr>
+<tr class="memitem:a66452e34a5c33368e3ddd388fff6b3c0 pub_static_methods_class_m_asset_manager" id="r_a66452e34a5c33368e3ddd388fff6b3c0"><td class="memItemLeft">static <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a66452e34a5c33368e3ddd388fff6b3c0">getInstance</a> ()</td></tr>
+<tr class="memdesc:a66452e34a5c33368e3ddd388fff6b3c0 pub_static_methods_class_m_asset_manager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get instance of asset-manager singleton.  <br /></td></tr>
+<tr class="memitem:a4a39e8a989e35a175d5363cb24a5c41e pub_static_methods_class_m_asset_manager" id="r_a4a39e8a989e35a175d5363cb24a5c41e"><td class="memItemLeft">static void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a4a39e8a989e35a175d5363cb24a5c41e">registerAssetManagerInstance</a> (<a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *instance)</td></tr>
+<tr class="inherit_header pub_static_methods_class_m_object"><td colspan="2">Static Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
+<tr class="memitem:a85240a1f6f04d73bb79acb95aa20e8aa pub_static_methods_class_m_object" id="r_a85240a1f6f04d73bb79acb95aa20e8aa"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a85240a1f6f04d73bb79acb95aa20e8aa">staticTypeInfo</a> ()</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:afdba88336fac7eb6792c856843c81901" id="r_afdba88336fac7eb6792c856843c81901"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#afdba88336fac7eb6792c856843c81901">loadAssetRecursive</a> (<a class="el" href="../../dc/d54/struct_s_string.html">SString</a> path)</td></tr>
-<tr class="memitem:a741e9c1b4d8a776b02d64008795c08dd" id="r_a741e9c1b4d8a776b02d64008795c08dd"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a741e9c1b4d8a776b02d64008795c08dd">loadAsset</a> (<a class="el" href="../../dc/d54/struct_s_string.html">SString</a> path)</td></tr>
-<tr class="memitem:a04bb6e4029e967edb59cbcdf06f81d32" id="r_a04bb6e4029e967edb59cbcdf06f81d32"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a04bb6e4029e967edb59cbcdf06f81d32">addToDeferredLoadableAssetList</a> (<a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> *asset)</td></tr>
-<tr class="memitem:a634cb0546426f78e31bd45be7a3d810a" id="r_a634cb0546426f78e31bd45be7a3d810a"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a634cb0546426f78e31bd45be7a3d810a">createMetaFile</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;filePath)</td></tr>
-<tr class="memitem:aa7ebf0e2690bd9bd6b5006de6177576a" id="r_aa7ebf0e2690bd9bd6b5006de6177576a"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#aa7ebf0e2690bd9bd6b5006de6177576a">loadMetaData</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;path, pugi::xml_document &amp;metaData)</td></tr>
-<tr class="memitem:a3dac6b85549e51ac0f7fb40cb651cb41" id="r_a3dac6b85549e51ac0f7fb40cb651cb41"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a3dac6b85549e51ac0f7fb40cb651cb41">hasMetaData</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;path)</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pro-attribs" class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:aabc13386081ba0d0be00be0395aaae86" id="r_aabc13386081ba0d0be00be0395aaae86"><td class="memItemLeft">std::vector&lt; <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#aabc13386081ba0d0be00be0395aaae86">ASSET_SEARCH_PATHS</a> = {&quot;assets/&quot;, &quot;meteor_assets/engine_assets/&quot;}</td></tr>
-<tr class="memitem:a70884728d5c026e94516395d344fd3c5" id="r_a70884728d5c026e94516395d344fd3c5"><td class="memItemLeft">std::map&lt; <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>, <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a70884728d5c026e94516395d344fd3c5">assetMap</a></td></tr>
-<tr class="memitem:acd617f36145c3a0ecd80e333312e7af2" id="r_acd617f36145c3a0ecd80e333312e7af2"><td class="memItemLeft">std::map&lt; <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>, <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#acd617f36145c3a0ecd80e333312e7af2">assetMapByAssetId</a></td></tr>
-<tr class="memitem:ac7d3f221cb6fc9b863bf603b8126ee49" id="r_ac7d3f221cb6fc9b863bf603b8126ee49"><td class="memItemLeft">std::vector&lt; <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#ac7d3f221cb6fc9b863bf603b8126ee49">defferedLoadableAssetList</a></td></tr>
-<tr class="memitem:aa788a13c17186e976d7b5a08067c7c65" id="r_aa788a13c17186e976d7b5a08067c7c65"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aa788a13c17186e976d7b5a08067c7c65">guid</a></td></tr>
-<tr class="memitem:a66ec44e656e7bb47fb89770fd2a884b6" id="r_a66ec44e656e7bb47fb89770fd2a884b6"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a66ec44e656e7bb47fb89770fd2a884b6">name</a></td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pro-static-attribs" class="groupheader"><a id="pro-static-attribs" name="pro-static-attribs"></a>
-Static Protected Attributes</h2></td></tr>
-<tr class="memitem:ae3a6aefc597975aae27b6524674b3e37" id="r_ae3a6aefc597975aae27b6524674b3e37"><td class="memItemLeft">static <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#ae3a6aefc597975aae27b6524674b3e37">managerInstance</a> = nullptr</td></tr>
+<tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pro_methods_class_m_asset_manager"><td colspan="2">Protected Member Functions inherited from <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a></td></tr>
+<tr class="memitem:afdba88336fac7eb6792c856843c81901 pro_methods_class_m_asset_manager" id="r_afdba88336fac7eb6792c856843c81901"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#afdba88336fac7eb6792c856843c81901">loadAssetRecursive</a> (<a class="el" href="../../dc/d54/struct_s_string.html">SString</a> path)</td></tr>
+<tr class="memitem:a741e9c1b4d8a776b02d64008795c08dd pro_methods_class_m_asset_manager" id="r_a741e9c1b4d8a776b02d64008795c08dd"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a741e9c1b4d8a776b02d64008795c08dd">loadAsset</a> (<a class="el" href="../../dc/d54/struct_s_string.html">SString</a> path)</td></tr>
+<tr class="memitem:a04bb6e4029e967edb59cbcdf06f81d32 pro_methods_class_m_asset_manager" id="r_a04bb6e4029e967edb59cbcdf06f81d32"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a04bb6e4029e967edb59cbcdf06f81d32">addToDeferredLoadableAssetList</a> (<a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> *asset)</td></tr>
+<tr class="memitem:a634cb0546426f78e31bd45be7a3d810a pro_methods_class_m_asset_manager" id="r_a634cb0546426f78e31bd45be7a3d810a"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a634cb0546426f78e31bd45be7a3d810a">createMetaFile</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;filePath)</td></tr>
+<tr class="memitem:aa7ebf0e2690bd9bd6b5006de6177576a pro_methods_class_m_asset_manager" id="r_aa7ebf0e2690bd9bd6b5006de6177576a"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#aa7ebf0e2690bd9bd6b5006de6177576a">loadMetaData</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;path, pugi::xml_document &amp;metaData)</td></tr>
+<tr class="memitem:a3dac6b85549e51ac0f7fb40cb651cb41 pro_methods_class_m_asset_manager" id="r_a3dac6b85549e51ac0f7fb40cb651cb41"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a3dac6b85549e51ac0f7fb40cb651cb41">hasMetaData</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;path)</td></tr>
+<tr class="inherit_header pro_attribs_class_m_asset_manager"><td colspan="2">Protected Attributes inherited from <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a></td></tr>
+<tr class="memitem:aabc13386081ba0d0be00be0395aaae86 pro_attribs_class_m_asset_manager" id="r_aabc13386081ba0d0be00be0395aaae86"><td class="memItemLeft">std::vector&lt; <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#aabc13386081ba0d0be00be0395aaae86">ASSET_SEARCH_PATHS</a> = {&quot;assets/&quot;, &quot;meteor_assets/engine_assets/&quot;}</td></tr>
+<tr class="memitem:a70884728d5c026e94516395d344fd3c5 pro_attribs_class_m_asset_manager" id="r_a70884728d5c026e94516395d344fd3c5"><td class="memItemLeft">std::map&lt; <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>, <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#a70884728d5c026e94516395d344fd3c5">assetMap</a></td></tr>
+<tr class="memitem:acd617f36145c3a0ecd80e333312e7af2 pro_attribs_class_m_asset_manager" id="r_acd617f36145c3a0ecd80e333312e7af2"><td class="memItemLeft">std::map&lt; <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>, <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#acd617f36145c3a0ecd80e333312e7af2">assetMapByAssetId</a></td></tr>
+<tr class="memitem:ac7d3f221cb6fc9b863bf603b8126ee49 pro_attribs_class_m_asset_manager" id="r_ac7d3f221cb6fc9b863bf603b8126ee49"><td class="memItemLeft">std::vector&lt; <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#ac7d3f221cb6fc9b863bf603b8126ee49">defferedLoadableAssetList</a></td></tr>
+<tr class="inherit_header pro_attribs_class_m_object"><td colspan="2">Protected Attributes inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
+<tr class="memitem:aa788a13c17186e976d7b5a08067c7c65 pro_attribs_class_m_object" id="r_aa788a13c17186e976d7b5a08067c7c65"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aa788a13c17186e976d7b5a08067c7c65">guid</a></td></tr>
+<tr class="memitem:a66ec44e656e7bb47fb89770fd2a884b6 pro_attribs_class_m_object" id="r_a66ec44e656e7bb47fb89770fd2a884b6"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a66ec44e656e7bb47fb89770fd2a884b6">name</a></td></tr>
+<tr class="inherit_header pro_static_attribs_class_m_asset_manager"><td colspan="2">Static Protected Attributes inherited from <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a></td></tr>
+<tr class="memitem:ae3a6aefc597975aae27b6524674b3e37 pro_static_attribs_class_m_asset_manager" id="r_ae3a6aefc597975aae27b6524674b3e37"><td class="memItemLeft">static <a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *&#160;</td><td class="memItemRight"><a class="el" href="../../dc/dfa/class_m_asset_manager.html#ae3a6aefc597975aae27b6524674b3e37">managerInstance</a> = nullptr</td></tr>
 </table>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a04bb6e4029e967edb59cbcdf06f81d32" name="a04bb6e4029e967edb59cbcdf06f81d32"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04bb6e4029e967edb59cbcdf06f81d32">&#9670;&#160;</a></span>addToDeferredLoadableAssetList()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MAssetManager::addToDeferredLoadableAssetList </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a> *</td>          <td class="paramname"><span class="paramname"><em>asset</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a8ed608bc6e1f6b43d17c1526e9dbc397" name="a8ed608bc6e1f6b43d17c1526e9dbc397"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ed608bc6e1f6b43d17c1526e9dbc397">&#9670;&#160;</a></span>cleanup()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MAssetManager::cleanup </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a916c64b155863fcf2bc30bb7479f4963" name="a916c64b155863fcf2bc30bb7479f4963"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a916c64b155863fcf2bc30bb7479f4963">&#9670;&#160;</a></span>consumePendingPing()</h2>
 
@@ -260,110 +225,6 @@ Static Protected Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a634cb0546426f78e31bd45be7a3d810a" name="a634cb0546426f78e31bd45be7a3d810a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a634cb0546426f78e31bd45be7a3d810a">&#9670;&#160;</a></span>createMetaFile()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MAssetManager::createMetaFile </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>filePath</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a53b6baf76db4e7f66b7aa08198195799" name="a53b6baf76db4e7f66b7aa08198195799"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a53b6baf76db4e7f66b7aa08198195799">&#9670;&#160;</a></span>equals()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MObject::equals </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a> *</td>          <td class="paramname"><span class="paramname"><em>obj</em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a6471a0e76629abb2d821a76da41a2d9a" name="a6471a0e76629abb2d821a76da41a2d9a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6471a0e76629abb2d821a76da41a2d9a">&#9670;&#160;</a></span>getAsset()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">T * MAssetManager::getAsset </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a></td>          <td class="paramname"><span class="paramname"><em>path</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a3d93390be22fe327a5f0824ac5c7172e" name="a3d93390be22fe327a5f0824ac5c7172e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d93390be22fe327a5f0824ac5c7172e">&#9670;&#160;</a></span>getAssetById()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">T * MAssetManager::getAssetById </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>assetId</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a924dab6348a70a33b82f243df15ec527" name="a924dab6348a70a33b82f243df15ec527"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a924dab6348a70a33b82f243df15ec527">&#9670;&#160;</a></span>getAssetRootNode()</h2>
 
@@ -383,81 +244,6 @@ template&lt;typename T&gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel nodiscard">nodiscard</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a89a6495b6e98746e0e1945caae839a84" name="a89a6495b6e98746e0e1945caae839a84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a89a6495b6e98746e0e1945caae839a84">&#9670;&#160;</a></span>getGUID()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::getGUID </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a66452e34a5c33368e3ddd388fff6b3c0" name="a66452e34a5c33368e3ddd388fff6b3c0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a66452e34a5c33368e3ddd388fff6b3c0">&#9670;&#160;</a></span>getInstance()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> * MAssetManager::getInstance </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel static">static</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aad84df3702d86545be9720c387493c29" name="aad84df3702d86545be9720c387493c29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad84df3702d86545be9720c387493c29">&#9670;&#160;</a></span>getName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::getName </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel nodiscard">nodiscard</span><span class="mlabel inherited">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -506,110 +292,6 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
-<a id="a3dac6b85549e51ac0f7fb40cb651cb41" name="a3dac6b85549e51ac0f7fb40cb651cb41"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3dac6b85549e51ac0f7fb40cb651cb41">&#9670;&#160;</a></span>hasMetaData()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MAssetManager::hasMetaData </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>path</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a741e9c1b4d8a776b02d64008795c08dd" name="a741e9c1b4d8a776b02d64008795c08dd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a741e9c1b4d8a776b02d64008795c08dd">&#9670;&#160;</a></span>loadAsset()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MAssetManager::loadAsset </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a></td>          <td class="paramname"><span class="paramname"><em>path</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="afdba88336fac7eb6792c856843c81901" name="afdba88336fac7eb6792c856843c81901"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afdba88336fac7eb6792c856843c81901">&#9670;&#160;</a></span>loadAssetRecursive()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MAssetManager::loadAssetRecursive </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a></td>          <td class="paramname"><span class="paramname"><em>path</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aa7ebf0e2690bd9bd6b5006de6177576a" name="aa7ebf0e2690bd9bd6b5006de6177576a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa7ebf0e2690bd9bd6b5006de6177576a">&#9670;&#160;</a></span>loadMetaData()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MAssetManager::loadMetaData </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>path</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">pugi::xml_document &amp;</td>          <td class="paramname"><span class="paramname"><em>metaData</em></span>&#160;)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="ab69843046bb8481491c6f1fc055e318c" name="ab69843046bb8481491c6f1fc055e318c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab69843046bb8481491c6f1fc055e318c">&#9670;&#160;</a></span>openAsset()</h2>
 
@@ -623,31 +305,6 @@ template&lt;typename T&gt; </div>
           <td></td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a1a86c190e85749ea7385c5c210b4b79e" name="a1a86c190e85749ea7385c5c210b4b79e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1a86c190e85749ea7385c5c210b4b79e">&#9670;&#160;</a></span>operator delete()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MObject::operator delete </td>
-          <td>(</td>
-          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>ptr</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -700,32 +357,9 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>Refresh the asset-manager. </p>
+
 <p>Reimplemented from <a class="el" href="../../dc/dfa/class_m_asset_manager.html#ae9357b47f8ea48a09cc0b05054d4f2c2">MAssetManager</a>.</p>
-
-</div>
-</div>
-<a id="a4a39e8a989e35a175d5363cb24a5c41e" name="a4a39e8a989e35a175d5363cb24a5c41e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a39e8a989e35a175d5363cb24a5c41e">&#9670;&#160;</a></span>registerAssetManagerInstance()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MAssetManager::registerAssetManagerInstance </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> *</td>          <td class="paramname"><span class="paramname"><em>instance</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel static">static</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -742,31 +376,6 @@ template&lt;typename T&gt; </div>
           <td></td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a662e9483ef27e9e77fc1048e86b4efca" name="a662e9483ef27e9e77fc1048e86b4efca"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a662e9483ef27e9e77fc1048e86b4efca">&#9670;&#160;</a></span>setName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MObject::setName </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>newName</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -813,31 +422,6 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
-<a id="a3700c35f75e3119ec8e930503cdff1d0" name="a3700c35f75e3119ec8e930503cdff1d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3700c35f75e3119ec8e930503cdff1d0">&#9670;&#160;</a></span>toString()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::toString </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="acc65b37069a2c2d50fc9f073148de4d9" name="acc65b37069a2c2d50fc9f073148de4d9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acc65b37069a2c2d50fc9f073148de4d9">&#9670;&#160;</a></span>typeInfo()</h2>
 
@@ -866,161 +450,6 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
-<a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Member Data Documentation</h2>
-<a id="aabc13386081ba0d0be00be0395aaae86" name="aabc13386081ba0d0be00be0395aaae86"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aabc13386081ba0d0be00be0395aaae86">&#9670;&#160;</a></span>ASSET_SEARCH_PATHS</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt;<a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&gt; MAssetManager::ASSET_SEARCH_PATHS = {&quot;assets/&quot;, &quot;meteor_assets/engine_assets/&quot;}</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a70884728d5c026e94516395d344fd3c5" name="a70884728d5c026e94516395d344fd3c5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70884728d5c026e94516395d344fd3c5">&#9670;&#160;</a></span>assetMap</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::map&lt;<a class="el" href="../../dc/d54/struct_s_string.html">SString</a>, <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a>*&gt; MAssetManager::assetMap</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="acd617f36145c3a0ecd80e333312e7af2" name="acd617f36145c3a0ecd80e333312e7af2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acd617f36145c3a0ecd80e333312e7af2">&#9670;&#160;</a></span>assetMapByAssetId</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::map&lt;<a class="el" href="../../dc/d54/struct_s_string.html">SString</a>, <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a>*&gt; MAssetManager::assetMapByAssetId</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ac7d3f221cb6fc9b863bf603b8126ee49" name="ac7d3f221cb6fc9b863bf603b8126ee49"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac7d3f221cb6fc9b863bf603b8126ee49">&#9670;&#160;</a></span>defferedLoadableAssetList</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt;<a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a>*&gt; MAssetManager::defferedLoadableAssetList</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aa788a13c17186e976d7b5a08067c7c65" name="aa788a13c17186e976d7b5a08067c7c65"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa788a13c17186e976d7b5a08067c7c65">&#9670;&#160;</a></span>guid</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::guid</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ae3a6aefc597975aae27b6524674b3e37" name="ae3a6aefc597975aae27b6524674b3e37"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae3a6aefc597975aae27b6524674b3e37">&#9670;&#160;</a></span>managerInstance</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/dfa/class_m_asset_manager.html">MAssetManager</a> * MAssetManager::managerInstance = nullptr</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel static">static</span><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a66ec44e656e7bb47fb89770fd2a884b6" name="a66ec44e656e7bb47fb89770fd2a884b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a66ec44e656e7bb47fb89770fd2a884b6">&#9670;&#160;</a></span>name</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::name</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/editor/editorassetmanager/<a class="el" href="../../dd/d84/editorassetmanager_8h_source.html">editorassetmanager.h</a></li>
 <li>src/editor/editorassetmanager/<a class="el" href="../../dc/db5/editorassetmanager_8cpp.html">editorassetmanager.cpp</a></li>
@@ -1039,7 +468,7 @@ template&lt;typename T&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a href="../../d1/dfb/class_m_editor_asset_manager.html">MEditorAssetManager</a></li>
-    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>

@@ -139,8 +139,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ade28afb39e72c3b4ef1ca6044d1c0c62" id="r_ade28afb39e72c3b4ef1ca6044d1c0c62"><td class="memItemLeft"><a class="el" href="../../d3/ddf/glmhelper_8h.html#ac3e268ed57558485f084c4916b0c4bf4">SVector2</a>&#160;</td><td class="memItemRight"><a class="el" href="#ade28afb39e72c3b4ef1ca6044d1c0c62">getResolution</a> () const</td></tr>
 <tr class="memitem:a032481266bbcda1b05bb4514873dcdca" id="r_a032481266bbcda1b05bb4514873dcdca"><td class="memItemLeft">sf::RenderTarget *&#160;</td><td class="memItemRight"><a class="el" href="#a032481266bbcda1b05bb4514873dcdca">getCoreRenderTarget</a> () const</td></tr>
 <tr class="memitem:ad8cdf44f056dffaa9b5da57c5cf1b367" id="r_ad8cdf44f056dffaa9b5da57c5cf1b367"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#ad8cdf44f056dffaa9b5da57c5cf1b367">makeBuffer</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;bufferName) override</td></tr>
-<tr class="memitem:a23f31fb674f4a101d01e8102acc09f2c" id="r_a23f31fb674f4a101d01e8102acc09f2c"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../df/d55/struct_s_buffer.html#a23f31fb674f4a101d01e8102acc09f2c">resize</a> (int width, int height)</td></tr>
-<tr class="memitem:a59375146cdd5d73eafdef9cb7213a923" id="r_a59375146cdd5d73eafdef9cb7213a923"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../df/d55/struct_s_buffer.html#a59375146cdd5d73eafdef9cb7213a923">isResizeable</a> () const</td></tr>
+<tr class="inherit_header pub_methods_struct_s_buffer"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../df/d55/struct_s_buffer.html">SBuffer</a></td></tr>
+<tr class="memitem:a23f31fb674f4a101d01e8102acc09f2c pub_methods_struct_s_buffer" id="r_a23f31fb674f4a101d01e8102acc09f2c"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../df/d55/struct_s_buffer.html#a23f31fb674f4a101d01e8102acc09f2c">resize</a> (int width, int height)</td></tr>
+<tr class="memitem:a59375146cdd5d73eafdef9cb7213a923 pub_methods_struct_s_buffer" id="r_a59375146cdd5d73eafdef9cb7213a923"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../df/d55/struct_s_buffer.html#a59375146cdd5d73eafdef9cb7213a923">isResizeable</a> () const</td></tr>
+<tr class="memitem:a7c2e93f3a3c0acb32f0d2966125cba8a pub_methods_struct_s_buffer" id="r_a7c2e93f3a3c0acb32f0d2966125cba8a"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../df/d55/struct_s_buffer.html#a7c2e93f3a3c0acb32f0d2966125cba8a">SBuffer</a> ()=default</td></tr>
+<tr class="memitem:adc80a23fac5398dd9ebf4a724ef7b9c2 pub_methods_struct_s_buffer" id="r_adc80a23fac5398dd9ebf4a724ef7b9c2"><td class="memItemLeft">virtual&#160;</td><td class="memItemRight"><a class="el" href="../../df/d55/struct_s_buffer.html#adc80a23fac5398dd9ebf4a724ef7b9c2">~SBuffer</a> ()=default</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -234,33 +237,6 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a59375146cdd5d73eafdef9cb7213a923" name="a59375146cdd5d73eafdef9cb7213a923"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a59375146cdd5d73eafdef9cb7213a923">&#9670;&#160;</a></span>isResizeable()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual bool SBuffer::isResizeable </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented in <a class="el" href="../../de/d5a/class_s_shadow_buffer.html#a269903f18a7a48c42c4dfd59c25bb5ba">SShadowBuffer</a>.</p>
-
-</div>
-</div>
 <a id="ad8cdf44f056dffaa9b5da57c5cf1b367" name="ad8cdf44f056dffaa9b5da57c5cf1b367"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad8cdf44f056dffaa9b5da57c5cf1b367">&#9670;&#160;</a></span>makeBuffer()</h2>
 
@@ -317,37 +293,6 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a23f31fb674f4a101d01e8102acc09f2c" name="a23f31fb674f4a101d01e8102acc09f2c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a23f31fb674f4a101d01e8102acc09f2c">&#9670;&#160;</a></span>resize()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual bool SBuffer::resize </td>
-          <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>width</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>height</em></span>&#160;)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented in <a class="el" href="../../db/dee/class_s_depth_buffer.html#ab6e162775780ce655a7c2e9fd145c400">SDepthBuffer</a>, and <a class="el" href="../../dd/df1/class_s_frame_buffer.html#a8c3eabe6efe2892d9d2dff8e365bc8f2">SFrameBuffer</a>.</p>
-
-</div>
-</div>
 <a id="a7c0557347f380e24ec4d9f79c5458e17" name="a7c0557347f380e24ec4d9f79c5458e17"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7c0557347f380e24ec4d9f79c5458e17">&#9670;&#160;</a></span>unbind()</h2>
 
@@ -393,7 +338,7 @@ Static Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a href="../../d7/d8b/class_s_render_buffer.html">SRenderBuffer</a></li>
-    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>

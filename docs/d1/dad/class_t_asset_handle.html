@@ -132,12 +132,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9cf0b00a5df0dbb49c96cbcaa381866b" id="r_a9cf0b00a5df0dbb49c96cbcaa381866b"><td class="memItemLeft">T &amp;&#160;</td><td class="memItemRight"><a class="el" href="#a9cf0b00a5df0dbb49c96cbcaa381866b">operator*</a> () const</td></tr>
 <tr class="memitem:adb1b3b9d4ac0bbe0cf88f2ada256d20e" id="r_adb1b3b9d4ac0bbe0cf88f2ada256d20e"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#adb1b3b9d4ac0bbe0cf88f2ada256d20e">operator bool</a> () const</td></tr>
 <tr class="memitem:a32035fefb3651017ef8f613abacfec17" id="r_a32035fefb3651017ef8f613abacfec17"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a32035fefb3651017ef8f613abacfec17">isValid</a> () const</td></tr>
+<tr class="memdesc:a32035fefb3651017ef8f613abacfec17"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the handle has a GUID AND the asset is currently loaded.  <br /></td></tr>
 <tr class="memitem:a89834edaed43aa6f7334b45da1b08f37" id="r_a89834edaed43aa6f7334b45da1b08f37"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a89834edaed43aa6f7334b45da1b08f37">isNull</a> () const</td></tr>
+<tr class="memdesc:a89834edaed43aa6f7334b45da1b08f37"><td class="mdescLeft">&#160;</td><td class="mdescRight">True if the handle was never assigned (no GUID at all).  <br /></td></tr>
 <tr class="memitem:a8bcb3a5f72bfc32fd2d8509bca7ad68b" id="r_a8bcb3a5f72bfc32fd2d8509bca7ad68b"><td class="memItemLeft">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;&#160;</td><td class="memItemRight"><a class="el" href="#a8bcb3a5f72bfc32fd2d8509bca7ad68b">getAssetId</a> () const</td></tr>
+<tr class="memdesc:a8bcb3a5f72bfc32fd2d8509bca7ad68b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the asset id held by handle.  <br /></td></tr>
 <tr class="memitem:af3338583745dc4d4eee31eb82fed6bdd" id="r_af3338583745dc4d4eee31eb82fed6bdd"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#af3338583745dc4d4eee31eb82fed6bdd">operator==</a> (const <a class="el" href="../../d1/dad/class_t_asset_handle.html">TAssetHandle</a>&lt; T &gt; &amp;other) const</td></tr>
 <tr class="memitem:a191c2d4468c68534f390ebb7cbc555e9" id="r_a191c2d4468c68534f390ebb7cbc555e9"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a191c2d4468c68534f390ebb7cbc555e9">operator!=</a> (const <a class="el" href="../../d1/dad/class_t_asset_handle.html">TAssetHandle</a>&lt; T &gt; &amp;other) const</td></tr>
 </table>
-<a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
+class TAssetHandle&lt; T &gt;</div><p><a class="el" href="../../d1/dad/class_t_asset_handle.html">TAssetHandle</a> acts as a wrapper over Assets instances when referenced by systems. this wrapper ensures the assets remain valid for use even after a reload and the asset pointer changes. </p>
+</div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a2258ad7cb83092158ee2095e32f5a43d" name="a2258ad7cb83092158ee2095e32f5a43d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2258ad7cb83092158ee2095e32f5a43d">&#9670;&#160;</a></span>TAssetHandle() <span class="overload">[1/3]</span></h2>
 
@@ -244,6 +250,7 @@ template&lt;typename T&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Resolves through the manager every call. O(log n) map lookup. Returns nullptr if the asset isn't loaded or the handle is null. </p>
 
 </div>
 </div>
@@ -272,6 +279,8 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>Returns the asset id held by handle. </p>
+
 </div>
 </div>
 <a id="a89834edaed43aa6f7334b45da1b08f37" name="a89834edaed43aa6f7334b45da1b08f37"></a>
@@ -299,6 +308,8 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
+<p>True if the handle was never assigned (no GUID at all). </p>
+
 </div>
 </div>
 <a id="a32035fefb3651017ef8f613abacfec17" name="a32035fefb3651017ef8f613abacfec17"></a>
@@ -325,6 +336,8 @@ template&lt;typename T&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>True if the handle has a GUID AND the asset is currently loaded. </p>
 
 </div>
 </div>
@@ -480,7 +493,7 @@ template&lt;typename T&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a href="../../d1/dad/class_t_asset_handle.html">TAssetHandle</a></li>
-    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>

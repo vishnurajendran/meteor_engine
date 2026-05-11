@@ -129,7 +129,7 @@ Inheritance diagram for MTextureAsset:</div>
   <map id="MTextureAsset_map" name="MTextureAsset_map">
 <area href="../../d7/dc9/class_m_asset.html" alt="MAsset" shape="rect" coords="79,56,227,80"/>
 <area href="../../d1/d9d/class_m_object.html" alt="MObject" shape="rect" coords="0,0,148,24"/>
-<area href="../../d2/d57/class_i_deffered_loadable_asset.html" alt="IDefferedLoadableAsset" shape="rect" coords="158,0,306,24"/>
+<area href="../../d2/d57/class_i_deffered_loadable_asset.html" title="This interface enables assets to have deferred loading capabilities." alt="IDefferedLoadableAsset" shape="rect" coords="158,0,306,24"/>
 <area href="../../db/d91/class_m_cubemap_asset.html" alt="MCubemapAsset" shape="rect" coords="79,168,227,192"/>
   </map>
 </div></div>
@@ -155,33 +155,48 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9da6818ae1cda93c73e471a5b6774803" id="r_a9da6818ae1cda93c73e471a5b6774803"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a9da6818ae1cda93c73e471a5b6774803">setCompression</a> (<a class="el" href="../../d7/dc8/textureasset_8h.html#a2de8b74dba9fb427c339e8dd00ebb526">ETextureCompression</a> c)</td></tr>
 <tr class="memitem:a5ac8ec0f49a190e7428686f0dac7408d" id="r_a5ac8ec0f49a190e7428686f0dac7408d"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a5ac8ec0f49a190e7428686f0dac7408d">loadImportSettings</a> (const pugi::xml_node &amp;node)</td></tr>
 <tr class="memitem:adb5c1c8882fdf858c4dd470ca36c99e2" id="r_adb5c1c8882fdf858c4dd470ca36c99e2"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#adb5c1c8882fdf858c4dd470ca36c99e2">saveImportSettings</a> ()</td></tr>
-<tr class="memitem:a5f1f91e02a1727087158a6d52d683f6b" id="r_a5f1f91e02a1727087158a6d52d683f6b"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a5f1f91e02a1727087158a6d52d683f6b">getPath</a> () const</td></tr>
-<tr class="memitem:a183897d600af15389911775ce4931c18" id="r_a183897d600af15389911775ce4931c18"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a183897d600af15389911775ce4931c18">getFullPath</a> () const</td></tr>
-<tr class="memitem:a8a40894c261863c1740472b1d529cf41" id="r_a8a40894c261863c1740472b1d529cf41"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a8a40894c261863c1740472b1d529cf41">isValid</a> () const</td></tr>
-<tr class="memitem:a108f677f1cab7e0e5c3299ae525a4082" id="r_a108f677f1cab7e0e5c3299ae525a4082"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a108f677f1cab7e0e5c3299ae525a4082">getAssetId</a> () const</td></tr>
-<tr class="memitem:a40a3c2c521696c241d4ae90ee2729e88" id="r_a40a3c2c521696c241d4ae90ee2729e88"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a40a3c2c521696c241d4ae90ee2729e88">internal_SetAssetId</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;assetId)</td></tr>
-<tr class="memitem:a8f7e03fe897094b730e9ff9d1ef60f5f" id="r_a8f7e03fe897094b730e9ff9d1ef60f5f"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a8f7e03fe897094b730e9ff9d1ef60f5f">openAsset</a> ()</td></tr>
-<tr class="memitem:aaa4664e8ba4d1d6534434df00ddfd2b7" id="r_aaa4664e8ba4d1d6534434df00ddfd2b7"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#aaa4664e8ba4d1d6534434df00ddfd2b7">hasDeferredLoad</a> () const override</td></tr>
-<tr class="memitem:a918fa7dba1a787713ec305e202288419" id="r_a918fa7dba1a787713ec305e202288419"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a918fa7dba1a787713ec305e202288419">deferredAssetLoad</a> (bool forced) override</td></tr>
-<tr class="memitem:a9dd97d03829dd89e51fe51c8cb0ccbe0" id="r_a9dd97d03829dd89e51fe51c8cb0ccbe0"><td class="memItemLeft">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a9dd97d03829dd89e51fe51c8cb0ccbe0">typeInfo</a> () const</td></tr>
-<tr class="memitem:a89a6495b6e98746e0e1945caae839a84" id="r_a89a6495b6e98746e0e1945caae839a84"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a89a6495b6e98746e0e1945caae839a84">getGUID</a> () const</td></tr>
-<tr class="memitem:a3700c35f75e3119ec8e930503cdff1d0" id="r_a3700c35f75e3119ec8e930503cdff1d0"><td class="memItemLeft">virtual <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a3700c35f75e3119ec8e930503cdff1d0">toString</a> () const</td></tr>
-<tr class="memitem:a53b6baf76db4e7f66b7aa08198195799" id="r_a53b6baf76db4e7f66b7aa08198195799"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a53b6baf76db4e7f66b7aa08198195799">equals</a> (const <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a> *obj) const</td></tr>
-<tr class="memitem:a662e9483ef27e9e77fc1048e86b4efca" id="r_a662e9483ef27e9e77fc1048e86b4efca"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a662e9483ef27e9e77fc1048e86b4efca">setName</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;newName)</td></tr>
-<tr class="memitem:aad84df3702d86545be9720c387493c29" id="r_aad84df3702d86545be9720c387493c29"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aad84df3702d86545be9720c387493c29">getName</a> () const</td></tr>
-<tr class="memitem:a1a86c190e85749ea7385c5c210b4b79e" id="r_a1a86c190e85749ea7385c5c210b4b79e"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a1a86c190e85749ea7385c5c210b4b79e">operator delete</a> (void *ptr)</td></tr>
+<tr class="inherit_header pub_methods_class_m_asset"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a></td></tr>
+<tr class="memitem:afeea3519de74d6c398be61bd0d6d1559 pub_methods_class_m_asset" id="r_afeea3519de74d6c398be61bd0d6d1559"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#afeea3519de74d6c398be61bd0d6d1559">MAsset</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;path)</td></tr>
+<tr class="memitem:ac7a5f719c4ddaaa85eb2bedf35e7305e pub_methods_class_m_asset" id="r_ac7a5f719c4ddaaa85eb2bedf35e7305e"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#ac7a5f719c4ddaaa85eb2bedf35e7305e">~MAsset</a> () override=default</td></tr>
+<tr class="memitem:a5f1f91e02a1727087158a6d52d683f6b pub_methods_class_m_asset" id="r_a5f1f91e02a1727087158a6d52d683f6b"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a5f1f91e02a1727087158a6d52d683f6b">getPath</a> () const</td></tr>
+<tr class="memdesc:a5f1f91e02a1727087158a6d52d683f6b pub_methods_class_m_asset"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get relative path to the asset.  <br /></td></tr>
+<tr class="memitem:a183897d600af15389911775ce4931c18 pub_methods_class_m_asset" id="r_a183897d600af15389911775ce4931c18"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a183897d600af15389911775ce4931c18">getFullPath</a> () const</td></tr>
+<tr class="memdesc:a183897d600af15389911775ce4931c18 pub_methods_class_m_asset"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get absolute path to the asset.  <br /></td></tr>
+<tr class="memitem:a8a40894c261863c1740472b1d529cf41 pub_methods_class_m_asset" id="r_a8a40894c261863c1740472b1d529cf41"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a8a40894c261863c1740472b1d529cf41">isValid</a> () const</td></tr>
+<tr class="memdesc:a8a40894c261863c1740472b1d529cf41 pub_methods_class_m_asset"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true, if the asset is Valid, and use-able.  <br /></td></tr>
+<tr class="memitem:a108f677f1cab7e0e5c3299ae525a4082 pub_methods_class_m_asset" id="r_a108f677f1cab7e0e5c3299ae525a4082"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a108f677f1cab7e0e5c3299ae525a4082">getAssetId</a> () const</td></tr>
+<tr class="memdesc:a108f677f1cab7e0e5c3299ae525a4082 pub_methods_class_m_asset"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the unique persistent id for this asset on disk.  <br /></td></tr>
+<tr class="memitem:a40a3c2c521696c241d4ae90ee2729e88 pub_methods_class_m_asset" id="r_a40a3c2c521696c241d4ae90ee2729e88"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a40a3c2c521696c241d4ae90ee2729e88">internal_SetAssetId</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;assetId)</td></tr>
+<tr class="memitem:a8f7e03fe897094b730e9ff9d1ef60f5f pub_methods_class_m_asset" id="r_a8f7e03fe897094b730e9ff9d1ef60f5f"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a8f7e03fe897094b730e9ff9d1ef60f5f">openAsset</a> ()</td></tr>
+<tr class="memitem:aaa4664e8ba4d1d6534434df00ddfd2b7 pub_methods_class_m_asset" id="r_aaa4664e8ba4d1d6534434df00ddfd2b7"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#aaa4664e8ba4d1d6534434df00ddfd2b7">hasDeferredLoad</a> () const override</td></tr>
+<tr class="memitem:a918fa7dba1a787713ec305e202288419 pub_methods_class_m_asset" id="r_a918fa7dba1a787713ec305e202288419"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a918fa7dba1a787713ec305e202288419">deferredAssetLoad</a> (bool forced) override</td></tr>
+<tr class="inherit_header pub_methods_class_m_object"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
+<tr class="memitem:a9dd97d03829dd89e51fe51c8cb0ccbe0 pub_methods_class_m_object" id="r_a9dd97d03829dd89e51fe51c8cb0ccbe0"><td class="memItemLeft">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a9dd97d03829dd89e51fe51c8cb0ccbe0">typeInfo</a> () const</td></tr>
+<tr class="memitem:a48fd4059be176487607315d88d715a97 pub_methods_class_m_object" id="r_a48fd4059be176487607315d88d715a97"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a48fd4059be176487607315d88d715a97">MObject</a> ()</td></tr>
+<tr class="memitem:a276f6c0aac01aaa700636a399000a954 pub_methods_class_m_object" id="r_a276f6c0aac01aaa700636a399000a954"><td class="memItemLeft">virtual&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a276f6c0aac01aaa700636a399000a954">~MObject</a> ()=default</td></tr>
+<tr class="memitem:a89a6495b6e98746e0e1945caae839a84 pub_methods_class_m_object" id="r_a89a6495b6e98746e0e1945caae839a84"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a89a6495b6e98746e0e1945caae839a84">getGUID</a> () const</td></tr>
+<tr class="memdesc:a89a6495b6e98746e0e1945caae839a84 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns the unique instance id for this object  <br /></td></tr>
+<tr class="memitem:a3700c35f75e3119ec8e930503cdff1d0 pub_methods_class_m_object" id="r_a3700c35f75e3119ec8e930503cdff1d0"><td class="memItemLeft">virtual <a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a3700c35f75e3119ec8e930503cdff1d0">toString</a> () const</td></tr>
+<tr class="memdesc:a3700c35f75e3119ec8e930503cdff1d0 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns string representation of this object.  <br /></td></tr>
+<tr class="memitem:a53b6baf76db4e7f66b7aa08198195799 pub_methods_class_m_object" id="r_a53b6baf76db4e7f66b7aa08198195799"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a53b6baf76db4e7f66b7aa08198195799">equals</a> (const <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a> *obj) const</td></tr>
+<tr class="memdesc:a53b6baf76db4e7f66b7aa08198195799 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">checks if two object instances are equal. default impl check guid equality  <br /></td></tr>
+<tr class="memitem:a662e9483ef27e9e77fc1048e86b4efca pub_methods_class_m_object" id="r_a662e9483ef27e9e77fc1048e86b4efca"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a662e9483ef27e9e77fc1048e86b4efca">setName</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;newName)</td></tr>
+<tr class="memdesc:a662e9483ef27e9e77fc1048e86b4efca pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">sets the name of this object  <br /></td></tr>
+<tr class="memitem:aad84df3702d86545be9720c387493c29 pub_methods_class_m_object" id="r_aad84df3702d86545be9720c387493c29"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aad84df3702d86545be9720c387493c29">getName</a> () const</td></tr>
+<tr class="memdesc:aad84df3702d86545be9720c387493c29 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the name of this object  <br /></td></tr>
+<tr class="memitem:a1a86c190e85749ea7385c5c210b4b79e pub_methods_class_m_object" id="r_a1a86c190e85749ea7385c5c210b4b79e"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a1a86c190e85749ea7385c5c210b4b79e">operator delete</a> (void *ptr)</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a85240a1f6f04d73bb79acb95aa20e8aa" id="r_a85240a1f6f04d73bb79acb95aa20e8aa"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a85240a1f6f04d73bb79acb95aa20e8aa">staticTypeInfo</a> ()</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pro-attribs" class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:aa6f15577cacb76790c65563f1a93b1b9" id="r_aa6f15577cacb76790c65563f1a93b1b9"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#aa6f15577cacb76790c65563f1a93b1b9">path</a></td></tr>
-<tr class="memitem:a97db1751dc1cab57f2a377519b62abf3" id="r_a97db1751dc1cab57f2a377519b62abf3"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a97db1751dc1cab57f2a377519b62abf3">assetId</a></td></tr>
-<tr class="memitem:ad277105188ed1ef666c53cc8b9b593f3" id="r_ad277105188ed1ef666c53cc8b9b593f3"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#ad277105188ed1ef666c53cc8b9b593f3">valid</a> = false</td></tr>
-<tr class="memitem:aa788a13c17186e976d7b5a08067c7c65" id="r_aa788a13c17186e976d7b5a08067c7c65"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aa788a13c17186e976d7b5a08067c7c65">guid</a></td></tr>
-<tr class="memitem:a66ec44e656e7bb47fb89770fd2a884b6" id="r_a66ec44e656e7bb47fb89770fd2a884b6"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a66ec44e656e7bb47fb89770fd2a884b6">name</a></td></tr>
+<tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_static_methods_class_m_object"><td colspan="2">Static Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
+<tr class="memitem:a85240a1f6f04d73bb79acb95aa20e8aa pub_static_methods_class_m_object" id="r_a85240a1f6f04d73bb79acb95aa20e8aa"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a85240a1f6f04d73bb79acb95aa20e8aa">staticTypeInfo</a> ()</td></tr>
+<tr class="inherit_header pro_attribs_class_m_asset"><td colspan="2">Protected Attributes inherited from <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a></td></tr>
+<tr class="memitem:aa6f15577cacb76790c65563f1a93b1b9 pro_attribs_class_m_asset" id="r_aa6f15577cacb76790c65563f1a93b1b9"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#aa6f15577cacb76790c65563f1a93b1b9">path</a></td></tr>
+<tr class="memitem:a97db1751dc1cab57f2a377519b62abf3 pro_attribs_class_m_asset" id="r_a97db1751dc1cab57f2a377519b62abf3"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a97db1751dc1cab57f2a377519b62abf3">assetId</a></td></tr>
+<tr class="memitem:ad277105188ed1ef666c53cc8b9b593f3 pro_attribs_class_m_asset" id="r_ad277105188ed1ef666c53cc8b9b593f3"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#ad277105188ed1ef666c53cc8b9b593f3">valid</a> = false</td></tr>
+<tr class="inherit_header pro_attribs_class_m_object"><td colspan="2">Protected Attributes inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
+<tr class="memitem:aa788a13c17186e976d7b5a08067c7c65 pro_attribs_class_m_object" id="r_aa788a13c17186e976d7b5a08067c7c65"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#aa788a13c17186e976d7b5a08067c7c65">guid</a></td></tr>
+<tr class="memitem:a66ec44e656e7bb47fb89770fd2a884b6 pro_attribs_class_m_object" id="r_a66ec44e656e7bb47fb89770fd2a884b6"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a66ec44e656e7bb47fb89770fd2a884b6">name</a></td></tr>
 </table>
 <a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="afe564ddac12cbf680dd51e277bb89542" name="afe564ddac12cbf680dd51e277bb89542"></a>
@@ -248,88 +263,6 @@ Protected Attributes</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a918fa7dba1a787713ec305e202288419" name="a918fa7dba1a787713ec305e202288419"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a918fa7dba1a787713ec305e202288419">&#9670;&#160;</a></span>deferredAssetLoad()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual void MAsset::deferredAssetLoad </td>
-          <td>(</td>
-          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>forced</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Override this method to do all loading asset after all other independent assets are ready.<br  />
-<br  />
-This does not guarantee that all deferred loads will succeed, since an asset could be dependent on another deferred load asset, at this point the order will dictate the asset-load success </p>
-
-<p>Implements <a class="el" href="../../d2/d57/class_i_deffered_loadable_asset.html#a6651e3a713006546df1426f613b8d910">IDefferedLoadableAsset</a>.</p>
-
-<p>Reimplemented in <a class="el" href="../../db/d91/class_m_cubemap_asset.html#ad8973deebd8a220db7bba7c8204121bf">MCubemapAsset</a>, and <a class="el" href="../../d7/dc8/class_m_material_asset.html#aafa2447a6a21b0caf7c4b355fe18dae0">MMaterialAsset</a>.</p>
-
-</div>
-</div>
-<a id="a53b6baf76db4e7f66b7aa08198195799" name="a53b6baf76db4e7f66b7aa08198195799"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a53b6baf76db4e7f66b7aa08198195799">&#9670;&#160;</a></span>equals()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MObject::equals </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a> *</td>          <td class="paramname"><span class="paramname"><em>obj</em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a108f677f1cab7e0e5c3299ae525a4082" name="a108f677f1cab7e0e5c3299ae525a4082"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a108f677f1cab7e0e5c3299ae525a4082">&#9670;&#160;</a></span>getAssetId()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MAsset::getAssetId </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="ae9e02875b06f0b996cba162105880512" name="ae9e02875b06f0b996cba162105880512"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae9e02875b06f0b996cba162105880512">&#9670;&#160;</a></span>getCompression()</h2>
 
@@ -405,56 +338,6 @@ This does not guarantee that all deferred loads will succeed, since an asset cou
 
 </div>
 </div>
-<a id="a183897d600af15389911775ce4931c18" name="a183897d600af15389911775ce4931c18"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a183897d600af15389911775ce4931c18">&#9670;&#160;</a></span>getFullPath()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MAsset::getFullPath </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a89a6495b6e98746e0e1945caae839a84" name="a89a6495b6e98746e0e1945caae839a84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a89a6495b6e98746e0e1945caae839a84">&#9670;&#160;</a></span>getGUID()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::getGUID </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="af7a8b5a30b1f72ac711113ea413f6aac" name="af7a8b5a30b1f72ac711113ea413f6aac"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af7a8b5a30b1f72ac711113ea413f6aac">&#9670;&#160;</a></span>getMaxImportSize()</h2>
 
@@ -474,56 +357,6 @@ This does not guarantee that all deferred loads will succeed, since an asset cou
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aad84df3702d86545be9720c387493c29" name="aad84df3702d86545be9720c387493c29"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aad84df3702d86545be9720c387493c29">&#9670;&#160;</a></span>getName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::getName </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel nodiscard">nodiscard</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a5f1f91e02a1727087158a6d52d683f6b" name="a5f1f91e02a1727087158a6d52d683f6b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5f1f91e02a1727087158a6d52d683f6b">&#9670;&#160;</a></span>getPath()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MAsset::getPath </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inherited">inherited</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -607,88 +440,6 @@ This does not guarantee that all deferred loads will succeed, since an asset cou
 
 </div>
 </div>
-<a id="aaa4664e8ba4d1d6534434df00ddfd2b7" name="aaa4664e8ba4d1d6534434df00ddfd2b7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaa4664e8ba4d1d6534434df00ddfd2b7">&#9670;&#160;</a></span>hasDeferredLoad()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual bool MAsset::hasDeferredLoad </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Inform that this asset needs deferred loading.<br  />
-<br  />
-By default, the assets do not need deferred loading, but some assets like material will need to depend on another asset like shader to get all available properties for a specific shader. so setting this true, will allow the asset to have another pass at loading after all independent assets are loaded, giving the dependencies to be resolved without any issue </p>
-
-<p>Implements <a class="el" href="../../d2/d57/class_i_deffered_loadable_asset.html#a98eb9d862a816d6525fa0433d52f280d">IDefferedLoadableAsset</a>.</p>
-
-<p>Reimplemented in <a class="el" href="../../db/d91/class_m_cubemap_asset.html#a9cd767b5079f6179e14cef13c8e0545c">MCubemapAsset</a>, and <a class="el" href="../../d7/dc8/class_m_material_asset.html#a29128cbcfb3d1eed3876179e2b6191f5">MMaterialAsset</a>.</p>
-
-</div>
-</div>
-<a id="a40a3c2c521696c241d4ae90ee2729e88" name="a40a3c2c521696c241d4ae90ee2729e88"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a40a3c2c521696c241d4ae90ee2729e88">&#9670;&#160;</a></span>internal_SetAssetId()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MAsset::internal_SetAssetId </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>assetId</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a8a40894c261863c1740472b1d529cf41" name="a8a40894c261863c1740472b1d529cf41"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8a40894c261863c1740472b1d529cf41">&#9670;&#160;</a></span>isValid()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MAsset::isValid </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a5ac8ec0f49a190e7428686f0dac7408d" name="a5ac8ec0f49a190e7428686f0dac7408d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5ac8ec0f49a190e7428686f0dac7408d">&#9670;&#160;</a></span>loadImportSettings()</h2>
 
@@ -702,58 +453,6 @@ By default, the assets do not need deferred loading, but some assets like materi
           <td></td>
         </tr>
       </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a8f7e03fe897094b730e9ff9d1ef60f5f" name="a8f7e03fe897094b730e9ff9d1ef60f5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8f7e03fe897094b730e9ff9d1ef60f5f">&#9670;&#160;</a></span>openAsset()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual bool MAsset::openAsset </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented in <a class="el" href="../../d0/d2e/class_m_scene_asset.html#a6c7d3e6fdbff056258c70557a0b0102e">MSceneAsset</a>.</p>
-
-</div>
-</div>
-<a id="a1a86c190e85749ea7385c5c210b4b79e" name="a1a86c190e85749ea7385c5c210b4b79e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1a86c190e85749ea7385c5c210b4b79e">&#9670;&#160;</a></span>operator delete()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MObject::operator delete </td>
-          <td>(</td>
-          <td class="paramtype">void *</td>          <td class="paramname"><span class="paramname"><em>ptr</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 </div>
@@ -780,6 +479,7 @@ By default, the assets do not need deferred loading, but some assets like materi
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Force a reload for this asset, it will re-import the asset redo any processes required for the asset. </p>
 
 <p>Implements <a class="el" href="../../d7/dc9/class_m_asset.html#a0c4c054f05d8178b11f285580164a1e4">MAsset</a>.</p>
 
@@ -902,31 +602,6 @@ By default, the assets do not need deferred loading, but some assets like materi
 
 </div>
 </div>
-<a id="a662e9483ef27e9e77fc1048e86b4efca" name="a662e9483ef27e9e77fc1048e86b4efca"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a662e9483ef27e9e77fc1048e86b4efca">&#9670;&#160;</a></span>setName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void MObject::setName </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>newName</em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a6f7fbe6f74a32606097cb753d0bb8d50" name="a6f7fbe6f74a32606097cb753d0bb8d50"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6f7fbe6f74a32606097cb753d0bb8d50">&#9670;&#160;</a></span>setWrapS()</h2>
 
@@ -977,196 +652,6 @@ By default, the assets do not need deferred loading, but some assets like materi
 
 </div>
 </div>
-<a id="a85240a1f6f04d73bb79acb95aa20e8aa" name="a85240a1f6f04d73bb79acb95aa20e8aa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a85240a1f6f04d73bb79acb95aa20e8aa">&#9670;&#160;</a></span>staticTypeInfo()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a> MObject::staticTypeInfo </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span><span class="mlabel constexpr">constexpr</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Compile-time type descriptor — usable without an instance </p>
-
-</div>
-</div>
-<a id="a3700c35f75e3119ec8e930503cdff1d0" name="a3700c35f75e3119ec8e930503cdff1d0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3700c35f75e3119ec8e930503cdff1d0">&#9670;&#160;</a></span>toString()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::toString </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a9dd97d03829dd89e51fe51c8cb0ccbe0" name="a9dd97d03829dd89e51fe51c8cb0ccbe0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9dd97d03829dd89e51fe51c8cb0ccbe0">&#9670;&#160;</a></span>typeInfo()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a> MObject::typeInfo </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel virtual">virtual</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>Runtime virtual — introduces the vtable slot </p>
-
-<p>Reimplemented in <a class="el" href="../../d4/d9d/class_m_application.html#a3e455a66982a5416c6cb83bf64401d7b">MApplication</a>, <a class="el" href="../../d4/d50/class_m_editor_application.html#ad47d6a44f73085b403fa82b80f062e4d">MEditorApplication</a>, <a class="el" href="../../d1/dfb/class_m_editor_asset_manager.html#acc65b37069a2c2d50fc9f073148de4d9">MEditorAssetManager</a>, <a class="el" href="../../d2/dfd/class_m_hot_reload_watcher.html#a8676a681a6bf6805f6cabe504fcd8327">MHotReloadWatcher</a>, <a class="el" href="../../dc/d70/class_m_light_system_manager.html#a087fd90ec91dd7545f199049407dea4c">MLightSystemManager</a>, <a class="el" href="../../d0/d38/class_m_render_queue.html#a157a170541a7b770626631ec4b72dca9">MRenderQueue</a>, <a class="el" href="../../d4/d29/class_m_skybox_queue.html#af32c2fcaf5a187325243159fab254d58">MSkyboxQueue</a>, <a class="el" href="../../da/de0/class_m_spatial_entity.html#afd8769fdf725bdfe6e62f14a7ae88fee">MSpatialEntity</a>, <a class="el" href="../../d2/dfb/class_m_static_mesh.html#a01eac81f646ce05614911d2450b1a50e">MStaticMesh</a>, <a class="el" href="../../d7/d99/class_m_static_mesh_asset.html#ac4a6700f0e89b0203b0888249798a092">MStaticMeshAsset</a>, <a class="el" href="../../d9/d51/class_m_static_mesh_asset_importer.html#a5c7ad4ae91bb008b0fd774e83cffa142">MStaticMeshAssetImporter</a>, <a class="el" href="../../db/d04/class_m_static_mesh_entity.html#a7bde772074ccb4bc031b4b600f1f56f6">MStaticMeshEntity</a>, and <a class="el" href="../../d0/d50/class_m_window.html#a877aae81da7911ed735f8e45dc64e25c">MWindow</a>.</p>
-
-</div>
-</div>
-<a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Member Data Documentation</h2>
-<a id="a97db1751dc1cab57f2a377519b62abf3" name="a97db1751dc1cab57f2a377519b62abf3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a97db1751dc1cab57f2a377519b62abf3">&#9670;&#160;</a></span>assetId</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MAsset::assetId</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aa788a13c17186e976d7b5a08067c7c65" name="aa788a13c17186e976d7b5a08067c7c65"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa788a13c17186e976d7b5a08067c7c65">&#9670;&#160;</a></span>guid</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::guid</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a66ec44e656e7bb47fb89770fd2a884b6" name="a66ec44e656e7bb47fb89770fd2a884b6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a66ec44e656e7bb47fb89770fd2a884b6">&#9670;&#160;</a></span>name</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MObject::name</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aa6f15577cacb76790c65563f1a93b1b9" name="aa6f15577cacb76790c65563f1a93b1b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa6f15577cacb76790c65563f1a93b1b9">&#9670;&#160;</a></span>path</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a> MAsset::path</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ad277105188ed1ef666c53cc8b9b593f3" name="ad277105188ed1ef666c53cc8b9b593f3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad277105188ed1ef666c53cc8b9b593f3">&#9670;&#160;</a></span>valid</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool MAsset::valid = false</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel protected">protected</span><span class="mlabel inherited">inherited</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/core/engine/texture/<a class="el" href="../../d7/dc8/textureasset_8h_source.html">textureasset.h</a></li>
 <li>src/core/engine/texture/<a class="el" href="../../d4/d3c/textureasset_8cpp.html">textureasset.cpp</a></li>
@@ -1185,7 +670,7 @@ By default, the assets do not need deferred loading, but some assets like materi
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a href="../../d6/dab/class_m_texture_asset.html">MTextureAsset</a></li>
-    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>

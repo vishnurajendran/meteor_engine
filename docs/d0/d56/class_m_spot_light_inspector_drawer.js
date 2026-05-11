@@ -1,19 +1,6 @@
 var class_m_spot_light_inspector_drawer =
 [
     [ "canDraw", "d0/d56/class_m_spot_light_inspector_drawer.html#a2a1f6a84fc58569a55adae2d3a12abe0", null ],
-    [ "drawColoredBoxOverLabel", "d0/d56/class_m_spot_light_inspector_drawer.html#a26ad2a1576b02a81695dfd6fee7a0b94", null ],
-    [ "drawLightIntensityAndColor", "d0/d56/class_m_spot_light_inspector_drawer.html#a77c507575590db31258187de97ee8994", null ],
-    [ "drawXYZComponent", "d0/d56/class_m_spot_light_inspector_drawer.html#af1f4a4052ea8a0b5ee29178689e8c970", null ],
-    [ "equals", "d0/d56/class_m_spot_light_inspector_drawer.html#a53b6baf76db4e7f66b7aa08198195799", null ],
-    [ "getGUID", "d0/d56/class_m_spot_light_inspector_drawer.html#a89a6495b6e98746e0e1945caae839a84", null ],
     [ "getInspectorName", "d0/d56/class_m_spot_light_inspector_drawer.html#abb433a4e18f495d34782dce493c67b21", null ],
-    [ "getName", "d0/d56/class_m_spot_light_inspector_drawer.html#aad84df3702d86545be9720c387493c29", null ],
-    [ "onDraw", "d0/d56/class_m_spot_light_inspector_drawer.html#a1925f515dba9e3e3ff24e6b61d368bf7", null ],
-    [ "onDrawInspector", "d0/d56/class_m_spot_light_inspector_drawer.html#ad42ffaca93b2b264e9da7e6aec569584", null ],
-    [ "operator delete", "d0/d56/class_m_spot_light_inspector_drawer.html#a1a86c190e85749ea7385c5c210b4b79e", null ],
-    [ "setName", "d0/d56/class_m_spot_light_inspector_drawer.html#a662e9483ef27e9e77fc1048e86b4efca", null ],
-    [ "toString", "d0/d56/class_m_spot_light_inspector_drawer.html#a3700c35f75e3119ec8e930503cdff1d0", null ],
-    [ "typeInfo", "d0/d56/class_m_spot_light_inspector_drawer.html#a9dd97d03829dd89e51fe51c8cb0ccbe0", null ],
-    [ "guid", "d0/d56/class_m_spot_light_inspector_drawer.html#aa788a13c17186e976d7b5a08067c7c65", null ],
-    [ "name", "d0/d56/class_m_spot_light_inspector_drawer.html#a66ec44e656e7bb47fb89770fd2a884b6", null ]
+    [ "onDrawInspector", "d0/d56/class_m_spot_light_inspector_drawer.html#ad42ffaca93b2b264e9da7e6aec569584", null ]
 ];

@@ -41,7 +41,9 @@ var hierarchy =
         [ "MSkyboxStage", "dd/d45/class_m_skybox_stage.html", null ]
       ] ]
     ] ],
+    [ "MAssetInspector", "de/d6f/class_m_asset_inspector.html", null ],
     [ "MBufferNames", "d3/d67/struct_m_buffer_names.html", null ],
+    [ "MEditorThemes", "d4/de1/class_m_editor_themes.html", null ],
     [ "MGarbageCollector", "da/d22/class_m_garbage_collector.html", null ],
     [ "MLogger", "dc/d3e/class_m_logger.html", null ],
     [ "MObject", "d1/d9d/class_m_object.html", [
@@ -60,7 +62,6 @@ var hierarchy =
         [ "MTextAssetImporter", "d4/d68/class_m_text_asset_importer.html", null ],
         [ "MTextureAssetImporter", "d9/dcc/class_m_texture_asset_importer.html", null ]
       ] ],
-      [ "MAssetInspector", "de/d6f/class_m_asset_inspector.html", null ],
       [ "MAssetManager", "dc/dfa/class_m_asset_manager.html", [
         [ "MEditorAssetManager", "d1/dfb/class_m_editor_asset_manager.html", null ]
       ] ],
@@ -72,8 +73,9 @@ var hierarchy =
         ] ]
       ] ],
       [ "MEditorControlsButtons", "d3/dd4/class_m_editor_controls_buttons.html", null ],
-      [ "MEditorThemes", "d4/de1/class_m_editor_themes.html", null ],
-      [ "MEngineSettings", "d9/d20/class_m_engine_settings.html", null ],
+      [ "MEngineSettings", "d9/d20/class_m_engine_settings.html", [
+        [ "MEditorSettings", "d4/df1/class_m_editor_settings.html", null ]
+      ] ],
       [ "MEngineStatics", "d5/d82/class_m_engine_statics.html", null ],
       [ "MEntityTypeRegistry", "d3/d08/class_m_entity_type_registry.html", null ],
       [ "MGizmos", "d9/d78/class_m_gizmos.html", null ],

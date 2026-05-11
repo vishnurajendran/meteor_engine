@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Meteor Engine: src/editor/window/imgui/imguistyles.cpp File Reference</title>
+<title>Meteor Engine: src/editor/settings/editor_settings.h Source File</title>
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../codefolding.js"></script>
 <script type="text/javascript" src="../../clipboard.js"></script>
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <script type="text/javascript">
-document.addEventListener('DOMContentLoaded',() => { initNavTree('d4/dc0/imguistyles_8cpp.html','../../',''); });
+document.addEventListener('DOMContentLoaded',() => { initNavTree('d8/d71/editor__settings_8h_source.html','../../',''); });
 </script>
 <div id="container">
 <div id="doc-content">
@@ -116,25 +116,41 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('d4/dc0/imguist
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">imguistyles.cpp File Reference</div></div>
+  <div class="headertitle"><div class="title">editor_settings.h</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &quot;<a class="el" href="../../dd/d32/imguistyles_8h_source.html">imguistyles.h</a>&quot;</code><br />
-</div></div><!-- contents -->
+<a href="../../d8/d71/editor__settings_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">//</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">// Created by ssj5v on 11-05-2026.</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment">//</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span> </div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#ifndef EDITOR_SETTINGS_H</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#define EDITOR_SETTINGS_H</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;<a class="code" href="../../d6/dfe/engine__settings_8h.html">core/engine/settings/engine_settings.h</a>&quot;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="foldopen" id="foldopen00010" data-start="{" data-end="};">
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno"><a class="line" href="../../d4/df1/class_m_editor_settings.html">   10</a></span><span class="keyword">class </span><a class="code hl_class" href="../../d4/df1/class_m_editor_settings.html">MEditorSettings</a> : <span class="keyword">public</span> <a class="code hl_class" href="../../d9/d20/class_m_engine_settings.html">MEngineSettings</a> {</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>    <a class="code hl_define" href="../../dc/d84/object__class__macros_8h.html#a2c32f6a11f95fcb3644df1473d7cb0bc">DEFINE_OBJECT_CLASS</a>(<a class="code hl_class" href="../../d4/df1/class_m_editor_settings.html">MEditorSettings</a>)</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    DECLARE_FIELD(editorTheme, std::string, <span class="stringliteral">&quot;me::midnight&quot;</span>)</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>};</div>
+</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#endif </span><span class="comment">//EDITOR_SETTINGS_H</span></div>
+<div class="ttc" id="aclass_m_editor_settings_html"><div class="ttname"><a href="../../d4/df1/class_m_editor_settings.html">MEditorSettings</a></div><div class="ttdef"><b>Definition</b> editor_settings.h:10</div></div>
+<div class="ttc" id="aclass_m_engine_settings_html"><div class="ttname"><a href="../../d9/d20/class_m_engine_settings.html">MEngineSettings</a></div><div class="ttdef"><b>Definition</b> engine_settings.h:10</div></div>
+<div class="ttc" id="aengine__settings_8h_html"><div class="ttname"><a href="../../d6/dfe/engine__settings_8h.html">engine_settings.h</a></div></div>
+<div class="ttc" id="aobject__class__macros_8h_html_a2c32f6a11f95fcb3644df1473d7cb0bc"><div class="ttname"><a href="../../dc/d84/object__class__macros_8h.html#a2c32f6a11f95fcb3644df1473d7cb0bc">DEFINE_OBJECT_CLASS</a></div><div class="ttdeci">#define DEFINE_OBJECT_CLASS(ClassName)</div><div class="ttdef"><b>Definition</b> object_class_macros.h:30</div></div>
+</div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
-<div id="page-nav" class="page-nav-panel">
-<div id="page-nav-resize-handle"></div>
-<div id="page-nav-tree">
-<div id="page-nav-contents">
-</div><!-- page-nav-contents -->
-</div><!-- page-nav-tree -->
-</div><!-- page-nav -->
 </div><!-- container -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a href="../../dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a href="../../dir_a31afd56823c6335224242a3eb4525db.html">editor</a></li><li class="navelem"><a href="../../dir_11b67e4d5e77e5d286f637778f7af747.html">window</a></li><li class="navelem"><a href="../../dir_0b49eb4c9c69dc06509643b1f8869aab.html">imgui</a></li><li class="navelem"><a href="../../d4/dc0/imguistyles_8cpp.html">imguistyles.cpp</a></li>
-    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="navelem"><a href="../../dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a href="../../dir_a31afd56823c6335224242a3eb4525db.html">editor</a></li><li class="navelem"><a href="../../dir_4db7741326e67d3117e3b3a4cf89b6bc.html">settings</a></li><li class="navelem"><a href="../../d8/d71/editor__settings_8h.html">editor_settings.h</a></li>
+    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>

@@ -1,15 +1,8 @@
 var class_s_shadow_buffer =
 [
-    [ "bindAsActive", "de/d5a/class_s_shadow_buffer.html#a64c5de1cdce5aa2f9b6715be2427d051", null ],
     [ "destroyDynamicShadows", "de/d5a/class_s_shadow_buffer.html#a5c6232343dd6ee2f766f463ce182371a", null ],
-    [ "getDepthTextureHandle", "de/d5a/class_s_shadow_buffer.html#a682bbf1daa9c0b26f1d67664fc753261", null ],
-    [ "getFBOHandle", "de/d5a/class_s_shadow_buffer.html#acb01a6e6eac096355aa1d446ae83fe65", null ],
-    [ "getResolution", "de/d5a/class_s_shadow_buffer.html#a95e078cd5cdc66ee96a089aacb51af83", null ],
     [ "initDynamicShadows", "de/d5a/class_s_shadow_buffer.html#a685a62e440cf449465c563d760227fed", null ],
     [ "isResizeable", "de/d5a/class_s_shadow_buffer.html#a269903f18a7a48c42c4dfd59c25bb5ba", null ],
-    [ "makeBuffer", "de/d5a/class_s_shadow_buffer.html#a35df83688992a58dd45539424f41d346", null ],
-    [ "resize", "de/d5a/class_s_shadow_buffer.html#ab6e162775780ce655a7c2e9fd145c400", null ],
-    [ "unbind", "de/d5a/class_s_shadow_buffer.html#a9fbaf853e1ec4bfdd548b8149d22d493", null ],
     [ "lightSpaceMatrix", "de/d5a/class_s_shadow_buffer.html#a09029322b9785f8b2d0c71d3195cce37", null ],
     [ "numPointShadows", "de/d5a/class_s_shadow_buffer.html#a9d8d1b438793e155a9d2a82b3090e4af", null ],
     [ "numSpotShadows", "de/d5a/class_s_shadow_buffer.html#a16da117c8f36e41d777a86c35c953afb", null ],
