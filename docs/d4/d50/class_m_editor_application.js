@@ -7,5 +7,6 @@ var class_m_editor_application =
     [ "isRunning", "d4/d50/class_m_editor_application.html#ae015d622783c06470913a309391bc0e7", null ],
     [ "loadPrerequisites", "d4/d50/class_m_editor_application.html#ae28c3417340c6a61aaf8dfb98210cf8f", null ],
     [ "run", "d4/d50/class_m_editor_application.html#a23c565ccaaf0bad70d29138c9c5a9618", null ],
-    [ "showSplashScreen", "d4/d50/class_m_editor_application.html#aa11c0f4d8d1d2070bcada3902fccc7d8", null ]
+    [ "showSplashScreen", "d4/d50/class_m_editor_application.html#aa11c0f4d8d1d2070bcada3902fccc7d8", null ],
+    [ "typeInfo", "d4/d50/class_m_editor_application.html#ad47d6a44f73085b403fa82b80f062e4d", null ]
 ];

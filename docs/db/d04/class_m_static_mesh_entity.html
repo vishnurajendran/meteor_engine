@@ -135,6 +135,7 @@ Inheritance diagram for MStaticMeshEntity:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a7bde772074ccb4bc031b4b600f1f56f6" id="r_a7bde772074ccb4bc031b4b600f1f56f6"><td class="memItemLeft"><a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="#a7bde772074ccb4bc031b4b600f1f56f6">typeInfo</a> () const override</td></tr>
 <tr class="memitem:ac499fc25513495b97cf081898431d7eb" id="r_ac499fc25513495b97cf081898431d7eb"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ac499fc25513495b97cf081898431d7eb">MStaticMeshEntity</a> ()</td></tr>
 <tr class="memitem:ab207e5b47384781c646865acb09426e8" id="r_ab207e5b47384781c646865acb09426e8"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ab207e5b47384781c646865acb09426e8">~MStaticMeshEntity</a> () override</td></tr>
 <tr class="memitem:ad91646397bb8b6a22a537387887adc83" id="r_ad91646397bb8b6a22a537387887adc83"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ad91646397bb8b6a22a537387887adc83">submitRenderItem</a> (<a class="el" href="../../d6/df8/class_i_render_item_collector.html">IRenderItemCollector</a> *collector) override</td></tr>
@@ -155,7 +156,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5dec6d31a36fe24704d1d689cb9b724a" id="r_a5dec6d31a36fe24704d1d689cb9b724a"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a5dec6d31a36fe24704d1d689cb9b724a">getCastsShadow</a> () const</td></tr>
 <tr class="memitem:ab3965be25f1dbdd66dba85d20f1a9cd3" id="r_ab3965be25f1dbdd66dba85d20f1a9cd3"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#ab3965be25f1dbdd66dba85d20f1a9cd3">setCastsShadow</a> (bool v)</td></tr>
 <tr class="inherit_header pub_methods_class_m_spatial_entity"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a></td></tr>
-<tr class="memitem:afd8769fdf725bdfe6e62f14a7ae88fee pub_methods_class_m_spatial_entity" id="r_afd8769fdf725bdfe6e62f14a7ae88fee"><td class="memItemLeft"><a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#afd8769fdf725bdfe6e62f14a7ae88fee">typeInfo</a> () const override</td></tr>
 <tr class="memitem:a9ddd631a2f3b7a1342f227d05746b5a2 pub_methods_class_m_spatial_entity" id="r_a9ddd631a2f3b7a1342f227d05746b5a2"><td class="memItemLeft">pugi::xml_node&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a9ddd631a2f3b7a1342f227d05746b5a2">serialiseEntity</a> (pugi::xml_node parent) const</td></tr>
 <tr class="memitem:af06c2ff623ca6be2132ee0f23d386252 pub_methods_class_m_spatial_entity" id="r_af06c2ff623ca6be2132ee0f23d386252"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#af06c2ff623ca6be2132ee0f23d386252">destroy</a> ()</td></tr>
 <tr class="memitem:a8d45322f10c34fd5c4a780116127cefd pub_methods_class_m_spatial_entity" id="r_a8d45322f10c34fd5c4a780116127cefd"><td class="memItemLeft"><a class="el" href="../../dd/d34/entityflags_8h.html#af2f09de57d00e3cac8dd8fe100f4d137">EEntityFlags</a>&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a8d45322f10c34fd5c4a780116127cefd">getEntityFlags</a> () const</td></tr>
@@ -219,17 +219,10 @@ Public Member Functions</h2></td></tr>
 <tr class="inherit_header pub_methods_class_i_meteor_drawable"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../dc/de7/class_i_meteor_drawable.html">IMeteorDrawable</a></td></tr>
 <tr class="memitem:a2b2537974f43dd28749fcd0cef5b793d pub_methods_class_i_meteor_drawable" id="r_a2b2537974f43dd28749fcd0cef5b793d"><td class="memItemLeft">virtual&#160;</td><td class="memItemRight"><a class="el" href="../../dc/de7/class_i_meteor_drawable.html#a2b2537974f43dd28749fcd0cef5b793d">~IMeteorDrawable</a> ()=default</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:a64299fead174cdc10d5d033a51b38ef3" id="r_a64299fead174cdc10d5d033a51b38ef3"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a64299fead174cdc10d5d033a51b38ef3">onDeserialise</a> (const pugi::xml_node &amp;node) override</td></tr>
-<tr class="inherit_header pro_methods_class_m_spatial_entity"><td colspan="2">Protected Member Functions inherited from <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a></td></tr>
-<tr class="memitem:a523f8ee6796923bf7f371ea52b294d59 pro_methods_class_m_spatial_entity" id="r_a523f8ee6796923bf7f371ea52b294d59"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a523f8ee6796923bf7f371ea52b294d59">onSerialise</a> (pugi::xml_node &amp;node) override</td></tr>
-<tr class="memitem:ae66a276373d3dc99a24e4ce63e886860 pro_methods_class_m_spatial_entity" id="r_ae66a276373d3dc99a24e4ce63e886860"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#ae66a276373d3dc99a24e4ce63e886860">onDeserialise</a> (const pugi::xml_node &amp;node) override</td></tr>
-<tr class="memitem:ac962ada511959d752bb5583d63c951b2 pro_methods_class_m_spatial_entity" id="r_ac962ada511959d752bb5583d63c951b2"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#ac962ada511959d752bb5583d63c951b2">MSpatialEntity</a> ()</td></tr>
-<tr class="memitem:a95e061799446e4200e1cdb708c32b0b3 pro_methods_class_m_spatial_entity" id="r_a95e061799446e4200e1cdb708c32b0b3"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a95e061799446e4200e1cdb708c32b0b3">MSpatialEntity</a> (<a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a> *parent)</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a954e39e05bee334ff825375d4bb41ba9" id="r_a954e39e05bee334ff825375d4bb41ba9"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="#a954e39e05bee334ff825375d4bb41ba9">staticTypeInfo</a> ()</td></tr>
+<tr class="memitem:ab94bf7d820a1c0d82fa74b3136c1c14c" id="r_ab94bf7d820a1c0d82fa74b3136c1c14c"><td class="memItemLeft">static <a class="el" href="../../db/d04/class_m_static_mesh_entity.html">MStaticMeshEntity</a> *&#160;</td><td class="memItemRight"><a class="el" href="#ab94bf7d820a1c0d82fa74b3136c1c14c">create</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;name={})</td></tr>
 <tr class="inherit_header pub_static_methods_class_m_spatial_entity"><td colspan="2">Static Public Member Functions inherited from <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a></td></tr>
 <tr class="memitem:a6165dfb310faae35c3b7edecb7c76339 pub_static_methods_class_m_spatial_entity" id="r_a6165dfb310faae35c3b7edecb7c76339"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a6165dfb310faae35c3b7edecb7c76339">staticTypeInfo</a> ()</td></tr>
 <tr class="memitem:a38bc5a0f30790ac9c0f96fc84699ad4d pub_static_methods_class_m_spatial_entity" id="r_a38bc5a0f30790ac9c0f96fc84699ad4d"><td class="memItemLeft">static <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a> *&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a38bc5a0f30790ac9c0f96fc84699ad4d">create</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;name={})</td></tr>
@@ -241,6 +234,18 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:ac81d98aec1b9f005b125c6c64ddbab88 pub_static_methods_class_m_spatial_entity" id="r_ac81d98aec1b9f005b125c6c64ddbab88"><td class="memItemLeft">static <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a> *&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#ac81d98aec1b9f005b125c6c64ddbab88">deserialiseEntity</a> (const pugi::xml_node &amp;node)</td></tr>
 <tr class="inherit_header pub_static_methods_class_m_object"><td colspan="2">Static Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
 <tr class="memitem:a85240a1f6f04d73bb79acb95aa20e8aa pub_static_methods_class_m_object" id="r_a85240a1f6f04d73bb79acb95aa20e8aa"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a85240a1f6f04d73bb79acb95aa20e8aa">staticTypeInfo</a> ()</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-pro-methods" class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a64299fead174cdc10d5d033a51b38ef3" id="r_a64299fead174cdc10d5d033a51b38ef3"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="#a64299fead174cdc10d5d033a51b38ef3">onDeserialise</a> (const pugi::xml_node &amp;node) override</td></tr>
+<tr class="inherit_header pro_methods_class_m_spatial_entity"><td colspan="2">Protected Member Functions inherited from <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a></td></tr>
+<tr class="memitem:a523f8ee6796923bf7f371ea52b294d59 pro_methods_class_m_spatial_entity" id="r_a523f8ee6796923bf7f371ea52b294d59"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a523f8ee6796923bf7f371ea52b294d59">onSerialise</a> (pugi::xml_node &amp;node) override</td></tr>
+<tr class="memitem:ae66a276373d3dc99a24e4ce63e886860 pro_methods_class_m_spatial_entity" id="r_ae66a276373d3dc99a24e4ce63e886860"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#ae66a276373d3dc99a24e4ce63e886860">onDeserialise</a> (const pugi::xml_node &amp;node) override</td></tr>
+<tr class="memitem:ac962ada511959d752bb5583d63c951b2 pro_methods_class_m_spatial_entity" id="r_ac962ada511959d752bb5583d63c951b2"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#ac962ada511959d752bb5583d63c951b2">MSpatialEntity</a> ()</td></tr>
+<tr class="memitem:a95e061799446e4200e1cdb708c32b0b3 pro_methods_class_m_spatial_entity" id="r_a95e061799446e4200e1cdb708c32b0b3"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a95e061799446e4200e1cdb708c32b0b3">MSpatialEntity</a> (<a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a> *parent)</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_class_m_spatial_entity"><td colspan="2">Protected Attributes inherited from <a class="el" href="../../da/de0/class_m_spatial_entity.html">MSpatialEntity</a></td></tr>
 <tr class="memitem:a4671a3d27d4b9f29b23ba7bd9f47f878 pro_attribs_class_m_spatial_entity" id="r_a4671a3d27d4b9f29b23ba7bd9f47f878"><td class="memItemLeft"><a class="el" href="../../d3/ddf/glmhelper_8h.html#a224f7deb28748f07e82faa79ebbac1e7">SVector3</a>&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a4671a3d27d4b9f29b23ba7bd9f47f878">relativePosition</a> = <a class="el" href="../../d3/ddf/glmhelper_8h.html#a224f7deb28748f07e82faa79ebbac1e7">SVector3</a>(0.0f)</td></tr>
 <tr class="memitem:a82713472b23ad114edec56901c6fdcaa pro_attribs_class_m_spatial_entity" id="r_a82713472b23ad114edec56901c6fdcaa"><td class="memItemLeft"><a class="el" href="../../d3/ddf/glmhelper_8h.html#aaedbaec375fe14fb276e0a51a92541c0">SQuaternion</a>&#160;</td><td class="memItemRight"><a class="el" href="../../da/de0/class_m_spatial_entity.html#a82713472b23ad114edec56901c6fdcaa">relativeRotation</a> = glm::identity&lt;<a class="el" href="../../d3/ddf/glmhelper_8h.html#aaedbaec375fe14fb276e0a51a92541c0">SQuaternion</a>&gt;()</td></tr>
@@ -340,6 +345,31 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="../../dc/de7/class_i_meteor_drawable.html#a3c6c24b156a356f931eefbcd607d34d5">IMeteorDrawable</a>.</p>
+
+</div>
+</div>
+<a id="ab94bf7d820a1c0d82fa74b3136c1c14c" name="ab94bf7d820a1c0d82fa74b3136c1c14c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab94bf7d820a1c0d82fa74b3136c1c14c">&#9670;&#160;</a></span>create()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../db/d04/class_m_static_mesh_entity.html">MStaticMeshEntity</a> * MStaticMeshEntity::create </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>name</em></span><span class="paramdefsep"> = </span><span class="paramdefval">{}</span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -667,6 +697,31 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a954e39e05bee334ff825375d4bb41ba9" name="a954e39e05bee334ff825375d4bb41ba9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a954e39e05bee334ff825375d4bb41ba9">&#9670;&#160;</a></span>staticTypeInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a> MStaticMeshEntity::staticTypeInfo </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span><span class="mlabel constexpr">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad91646397bb8b6a22a537387887adc83" name="ad91646397bb8b6a22a537387887adc83"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad91646397bb8b6a22a537387887adc83">&#9670;&#160;</a></span>submitRenderItem()</h2>
 
@@ -694,6 +749,34 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a7bde772074ccb4bc031b4b600f1f56f6" name="a7bde772074ccb4bc031b4b600f1f56f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7bde772074ccb4bc031b4b600f1f56f6">&#9670;&#160;</a></span>typeInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a> MStaticMeshEntity::typeInfo </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Runtime virtual — introduces the vtable slot </p>
+
+<p>Reimplemented from <a class="el" href="../../da/de0/class_m_spatial_entity.html#afd8769fdf725bdfe6e62f14a7ae88fee">MSpatialEntity</a>.</p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/core/engine/3d/staticmesh/<a class="el" href="../../d2/d46/staticmeshentity_8h_source.html">staticmeshentity.h</a></li>
 <li>src/core/engine/3d/staticmesh/<a class="el" href="../../db/de5/staticmeshentity_8cpp.html">staticmeshentity.cpp</a></li>
@@ -712,7 +795,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a href="../../db/d04/class_m_static_mesh_entity.html">MStaticMeshEntity</a></li>
-    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>

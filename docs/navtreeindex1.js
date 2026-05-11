@@ -77,6 +77,7 @@ var NAVTREEINDEX1 =
 "d2/df1/cameraentityinspectordrawer_8h.html":[2,0,0,1,3,4,0,1],
 "d2/df1/cameraentityinspectordrawer_8h_source.html":[2,0,0,1,3,4,0,1],
 "d2/dfb/class_m_static_mesh.html":[1,0,134],
+"d2/dfb/class_m_static_mesh.html#a01eac81f646ce05614911d2450b1a50e":[1,0,134,9],
 "d2/dfb/class_m_static_mesh.html#a2f9b14a2161367331b230eacb852740e":[1,0,134,4],
 "d2/dfb/class_m_static_mesh.html#a3699ff1961ce8a658036d5540a4f2e0f":[1,0,134,1],
 "d2/dfb/class_m_static_mesh.html#a7ce838e7f497d152b008fe9b3630d827":[1,0,134,6],
@@ -226,6 +227,7 @@ var NAVTREEINDEX1 =
 "d4/d50/class_m_editor_application.html#aa11c0f4d8d1d2070bcada3902fccc7d8":[1,0,52,7],
 "d4/d50/class_m_editor_application.html#aa9aae848fede5cff5ddd2682e1c296f0":[1,0,52,1],
 "d4/d50/class_m_editor_application.html#ab2fce9679189568a3daa5a108f16c448":[1,0,52,0],
+"d4/d50/class_m_editor_application.html#ad47d6a44f73085b403fa82b80f062e4d":[1,0,52,8],
 "d4/d50/class_m_editor_application.html#adf86b13ac79cd3d1134bc13b32d71dbc":[1,0,52,3],
 "d4/d50/class_m_editor_application.html#ae015d622783c06470913a309391bc0e7":[1,0,52,4],
 "d4/d50/class_m_editor_application.html#ae28c3417340c6a61aaf8dfb98210cf8f":[1,0,52,5],
@@ -247,7 +249,5 @@ var NAVTREEINDEX1 =
 "d4/d81/class_m_add_cylinder_item.html#a93110da139361d2b59da41eaee5a0f86":[1,0,15,2],
 "d4/d81/class_m_add_cylinder_item.html#a9827cbb3eb200e7e83211c5e2d31e0a0":[1,0,15,0],
 "d4/d83/menubaritem_8h.html":[2,0,0,1,7,1,2],
-"d4/d83/menubaritem_8h_source.html":[2,0,0,1,7,1,2],
-"d4/d84/hotreloadwatcher_8cpp.html":[2,0,0,1,1,5],
-"d4/d8f/class_m_editor_scene_camera_entity.html":[1,0,59]
+"d4/d83/menubaritem_8h_source.html":[2,0,0,1,7,1,2]
 };

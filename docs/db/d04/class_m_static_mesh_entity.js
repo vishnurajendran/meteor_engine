@@ -17,5 +17,6 @@ var class_m_static_mesh_entity =
     [ "setCastsShadow", "db/d04/class_m_static_mesh_entity.html#ab3965be25f1dbdd66dba85d20f1a9cd3", null ],
     [ "setMaterialAsset", "db/d04/class_m_static_mesh_entity.html#ac278787ef55e8e027f7370ea4c2e9dac", null ],
     [ "setStaticMeshAsset", "db/d04/class_m_static_mesh_entity.html#a79413e9ff698cb5fd6a4ecea6a67ee06", null ],
-    [ "submitRenderItem", "db/d04/class_m_static_mesh_entity.html#ad91646397bb8b6a22a537387887adc83", null ]
+    [ "submitRenderItem", "db/d04/class_m_static_mesh_entity.html#ad91646397bb8b6a22a537387887adc83", null ],
+    [ "typeInfo", "db/d04/class_m_static_mesh_entity.html#a7bde772074ccb4bc031b4b600f1f56f6", null ]
 ];

@@ -1,5 +1,7 @@
 var NAVTREEINDEX2 =
 {
+"d4/d84/hotreloadwatcher_8cpp.html":[2,0,0,1,1,5],
+"d4/d8f/class_m_editor_scene_camera_entity.html":[1,0,59],
 "d4/d8f/class_m_editor_scene_camera_entity.html#a84c4fbaf99a335dc06ef61a0a2702624":[1,0,59,1],
 "d4/d8f/class_m_editor_scene_camera_entity.html#ae6b700f489b5203a0fc591a62f52fd22":[1,0,59,2],
 "d4/d8f/class_m_editor_scene_camera_entity.html#afc043958d81b2d0f8786cfea1cc49c4e":[1,0,59,0],
@@ -9,13 +11,14 @@ var NAVTREEINDEX2 =
 "d4/d90/dynamic__light_8cpp.html":[2,0,0,0,1,5,2,2],
 "d4/d9d/class_m_application.html":[1,0,29],
 "d4/d9d/class_m_application.html#a10a30a15c65f47453f95859380a42124":[1,0,29,6],
+"d4/d9d/class_m_application.html#a3e455a66982a5416c6cb83bf64401d7b":[1,0,29,7],
 "d4/d9d/class_m_application.html#a3e9d7682c302e41cd700a0edc3df2ec3":[1,0,29,0],
 "d4/d9d/class_m_application.html#a7e33f6cb916ba8d65a9b30a6a54ab2b4":[1,0,29,5],
 "d4/d9d/class_m_application.html#a94f77ed439201c402949cbb2152078f7":[1,0,29,1],
 "d4/d9d/class_m_application.html#aacfdf7088b7fbfc9e3b37eb48899f7d3":[1,0,29,4],
 "d4/d9d/class_m_application.html#abb1f33b9657643fe9e1f25944c0ed678":[1,0,29,3],
 "d4/d9d/class_m_application.html#ad5953b50e6e0ebaa429a64f27ca5b634":[1,0,29,2],
-"d4/d9d/class_m_application.html#ae7df22b5516a1f8abe0782fe514349b6":[1,0,29,7],
+"d4/d9d/class_m_application.html#ae7df22b5516a1f8abe0782fe514349b6":[1,0,29,8],
 "d4/dbe/class_m_buffer_registery.html":[1,0,36],
 "d4/dbe/class_m_buffer_registery.html#a31927a24c5d90beaec0c65b083b7e8b8":[1,0,36,5],
 "d4/dbe/class_m_buffer_registery.html#a9ed573d25753c483450dac18b288eb8c":[1,0,36,1],
@@ -246,8 +249,5 @@ var NAVTREEINDEX2 =
 "d6/d52/class_m_static_mesh_inspector_drawer.html":[1,0,139],
 "d6/d52/class_m_static_mesh_inspector_drawer.html#a07ef5ede06a5deffd8716110601288a3":[1,0,139,2],
 "d6/d52/class_m_static_mesh_inspector_drawer.html#a2c0eecf7a1a586fd5f1774c8ff6146b7":[1,0,139,0],
-"d6/d52/class_m_static_mesh_inspector_drawer.html#a34312f37d9fa8cb6125bb7809cb5a530":[1,0,139,1],
-"d6/d5c/class_m_open_scene_menubar_item.html":[1,0,89],
-"d6/d5c/class_m_open_scene_menubar_item.html#a310b7737eda0cd361d4a49a2c417e347":[1,0,89,3],
-"d6/d5c/class_m_open_scene_menubar_item.html#a4565517ba4c093d813eca25154fb4587":[1,0,89,0]
+"d6/d52/class_m_static_mesh_inspector_drawer.html#a34312f37d9fa8cb6125bb7809cb5a530":[1,0,139,1]
 };

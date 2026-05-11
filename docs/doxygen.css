@@ -2535,6 +2535,13 @@ details[open]>summary::before {
         display: inline-block;
         transform: rotate(0deg);
 }
+
+html {
+--timestamp: 'Mon May 11 2026 19:58:25';
+}
+span.timestamp { content: ' '; }
+span.timestamp:before { content: var(--timestamp); }
+
 :root {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-background-color);

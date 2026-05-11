@@ -7,5 +7,6 @@ var class_m_application =
     [ "isRunning", "d4/d9d/class_m_application.html#aacfdf7088b7fbfc9e3b37eb48899f7d3", null ],
     [ "run", "d4/d9d/class_m_application.html#a7e33f6cb916ba8d65a9b30a6a54ab2b4", null ],
     [ "startFrame", "d4/d9d/class_m_application.html#a10a30a15c65f47453f95859380a42124", null ],
+    [ "typeInfo", "d4/d9d/class_m_application.html#a3e455a66982a5416c6cb83bf64401d7b", null ],
     [ "deltaTime", "d4/d9d/class_m_application.html#ae7df22b5516a1f8abe0782fe514349b6", null ]
 ];

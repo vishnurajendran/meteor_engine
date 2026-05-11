@@ -1,5 +1,8 @@
 var NAVTREEINDEX3 =
 {
+"d6/d5c/class_m_open_scene_menubar_item.html":[1,0,89],
+"d6/d5c/class_m_open_scene_menubar_item.html#a310b7737eda0cd361d4a49a2c417e347":[1,0,89,3],
+"d6/d5c/class_m_open_scene_menubar_item.html#a4565517ba4c093d813eca25154fb4587":[1,0,89,0],
 "d6/d5c/class_m_open_scene_menubar_item.html#a6c0c717d0d1eec7cb3cad60e84c6c181":[1,0,89,1],
 "d6/d5c/class_m_open_scene_menubar_item.html#aa9fcaae236ee8c9908eb7a6e4cecfb8a":[1,0,89,2],
 "d6/d61/light__bvh__node_8h.html":[2,0,0,0,2,0,1,3,2,0,1],
@@ -192,6 +195,7 @@ var NAVTREEINDEX3 =
 "d7/d99/class_m_static_mesh_asset.html#a47c4ce1a6fe64ca0b063e3868789237b":[1,0,135,1],
 "d7/d99/class_m_static_mesh_asset.html#a6cb8ae905663e0b239bacde094cac38c":[1,0,135,2],
 "d7/d99/class_m_static_mesh_asset.html#aaf05cc0796c80065fa58a3de2bb7b382":[1,0,135,0],
+"d7/d99/class_m_static_mesh_asset.html#ac4a6700f0e89b0203b0888249798a092":[1,0,135,4],
 "d7/d9b/imguisubwindowmanager_8cpp.html":[2,0,0,1,7,0,4],
 "d7/dad/editorcontrolsbuttons_8cpp.html":[2,0,0,1,7,0,0],
 "d7/dbf/camera__spatial__entity_8cpp.html":[2,0,0,0,1,2,0],
@@ -245,9 +249,5 @@ var NAVTREEINDEX3 =
 "d7/dc9/class_m_asset.html#ac7a5f719c4ddaaa85eb2bedf35e7305e":[1,0,30,1],
 "d7/dc9/class_m_asset.html#ad277105188ed1ef666c53cc8b9b593f3":[1,0,30,13],
 "d7/dc9/class_m_asset.html#afeea3519de74d6c398be61bd0d6d1559":[1,0,30,0],
-"d7/dc9/frame__buffer_8cpp.html":[2,0,0,0,2,0,1,0,1,0],
-"d7/dcb/align__selected__to__view_8h.html":[2,0,0,1,7,1,0,1,1],
-"d7/dcb/align__selected__to__view_8h_source.html":[2,0,0,1,7,1,0,1,1],
-"d7/dcf/class_m_ambient_light_entity_deserialiser.html":[1,0,27],
-"d7/dcf/class_m_ambient_light_entity_deserialiser.html#a4478bdb4a5babda4c4f9483268273c0a":[1,0,27,1]
+"d7/dc9/frame__buffer_8cpp.html":[2,0,0,0,2,0,1,0,1,0]
 };

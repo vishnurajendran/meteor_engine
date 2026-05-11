@@ -64,13 +64,13 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "d1/df4/shader_8h.html#ae28c9af4502adfb7f160372421cb79c7a0d368292f17012d66912908725eaedbb",
-"d4/d8f/class_m_editor_scene_camera_entity.html#a84c4fbaf99a335dc06ef61a0a2702624",
-"d6/d5c/class_m_open_scene_menubar_item.html#a6c0c717d0d1eec7cb3cad60e84c6c181",
-"d7/dcf/class_m_ambient_light_entity_deserialiser.html#abfd152d2117a7823ad13a9218e58bb44",
-"da/de0/class_m_spatial_entity.html#a0eff89ab9a7c72efb8b754b03597d7ab",
-"dc/d54/struct_s_string.html#a1e876fe3f76015b4346ca64a763f2cb8",
-"dd/da9/reset__camera__to__origin_8h.html",
-"dir_dd3cabb5cf83cbd94c26561e9c9eae54.html"
+"d4/d84/hotreloadwatcher_8cpp.html",
+"d6/d5c/class_m_open_scene_menubar_item.html",
+"d7/dcb/align__selected__to__view_8h.html",
+"da/dd8/procedural__skybox__queue_8h.html#a908865f6e607b843d08499dcefabbd1a",
+"dc/d54/struct_s_string.html#a1066f63b2ace3b49529b012bd53a1417",
+"dd/d95/hotreloadwatcher_8h.html",
+"dir_c5a89c84b371b6ea11a235e8b6ea6163.html"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

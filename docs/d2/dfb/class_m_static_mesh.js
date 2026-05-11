@@ -8,5 +8,6 @@ var class_m_static_mesh =
     [ "getVAO", "d2/dfb/class_m_static_mesh.html#ab1f72f26fb41842c63bd564bd5d3e5aa", null ],
     [ "getVertexCount", "d2/dfb/class_m_static_mesh.html#a7ce838e7f497d152b008fe9b3630d827", null ],
     [ "getVertices", "d2/dfb/class_m_static_mesh.html#ab312ae9fae18f1a4f44958ed2455d597", null ],
-    [ "prepareMesh", "d2/dfb/class_m_static_mesh.html#a9205b4fb182e64385f83f2acfc07c3ad", null ]
+    [ "prepareMesh", "d2/dfb/class_m_static_mesh.html#a9205b4fb182e64385f83f2acfc07c3ad", null ],
+    [ "typeInfo", "d2/dfb/class_m_static_mesh.html#a01eac81f646ce05614911d2450b1a50e", null ]
 ];

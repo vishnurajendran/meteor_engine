@@ -135,6 +135,7 @@ Inheritance diagram for MStaticMeshAsset:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:ac4a6700f0e89b0203b0888249798a092" id="r_ac4a6700f0e89b0203b0888249798a092"><td class="memItemLeft">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="#ac4a6700f0e89b0203b0888249798a092">typeInfo</a> () const override</td></tr>
 <tr class="memitem:aaf05cc0796c80065fa58a3de2bb7b382" id="r_aaf05cc0796c80065fa58a3de2bb7b382"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#aaf05cc0796c80065fa58a3de2bb7b382">MStaticMeshAsset</a> (const <a class="el" href="../../dc/d54/struct_s_string.html">SString</a> &amp;path)</td></tr>
 <tr class="memitem:a47c4ce1a6fe64ca0b063e3868789237b" id="r_a47c4ce1a6fe64ca0b063e3868789237b"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a47c4ce1a6fe64ca0b063e3868789237b">~MStaticMeshAsset</a> () override</td></tr>
 <tr class="memitem:a6cb8ae905663e0b239bacde094cac38c" id="r_a6cb8ae905663e0b239bacde094cac38c"><td class="memItemLeft">std::vector&lt; <a class="el" href="../../d2/dfb/class_m_static_mesh.html">MStaticMesh</a> * &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a6cb8ae905663e0b239bacde094cac38c">getMeshes</a> () const</td></tr>
@@ -156,7 +157,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aaa4664e8ba4d1d6534434df00ddfd2b7 pub_methods_class_m_asset" id="r_aaa4664e8ba4d1d6534434df00ddfd2b7"><td class="memItemLeft">virtual bool&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#aaa4664e8ba4d1d6534434df00ddfd2b7">hasDeferredLoad</a> () const override</td></tr>
 <tr class="memitem:a918fa7dba1a787713ec305e202288419 pub_methods_class_m_asset" id="r_a918fa7dba1a787713ec305e202288419"><td class="memItemLeft">virtual void&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a918fa7dba1a787713ec305e202288419">deferredAssetLoad</a> (bool forced) override</td></tr>
 <tr class="inherit_header pub_methods_class_m_object"><td colspan="2">Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
-<tr class="memitem:a9dd97d03829dd89e51fe51c8cb0ccbe0 pub_methods_class_m_object" id="r_a9dd97d03829dd89e51fe51c8cb0ccbe0"><td class="memItemLeft">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a9dd97d03829dd89e51fe51c8cb0ccbe0">typeInfo</a> () const</td></tr>
 <tr class="memitem:a48fd4059be176487607315d88d715a97 pub_methods_class_m_object" id="r_a48fd4059be176487607315d88d715a97"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a48fd4059be176487607315d88d715a97">MObject</a> ()</td></tr>
 <tr class="memitem:a276f6c0aac01aaa700636a399000a954 pub_methods_class_m_object" id="r_a276f6c0aac01aaa700636a399000a954"><td class="memItemLeft">virtual&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a276f6c0aac01aaa700636a399000a954">~MObject</a> ()=default</td></tr>
 <tr class="memitem:a89a6495b6e98746e0e1945caae839a84 pub_methods_class_m_object" id="r_a89a6495b6e98746e0e1945caae839a84"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a89a6495b6e98746e0e1945caae839a84">getGUID</a> () const</td></tr>
@@ -171,10 +171,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aad84df3702d86545be9720c387493c29 pub_methods_class_m_object"><td class="mdescLeft">&#160;</td><td class="mdescRight">gets the name of this object  <br /></td></tr>
 <tr class="memitem:a1a86c190e85749ea7385c5c210b4b79e pub_methods_class_m_object" id="r_a1a86c190e85749ea7385c5c210b4b79e"><td class="memItemLeft">void&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a1a86c190e85749ea7385c5c210b4b79e">operator delete</a> (void *ptr)</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
+<tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:aeaef4c0e6639c9bd523491a5f9a145c7" id="r_aeaef4c0e6639c9bd523491a5f9a145c7"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="#aeaef4c0e6639c9bd523491a5f9a145c7">staticTypeInfo</a> ()</td></tr>
 <tr class="inherit_header pub_static_methods_class_m_object"><td colspan="2">Static Public Member Functions inherited from <a class="el" href="../../d1/d9d/class_m_object.html">MObject</a></td></tr>
 <tr class="memitem:a85240a1f6f04d73bb79acb95aa20e8aa pub_static_methods_class_m_object" id="r_a85240a1f6f04d73bb79acb95aa20e8aa"><td class="memItemLeft">static constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d1/d9d/class_m_object.html#a85240a1f6f04d73bb79acb95aa20e8aa">staticTypeInfo</a> ()</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
+Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_attribs_class_m_asset"><td colspan="2">Protected Attributes inherited from <a class="el" href="../../d7/dc9/class_m_asset.html">MAsset</a></td></tr>
 <tr class="memitem:aa6f15577cacb76790c65563f1a93b1b9 pro_attribs_class_m_asset" id="r_aa6f15577cacb76790c65563f1a93b1b9"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#aa6f15577cacb76790c65563f1a93b1b9">path</a></td></tr>
 <tr class="memitem:a97db1751dc1cab57f2a377519b62abf3 pro_attribs_class_m_asset" id="r_a97db1751dc1cab57f2a377519b62abf3"><td class="memItemLeft"><a class="el" href="../../dc/d54/struct_s_string.html">SString</a>&#160;</td><td class="memItemRight"><a class="el" href="../../d7/dc9/class_m_asset.html#a97db1751dc1cab57f2a377519b62abf3">assetId</a></td></tr>
@@ -292,6 +296,59 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aeaef4c0e6639c9bd523491a5f9a145c7" name="aeaef4c0e6639c9bd523491a5f9a145c7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeaef4c0e6639c9bd523491a5f9a145c7">&#9670;&#160;</a></span>staticTypeInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a> MStaticMeshAsset::staticTypeInfo </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span><span class="mlabel constexpr">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac4a6700f0e89b0203b0888249798a092" name="ac4a6700f0e89b0203b0888249798a092"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4a6700f0e89b0203b0888249798a092">&#9670;&#160;</a></span>typeInfo()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="../../db/d3e/struct_m_type_info.html">MTypeInfo</a> MStaticMeshAsset::typeInfo </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Runtime virtual — introduces the vtable slot </p>
+
+<p>Reimplemented from <a class="el" href="../../d1/d9d/class_m_object.html#a9dd97d03829dd89e51fe51c8cb0ccbe0">MObject</a>.</p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>src/core/engine/3d/staticmesh/<a class="el" href="../../d3/da5/staticmeshasset_8h_source.html">staticmeshasset.h</a></li>
 <li>src/core/engine/3d/staticmesh/<a class="el" href="../../de/db4/staticmeshasset_8cpp.html">staticmeshasset.cpp</a></li>
@@ -310,7 +367,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a href="../../d7/d99/class_m_static_mesh_asset.html">MStaticMeshAsset</a></li>
-    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
+    <li class="footer">Generated on <span class="timestamp"></span> for Meteor Engine by <a href="https://www.doxygen.org/index.html"><img class="footer" src="../../doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>
 </body>
