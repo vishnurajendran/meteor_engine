@@ -9,7 +9,7 @@
 #include "camera_spatial_entity.h"
 #include "core/object/object.h"
 
-
+/// This is the repository of all instances of camera during engine runtime.
 class MViewManagement : public MObject {
     DEFINE_OBJECT_SUBCLASS(MViewManagement)
 private:

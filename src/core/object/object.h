@@ -12,6 +12,8 @@
 #include "core/utils/sstring.h"
 #include "object_class_macros.h" // DEFINE_MOBJECT_CLASS
 
+/// Base class for all objects within meteor.
+/// it provides essential functions to be used within the engine
 class MObject
 {
     // introduces virtual MTypeInfo typeInfo() const
@@ -21,11 +23,16 @@ public:
     MObject();
     virtual ~MObject() = default;
 
+    /// returns the unique instance id for this object
     [[nodiscard]] SString getGUID() const;
+    /// returns string representation of this object.
     [[nodiscard]] virtual SString toString() const;
+    /// checks if two object instances are equal. default impl check guid equality
     [[nodiscard]] virtual bool equals(const MObject* obj) const;
 
+    /// sets the name of this object
     void setName(const SString& newName) { name = newName; }
+    /// gets the name of this object
     [[nodiscard]] SString getName() const { return name; }
 
     // delete operation

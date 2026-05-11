@@ -8,12 +8,13 @@
 
 
 class MTextAsset : public MAsset {
-    DEFINE_OBJECT_SUBCLASS(MTextAsset)
 private:
     SString text;
 public:
     MTextAsset(const SString& path);
     SString getText() const;
+    void setText(const SString& newText);
+    bool save();
 
     bool requestReload() override { loadFromPath(path); return true; };
 private:

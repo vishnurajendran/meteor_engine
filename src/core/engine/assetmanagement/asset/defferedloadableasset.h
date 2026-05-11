@@ -5,6 +5,7 @@
 #ifndef DEFFEREDLOADABLEASSET_H
 #define DEFFEREDLOADABLEASSET_H
 
+/// This interface enables assets to have deferred loading capabilities.
 class IDefferedLoadableAsset {
 public:
     virtual bool hasDeferredLoad() const = 0;

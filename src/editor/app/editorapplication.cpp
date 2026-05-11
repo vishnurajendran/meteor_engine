@@ -10,6 +10,7 @@
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/editorwindows/assetwindow/editorassetwindow.h"
+#include "editor/settings/editor_settings.h"
 #include "editor/window/imgui/imguiwindow.h"
 #include "editor/window/menubar/menubartree.h"
 
@@ -55,20 +56,23 @@ void MEditorApplication::cleanup() {
 
 void MEditorApplication::initialise() {
 
+    // init engine settings.
+    MEngineStatics::loadEngineSettings<MEditorSettings>(getEngineSettingsPath());
+
     std::thread splashThread(&MEditorApplication::showSplashScreen, this);
     editorInst = this;
     //appRunning = true;
     MLOG(STR("Initialising Editor"));
     window = new MImGuiWindow();
-    const auto winX = MEngineStatics::getEngineSettings().resX.get();
-    const auto winY = MEngineStatics::getEngineSettings().resY.get();
-    const auto fps= MEngineStatics::getEngineSettings().fps.get();
+    const auto winX = MEngineStatics::getEngineSettings()->resX.get();
+    const auto winY = MEngineStatics::getEngineSettings()->resY.get();
+    const auto fps= MEngineStatics::getEngineSettings()->fps.get();
     window->initialiseWindow(STR("Meteorite Editor"), SVector2(winX, winY), fps);
     window->setWindowResizeCallback([this](const SVector2& size)
     {
         MLOG(STR("Meteorite:: Resized Window"));
-        MEngineStatics::getEngineSettings().resX.set(size.x);
-        MEngineStatics::getEngineSettings().resY.set(size.y);
+        MEngineStatics::getEngineSettings()->resX.set(size.x);
+        MEngineStatics::getEngineSettings()->resY.set(size.y);
         MEngineStatics::saveAll();
     });
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "editor/meteorite.h"
+#include "editor/window/imgui/imguiwindow.h"
 
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
@@ -8,7 +9,6 @@ class MEditorAssetManager;
 class MCameraEntity;
 class MEditorSceneManager;
 class MImGuiSubWindow;
-class MImGuiWindow;
 
 class MEditorApplication : public MApplication {
     DEFINE_OBJECT_SUBCLASS(MEditorApplication)

@@ -4,19 +4,14 @@
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "core/engine/assetmanagement/asset/asset.h"
-#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
-#include "core/engine/skybox/cubemapasset.h"
-#include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
-#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "core/engine/texture/textureasset.h"
 #include "editor/editorwindows/inspectordrawer/controls/material_properties_controls.h"
 #include "core/utils/logger.h"
 
-std::map<SString, MMaterialPropertyControl*>     MAssetInspector::propControlCache;
-std::map<SString, MAssetInspector::SCubemapFaceControls> MAssetInspector::cubemapFaceCache;
-
-// ── Dispatch ──────────────────────────────────────────────────────────────────
+std::map<SString, MMaterialPropertyControl*> MAssetInspector::propControlCache;
+std::map<SString, std::vector<char>> MAssetInspector::textEditBuffers;
 
 void MAssetInspector::draw(MAsset* asset)
 {
@@ -24,18 +19,13 @@ void MAssetInspector::draw(MAsset* asset)
 
     if (auto* mat = dynamic_cast<MMaterialAsset*>(asset))
         drawMaterialAsset(mat);
-    // MCubemapAsset inherits MTextureAsset — check cubemap FIRST
-    else if (auto* cubemap = dynamic_cast<MCubemapAsset*>(asset))
-        drawCubemapAsset(cubemap);
     else if (auto* tex = dynamic_cast<MTextureAsset*>(asset))
         drawTextureAsset(tex);
-    else if (auto* text = dynamic_cast<MTextAsset*>(asset))
-        drawTextAsset(text);
+    else if (auto* txt = dynamic_cast<MTextAsset*>(asset))
+        drawTextAsset(txt);
     else
         drawGenericAsset(asset);
 }
-
-// ── Material inspector (unchanged) ────────────────────────────────────────────
 
 void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 {
@@ -71,6 +61,8 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     ImGui::Spacing();
 
+    // Check buildability without storing the pointer — getMaterial() is called
+    // fresh inside ctrl->draw(asset) each frame to avoid dangling pointers.
     if (!asset->getMaterial())
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
@@ -85,6 +77,7 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     auto* ctrl = propControlCache[id];
 
+    // Flush texture reference controls when property count changes (hot reload).
     const int propCount = (int)asset->getMaterial()->getProperties().size();
     if (ctrl->getLastPropertyCount() != propCount)
     {
@@ -92,6 +85,7 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
         ctrl->setLastPropertyCount(propCount);
     }
 
+    // Pass the asset — draw() calls getMaterial() fresh internally.
     ctrl->draw(asset);
 
     ImGui::Spacing();
@@ -105,7 +99,9 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
     if (saved)
     {
         if (!asset->save())
+        {
             ImGui::OpenPopup("##save_err");
+        }
     }
 
     if (ImGui::BeginPopup("##save_err"))
@@ -116,37 +112,6 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
     }
 }
 
-// ── Texture inspector ─────────────────────────────────────────────────────────
-
-// Label arrays for combo boxes — indices must match enum order.
-
-static const char* filterMinLabels[] = {
-    "Nearest", "Linear",
-    "Nearest Mipmap Nearest", "Linear Mipmap Nearest",
-    "Nearest Mipmap Linear",  "Linear Mipmap Linear"
-};
-
-static const char* filterMagLabels[] = { "Nearest", "Linear" };
-
-static const char* wrapLabels[] = {
-    "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border"
-};
-
-static const char* compressionLabels[] = { "None", "DXT1 (BC1, RGB)", "DXT5 (BC3, RGBA)" };
-
-static const char* maxSizeLabels[] = {
-    "No Limit", "4096", "2048", "1024", "512", "256", "128"
-};
-static const int maxSizeValues[] = { 0, 4096, 2048, 1024, 512, 256, 128 };
-static constexpr int maxSizeCount = 7;
-
-static int maxSizeToIndex(int val)
-{
-    for (int i = 0; i < maxSizeCount; ++i)
-        if (maxSizeValues[i] == val) return i;
-    return 0;
-}
-
 void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
 {
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.5f, 1.f, 1.f));
@@ -154,7 +119,6 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
     ImGui::PopStyleColor();
     ImGui::Separator();
 
-    // ── Info table ────────────────────────────────────────────────────────
     constexpr float LW = 100.f;
     if (ImGui::BeginTable("##tex_info", 2, ImGuiTableFlags_None))
     {
@@ -179,7 +143,7 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
         {
             auto size = tex->getCoreTexture()->getSize();
             char buf[64];
-            std::snprintf(buf, sizeof(buf), "%u x %u", size.x, size.y);
+            std::snprintf(buf, sizeof(buf), "%u × %u", size.x, size.y);
             row("Size:", buf);
         }
 
@@ -188,7 +152,7 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
 
     ImGui::Spacing();
 
-    // ── Preview ───────────────────────────────────────────────────────────
+    // Preview — fits to the available width while keeping aspect ratio.
     auto* tex = asset->getTexture();
     if (tex && tex->getCoreTexture())
     {
@@ -198,6 +162,7 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
         float previewW = std::min(avail, 512.f);
         float previewH = previewW * aspect;
 
+        // Subtle border
         ImVec2 tl = ImGui::GetCursorScreenPos();
         ImGui::GetWindowDrawList()->AddRectFilled(
             ImVec2(tl.x - 1, tl.y - 1),
@@ -212,124 +177,20 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
         ImGui::TextUnformatted("Texture not loaded.");
         ImGui::PopStyleColor();
     }
-
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    // ── Import settings ───────────────────────────────────────────────────
-    if (ImGui::CollapsingHeader("Import Settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        constexpr float LABEL_W = 120.f;
-        if (ImGui::BeginTable("##tex_settings", 2, ImGuiTableFlags_None))
-        {
-            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LABEL_W);
-            ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
-
-            // ── Max Import Size ───────────────────────────────────────────
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Max Size:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            int sizeIdx = maxSizeToIndex(asset->getMaxImportSize());
-            if (ImGui::Combo("##maxSize", &sizeIdx, maxSizeLabels, maxSizeCount))
-                asset->setMaxImportSize(maxSizeValues[sizeIdx]);
-
-            // ── Min Filter ────────────────────────────────────────────────
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Min Filter:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            int minIdx = (int)asset->getFilterMin();
-            if (ImGui::Combo("##filterMin", &minIdx, filterMinLabels, IM_ARRAYSIZE(filterMinLabels)))
-                asset->setFilterMin((ETextureFilterMin)minIdx);
-
-            // ── Mag Filter ────────────────────────────────────────────────
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Mag Filter:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            int magIdx = (int)asset->getFilterMag();
-            if (ImGui::Combo("##filterMag", &magIdx, filterMagLabels, IM_ARRAYSIZE(filterMagLabels)))
-                asset->setFilterMag((ETextureFilterMag)magIdx);
-
-            // ── Wrap S ────────────────────────────────────────────────────
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Wrap S:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            int wrapSIdx = (int)asset->getWrapS();
-            if (ImGui::Combo("##wrapS", &wrapSIdx, wrapLabels, IM_ARRAYSIZE(wrapLabels)))
-                asset->setWrapS((ETextureWrap)wrapSIdx);
-
-            // ── Wrap T ────────────────────────────────────────────────────
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Wrap T:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            int wrapTIdx = (int)asset->getWrapT();
-            if (ImGui::Combo("##wrapT", &wrapTIdx, wrapLabels, IM_ARRAYSIZE(wrapLabels)))
-                asset->setWrapT((ETextureWrap)wrapTIdx);
-
-            // ── Compression ───────────────────────────────────────────────
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Compression:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            int compIdx = (int)asset->getCompression();
-            if (ImGui::Combo("##compression", &compIdx, compressionLabels, IM_ARRAYSIZE(compressionLabels)))
-                asset->setCompression((ETextureCompression)compIdx);
-
-            ImGui::EndTable();
-        }
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Save & Reimport##tex_save", ImVec2(-FLT_MIN, 0)))
-        {
-            if (asset->saveImportSettings())
-            {
-                asset->requestReload();
-            }
-            else
-            {
-                ImGui::OpenPopup("##tex_save_err");
-            }
-        }
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Save import settings to .meta and reload texture");
-
-        if (ImGui::BeginPopup("##tex_save_err"))
-        {
-            ImGui::TextUnformatted("Failed to save import settings. Check logs.");
-            if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
-            ImGui::EndPopup();
-        }
-    }
 }
 
-// ── Cubemap inspector ─────────────────────────────────────────────────────────
-
-static bool canAcceptTextureOnly(MAsset* asset)
+void MAssetInspector::drawTextAsset(MTextAsset* asset)
 {
-    // Accept MTextureAsset but NOT MCubemapAsset (which inherits from it)
-    if (!asset) return false;
-    if (dynamic_cast<MCubemapAsset*>(asset)) return false;
-    return dynamic_cast<MTextureAsset*>(asset) != nullptr;
-}
-
-void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
-{
+    // Header
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.8f, 0.9f, 1.f));
-    ImGui::TextUnformatted("Cubemap Asset");
+    ImGui::TextUnformatted("Text Asset");
     ImGui::PopStyleColor();
     ImGui::Separator();
 
-    // ── Info ──────────────────────────────────────────────────────────────
     constexpr float LW = 100.f;
-    if (ImGui::BeginTable("##cube_info", 2, ImGuiTableFlags_None))
+    if (ImGui::BeginTable("##txt_info", 2, ImGuiTableFlags_None))
     {
-        ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
+        ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed, LW);
         ImGui::TableSetupColumn("v", ImGuiTableColumnFlags_WidthStretch);
 
         auto row = [&](const char* label, const char* value) {
@@ -350,103 +211,77 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
 
     ImGui::Spacing();
 
-    if (ImGui::CollapsingHeader("Face Textures", ImGuiTreeNodeFlags_DefaultOpen))
+    // --- Editable text buffer ---
+    // We maintain a std::vector<char> per asset ID so the buffer persists
+    // across frames. On first access (or after a reload), we seed it from
+    // the asset's current text.
+    static constexpr size_t BUFFER_HEADROOM = 4096;
+
+    const SString& id = asset->getAssetId();
+    auto it = textEditBuffers.find(id);
+    if (it == textEditBuffers.end())
     {
-        const SString& id = asset->getAssetId();
+        const SString& src = asset->getText();
+        size_t capacity = src.size() + BUFFER_HEADROOM;
+        auto& buf = textEditBuffers[id];
+        buf.resize(capacity, '\0');
+        std::memcpy(buf.data(), src.c_str(), src.size());
+        it = textEditBuffers.find(id);
+    }
 
-        // Lazy-create controls for this cubemap
-        if (!cubemapFaceCache.contains(id))
+    auto& buf = it->second;
+
+    // Grow the buffer if ImGui signals it ran out of space.
+    ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput
+                              | ImGuiInputTextFlags_CallbackResize;
+
+    auto resizeCallback = [](ImGuiInputTextCallbackData* data) -> int {
+        if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
         {
-            auto& entry = cubemapFaceCache[id];
-            auto* am = MAssetManager::getInstance();
-            for (int i = 0; i < MCubemapAsset::FACE_COUNT; ++i)
-            {
-                entry.faces[i] = new MAssetReferenceControl();
-                entry.faces[i]->canAcceptAssetFuncCallback = canAcceptTextureOnly;
-
-                // Seed with current face texture if it exists
-                SString facePath = asset->getFacePath(i);
-                if (!facePath.empty())
-                {
-                    auto* faceAsset = am->getAsset<MTextureAsset>(facePath);
-                    if (faceAsset)
-                        entry.faces[i]->setAssetReference(faceAsset);
-                }
-            }
+            auto* vec = static_cast<std::vector<char>*>(data->UserData);
+            vec->resize(data->BufTextLen + BUFFER_HEADROOM);
+            data->Buf = vec->data();
+            data->BufSize = static_cast<int>(vec->size());
         }
+        return 0;
+    };
 
-        auto& controls = cubemapFaceCache[id];
+    float availH = ImGui::GetContentRegionAvail().y
+                  - ImGui::GetFrameHeightWithSpacing() * 2.f;
+    float editorH = std::max(availH, 120.f);
 
-        // Human-readable labels for each face
-        static const char* faceDisplayNames[6] = {
-            "Right (+X)", "Left (-X)", "Top (+Y)",
-            "Bottom (-Y)", "Back (+Z)", "Front (-Z)"
-        };
+    ImGui::InputTextMultiline(
+        "##txt_edit",
+        buf.data(),
+        buf.size(),
+        ImVec2(-FLT_MIN, editorH),
+        flags,
+        resizeCallback,
+        &buf
+    );
 
-        constexpr float LABEL_W = 100.f;
-        if (ImGui::BeginTable("##cube_faces", 2, ImGuiTableFlags_None))
+    ImGui::Spacing();
+
+    // --- Save button ---
+    const bool saved = ImGui::Button("Save##txt_save", ImVec2(-FLT_MIN, 0));
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Write changes back to %s", asset->getPath().c_str());
+
+    if (saved)
+    {
+        asset->setText(SString(buf.data()));
+        if (!asset->save())
         {
-            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LABEL_W);
-            ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
-
-            for (int i = 0; i < MCubemapAsset::FACE_COUNT; ++i)
-            {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::AlignTextToFramePadding();
-                ImGui::TextUnformatted(faceDisplayNames[i]);
-                ImGui::TableSetColumnIndex(1);
-                ImGui::SetNextItemWidth(-FLT_MIN);
-
-                ImGui::PushID(i);
-                controls.faces[i]->drawControl("");
-                ImGui::PopID();
-            }
-
-            ImGui::EndTable();
-        }
-
-        ImGui::Spacing();
-
-        if (ImGui::Button("Save & Rebuild##cube_save", ImVec2(-FLT_MIN, 0)))
-        {
-            // Update face paths from the reference controls
-            for (int i = 0; i < MCubemapAsset::FACE_COUNT; ++i)
-            {
-                auto* ref = controls.faces[i]->getAssetReference();
-                asset->setFacePath(i, ref ? ref->getPath() : SString(""));
-            }
-
-            if (asset->save())
-            {
-                asset->requestReload();
-            }
-            else
-            {
-                ImGui::OpenPopup("##cube_save_err");
-            }
-        }
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Save cubemap XML and rebuild GPU cubemap texture");
-
-        if (ImGui::BeginPopup("##cube_save_err"))
-        {
-            ImGui::TextUnformatted("Failed to save cubemap. Check logs.");
-            if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
-            ImGui::EndPopup();
+            ImGui::OpenPopup("##txt_save_err");
         }
     }
-}
 
-void MAssetInspector::drawTextAsset(MTextAsset* asset)
-{
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.8f, 0.6f, 1.f));
-    ImGui::TextUnformatted("Text Asset");
-    ImGui::PopStyleColor();
-    ImGui::Separator();
-
-    ImGui::Text("Name: %s", asset->getName().c_str());
-    ImGui::Text("Path: %s", asset->getPath().c_str());
+    if (ImGui::BeginPopup("##txt_save_err"))
+    {
+        ImGui::TextUnformatted("Failed to save text asset. Check logs.");
+        if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
 }
 
 void MAssetInspector::drawGenericAsset(MAsset* asset)

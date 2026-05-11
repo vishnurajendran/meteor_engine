@@ -9,7 +9,7 @@
 #include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
 #include "core/meteor_core_minimal.h"
 
-
+/// Defines the application for the meteor
 class MApplication : public MObject {
     DEFINE_OBJECT_SUBCLASS(MApplication)
 public:

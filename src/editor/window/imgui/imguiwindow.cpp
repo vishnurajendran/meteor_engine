@@ -12,10 +12,10 @@
 #include "editor/window/menubar/menubartree.h"
 #include "editorcontrolsbuttons.h"
 #include "imgui_internal.h"
-#include "imguistyles.h"
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
+#include "editor/themes/editor_themes.h"
 
 bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)
 {
@@ -43,7 +43,7 @@ bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-    MEditorThemes::applyDeepDarkTheme();
+    MEditorThemes::applyTheme();
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);  // Full-screen size

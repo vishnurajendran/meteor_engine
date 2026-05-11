@@ -6,7 +6,7 @@
 #define TEXTASSETIMPORTER_H
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 
-
+/// Importer for Text Assets
 class MTextAssetImporter : public MAssetImporter {
     DEFINE_OBJECT_SUBCLASS(MTextAssetImporter)
 private:
