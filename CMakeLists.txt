@@ -386,6 +386,8 @@ set(CORE_SOURCES
         src/core/utils/field_engine_types.h
         src/core/engine/assetmanagement/asset/asset_handle.h
         src/core/graphics/core/shader/shader_utils.h
+        src/core/graphics/core/render-pipeline/stages/clear/clear_stage.cpp
+        src/core/graphics/core/render-pipeline/stages/clear/clear_stage.h
 )
 
 set(EDITOR_SOURCES
@@ -484,6 +486,8 @@ set(EDITOR_SOURCES
         src/editor/settings/editor_settings.h
         src/editor/themes/editor_themes.cpp
         src/editor/themes/editor_themes.h
+        src/editor/editorrenderstages/gizmos/gizmo_stage.cpp
+        src/editor/editorrenderstages/gizmos/gizmo_stage.h
 )
 
 set(PLAYER_SOURCES

@@ -14,21 +14,21 @@ enum ERenderStageOrder
     RS_Depth         = 0,       // depth prepass
     RS_Shadow        = 1,       // shadow maps
 
+    RS_Clear         = 500,     // clear BUFFER_OPAQUE (colour + depth)
+    RS_Skybox        = 750,     // skybox into BUFFER_OPAQUE (before geometry)
     RS_Opaque        = 1000,    // opaque geometry
     RS_Transparent   = 3000,    // transparent geometry
 
-    RS_Lighting      = 4000,    // lighting accumulation
+    RS_Lighting      = 4000,    // lighting mask accumulation
 
     RS_UserInterface = 5000,    // UI
 
     RS_Composite     = 8000,    // composite all flagged buffers into render target
-
     RS_PostProcessing = 9999,   // post-process on the composited result
 };
 
 class MRenderStage : public MObject, public IRenderStage
 {
-    DEFINE_OBJECT_SUBCLASS(MRenderStage)
 public:
     MRenderStage()          = default;
     ~MRenderStage() override = default;

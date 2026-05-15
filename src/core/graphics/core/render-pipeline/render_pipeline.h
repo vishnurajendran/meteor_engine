@@ -8,7 +8,6 @@
 
 #include <vector>
 #include <cstdint>
-
 #include "buffer_registry.h"
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
@@ -17,7 +16,7 @@
 #include "interfaces/render_stage_interface.h"
 #include "render_item.h"
 
-// Pure orchestration — owns stages and the buffer registry, drives the frame
+// Pure orchestration - owns stages and the buffer registry, drives the frame
 // lifecycle, and collects render items from the scene.  Contains zero render
 // logic; all drawing decisions live inside the stages.
 class MRenderPipeline : public MObject,
@@ -66,6 +65,11 @@ public:
         IRenderStage* stage = new T();
         stage->init(this);
         renderStages.push_back(stage);
+
+        // sort the render stages after each addition.
+        std::sort(renderStages.begin(), renderStages.end(),
+            [](IRenderStage* a, IRenderStage* b) { return a->getSortingOrder() < b->getSortingOrder(); });
+
         return true;
     }
 

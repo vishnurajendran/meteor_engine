@@ -9,7 +9,7 @@
 
 class MAsset : public MObject, IDefferedLoadableAsset
 {
-    DEFINE_OBJECT_SUBCLASS(MAsset)
+    DEFINE_OBJECT_CLASS(MAsset)
 protected:
     SString path;
     SString assetId;
@@ -19,25 +19,22 @@ public:
     MAsset(const SString& path);
     ~MAsset() override = default;
 
-    /// Get relative path to the asset.
     SString getPath() const;
-
-    /// Get absolute path to the asset.
     SString getFullPath() const;
-
-    /// Returns true, if the asset is Valid, and use-able.
     bool isValid() const;
 
-    /// Get the unique persistent id for this asset on disk
     SString getAssetId() const { return assetId; }
     void internal_SetAssetId(const SString& assetId);
 
     // tries handling of asset open request.
     virtual bool openAsset() { return false; }
 
-    /// Force a reload for this asset, it will re-import the asset
-    /// redo any processes required for the asset.
+    // force a reload on asset
     virtual bool requestReload() = 0;
+
+    // Override in subclasses that support saving (e.g. MMaterialAsset).
+    // Returns true on success. Clears the dirty flag on successful save.
+    virtual bool save() { return false; }
 
     /// Inform that this asset needs deferred loading.\n\n
     /// By default, the assets do not need deferred loading,

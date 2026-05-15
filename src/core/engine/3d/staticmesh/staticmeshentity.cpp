@@ -24,26 +24,72 @@ MStaticMeshEntity::~MStaticMeshEntity()
     delete errorMaterialInstance;
 }
 
+// ── Serialisation ─────────────────────────────────────────────────────────────
+
+void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
+{
+    MSpatialEntity::onSerialise(node);
+
+    // Write all material slots as:
+    //   <materialSlots>
+    //       <slot index="0">assets/materials/brick.material</slot>
+    //       <slot index="1">assets/materials/wood.material</slot>
+    //   </materialSlots>
+    auto slotsNode = node.append_child("materialSlots");
+    for (int i = 0; i < (int)materialSlots.size(); ++i)
+    {
+        auto slotNode = slotsNode.append_child("slot");
+        slotNode.append_attribute("index").set_value(i);
+        if (materialSlots[i].isValid())
+            slotNode.text().set(materialSlots[i].assetHandle->getPath().c_str());
+    }
+}
+
 void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
 {
     MSpatialEntity::onDeserialise(node);
 
+    // ── Load mesh first — this resizes materialSlots ──────────────────────
     const std::string& meshPath = meshAssetPath.get();
     if (!meshPath.empty())
     {
-        const auto asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshPath.c_str());
+        auto asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshPath.c_str());
         if (asset) setStaticMeshAsset(asset);
         else       MWARN(STR("MStaticMeshEntity: mesh not found: ") + meshPath);
     }
 
-    const std::string& matPath = materialAssetPath.get();
-    if (!matPath.empty())
+    // ── Load material slots ───────────────────────────────────────────────
+    auto slotsNode = node.child("materialSlots");
+    if (slotsNode)
     {
-        const auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
-        if (asset) setMaterialAsset(asset, 0);
-        else       MWARN(STR("MStaticMeshEntity: material not found: ") + matPath);
+        // New format — multiple slots.
+        for (auto slotNode : slotsNode.children("slot"))
+        {
+            int idx = slotNode.attribute("index").as_int(-1);
+            if (idx < 0 || idx >= (int)materialSlots.size()) continue;
+
+            SString matPath = slotNode.text().as_string();
+            if (matPath.empty()) continue;
+
+            auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
+            if (asset) setMaterialAsset(asset, idx);
+            else       MWARN(SString::format("MStaticMeshEntity: material not found for slot {0}: {1}", idx, matPath));
+        }
+    }
+    else
+    {
+        // Backward compat — old format with single materialAssetPath (slot 0 only).
+        const std::string& matPath = materialAssetPath.get();
+        if (!matPath.empty())
+        {
+            auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
+            if (asset) setMaterialAsset(asset, 0);
+            else       MWARN(STR("MStaticMeshEntity: material not found: ") + matPath);
+        }
     }
 }
+
+// ── Render ────────────────────────────────────────────────────────────────────
 
 void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 {
@@ -52,10 +98,9 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
     const SMatrix4 current = getTransformMatrix();
     if (current != prevTransformMatrix) { prevTransformMatrix = current; calculateBounds(); }
 
-    // Lazy-load error material once.
     if (!errorMaterialInstance)
     {
-        const auto asset = MAssetManager::getInstance()
+        auto asset = MAssetManager::getInstance()
             ->getAsset<MMaterialAsset>("meteor_assets/engine_assets/materials/error_material.material");
         if (asset) errorMaterialInstance = asset->getMaterial();
     }
@@ -68,7 +113,6 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
         const auto* mesh = meshes[i];
         if (!mesh) continue;
 
-        // Use the asset's shared material directly — no instancing.
         MMaterial* mat = materialSlots[i].getMaterial();
         if (!mat) mat = errorMaterialInstance;
         if (!mat) continue;
@@ -102,6 +146,8 @@ void MStaticMeshEntity::onUpdate(float dt)
 
 void MStaticMeshEntity::onDrawGizmo(SVector2 res) { MSpatialEntity::onDrawGizmo(res); }
 
+// ── Asset setters ─────────────────────────────────────────────────────────────
+
 void MStaticMeshEntity::setStaticMeshAsset(TAssetHandle<MStaticMeshAsset> asset)
 {
     if (!asset) { staticMeshAsset = {}; meshAssetPath = std::string(""); return; }
@@ -131,34 +177,24 @@ void MStaticMeshEntity::setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int
 
     if (slotId == 0)
         materialAssetPath = (asset && asset.isValid()) ? asset->getPath().str() : std::string("");
-
-    MLOG(SString::format("MStaticMeshEntity::Material Slot updated {0}, SlotId:{1}", asset->getPath(), slotId));
 }
 
 void MStaticMeshEntity::swapMaterialSlots(int a, int b)
 {
+    if (a < 0 || a >= (int)materialSlots.size()) return;
+    if (b < 0 || b >= (int)materialSlots.size()) return;
     if (a == b) return;
-    if (a < 0 || a >= (int)materialSlots.size() ||
-        b < 0 || b >= (int)materialSlots.size())
-    {
-        MERROR(SString::format(
-            "MStaticMeshEntity::swapMaterialSlots: indices {0}, {1} out of range (size={2})",
-            a, b, (int)materialSlots.size()));
-        return;
-    }
-
     std::swap(materialSlots[a], materialSlots[b]);
 
-    // materialAssetPath serialises slot 0 only.
-    // If slot 0 was involved in the swap, update it to stay consistent.
+    // Keep materialAssetPath in sync if slot 0 was involved.
     if (a == 0 || b == 0)
     {
-        const auto& slot0 = materialSlots[0];
-        materialAssetPath = (slot0.isValid() && slot0.assetHandle.isValid())
-                                ? slot0.assetHandle->getPath().str()
-                                : std::string("");
+        auto& slot0 = materialSlots[0];
+        materialAssetPath = (slot0.isValid()) ? slot0.assetHandle->getPath().str() : std::string("");
     }
 }
+
+// ── Accessors ─────────────────────────────────────────────────────────────────
 
 TAssetHandle<MMaterialAsset> MStaticMeshEntity::getMaterialAsset(int slotId) const
 {

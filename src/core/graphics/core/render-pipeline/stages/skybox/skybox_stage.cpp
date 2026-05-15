@@ -40,12 +40,12 @@ void MSkyboxStage::render(IRenderPipeline* const pipeline)
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
     if (MSkyboxQueue::getDrawCalls().empty()) return;
 
-    // Bind directly into BUFFER_OPAQUE so the skybox and geometry share the
-    // same colour buffer.  The composite stage blits this to the render target.
     opaqueBuffer->bindAsActive();
 
     const SVector2 res = pipeline->getRenderResolution();
     glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
+
+    glDepthMask(GL_FALSE);  // don't corrupt the clean depth from clear stage
 
     for (auto* drawCall : MSkyboxQueue::getDrawCalls())
     {
@@ -53,6 +53,16 @@ void MSkyboxStage::render(IRenderPipeline* const pipeline)
         drawCall->setTargetResolution(res);
         drawCall->draw();
     }
+
+    glDepthMask(GL_TRUE);   // restore for opaque stage
+
+    // Unbind any cubemap left by the draw call so it doesn't pollute
+    // subsequent stages' sampler state. The cubemap skybox binds its
+    // texture at unit 0 and never cleans up — stale cubemap bindings
+    // cause undefined behaviour for sampler2D/samplerCube uniforms in
+    // material and lighting shaders that default to unit 0.
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
     opaqueBuffer->unbind();
 }

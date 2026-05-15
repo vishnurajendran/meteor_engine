@@ -1,6 +1,7 @@
 #include "object.h"
-#include "core/utils/guid.h"
 #include "core/object/gc.h"
+#include "core/utils/guid.h"
+#include "core/utils/logger.h"
 
 MObject::MObject()
 {

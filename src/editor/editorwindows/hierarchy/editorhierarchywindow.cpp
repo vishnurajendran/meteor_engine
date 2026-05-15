@@ -142,7 +142,19 @@ void MEditorHierarchyWindow::drawSceneRoot(MScene* scene)
     ImGui::SameLine(0, 4);
     ImGui::Image(sceneTex, sceneTexSize);
     ImGui::SameLine(0, 5);
-    ImGui::TextUnformatted(scene->getName().c_str());
+
+    // Show * indicator when scene has unsaved changes.
+    if (scene->isDirty())
+    {
+        SString dirtyName = scene->getName() + STR(" *");
+        ImGui::TextUnformatted(dirtyName.c_str());
+    }
+    else
+    {
+        ImGui::TextUnformatted(scene->getName().c_str());
+    }
+
+
 
     if (open)
     {
@@ -402,3 +414,4 @@ int MEditorHierarchyWindow::countVisibleEntities(MScene* scene) const
     for (auto* root : scene->getRootEntities()) total += count(root);
     return total;
 }
+

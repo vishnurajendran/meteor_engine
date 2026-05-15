@@ -13,19 +13,20 @@
 
     #FRAGMENT_PASS
 
-    // Raw uniforms — not properties — so the asset system does not pre-bind
-    // any default textures that would corrupt the output.
     uniform sampler2D _albedoTex;  // BUFFER_OPAQUE  (GL_RGBA8,   unit 0)
     uniform sampler2D _lightsTex;  // BUFFER_LIGHTS  (GL_RGBA16F, unit 1)
 
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
-        vec3 albedo = texture(_albedoTex, v2fTexCoords).rgb;
-        vec3 lights = texture(_lightsTex, v2fTexCoords).rgb;
+        vec4 opaque = texture(_albedoTex, v2fTexCoords);
+        vec4 light  = texture(_lightsTex, v2fTexCoords);
 
-        // Multiply in shader space — handles HDR light values above 1.0
-        // correctly before clamping to the LDR output framebuffer.
-        return vec4(albedo * lights, 1.0);
+        // Light mask compositing:
+        //   light.a = 0 → unlit pixel, pass through opaque as-is
+        //   light.a = 1 → lit pixel, multiply opaque by light contribution
+        vec3 result = mix(opaque.rgb, opaque.rgb * light.rgb, light.a);
+
+        return vec4(result, opaque.a);
     }
 
     #END_FRAGMENT_PASS

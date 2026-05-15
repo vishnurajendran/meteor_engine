@@ -37,7 +37,7 @@ public:
     static void registerAssetManagerInstance(MAssetManager* instance);
     virtual void refresh();
     virtual void cleanup();
-
+    virtual int saveDirtyAssets();
 
     // Every handle returned resolves by GUID. The path is only used to
     // locate the asset and extract its GUID at creation time.

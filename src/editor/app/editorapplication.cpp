@@ -8,8 +8,10 @@
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
+#include "editor/editorrenderstages/gizmos/gizmo_stage.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/editorwindows/assetwindow/editorassetwindow.h"
+#include "editor/helper/scene_io.h"
 #include "editor/settings/editor_settings.h"
 #include "editor/window/imgui/imguiwindow.h"
 #include "editor/window/menubar/menubartree.h"
@@ -23,6 +25,7 @@ MEditorApplication::MEditorApplication() : MApplication(){
     name = STR("MeteoriteEditor");
 }
 
+
 void MEditorApplication::run() {
     if(window == nullptr)
         return;
@@ -33,13 +36,94 @@ void MEditorApplication::run() {
     if (sceneManagerRef)
         sceneManagerRef->update(deltaTime);
 
-    // tick-hot reload system.
     if (assetManagerRef)
         assetManagerRef->tickHotReload();
 
     window->update(deltaTime);
+
+    // Process global keyboard shortcuts after ImGui has processed input.
+    processGlobalShortcuts();
+
     endFrame();
 }
+
+void MEditorApplication::processGlobalShortcuts()
+{
+    // Only process when no text input is active — avoids capturing
+    // Ctrl+S while the user is typing in a text field.
+    if (ImGui::GetIO().WantTextInput) return;
+
+    const bool ctrl  = ImGui::GetIO().KeyCtrl;
+    const bool shift = ImGui::GetIO().KeyShift;
+
+    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
+    {
+        if (shift)
+            saveAllDirty();
+        else
+            saveSelected();
+    }
+}
+
+void MEditorApplication::saveSelected()
+{
+    // If an asset is selected, save it.
+    if (auto* asset = dynamic_cast<MAsset*>(SelectedObject))
+    {
+        if (asset->save())
+        {
+            asset->clearDirty();
+            MLOG(SString::format("Saved asset: {0}", asset->getPath()));
+        }
+        return;
+    }
+
+    // Otherwise, save the current scene.
+    if (!sceneManagerRef) return;
+
+    SString path = sceneManagerRef->getActiveScenePath();
+    if (path.empty())
+        path = MSceneIO::getCurrentPath();
+
+    if (!path.empty())
+    {
+        sceneManagerRef->saveCurrentScene(path);
+        auto* scene = sceneManagerRef->getActiveScene();
+        if (scene) scene->clearDirty();
+        MLOG(SString::format("Saved scene: {0}", path));
+    }
+    else
+    {
+        MWARN("No scene path known — use File > Save Scene As");
+    }
+}
+
+void MEditorApplication::saveAllDirty()
+{
+    // Save all dirty assets.
+    int count = MAssetManager::getInstance()->saveDirtyAssets();
+
+    // Save scene if dirty.
+    if (sceneManagerRef)
+    {
+        auto* scene = sceneManagerRef->getActiveScene();
+        if (scene && scene->isDirty())
+        {
+            SString path = sceneManagerRef->getActiveScenePath();
+            if (path.empty()) path = MSceneIO::getCurrentPath();
+
+            if (!path.empty())
+            {
+                sceneManagerRef->saveCurrentScene(path);
+                scene->clearDirty();
+                ++count;
+            }
+        }
+    }
+
+    MLOG(SString::format("Save All: {0} items saved", count));
+}
+
 
 void MEditorApplication::cleanup() {
     MLOG(STR("Cleanup..."));
@@ -76,6 +160,8 @@ void MEditorApplication::initialise() {
         MEngineStatics::saveAll();
     });
 
+    // add a gizmo pipelin
+    pipelineManager.getPipeline().addStage<MGizmoStage>();
 
     // call intialise before use
     window->setGraphicsCall([this]()

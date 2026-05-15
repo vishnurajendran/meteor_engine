@@ -30,11 +30,11 @@ MSpatialEntity* MDirectionalLightEntityDeserialiser::deserialize(pugi::xml_node 
     entity->setIntensity(intensity);
     entity->setColor(SColor(color.x, color.y, color.z, color.w));
 
-    auto* mgr = MLightSystemManager::getInstance();
+    // Shadow settings — stored on the entity, not the manager.
     if (const auto n = ln.child("castsShadow"))
-        mgr->directionalShadowEnabled = std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0";
+        entity->setCastsShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
     if (const auto n = ln.child("smoothShadow"))
-        mgr->smoothShadows = std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0";
+        entity->setSmoothShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
 
     return entity;
 }
@@ -43,13 +43,12 @@ pugi::xml_node MDirectionalLightEntityDeserialiser::serialise(MSpatialEntity* en
                                                                pugi::xml_node parent)
 {
     auto* light = dynamic_cast<MDirectionalLight*>(entity);
-    auto* mgr   = MLightSystemManager::getInstance();
     pugi::xml_node node   = writeSpatialBase(entity, parent, "directional_light");
     pugi::xml_node attrib = node.child(ATTRIB_NODE.c_str());
     pugi::xml_node ln     = attrib.append_child("directional_light");
     writeColor(ln, "color",        light->getColor());
     writeFloat(ln, "intensity",    light->getIntensity());
-    writeBool (ln, "castsShadow",  mgr->directionalShadowEnabled);
-    writeBool (ln, "smoothShadow", mgr->smoothShadows);
+    writeBool (ln, "castsShadow",  light->getCastsShadow());
+    writeBool (ln, "smoothShadow", light->getSmoothShadow());
     return node;
 }

@@ -141,7 +141,7 @@ void MShadowStage::render(IRenderPipeline* const pipeline)
     auto* mgr = MLightSystemManager::getInstance();
 
     auto* dirLight = mgr->getDirectionalLight();
-    if (dirLight && dirLight->getEnabled() && mgr->directionalShadowEnabled)
+    if (dirLight && dirLight->getEnabled() && mgr->isDirectionalShadowEnabled())
         renderDirectionalShadow(pipeline, dirLight);
 
     renderSpotShadows(pipeline);

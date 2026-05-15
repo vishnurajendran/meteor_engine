@@ -8,9 +8,6 @@
 #include "opaque_stage.h"
 #include "core/engine/camera/viewmanagement.h"
 #include "core/graphics/core/material/material.h"
-#include "core/graphics/core/shader/shader.h"
-#include "core/graphics/core/shader/shaderasset.h"
-#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
@@ -19,28 +16,17 @@
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/utils/logger.h"
 
-static constexpr const char* ALBEDO_SHADER_PATH =
-    "meteor_assets/engine_assets/shaders/internal/albedo_pass.mesl";
-
 void MOpaqueStage::init(IRenderPipeline* const pipeline)
 {
     opaqueBuffer = pipeline->getBufferRegistry()
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer)
         MERROR("MOpaqueStage::init failed to create opaque buffer");
-
-    // Store the path only — the raw MShader* is looked up fresh each frame
-    // so it survives asset manager refresh() without dangling.
-    if (MAssetManager::getInstance()->getAsset<MShaderAsset>(ALBEDO_SHADER_PATH))
-        albedoShaderPath = ALBEDO_SHADER_PATH;
-    else
-        MERROR("MOpaqueStage::init could not find albedo shader: " + SString(ALBEDO_SHADER_PATH));
 }
 
 void MOpaqueStage::cleanup(IRenderPipeline* const pipeline)
 {
-    opaqueBuffer     = nullptr;
-    albedoShaderPath = "";
+    opaqueBuffer = nullptr;
 }
 
 void MOpaqueStage::preRender(IRenderPipeline* const pipeline)
@@ -50,12 +36,7 @@ void MOpaqueStage::preRender(IRenderPipeline* const pipeline)
 
 void MOpaqueStage::render(IRenderPipeline* const pipeline)
 {
-    // Resolve albedo shader fresh each frame — survives asset manager refresh().
-    const auto albedoAsset = MAssetManager::getInstance()
-                            ->getAsset<MShaderAsset>(albedoShaderPath.c_str());
-    MShader* albedoShader = albedoAsset ? albedoAsset->getShader() : nullptr;
-
-    if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0 || !albedoShader) return;
+    if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
 
     opaqueBuffer->bindAsActive();
 
@@ -65,7 +46,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // No glClear — MClearStage handles clearing before skybox and geometry.
 
     MCameraEntity* camera = nullptr;
     for (auto* c : MViewManagement::getCameras())
@@ -74,8 +55,6 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     const glm::mat4 viewMat = camera ? camera->getViewMatrix()          : glm::mat4(1.f);
     const glm::mat4 projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
 
-    // Helper: set model/view/projection on whatever program is currently bound.
-    // Works for both the albedo shader and any custom material shader.
     auto setMVP = [&](const glm::mat4& model)
     {
         GLint prog = 0;
@@ -95,29 +74,9 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     {
         if (item.vao == 0 || !item.material) continue;
 
-        if (item.getShadingMode() == MMaterial::ShadingMode::Unlit)
-        {
-            // Unlit — the material's own shader runs in full.
-            // bindMaterial() calls glUseProgram + uploads all properties.
-            // BUFFER_LIGHTS is cleared to white so the composite stage
-            // produces:  materialOutput × white = materialOutput (correct).
-            item.material->bindMaterial();
-        }
-        else
-        {
-            // Lit (deferred) — albedo-only pass. The lighting stage renders
-            // the same geometry again into BUFFER_LIGHTS, then composite
-            // multiplies:  albedo × lighting = final shaded colour.
-            albedoShader->bind();
-            for (auto& [key, val] : item.material->getProperties())
-                albedoShader->setPropertyValue(key, val);
-        }
-
+        item.material->bindMaterial();
         setMVP(item.transform);
 
-        // Re-assert depth state before every draw — bindMaterial() may change
-        // glDepthMask or glDepthFunc if the material's shader has side effects,
-        // causing subsequent items to render incorrectly (e.g. plane over cube).
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);

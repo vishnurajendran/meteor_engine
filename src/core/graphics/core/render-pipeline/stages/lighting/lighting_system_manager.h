@@ -8,14 +8,14 @@
 #include "../../../../../object/object.h"
 #include "../../../../../utils/glmhelper.h"
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
+#include "core/engine/lighting/directional/directional_light.h"
 #include "core/utils/aabb.h"
 #include "lightbvh/lightscene.h"
 
 
 class MLightEntity;
 
-class MLightSystemManager : public MObject {
-    DEFINE_OBJECT_SUBCLASS(MLightSystemManager)
+class MLightSystemManager : MObject {
 public:
     void registerLight(MLightEntity* light);
     void unregisterLight(MLightEntity* light);
@@ -23,9 +23,21 @@ public:
     void prepareDynamicLights(const AABB& bounds);
     void requestLightSceneRebuild();
 
-    // Shadow toggle and soft shadow mode — read by MShadowStage and MLightingStage each frame.
-    bool directionalShadowEnabled = true;
-    bool smoothShadows            = false;
+    // ── Directional shadow — queries the directional light entity ─────────
+    // These replace the old global booleans. If no directional light exists,
+    // they return safe defaults.
+    bool isDirectionalShadowEnabled() const
+    {
+        auto* dl = dynamic_cast<MDirectionalLight*>(directionalLightInstance);
+        return dl ? dl->getCastsShadow() : false;
+    }
+
+    bool isDirectionalSmoothShadow() const
+    {
+        auto* dl = dynamic_cast<MDirectionalLight*>(directionalLightInstance);
+        return dl ? dl->getSmoothShadow() : false;
+    }
+
     MLightEntity* getDirectionalLight() const { return directionalLightInstance; }
     const std::vector<MDynamicLight*>& getDynamicLights() const { return dynamicLights; }
 public:

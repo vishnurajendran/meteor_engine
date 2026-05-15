@@ -3,6 +3,7 @@
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/scene/scenemanager.h"
+#include "core/graphics/core/render-pipeline/stages/composite/composite_stage.h"
 #include "editor/app/editorapplication.h"
 #include "imgui.h"
 
@@ -457,12 +458,14 @@ void MEditorSceneViewWindow::drawOverlayToolbar()
     float eyeLabelW  = ImGui::CalcTextSize(eyeLabel).x + 12.0f; // +padding
 
     // Panel width = two text labels + 5 icon buttons + eye text button
-    //             + 3 dividers + item gaps + breathing room
+    //             + debug view combo + 4 dividers + item gaps + breathing room
+    float comboW = 100.0f + OVL_PAD * 2.0f;
     float panelW = gizmoTextW + modeTextW
                  + (iconW + 8.0f) * 5.0f   // 5 ImageButtons (icon + frame padding)
                  + eyeLabelW
+                 + comboW
                  + OVL_PAD * 9.0f
-                 + 3.0f * (1.0f + OVL_PAD * 2.0f)
+                 + 4.0f * (1.0f + OVL_PAD * 2.0f)  // 4 dividers
                  + 24.0f;
 
     beginOverlayPanel("##toolbar",
@@ -522,6 +525,27 @@ void MEditorSceneViewWindow::drawOverlayToolbar()
         }
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip(gizmosEnabled ? "Click to hide gizmos" : "Click to show gizmos");
+
+        // ── Section 4: buffer debug view dropdown ─────────────────────────
+        ImGui::SameLine(0, OVL_PAD);
+        ImGui::SetCursorPosY(btnY);
+        overlayDivider(iconH);
+
+        ImGui::SetCursorPosY(textY);
+        {
+            static const char* viewNames[] = {
+                "Final", "Opaque", "Lighting", "Depth", "Light Mask"
+            };
+            int cur = static_cast<int>(MCompositeStage::debugView);
+
+            ImGui::PushStyleColor(ImGuiCol_FrameBg,        ImVec4(0.12f, 0.12f, 0.12f, 0.9f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.20f, 0.20f, 0.20f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_PopupBg,        ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+            ImGui::SetNextItemWidth(100.0f);
+            if (ImGui::Combo("##bufview", &cur, viewNames, IM_ARRAYSIZE(viewNames)))
+                MCompositeStage::debugView = static_cast<EBufferDebugView>(cur);
+            ImGui::PopStyleColor(3);
+        }
     }
     endOverlayPanel();
 }

@@ -9,17 +9,17 @@
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 
 class SFrameBuffer;
-class MShader;
 
 // Opaque geometry stage — RS_Opaque (1000).
 //
-// Renders all SRenderItems into BUFFER_OPAQUE using albedo_pass.mesl as a
-// shader override — outputs texture * color only, no lighting math.
-// MLightingStage renders the same geometry separately into BUFFER_LIGHTS with
-// the light contribution, and MCompositeStage multiplies them together.
+// Renders all SRenderItems into BUFFER_OPAQUE using each item's own material
+// via bindMaterial(). Material shaders output albedo only — no lighting.
+//
+// The lighting stage writes a light mask into BUFFER_LIGHTS:
+//   alpha = 0  →  unlit pixel (composite passes through opaque value)
+//   alpha = 1  →  lit pixel   (composite multiplies opaque × light)
 class MOpaqueStage : public MRenderStage
 {
-    DEFINE_OBJECT_SUBCLASS(MOpaqueStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Opaque; }
 
@@ -30,10 +30,7 @@ public:
     void postRender(IRenderPipeline* const pipeline) override;
 
 private:
-    SFrameBuffer* opaqueBuffer  = nullptr;
-    // No cached MShader* — raw shader pointers are invalidated on refresh().
-    // The path is used to look up the shader fresh each render() call.
-    SString       albedoShaderPath;
+    SFrameBuffer* opaqueBuffer = nullptr;
 };
 
 #endif // OPAQUE_STAGE_H

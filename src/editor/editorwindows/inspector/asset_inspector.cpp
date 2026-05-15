@@ -7,11 +7,11 @@
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
 #include "core/engine/texture/textureasset.h"
+#include "core/engine/assetmanagement/textasset/textasset.h"
 #include "editor/editorwindows/inspectordrawer/controls/material_properties_controls.h"
 #include "core/utils/logger.h"
 
 std::map<SString, MMaterialPropertyControl*> MAssetInspector::propControlCache;
-std::map<SString, std::vector<char>> MAssetInspector::textEditBuffers;
 
 void MAssetInspector::draw(MAsset* asset)
 {
@@ -27,11 +27,15 @@ void MAssetInspector::draw(MAsset* asset)
         drawGenericAsset(asset);
 }
 
+// ── Material ──────────────────────────────────────────────────────────────────
+
 void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 {
-    // Header
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.75f, 0.3f, 1.f));
-    ImGui::TextUnformatted("Material Asset");
+    SString matTitle = asset->isDirty()
+        ? SString("Material Asset *")
+        : SString("Material Asset");
+    ImGui::TextUnformatted(matTitle.c_str());
     ImGui::PopStyleColor();
     ImGui::Separator();
 
@@ -61,8 +65,6 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     ImGui::Spacing();
 
-    // Check buildability without storing the pointer — getMaterial() is called
-    // fresh inside ctrl->draw(asset) each frame to avoid dangling pointers.
     if (!asset->getMaterial())
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
@@ -77,7 +79,6 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     auto* ctrl = propControlCache[id];
 
-    // Flush texture reference controls when property count changes (hot reload).
     const int propCount = (int)asset->getMaterial()->getProperties().size();
     if (ctrl->getLastPropertyCount() != propCount)
     {
@@ -85,7 +86,6 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
         ctrl->setLastPropertyCount(propCount);
     }
 
-    // Pass the asset — draw() calls getMaterial() fresh internally.
     ctrl->draw(asset);
 
     ImGui::Spacing();
@@ -98,10 +98,10 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     if (saved)
     {
-        if (!asset->save())
-        {
+        if (asset->save())
+            asset->clearDirty();
+        else
             ImGui::OpenPopup("##save_err");
-        }
     }
 
     if (ImGui::BeginPopup("##save_err"))
@@ -111,6 +111,8 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
         ImGui::EndPopup();
     }
 }
+
+// ── Texture ───────────────────────────────────────────────────────────────────
 
 void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
 {
@@ -152,7 +154,7 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
 
     ImGui::Spacing();
 
-    // Preview — fits to the available width while keeping aspect ratio.
+    // ── Preview ───────────────────────────────────────────────────────────
     auto* tex = asset->getTexture();
     if (tex && tex->getCoreTexture())
     {
@@ -162,7 +164,6 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
         float previewW = std::min(avail, 512.f);
         float previewH = previewW * aspect;
 
-        // Subtle border
         ImVec2 tl = ImGui::GetCursorScreenPos();
         ImGui::GetWindowDrawList()->AddRectFilled(
             ImVec2(tl.x - 1, tl.y - 1),
@@ -177,112 +178,175 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
         ImGui::TextUnformatted("Texture not loaded.");
         ImGui::PopStyleColor();
     }
+
+    // ── Import Settings ───────────────────────────────────────────────────
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Import Settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        constexpr float LABEL_W = 120.f;
+        bool changed = false;
+
+        if (ImGui::BeginTable("##tex_import", 2, ImGuiTableFlags_None))
+        {
+            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LABEL_W);
+            ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
+
+            // ── Min Filter ────────────────────────────────────────────────
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Min Filter:");
+                ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+
+                static const char* filterMinNames[] = {
+                    "Nearest", "Linear",
+                    "Nearest Mipmap Nearest", "Linear Mipmap Nearest",
+                    "Nearest Mipmap Linear",  "Linear Mipmap Linear"
+                };
+                int cur = (int)asset->getFilterMin();
+                if (ImGui::Combo("##filterMin", &cur, filterMinNames, IM_ARRAYSIZE(filterMinNames)))
+                {
+                    asset->setFilterMin((ETextureFilterMin)cur);
+                    changed = true;
+                }
+            }
+
+            // ── Mag Filter ────────────────────────────────────────────────
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Mag Filter:");
+                ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+
+                static const char* filterMagNames[] = { "Nearest", "Linear" };
+                int cur = (int)asset->getFilterMag();
+                if (ImGui::Combo("##filterMag", &cur, filterMagNames, IM_ARRAYSIZE(filterMagNames)))
+                {
+                    asset->setFilterMag((ETextureFilterMag)cur);
+                    changed = true;
+                }
+            }
+
+            // ── Wrap S ────────────────────────────────────────────────────
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Wrap S:");
+                ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+
+                static const char* wrapNames[] = {
+                    "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border"
+                };
+                int cur = (int)asset->getWrapS();
+                if (ImGui::Combo("##wrapS", &cur, wrapNames, IM_ARRAYSIZE(wrapNames)))
+                {
+                    asset->setWrapS((ETextureWrap)cur);
+                    changed = true;
+                }
+            }
+
+            // ── Wrap T ────────────────────────────────────────────────────
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Wrap T:");
+                ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+
+                static const char* wrapNames[] = {
+                    "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border"
+                };
+                int cur = (int)asset->getWrapT();
+                if (ImGui::Combo("##wrapT", &cur, wrapNames, IM_ARRAYSIZE(wrapNames)))
+                {
+                    asset->setWrapT((ETextureWrap)cur);
+                    changed = true;
+                }
+            }
+
+            // ── Compression ───────────────────────────────────────────────
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Compression:");
+                ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+
+                static const char* compNames[] = { "None", "DXT1 (BC1)", "DXT5 (BC3)" };
+                int cur = (int)asset->getCompression();
+                if (ImGui::Combo("##compression", &cur, compNames, IM_ARRAYSIZE(compNames)))
+                {
+                    asset->setCompression((ETextureCompression)cur);
+                    changed = true;
+                }
+            }
+
+            // ── Max Import Size ───────────────────────────────────────────
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Max Size:");
+                ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+
+                int maxSize = asset->getMaxImportSize();
+                if (ImGui::InputInt("##maxSize", &maxSize, 0, 0))
+                {
+                    if (maxSize < 0) maxSize = 0;
+                    asset->setMaxImportSize(maxSize);
+                    changed = true;
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("0 = no limit. Common values: 512, 1024, 2048, 4096");
+            }
+
+            ImGui::EndTable();
+        }
+
+        if (changed)
+            asset->markDirty();
+
+        ImGui::Spacing();
+
+        if (ImGui::Button("Apply & Save##tex_save", ImVec2(-FLT_MIN, 0)))
+        {
+            if (asset->saveImportSettings())
+            {
+                asset->requestReload();
+                asset->clearDirty();
+                MLOG(SString::format("Texture import settings saved: {0}", asset->getPath()));
+            }
+            else
+            {
+                ImGui::OpenPopup("##tex_save_err");
+            }
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Save settings to .meta and re-import the texture");
+
+        if (ImGui::BeginPopup("##tex_save_err"))
+        {
+            ImGui::TextUnformatted("Failed to save import settings. Check logs.");
+            if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
+    }
 }
+
+// ── Text ──────────────────────────────────────────────────────────────────────
 
 void MAssetInspector::drawTextAsset(MTextAsset* asset)
 {
-    // Header
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.8f, 0.9f, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.8f, 1.f, 1.f));
     ImGui::TextUnformatted("Text Asset");
     ImGui::PopStyleColor();
     ImGui::Separator();
 
-    constexpr float LW = 100.f;
-    if (ImGui::BeginTable("##txt_info", 2, ImGuiTableFlags_None))
-    {
-        ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed, LW);
-        ImGui::TableSetupColumn("v", ImGuiTableColumnFlags_WidthStretch);
-
-        auto row = [&](const char* label, const char* value) {
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.55f, 0.55f, 1.f));
-            ImGui::TextUnformatted(label);
-            ImGui::PopStyleColor();
-            ImGui::TableSetColumnIndex(1);
-            ImGui::TextUnformatted(value);
-        };
-
-        row("Name:", asset->getName().c_str());
-        row("Path:", asset->getPath().c_str());
-
-        ImGui::EndTable();
-    }
-
-    ImGui::Spacing();
-
-    // --- Editable text buffer ---
-    // We maintain a std::vector<char> per asset ID so the buffer persists
-    // across frames. On first access (or after a reload), we seed it from
-    // the asset's current text.
-    static constexpr size_t BUFFER_HEADROOM = 4096;
-
-    const SString& id = asset->getAssetId();
-    auto it = textEditBuffers.find(id);
-    if (it == textEditBuffers.end())
-    {
-        const SString& src = asset->getText();
-        size_t capacity = src.size() + BUFFER_HEADROOM;
-        auto& buf = textEditBuffers[id];
-        buf.resize(capacity, '\0');
-        std::memcpy(buf.data(), src.c_str(), src.size());
-        it = textEditBuffers.find(id);
-    }
-
-    auto& buf = it->second;
-
-    // Grow the buffer if ImGui signals it ran out of space.
-    ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput
-                              | ImGuiInputTextFlags_CallbackResize;
-
-    auto resizeCallback = [](ImGuiInputTextCallbackData* data) -> int {
-        if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
-        {
-            auto* vec = static_cast<std::vector<char>*>(data->UserData);
-            vec->resize(data->BufTextLen + BUFFER_HEADROOM);
-            data->Buf = vec->data();
-            data->BufSize = static_cast<int>(vec->size());
-        }
-        return 0;
-    };
-
-    float availH = ImGui::GetContentRegionAvail().y
-                  - ImGui::GetFrameHeightWithSpacing() * 2.f;
-    float editorH = std::max(availH, 120.f);
-
-    ImGui::InputTextMultiline(
-        "##txt_edit",
-        buf.data(),
-        buf.size(),
-        ImVec2(-FLT_MIN, editorH),
-        flags,
-        resizeCallback,
-        &buf
-    );
-
-    ImGui::Spacing();
-
-    // --- Save button ---
-    const bool saved = ImGui::Button("Save##txt_save", ImVec2(-FLT_MIN, 0));
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Write changes back to %s", asset->getPath().c_str());
-
-    if (saved)
-    {
-        asset->setText(SString(buf.data()));
-        if (!asset->save())
-        {
-            ImGui::OpenPopup("##txt_save_err");
-        }
-    }
-
-    if (ImGui::BeginPopup("##txt_save_err"))
-    {
-        ImGui::TextUnformatted("Failed to save text asset. Check logs.");
-        if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
-        ImGui::EndPopup();
-    }
+    ImGui::Text("Name: %s", asset->getName().c_str());
+    ImGui::Text("Path: %s", asset->getPath().c_str());
 }
+
+// ── Generic ───────────────────────────────────────────────────────────────────
 
 void MAssetInspector::drawGenericAsset(MAsset* asset)
 {

@@ -1,20 +1,19 @@
 // thumbnailrenderer.cpp
 
-#include <GL/glew.h>
 #include "thumbnail_renderer.h"
+#include <GL/glew.h>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
 #include "core/utils/logger.h"
 
 // ── Built-in Lambert shader ───────────────────────────────────────────────────
-// Three-point light rig: key (warm), fill (cool), rim (white).
-// Normal is world-space from the geometry; no textures needed.
-// ─────────────────────────────────────────────────────────────────────────────
 
 static const char* k_thumbVert = R"GLSL(
 #version 460 core
@@ -43,11 +42,24 @@ in  vec3 vNormal;
 in  vec3 vFragPos;
 out vec4 FragColor;
 
-uniform vec3 baseColor;
+uniform vec3      baseColor;
+uniform sampler2D albedoTex;
+uniform int       useAlbedoTex;
 
 void main()
 {
-    vec3 N   = normalize(vNormal);
+    vec3 N = normalize(vNormal);
+
+    // Spherical UV from normal — no vertex UV attribute needed.
+    vec3 color = baseColor;
+    if (useAlbedoTex == 1)
+    {
+        vec2 uv = vec2(
+            atan(N.z, N.x) / (2.0 * 3.14159265) + 0.5,
+            asin(clamp(N.y, -1.0, 1.0)) / 3.14159265 + 0.5
+        );
+        color *= texture(albedoTex, uv).rgb;
+    }
 
     // Key light — warm, upper-left
     vec3 key  = normalize(vec3(-1.0, 2.0, 2.0));
@@ -61,7 +73,7 @@ void main()
     vec3 rim  = normalize(vec3(0.0, -1.0, -2.0));
     float rd  = pow(max(dot(N, rim), 0.0), 4.0) * 0.3;
 
-    vec3 col  = baseColor * (0.18 + kd + fd) + vec3(0.3) * rd;
+    vec3 col  = color * (0.18 + kd + fd) + vec3(0.3) * rd;
     FragColor = vec4(col, 1.0);
 }
 )GLSL";
@@ -77,7 +89,6 @@ void MThumbnailRenderer::init()
 {
     if (initialised) return;
 
-    // The FBO makeBuffer() defers allocation to resize(); call resize() directly.
     fbo.makeBuffer("thumbnail_fbo");
     if (!fbo.resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE))
     {
@@ -98,19 +109,16 @@ void MThumbnailRenderer::init()
 void MThumbnailRenderer::requestThumbnail(MAsset* asset, MThumbnailCache& cache)
 {
     if (!asset) return;
-    if (cache.has(asset->getAssetId())) return; // already cached
+    if (cache.has(asset->getAssetId())) return;
 
-    // Determine type
     EThumbnailAssetType type = EThumbnailAssetType::Unknown;
     if (dynamic_cast<MStaticMeshAsset*>(asset))
         type = EThumbnailAssetType::StaticMesh;
     else if (dynamic_cast<MMaterialAsset*>(asset))
         type = EThumbnailAssetType::Material;
     else
-        return; // no thumbnail for this asset type (shaders use their file icon)
+        return;
 
-    // Avoid duplicate queue entries
-    // (Simple O(n) scan — the queue is tiny, never more than a few hundred)
     auto copy = requestQueue;
     while (!copy.empty())
     {
@@ -140,11 +148,8 @@ bool MThumbnailRenderer::tick(MThumbnailCache& cache)
     SAssetThumbnailRequest req = requestQueue.front();
     requestQueue.pop();
 
-    // Asset may have been deleted since the request was queued.
     if (!req.asset) return false;
 
-    // Skip if it was cached by a previous tick (can happen after hot reload
-    // followed by a fresh request for the same asset).
     if (cache.has(req.assetId)) return false;
 
     sf::Texture* thumb = nullptr;
@@ -175,14 +180,6 @@ sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
     auto meshes = asset->getMeshes();
     if (meshes.empty()) return nullptr;
 
-    // ── Compute local-space AABB from raw vertex positions ────────────────────
-    // Bounds are not stored on MStaticMesh (they depend on the transform
-    // matrix in world use). For thumbnail purposes we compute them here
-    // directly from the vertex data — no transform needed since we centre
-    // the camera on whatever space the vertices happen to be in.
-    //
-    // Requires MStaticMesh to expose its vertices:
-    //   const std::vector<SVertex>& getVertices() const { return vertices; }
     glm::vec3 aabbMin( 1e9f);
     glm::vec3 aabbMax(-1e9f);
 
@@ -196,11 +193,8 @@ sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
         }
     }
 
-    // Bounding sphere that fully encloses the AABB.
-    // Half-diagonal guarantees all 8 corners are inside the sphere,
-    // so if the sphere fits the frustum the entire mesh does too.
     glm::vec3 center(0.f);
-    float     radius = 1.0f;    // fallback for meshes with no vertices
+    float     radius = 1.0f;
     if (aabbMin.x < 1e8f)
     {
         center = (aabbMin + aabbMax) * 0.5f;
@@ -208,8 +202,6 @@ sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
         radius = glm::max(radius, 0.001f);
     }
 
-    // ── Build draw list ───────────────────────────────────────────────────────
-    // Requires MStaticMesh::getVAO(), getEBO(), getIndexCount().
     std::vector<SMeshDraw> draws;
     for (auto* m : meshes)
     {
@@ -223,10 +215,8 @@ sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
 
     if (draws.empty()) return nullptr;
 
-    // ── Camera: frustum-fit to bounding sphere ────────────────────────────────
     SThumbnailCamera cam = computeThumbnailCamera(center, radius);
 
-    // ── Render ────────────────────────────────────────────────────────────────
     fbo.bindAsActive();
     glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
     glEnable(GL_DEPTH_TEST);
@@ -251,36 +241,44 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
 {
     if (!asset || sphereVAO == 0) return nullptr;
 
-    // getInstance() returns a cloned MMaterial with all per-material property
-    // overrides applied on top of the shader defaults. We own this clone.
+    // getMaterial() returns the shared 'original' — do NOT delete it.
     MMaterial* mat = asset->getMaterial();
-    glm::vec3 baseColor(0.85f, 0.45f, 0.15f); // warm orange default
+
+    glm::vec3    baseColor(0.85f, 0.85f, 0.85f);
+    unsigned int albedoTexId  = 0;
+    bool         hasAlbedoTex = false;
 
     if (mat)
     {
         for (auto& [key, val] : mat->getProperties())
         {
+            // Extract base color from the first Color property.
             if (val.getType() == SShaderPropertyType::Color)
             {
                 auto c = val.getColor();
                 baseColor = glm::vec3(c.r, c.g, c.b);
-                break;
             }
-            if (val.getType() == SShaderPropertyType::UniformVec4)
+
+            // Extract albedo texture — first Texture property found.
+            if (!hasAlbedoTex && val.getType() == SShaderPropertyType::Texture)
             {
-                auto c = val.getVec4Val();
-                baseColor = glm::vec3(c.r, c.g, c.b);
-                break;
-            }
-            if (val.getType() == SShaderPropertyType::UniformVec3)
-            {
-                baseColor = val.getVec3Val();
-                break;
+                const SString& texPath = val.getTexAssetReference();
+                if (!texPath.empty())
+                {
+                    auto texAsset = MAssetManager::getInstance()
+                                        ->getAsset<MTextureAsset>(texPath.c_str());
+                    if (texAsset && texAsset->getTexture() &&
+                        texAsset->getTexture()->getCoreTexture())
+                    {
+                        albedoTexId  = texAsset->getTexture()->getCoreTexture()
+                                               ->getNativeHandle();
+                        hasAlbedoTex = true;
+                    }
+                }
             }
         }
     }
 
-    // Clamp so thumbnails are never pure-black or blown-out.
     baseColor = glm::clamp(baseColor, glm::vec3(0.05f), glm::vec3(1.0f));
 
     SThumbnailCamera cam = computeThumbnailCamera(glm::vec3(0.f), 1.0f);
@@ -295,8 +293,35 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
     glClearColor(0.12f, 0.12f, 0.12f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    SMeshDraw sphere{ sphereVAO, sphereEBO, sphereIndexCount };
-    drawMeshes({ sphere }, cam, baseColor);
+    glUseProgram(thumbnailShader);
+
+    glm::mat4 model(1.0f);
+    if (uModel     >= 0) glUniformMatrix4fv(uModel, 1, GL_FALSE, glm::value_ptr(model));
+    if (uView      >= 0) glUniformMatrix4fv(uView,  1, GL_FALSE, glm::value_ptr(cam.view));
+    if (uProj      >= 0) glUniformMatrix4fv(uProj,  1, GL_FALSE, glm::value_ptr(cam.proj));
+    if (uBaseColor >= 0) glUniform3fv(uBaseColor, 1, glm::value_ptr(baseColor));
+
+    // Bind albedo texture if the material has one.
+    if (hasAlbedoTex && uUseAlbedoTex >= 0)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, albedoTexId);
+        if (uAlbedoTex >= 0) glUniform1i(uAlbedoTex, 0);
+        glUniform1i(uUseAlbedoTex, 1);
+    }
+    else if (uUseAlbedoTex >= 0)
+    {
+        glUniform1i(uUseAlbedoTex, 0);
+    }
+
+    glBindVertexArray(sphereVAO);
+    glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+
+    // Clean up texture state.
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
 
     auto* tex = readbackToTexture();
     fbo.unbind();
@@ -319,6 +344,9 @@ void MThumbnailRenderer::drawMeshes(const std::vector<SMeshDraw>& meshes,
     glUniformMatrix4fv(uProj,  1, GL_FALSE, glm::value_ptr(cam.proj));
     glUniform3fv(uBaseColor, 1, glm::value_ptr(baseColor));
 
+    // Ensure texture sampling is off for mesh thumbnails.
+    if (uUseAlbedoTex >= 0) glUniform1i(uUseAlbedoTex, 0);
+
     for (const auto& d : meshes)
     {
         if (d.vao == 0) continue;
@@ -337,7 +365,6 @@ void MThumbnailRenderer::drawMeshes(const std::vector<SMeshDraw>& meshes,
 
 sf::Texture* MThumbnailRenderer::readbackToTexture()
 {
-    // Read RGBA pixels from the currently-bound FBO's colour attachment.
     std::vector<uint8_t> pixels(THUMBNAIL_SIZE * THUMBNAIL_SIZE * 4);
     glReadPixels(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE,
                  GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
@@ -363,41 +390,16 @@ sf::Texture* MThumbnailRenderer::readbackToTexture()
 }
 
 // ── Camera helpers ────────────────────────────────────────────────────────────
-//
-// Frustum-fit derivation
-// ──────────────────────
-// We want the bounding sphere (center, radius) to be completely inside the
-// frustum with MARGIN headroom on every side.
-//
-// For a perspective camera with half-FOV angle A:
-//   Any point on the sphere edge is at most `radius` from the center.
-//   The frustum half-width at distance d is  d * tan(A).
-//   For the sphere to fit:  d * tan(A) >= radius * MARGIN
-//                        →  d >= radius * MARGIN / tan(A)
-//
-// The same distance d works for both horizontal and vertical because the
-// thumbnail FBO is square (aspect = 1).
-//
-// Near plane: d - radius*MARGIN  (just in front of the sphere)
-// Far  plane: d + radius*MARGIN  (just behind the sphere)
-//
-// Both are derived from d so a change to FOV_DEG or MARGIN automatically
-// keeps the projection and distance in sync.
 
 MThumbnailRenderer::SThumbnailCamera
 MThumbnailRenderer::computeThumbnailCamera(const glm::vec3& center, float radius)
 {
     const float halfFovRad = glm::radians(FOV_DEG * 0.5f);
-
-    // Distance from eye to center that puts the bounding sphere edge exactly
-    // at the frustum boundary, then scaled out by MARGIN.
     const float dist = (radius * MARGIN) / std::tan(halfFovRad);
 
-    // Fixed 3/4 view direction — visually clean for any mesh orientation.
     const glm::vec3 dir = glm::normalize(glm::vec3(1.2f, 0.8f, 1.6f));
     const glm::vec3 eye = center + dir * dist;
 
-    // Near/far derived from the same distance so there is no mismatch.
     const float nearZ = glm::max(dist - radius * MARGIN, 0.001f);
     const float farZ  = dist + radius * MARGIN;
 
@@ -444,15 +446,16 @@ void MThumbnailRenderer::buildThumbnailShader()
         return;
     }
 
-    uModel     = glGetUniformLocation(thumbnailShader, "model");
-    uView      = glGetUniformLocation(thumbnailShader, "view");
-    uProj      = glGetUniformLocation(thumbnailShader, "projection");
-    uBaseColor = glGetUniformLocation(thumbnailShader, "baseColor");
+    uModel        = glGetUniformLocation(thumbnailShader, "model");
+    uView         = glGetUniformLocation(thumbnailShader, "view");
+    uProj         = glGetUniformLocation(thumbnailShader, "projection");
+    uBaseColor    = glGetUniformLocation(thumbnailShader, "baseColor");
+    uAlbedoTex    = glGetUniformLocation(thumbnailShader, "albedoTex");
+    uUseAlbedoTex = glGetUniformLocation(thumbnailShader, "useAlbedoTex");
 }
 
 void MThumbnailRenderer::buildSphereGeometry()
 {
-    // UV sphere — 32 stacks × 32 slices with position + normal at layout 0/1.
     const int stacks = 24, slices = 24;
     std::vector<float>        verts;
     std::vector<unsigned int> indices;
@@ -466,9 +469,7 @@ void MThumbnailRenderer::buildSphereGeometry()
             float x = std::sin(phi) * std::cos(theta);
             float y = std::cos(phi);
             float z = std::sin(phi) * std::sin(theta);
-            // position
             verts.push_back(x); verts.push_back(y); verts.push_back(z);
-            // normal == position for unit sphere
             verts.push_back(x); verts.push_back(y); verts.push_back(z);
         }
     }
@@ -496,10 +497,8 @@ void MThumbnailRenderer::buildSphereGeometry()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
     const int stride = 6 * sizeof(float);
-    // location 0: position
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
-    // location 1: normal
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
 
@@ -512,5 +511,4 @@ void MThumbnailRenderer::destroyGL()
     if (sphereVAO)       { glDeleteVertexArrays(1, &sphereVAO); sphereVAO = 0; }
     if (sphereVBO)       { glDeleteBuffers(1, &sphereVBO);      sphereVBO = 0; }
     if (sphereEBO)       { glDeleteBuffers(1, &sphereEBO);      sphereEBO = 0; }
-    // SFrameBuffer cleans up its own GL resources in its destructor.
 }

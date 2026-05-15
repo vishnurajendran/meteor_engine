@@ -9,6 +9,8 @@
 #include <pugixml.hpp>
 #include <unordered_set>
 
+#include "core/engine/entities/spatial/spatial.h"
+
 
 class MSpatialEntity;
 class MScene : public MObject {

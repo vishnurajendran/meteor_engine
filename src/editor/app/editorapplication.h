@@ -5,13 +5,10 @@
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
 
-class MEditorAssetManager;
-class MCameraEntity;
-class MEditorSceneManager;
-class MImGuiSubWindow;
 
+class MEditorAssetManager;
+class MEditorSceneManager;
 class MEditorApplication : public MApplication {
-    DEFINE_OBJECT_SUBCLASS(MEditorApplication)
 private:
     MEditorSceneManager* sceneManagerRef;
     MEditorAssetManager* assetManagerRef;
@@ -21,10 +18,17 @@ private:
     MRenderPipelineManager pipelineManager;
     std::atomic<bool> splashShowing = true;
 
+    // Checks Ctrl+S / Ctrl+Shift+S each frame during the ImGui pass.
+    void processGlobalShortcuts();
+
+    // Save the currently selected asset or scene.
+    void saveSelected();
+
+    // Save all dirty assets and the scene if dirty.
+    void saveAllDirty();
+
 public:
     // Unified selection — can be MSpatialEntity* or MAsset*.
-    // For assets, SelectedAssetId is also set so the inspector can resolve
-    // the correct instance after a refresh() without a dangling pointer.
     static MObject* SelectedObject;
 
 public:

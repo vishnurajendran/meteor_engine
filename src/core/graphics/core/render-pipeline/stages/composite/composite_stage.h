@@ -4,17 +4,19 @@
 
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 
-class MShader;
+// Which buffer the scene view is visualising.
+enum class EBufferDebugView
+{
+    Final = 0,      // normal composite output
+    Opaque,         // BUFFER_OPAQUE color (unlit albedo)
+    Lighting,       // BUFFER_LIGHTS color (light contribution)
+    Depth,          // BUFFER_OPAQUE depth (linearised grayscale)
+    LightMask,      // BUFFER_LIGHTS alpha (1 = lit, 0 = unlit)
+    COUNT
+};
 
-// Composite stage — RS_Composite (8000).
-//
-// Blends all flagged buffers and writes the final result directly to the
-// SFML render target (its internal FBO).
-// When MPostProcessStage is added later, this stage will instead write to
-// BUFFER_COMPOSITE and MPostProcessStage will do the final SFML blit.
 class MCompositeStage : public MRenderStage
 {
-    DEFINE_OBJECT_SUBCLASS(MCompositeStage)
 public:
     int  getSortingOrder() override { return ERenderStageOrder::RS_Composite; }
 
@@ -24,6 +26,9 @@ public:
     void render    (IRenderPipeline* const pipeline) override;
     void postRender(IRenderPipeline* const pipeline) override;
 
+    // Set from the scene view dropdown. Default = Final.
+    static EBufferDebugView debugView;
+
 private:
     void compositeOpaqueWithLights(IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;
@@ -32,13 +37,23 @@ private:
     void compositeDepth           (IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;
 
+    // Debug buffer visualisation — fullscreen quad with inline shader.
+    void renderDebugView(IRenderPipeline* const pipeline,
+                         int sfmlFBO, int w, int h) const;
+
     void initFullscreenQuad();
     void destroyFullscreenQuad();
+    void buildDebugShader();
 
-    unsigned int quadVAO              = 0;
-    unsigned int quadVBO              = 0;
-    unsigned int quadEBO              = 0;
-    MShader*     finalCompositeShader = nullptr;
+    unsigned int quadVAO = 0;
+    unsigned int quadVBO = 0;
+    unsigned int quadEBO = 0;
+
+    // Debug visualisation shader (built once in init).
+    unsigned int debugShader   = 0;
+    int          dbgLocTex     = -1;
+    int          dbgLocMode    = -1;   // 0=color, 1=depth, 2=alpha
+    int          dbgLocNearFar = -1;
 };
 
 #endif

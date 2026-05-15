@@ -6,6 +6,7 @@
 #include "buffers/render/renderbuffer.h"
 #include "core/utils/logger.h"
 #include "render_queue.h"
+#include "stages/clear/clear_stage.h"
 #include "stages/composite/composite_stage.h"
 #include "stages/depth/depth_render_stage.h"
 #include "stages/lighting/lighting_stage.h"
@@ -28,6 +29,7 @@ void MRenderPipeline::init()
     if (initialised)
         return;
 
+    addStage<MClearStage>();              // clear screen pass.
     addStage<MDepthRenderStage>();        // depth prepass
     addStage<MShadowStage>();             // shadow map         -> BUFFER_SHADOW
     addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE

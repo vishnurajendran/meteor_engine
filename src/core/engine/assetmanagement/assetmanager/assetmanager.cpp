@@ -157,3 +157,19 @@ bool MAssetManager::hasMetaData(const SString& path)
 {
     return FileIO::hasFile(path+"."+ META_FILE_EXTENSION);
 }
+
+int MAssetManager::saveDirtyAssets()
+{
+    int savedCount = 0;
+    for (auto& [path, asset] : assetMap)
+    {
+        if (!asset || !asset->isDirty()) continue;
+        if (asset->save())
+        {
+            asset->clearDirty();
+            ++savedCount;
+            MLOG(SString::format("Auto-saved dirty asset: {0}", path));
+        }
+    }
+    return savedCount;
+}

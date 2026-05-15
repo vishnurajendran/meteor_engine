@@ -6,6 +6,7 @@
 #define ENGINE_STATICS_H
 #include "core/object/object.h"
 #include "core/utils/fileio.h"
+#include "core/utils/logger.h"
 #include "settings/engine_settings.h"
 
 class MEngineStatics : public MObject {

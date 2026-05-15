@@ -10,17 +10,16 @@
 
 class SFrameBuffer;
 
-// Skybox stage — runs just before transparents (RS_Transparent - 1 = 2999).
+// Skybox stage — RS_Skybox (750).
 //
-// Renders into BUFFER_OPAQUE so it sits in the same colour buffer as the
-// opaque geometry.  The skybox draw call uses GL_LEQUAL depth so it only
-// fills pixels where no geometry was drawn.
-// MCompositeStage blits the finished BUFFER_OPAQUE to the render target.
+// Renders into BUFFER_OPAQUE after MClearStage clears the buffer but before
+// opaque geometry. The skybox fills the background; geometry overwrites it
+// via depth testing (GL_LESS). Skybox depth stays at the far plane so the
+// lighting stage's depth blit preserves correct geometry depth.
 class MSkyboxStage : public MRenderStage
 {
-    DEFINE_OBJECT_SUBCLASS(MSkyboxStage)
 public:
-    int  getSortingOrder() override { return ERenderStageOrder::RS_Transparent - 1; }
+    int  getSortingOrder() override { return ERenderStageOrder::RS_Skybox; }
 
     void init      (IRenderPipeline* const pipeline) override;
     void cleanup   (IRenderPipeline* const pipeline) override;

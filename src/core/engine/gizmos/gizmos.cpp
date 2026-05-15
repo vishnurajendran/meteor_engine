@@ -54,12 +54,12 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
         createLineVAO();
 
     auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(
-        "meteor_assets/engine_assets/shaders/line.mesl");
+        "meteor_assets/engine_assets/shaders/internal/line.mesl");
 
     if (!shaderAsset)
         return;
 
-    auto lineShader =  shaderAsset->getShader();
+    auto lineShader = shaderAsset->getShader();
     glm::vec3 lineVerts[2] = { start, end };
 
     glBindBuffer(GL_ARRAY_BUFFER, uiLineVBO);
@@ -88,13 +88,19 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
     glLineWidth(thickness);
     glDrawArrays(GL_LINES, 0, 2);
     glBindVertexArray(0);
-    glEnable(GL_DEPTH_TEST);
+
+    // Only restore depth test if this call was the one that disabled it.
+    // Unconditionally enabling it would corrupt the "depth off" state set
+    // by the gizmo stage, causing subsequent lines to fail depth testing.
+    if (ignoreZDepth)
+        glEnable(GL_DEPTH_TEST);
 }
 
 
 void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture)
 {
-    auto uiShader = MAssetManager::getInstance()->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/gizmo.mesl");
+    auto uiShader = MAssetManager::getInstance()->
+    getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/gizmo.mesl");
     if (!texture || !uiShader)
     {
         MLOG("Shader or Texture NULL");
@@ -104,12 +110,11 @@ void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExte
     if (!uiQuadVAO)
         uiQuadVAO = createQuadVAO();
 
-    // Set up orthographic projection for screen
     auto camera = getActiveCamera();
 
-    SVector2 resolution = getResolution(); // screen resolution
+    SVector2 resolution = getResolution();
     SMatrix4 proj = camera->getProjectionMatrix(resolution);
-    SMatrix4 view = camera->getViewMatrix(); // no view transform
+    SMatrix4 view = camera->getViewMatrix();
 
     SMatrix4 model(1.0f);
     model = glm::translate(model, position);
@@ -118,29 +123,28 @@ void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExte
 
     SMatrix4 mvp = proj * view * model;
 
-    // Bind shader and set uniforms
     uiShader->getShader()->bind();
 
     SShaderPropertyValue uMVP;
     uMVP.setMat4Val(mvp);
     uiShader->getShader()->setPropertyValue("uMVP", uMVP);
 
-    //bind the texture
     texture->bind(0,0);
 
+    // Save and restore depth state — don't leak "depth ON" to line draws.
+    GLboolean depthWasEnabled = glIsEnabled(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
 
-    // Draw quad
     glBindVertexArray(uiQuadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 
-    glEnable(GL_DEPTH_TEST);
+    if (depthWasEnabled)
+        glEnable(GL_DEPTH_TEST);
 }
 
 void MGizmos::drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness)
 {
-    // Compute corners of the cube (8 total)
     SVector3 min = position - halfExtents;
     SVector3 max = position + halfExtents;
 
@@ -176,7 +180,7 @@ void MGizmos::drawWireCube(SVector3 position, SVector3 halfExtents, SColor color
 
 void MGizmos::drawWireSphere(SVector3 position, float radius, SColor color, float thickness)
 {
-    const int segments = 32; // More segments = smoother sphere
+    const int segments = 32;
 
     for (int i = 0; i < segments; ++i)
     {
@@ -186,7 +190,7 @@ void MGizmos::drawWireSphere(SVector3 position, float radius, SColor color, floa
         SVector3 p1 = position + SVector3(radius * cos(theta1), radius * sin(theta1), 0);
         SVector3 p2 = position + SVector3(radius * cos(theta2), radius * sin(theta2), 0);
 
-        drawLine(p1, p2, color, thickness,false);
+        drawLine(p1, p2, color, thickness, false);
     }
 
     for (int i = 0; i < segments; ++i)
@@ -216,9 +220,8 @@ void MGizmos::drawWireSphere(SVector3 position, float radius, SColor color, floa
 void MGizmos::drawRay(const SVector3& origin, const SVector3& direction, const float& length, const SColor& color, const float& thickness)
 {
     glm::vec3 end = origin + direction * length;
-    drawLine(origin, end, color, thickness); // shaft
+    drawLine(origin, end, color, thickness);
 
-    // Arrow tip (optional): draw 2 lines forming a small "V"
     glm::vec3 dir = glm::normalize(direction);
     glm::vec3 right = glm::normalize(glm::cross(dir, glm::vec3(0, 1, 0))) * (length * 0.1f);
     glm::vec3 up = glm::normalize(glm::cross(right, dir)) * (length * 0.1f);
@@ -231,10 +234,8 @@ void MGizmos::drawRay(const SVector3& origin, const SVector3& direction, const f
 
 void MGizmos::drawWireFrustum(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, SColor color, float thickness)
 {
-    // Inverse View-Projection to get clip-to-world
     glm::mat4 invVP = glm::inverse(projectionMatrix * viewMatrix);
 
-    // Clip space corners (NDC): [-1, 1]
     glm::vec4 ndcCorners[8] = {
         {-1, -1, -1, 1}, // near bottom-left
         { 1, -1, -1, 1}, // near bottom-right
@@ -248,7 +249,6 @@ void MGizmos::drawWireFrustum(const glm::mat4& viewMatrix, const glm::mat4& proj
 
     SVector3 worldCorners[8];
 
-    // Transform to world space
     for (int i = 0; i < 8; ++i)
     {
         glm::vec4 world = invVP * ndcCorners[i];
@@ -275,7 +275,6 @@ void MGizmos::drawWireFrustum(const glm::mat4& viewMatrix, const glm::mat4& proj
 
 unsigned int MGizmos::createQuadVAO()
 {
-    // Quad covering [0,1] in both x and y, with corresponding UVs
     float quadVertices[] = {0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
 
                             0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};

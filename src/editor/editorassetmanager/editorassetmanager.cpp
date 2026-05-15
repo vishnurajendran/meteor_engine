@@ -17,15 +17,13 @@ void MEditorAssetManager::refresh()
     hotReloadWatcher.unwatchAll();
     thumbnailCache.evictAll();
     thumbnailRenderer.clearQueue();
-    failedAssetPaths.clear();   // allow re-import after user fixes broken files
+    failedAssetPaths.clear();
 
     MAssetManager::refresh();
 
     buildAssetTree();
     registerAssetsWithWatcher();
 
-    // Initialise the thumbnail renderer on the first refresh (GL context is
-    // guaranteed to be active by the time the editor calls refresh()).
     if (!thumbnailRenderer.isInitialised())
         thumbnailRenderer.init();
 
@@ -35,21 +33,14 @@ void MEditorAssetManager::refresh()
 
 int MEditorAssetManager::tickHotReload()
 {
-    // Content-change hot reload — 1s poll inside the watcher.
     const int count = hotReloadWatcher.tick();
     if (count > 0)
     {
         totalHotReloadCount += count;
-        // Evict thumbnails for assets that were just reloaded.
-        // The watcher doesn't tell us which paths changed, so we rely on
-        // the asset window re-requesting thumbnails after eviction.
-        // A more surgical approach: add an onReload callback to SWatchEntry.
     }
 
-    // New / deleted files — 5s poll.
     deltaRefresh();
 
-    // Thumbnail generation — one per frame.
     thumbnailRenderer.tick(thumbnailCache);
 
     return count;
@@ -58,6 +49,15 @@ int MEditorAssetManager::tickHotReload()
 sf::Texture* MEditorAssetManager::getThumbnail(MAsset* asset)
 {
     if (!asset) return nullptr;
+
+    // Dirty asset → evict stale thumbnail so it gets re-rendered
+    // on the next requestThumbnail() call.
+    if (asset->isDirty() && thumbnailCache.has(asset->getAssetId()))
+    {
+        thumbnailCache.evict(asset->getAssetId());
+        return nullptr;
+    }
+
     return thumbnailCache.get(asset->getAssetId());
 }
 
@@ -94,8 +94,6 @@ void MEditorAssetManager::deltaRefresh()
             if (FileIO::getFileExtension(path) == STR("meta")) continue;
             if (assetMap.contains(path)) continue;
 
-            // Skip paths that have already failed — don't spam the log.
-            // A full refresh() clears this set so fixed files are retried.
             if (failedAssetPaths.contains(path)) continue;
 
             const size_t deferredBefore = defferedLoadableAssetList.size();
@@ -110,8 +108,6 @@ void MEditorAssetManager::deltaRefresh()
             }
             else
             {
-                // Record permanently — stops the delta scan retrying a broken
-                // file every 5 seconds and spamming the log.
                 failedAssetPaths.insert(path);
             }
         }
@@ -205,8 +201,6 @@ void MEditorAssetManager::recursiveBuildAssetTree(std::queue<SString>& pathQueue
 
     recursiveBuildAssetTree(pathQueue, node, asset, parsedPath);
 }
-
-// ── Open asset ────────────────────────────────────────────────────────────────
 
 void MEditorAssetManager::openAsset(MAsset* asset)
 {

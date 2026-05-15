@@ -15,7 +15,7 @@ class MStaticMeshEntity : public MSpatialEntity, public IMeteorDrawable
     DEFINE_SPATIAL_CLASS(MStaticMeshEntity)
 
     DECLARE_FIELD(meshAssetPath,     std::string, "")
-    DECLARE_FIELD(materialAssetPath, std::string, "")  // slot 0 path for scene serialisation
+    DECLARE_FIELD(materialAssetPath, std::string, "")  // slot 0 — kept for backward compat
     DECLARE_FIELD(castsShadow,       bool,        true)
 
 public:
@@ -36,7 +36,6 @@ public:
 
     [[nodiscard]] TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()   const { return staticMeshAsset; }
     [[nodiscard]] TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0)    const;
-    // Returns the material from the asset directly (no instancing).
     [[nodiscard]] MMaterial*        getMaterialInstance(int slotId = 0) const;
     [[nodiscard]] int               getMaterialSlotCount()              const { return (int)materialSlots.size(); }
     [[nodiscard]] AABB              getBounds()                         const { return bounds; }
@@ -44,11 +43,10 @@ public:
     void setCastsShadow(bool v) { castsShadow = v; }
 
 protected:
+    void onSerialise(pugi::xml_node& node)         override;
     void onDeserialise(const pugi::xml_node& node) override;
 
 private:
-    // Simple slot — just holds a handle. No owned MMaterial*.
-    // All users of the same MMaterialAsset share its original material directly.
     struct SMaterialSlot
     {
         TAssetHandle<MMaterialAsset> assetHandle;

@@ -18,8 +18,10 @@ public:
 
     inline void initalise() { pipeline.init(); }
     void preRender() { pipeline.preRender(); }
-    void render() { pipeline.render(); };
+    void render() { pipeline.render(); }
     void postRender() { pipeline.postRender(); }
+
+    MRenderPipeline& getPipeline() { return pipeline; }
 
     static MRenderPipelineManager* const getInstance() { return activeInstance; }
 private:

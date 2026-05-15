@@ -17,13 +17,9 @@
 static constexpr const char* LIGHTING_SHADER_PATH =
     "meteor_assets/engine_assets/shaders/internal/lighting_pass.mesl";
 
-// Texture unit layout (must match lighting_pass.mesl):
-//   0  = directional shadow map
-//   1..4  = spot shadow maps [0..3]
-//   5..8  = point shadow cube maps [0..3]
 static constexpr int TEX_UNIT_DIR_SHADOW   = 0;
-static constexpr int TEX_UNIT_SPOT_BASE    = 1;   // 1..4
-static constexpr int TEX_UNIT_POINT_BASE   = 5;   // 5..8
+static constexpr int TEX_UNIT_SPOT_BASE    = 1;
+static constexpr int TEX_UNIT_POINT_BASE   = 5;
 
 void MLightingStage::init(IRenderPipeline* const pipeline)
 {
@@ -31,7 +27,8 @@ void MLightingStage::init(IRenderPipeline* const pipeline)
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
     if (lightsBuffer) lightsBuffer->setColorFormat(0x881A); // GL_RGBA16F
 
-    if (MAssetManager::getInstance()->getAsset<MShaderAsset>(LIGHTING_SHADER_PATH))
+    auto handle = MAssetManager::getInstance()->getAsset<MShaderAsset>(LIGHTING_SHADER_PATH);
+    if (handle)
         lightingShaderPath = LIGHTING_SHADER_PATH;
     else
         MERROR("MLightingStage::init — could not find: " + SString(LIGHTING_SHADER_PATH));
@@ -47,13 +44,10 @@ void MLightingStage::preRender(IRenderPipeline* const pipeline) {}
 
 void MLightingStage::render(IRenderPipeline* const pipeline)
 {
-    // Flush any GL errors from previous stages so they don't corrupt our draws.
     while (glGetError() != GL_NO_ERROR) {}
 
     if (!lightsBuffer || lightsBuffer->getFBOHandle() == 0) return;
 
-    // Always clear to white first — if the shader is missing or fails, the
-    // composite stage multiplies albedo × white = albedo (unlit but visible).
     lightsBuffer->bindAsActive();
 
     const SVector2 res = pipeline->getRenderResolution();
@@ -61,15 +55,9 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     const int h = static_cast<int>(res.y);
 
     glViewport(0, 0, w, h);
-    glClearColor(1.f, 1.f, 1.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Blit BUFFER_OPAQUE depth into BUFFER_LIGHTS so the lighting pass
-    // depth-tests against the same values the opaque pass wrote.
-    // Without this, BUFFER_LIGHTS starts with a fresh depth buffer and
-    // geometry submitted in scene-graph order can overwrite pixels that
-    // the opaque stage had correctly occluded (e.g. plane over cube).
     auto* opaqueBuffer = pipeline->getBufferRegistry()
                                   .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (opaqueBuffer && opaqueBuffer->getFBOHandle() != 0)
@@ -81,8 +69,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     lightsBuffer->unbind();
 
-    // Resolve lighting shader fresh each frame — survives asset manager refresh().
-    const auto lightingAsset = MAssetManager::getInstance()
+    auto lightingAsset = MAssetManager::getInstance()
                               ->getAsset<MShaderAsset>(lightingShaderPath.c_str());
     MShader* lightingShader = lightingAsset ? lightingAsset->getShader() : nullptr;
 
@@ -95,23 +82,24 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     lightsBuffer->bindAsActive();
     glViewport(0, 0, w, h);
     glEnable(GL_DEPTH_TEST);
-    // GL_LEQUAL because we blitted the exact depth values from the opaque pass --
-    // geometry at the same position will have equal depth, not strictly less.
     glDepthFunc(GL_LEQUAL);
-    glDepthMask(GL_FALSE); // lighting pass must not overwrite depth
+    glDepthMask(GL_FALSE);
     glEnable(GL_CULL_FACE);
 
     MCameraEntity* camera = nullptr;
     for (auto* c : MViewManagement::getCameras())
         if (c && c->getEnabled()) { camera = c; break; }
 
-    // ---- Fetch shadow buffer ------------------------------------------------
     auto* sb = pipeline->getBufferRegistry()
                          .getBuffer<SShadowBuffer>(MBufferNames::BUFFER_SHADOW);
     const bool hasShadow = sb && sb->getFBOHandle() != 0 &&
                            (pipeline->getCompositeFlags() & ECF_Shadow);
 
-    // ---- Bind shader and set per-frame uniforms ----------------------------
+    // Per-light shadow settings via manager accessors (queries the entity).
+    auto* mgr = MLightSystemManager::getInstance();
+    const bool dirShadowEnabled = mgr->isDirectionalShadowEnabled();
+    const bool dirSmoothShadow  = mgr->isDirectionalSmoothShadow();
+
     lightingShader->bind();
 
     if (camera)
@@ -143,14 +131,13 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         if (l >= 0) glUniform1i(l, hasShadow ? 1 : 0);
 
         l = glGetUniformLocation(prog, "hasDirShadow");
-        if (l >= 0) glUniform1i(l,
-            (hasShadow && MLightSystemManager::getInstance()->directionalShadowEnabled) ? 1 : 0);
+        if (l >= 0) glUniform1i(l, (hasShadow && dirShadowEnabled) ? 1 : 0);
 
         l = glGetUniformLocation(prog, "smoothShadows");
-        if (l >= 0) glUniform1i(l, MLightSystemManager::getInstance()->smoothShadows ? 1 : 0);
+        if (l >= 0) glUniform1i(l, dirSmoothShadow ? 1 : 0);
     }
 
-    // ---- Spot shadow maps — individual uniform names (no array indexing) ----
+    // ---- Spot shadow maps ──────────────────────────────────────────────────
     static const char* spotMapNames[]    = {"spotShadowMap0","spotShadowMap1","spotShadowMap2","spotShadowMap3"};
     static const char* spotMatrixNames[] = {"spotLightSpaceMatrix0","spotLightSpaceMatrix1","spotLightSpaceMatrix2","spotLightSpaceMatrix3"};
     static const char* spotPosNames[]    = {"spotLightPos0","spotLightPos1","spotLightPos2","spotLightPos3"};
@@ -172,7 +159,6 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
                 glUniformMatrix4fv(l, 1, GL_FALSE,
                                    glm::value_ptr(sb->spotLightSpaceMatrices[i]));
 
-            // Linear depth uniforms — position and far plane for distance comparison.
             l = glGetUniformLocation(prog, spotPosNames[i]);
             if (l >= 0 && i < sb->numSpotShadows)
                 glUniform3fv(l, 1, glm::value_ptr(sb->spotLightPositions[i]));
@@ -183,9 +169,9 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         }
     }
 
-    // ---- Point shadow cube maps — individual uniform names -----------------
-    static const char* pointMapNames[]    = {"pointShadowMap0","pointShadowMap1","pointShadowMap2","pointShadowMap3"};
-    static const char* pointFarNames[]    = {"pointFarPlane0","pointFarPlane1","pointFarPlane2","pointFarPlane3"};
+    // ---- Point shadow cube maps ────────────────────────────────────────────
+    static const char* pointMapNames[] = {"pointShadowMap0","pointShadowMap1","pointShadowMap2","pointShadowMap3"};
+    static const char* pointFarNames[] = {"pointFarPlane0","pointFarPlane1","pointFarPlane2","pointFarPlane3"};
 
     if (hasShadow)
     {
@@ -204,7 +190,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         }
     }
 
-    // ---- Per-item draw -----------------------------------------------------
+    // ---- Per-item draw — lit items only ────────────────────────────────────
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
@@ -214,11 +200,10 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         modelVal.setMat4Val(item.transform);
         lightingShader->setPropertyValue("model", modelVal);
 
-        // Expand bounds for flat geometry (planes) so nearby lights aren't missed.
         AABB queryBounds  = item.bounds;
         queryBounds.min  -= SVector3(5.0f);
         queryBounds.max  += SVector3(5.0f);
-        MLightSystemManager::getInstance()->prepareDynamicLights(queryBounds);
+        mgr->prepareDynamicLights(queryBounds);
 
         glBindVertexArray(item.vao);
         if (item.ebo != 0)
@@ -235,11 +220,9 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     glBindVertexArray(0);
     glUseProgram(0);
 
-    // Restore depth state before unbinding so the next stage starts clean.
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
 
-    // Unbind all shadow textures.
     for (int i = 0; i < 9; ++i)
     {
         glActiveTexture(GL_TEXTURE0 + i);

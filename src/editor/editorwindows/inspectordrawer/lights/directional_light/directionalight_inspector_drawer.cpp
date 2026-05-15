@@ -26,8 +26,15 @@ void MDirecionalLightInspectorDrawer::drawDLGui(MDirectionalLight* light) {
             light->setIntensity(intensity);
             light->setColor(color);
         }
-        auto* mgr = MLightSystemManager::getInstance();
-        ImGui::Checkbox("Cast Shadow",    &mgr->directionalShadowEnabled);
-        ImGui::Checkbox("Smooth Shadows", &mgr->smoothShadows);
+
+        // Shadow settings — per-light, not global.
+        bool casts  = light->getCastsShadow();
+        bool smooth = light->getSmoothShadow();
+
+        if (ImGui::Checkbox("Cast Shadow", &casts))
+            light->setCastsShadow(casts);
+
+        if (ImGui::Checkbox("Smooth Shadows", &smooth))
+            light->setSmoothShadow(smooth);
     }
 }
