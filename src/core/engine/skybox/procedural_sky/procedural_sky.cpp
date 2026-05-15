@@ -17,7 +17,7 @@ IMPLEMENT_SPATIAL_CLASS(MProceduralSkyboxEntity)
 MProceduralSkyboxEntity::MProceduralSkyboxEntity()
 {
     name = "ProceduralSkybox";
-    auto* shaderAsset = MAssetManager::getInstance()
+    const auto shaderAsset = MAssetManager::getInstance()
         ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/proceduralskybox.mesl");
     if (!shaderAsset)
     {
@@ -107,7 +107,7 @@ void MProceduralSkyboxEntity::onUpdate(float deltaTime)
 
 void MProceduralSkyboxEntity::onDrawGizmo(SVector2 res)
 {
-    auto* tex = MAssetManager::getInstance()
+    const auto tex = MAssetManager::getInstance()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox_procedural.png");
     if (tex)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), tex->getTexture());

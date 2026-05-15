@@ -44,7 +44,7 @@ void MMaterialAsset::buildMaterialAsset()
         return;
     }
 
-    auto* shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(sp.c_str());
+    const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(sp.c_str());
     if (!shaderAsset)
     {
         MERROR("MMaterialAsset::buildMaterialAsset(): shader asset not found: " + SString(sp.c_str()));
@@ -224,8 +224,8 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
 
 
     MLOG(SString::format("Copying Shader Properties {0}", shaderPath));
-    auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(shaderPath);
-    if (shaderAsset == nullptr)
+    const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(shaderPath);
+    if (shaderAsset)
     {
         MERROR(SString::format("Invalid Shader Asset {0}", shaderPath));
         return false;

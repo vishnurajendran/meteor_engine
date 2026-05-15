@@ -15,8 +15,6 @@
 
 const SString MAssetReferenceControl::ASSET_REF_TARGET_KEY = "_AssetFileRef";
 
-MAssetReferenceControl::MAssetReferenceControl() : MAssetReferenceControl(nullptr) {}
-
 MAssetReferenceControl::MAssetReferenceControl(TAssetHandle<MAsset> asset)
 {
     assetIdReference           = "";
@@ -25,13 +23,13 @@ MAssetReferenceControl::MAssetReferenceControl(TAssetHandle<MAsset> asset)
     assetIdReference = asset->getAssetId();
 }
 
-MAsset* MAssetReferenceControl::getAssetReference() const
+TAssetHandle<MAsset> MAssetReferenceControl::getAssetReference() const
 {
-    if (assetIdReference.empty()) return nullptr;
+    if (assetIdReference.empty()) return TAssetHandle<MAsset>();
     return MAssetManager::getInstance()->getAssetById<MAsset>(assetIdReference);
 }
 
-void MAssetReferenceControl::setAssetReference(MAsset* asset)
+void MAssetReferenceControl::setAssetReference(TAssetHandle<MAsset> asset)
 {
     if (asset) assetIdReference = asset->getAssetId();
 }
@@ -41,7 +39,7 @@ sf::Texture* MAssetReferenceControl::getFileIcon(MAssetManager* am, TAssetHandle
     // Guard every asset + texture lookup — any of these can be null if the
     // asset hasn't loaded yet or the icon file is missing.
     sf::Texture* defaultIcon = nullptr;
-    if (auto* iconAsset = am->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/file-default.png"))
+    if (const auto iconAsset = am->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/file-default.png"))
         if (auto* tex = iconAsset->getTexture())
             defaultIcon = tex->getCoreTexture();
 
@@ -56,7 +54,7 @@ sf::Texture* MAssetReferenceControl::getFileIcon(MAssetManager* am, TAssetHandle
         auto ext = FileIO::getFileExtension(asset->getPath());
         if (imp->canImport(ext))
         {
-            auto* iconAsset = am->getAsset<MTextureAsset>(imp->getIconPath());
+            const auto iconAsset = am->getAsset<MTextureAsset>(imp->getIconPath());
             if (iconAsset && iconAsset->getTexture())
                 if (auto* core = iconAsset->getTexture()->getCoreTexture())
                     return core;
@@ -74,9 +72,6 @@ bool MAssetReferenceControl::drawControl(const SString& label)
 
 // drawCompactControl
 //
-// Layout:  [← dropZoneW ─────────────────────────] [×]
-//          [32px thumb] [asset name / "(none)"]     [×]
-//
 // The InvisibleButton covers the entire drop zone so drag-drop works anywhere
 // on the row, not just the thumbnail.  It also handles hover detection.
 //
@@ -92,7 +87,7 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
 
     bool modified = false;
     auto* am      = MAssetManager::getInstance();
-    MAsset* current   = assetIdReference.empty() ? nullptr : getAssetReference();
+    const auto current   = assetIdReference.empty() ? TAssetHandle<MAsset>() : getAssetReference();
     sf::Texture* icon = getFileIcon(am, current);
 
     ImDrawList* dl    = ImGui::GetWindowDrawList();

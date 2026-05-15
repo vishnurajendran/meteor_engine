@@ -13,7 +13,7 @@ MSkyboxEntity::MSkyboxEntity()
 {
     name = "Skybox";
 
-    auto* shaderAsset = MAssetManager::getInstance()
+    const auto shaderAsset = MAssetManager::getInstance()
         ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/skybox.mesl");
     if (!shaderAsset)
     {
@@ -21,7 +21,7 @@ MSkyboxEntity::MSkyboxEntity()
         return;
     }
 
-    skyboxDrawCall = new MSkyboxDrawCall(nullptr, shaderAsset->getShader());
+    skyboxDrawCall = new MSkyboxDrawCall(TAssetHandle<MCubemapAsset>(), shaderAsset->getShader());
     MSkyboxQueue::add(skyboxDrawCall);
 }
 
@@ -35,7 +35,7 @@ MSkyboxEntity::~MSkyboxEntity()
     }
 }
 
-void MSkyboxEntity::setCubemapAsset(MCubemapAsset* cubemap)
+void MSkyboxEntity::setCubemapAsset(TAssetHandle<MCubemapAsset> cubemap)
 {
     cubemapAsset = cubemap;
     // Keep path field in sync so it serializes correctly
@@ -54,7 +54,7 @@ void MSkyboxEntity::onDeserialise(const pugi::xml_node& node)
     const std::string& path = cubemapAssetPath.get();
     if (!path.empty())
     {
-        auto* asset = MAssetManager::getInstance()->getAsset<MCubemapAsset>(path.c_str());
+        const auto asset = MAssetManager::getInstance()->getAsset<MCubemapAsset>(path.c_str());
         if (asset)
             setCubemapAsset(asset);
         else
@@ -71,7 +71,7 @@ void MSkyboxEntity::onExit()
 
 void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)
 {
-    auto* texture = MAssetManager::getInstance()
+    const auto texture = MAssetManager::getInstance()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox.png");
     if (texture)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());

@@ -16,8 +16,8 @@ bool MSkyboxInspectorDrawer::registered = []() {
 MSkyboxInspectorDrawer::MSkyboxInspectorDrawer()
 {
     cubemapAssetControl = new MAssetReferenceControl();
-    cubemapAssetControl->canAcceptAssetFuncCallback = [](MAsset* asset) {
-        return dynamic_cast<MCubemapAsset*>(asset) != nullptr;
+    cubemapAssetControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
+        return dynamic_cast<MCubemapAsset*>(asset.get()) != nullptr;
     };
 }
 
@@ -44,8 +44,8 @@ void MSkyboxInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
             // Sync the control with the entity's current cubemap asset.
             // This handles external changes (e.g. scene load, undo).
-            auto* currentCubemap = skybox->getCubemapAsset();
-            if (cubemapAssetControl->getAssetReference() != currentCubemap)
+            const auto currentCubemap = skybox->getCubemapAsset();
+            if (cubemapAssetControl->getAssetReference().get() != currentCubemap.get())
                 cubemapAssetControl->setAssetReference(currentCubemap);
 
             ImGui::TableNextRow();
@@ -57,9 +57,7 @@ void MSkyboxInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
             if (cubemapAssetControl->drawControl(""))
             {
-                auto* newCubemap = dynamic_cast<MCubemapAsset*>(
-                    cubemapAssetControl->getAssetReference());
-                skybox->setCubemapAsset(newCubemap);
+                skybox->setCubemapAsset(cubemapAssetControl->getAssetReference());
             }
 
             ImGui::EndTable();

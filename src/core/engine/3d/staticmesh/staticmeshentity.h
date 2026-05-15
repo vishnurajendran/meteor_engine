@@ -33,8 +33,8 @@ public:
     void setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int slotId = 0);
     void calculateBounds();
 
-    [[nodiscard]] MStaticMeshAsset* getStaticMeshAsset()                const { return staticMeshAsset.get(); }
-    [[nodiscard]] MMaterialAsset*   getMaterialAsset(int slotId = 0)    const;
+    [[nodiscard]] TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()   const { return staticMeshAsset; }
+    [[nodiscard]] TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0)    const;
     // Returns the material from the asset directly (no instancing).
     [[nodiscard]] MMaterial*        getMaterialInstance(int slotId = 0) const;
     [[nodiscard]] int               getMaterialSlotCount()              const { return (int)materialSlots.size(); }

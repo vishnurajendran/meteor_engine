@@ -19,20 +19,20 @@ class MAssetReferenceControl : public MObject {
 private:
     SString assetIdReference = "";
 private:
-    sf::Texture* getFileIcon(MAssetManager* assetManager, TAssetHandle<MAsset> asset) const;
+    sf::Texture* getFileIcon(MAssetManager* assetManager,TAssetHandle<MAsset> asset) const;
     static bool defaultTestFuncCallback(TAssetHandle<MAsset> asset);
 public:
     static const SString ASSET_REF_TARGET_KEY;
-    MAssetReferenceControl();
+    MAssetReferenceControl() = default;
     explicit MAssetReferenceControl(TAssetHandle<MAsset> asset);
-    MAsset* getAssetReference() const;
-    void setAssetReference(MAsset* asset);
+    TAssetHandle<MAsset> getAssetReference() const;
+    void setAssetReference(TAssetHandle<MAsset> asset);
     bool drawControl(const SString& label);
 
     // Single-row compact version — fits inside inspector table cells.
     // Renders: [32px thumb] [asset name or "(none)"] [× clear]
     bool drawCompactControl(const SString& label);
-    std::function<bool(MAsset* asset)> canAcceptAssetFuncCallback;
+    std::function<bool(TAssetHandle<MAsset> asset)> canAcceptAssetFuncCallback;
 };
 
 #endif //OBJECT_REFERENCE_CONTROLS_H

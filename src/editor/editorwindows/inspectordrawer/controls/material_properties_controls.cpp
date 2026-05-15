@@ -195,10 +195,10 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
         const auto assetPath = value.getTexAssetReference();
         if (!assetPath.empty())
         {
-            auto* current = texRefControl->getAssetReference();
+            const auto current = texRefControl->getAssetReference();
             if (!current || current->getPath() != assetPath)
             {
-                auto* texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
+                const auto texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
                 if (texAsset)
                     texRefControl->setAssetReference(texAsset);
             }
@@ -208,13 +208,13 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
     {
         texRefControl = new MAssetReferenceControl();
         textureReferences[controlRefId] = texRefControl;
-        texRefControl->canAcceptAssetFuncCallback = [](MAsset* asset)
-        { return dynamic_cast<MTextureAsset*>(asset) != nullptr; };
+        texRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset)
+        { return dynamic_cast<MTextureAsset*>(asset.get()) != nullptr; };
 
         const auto assetPath = value.getTexAssetReference();
         if (!assetPath.empty())
         {
-            auto* texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
+            const auto texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
             if (texAsset)
                 texRefControl->setAssetReference(texAsset);
         }
@@ -225,7 +225,7 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
     // for the standalone Static Mesh inspector panels.
     if (texRefControl->drawCompactControl(label))
     {
-        auto* asset = texRefControl->getAssetReference();
+        const auto asset = texRefControl->getAssetReference();
         value.setTextureReference(asset ? asset->getPath() : SString(""));
         target->setProperty(label, SShaderPropertyValue(value));
     }

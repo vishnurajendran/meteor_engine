@@ -14,8 +14,8 @@ bool MStaticMeshInspectorDrawer::registered = []()
 MStaticMeshInspectorDrawer::MStaticMeshInspectorDrawer()
 {
     meshAssetControl = new MAssetReferenceControl();
-    meshAssetControl->canAcceptAssetFuncCallback = [](MAsset* asset)
-    { return dynamic_cast<MStaticMeshAsset*>(asset) != nullptr; };
+    meshAssetControl->canAcceptAssetFuncCallback = [](const TAssetHandle<MAsset>& asset)
+    { return dynamic_cast<MStaticMeshAsset*>(asset.get()) != nullptr; };
 }
 
 bool MStaticMeshInspectorDrawer::canDraw(MSpatialEntity* entity)
@@ -29,8 +29,8 @@ void MStaticMeshInspectorDrawer::ensureSlotControls(int count)
     {
         SSlotControls sc;
         sc.assetRef = new MAssetReferenceControl();
-        sc.assetRef->canAcceptAssetFuncCallback = [](MAsset* asset)
-        { return dynamic_cast<MMaterialAsset*>(asset) != nullptr; };
+        sc.assetRef->canAcceptAssetFuncCallback = [](const TAssetHandle<MAsset>& asset)
+        { return dynamic_cast<MMaterialAsset*>(asset.get()) != nullptr; };
         slotControls.push_back(std::move(sc));
     }
 }
@@ -49,8 +49,13 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
             ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
 
-            auto* cur = sme->getStaticMeshAsset();
-            if (meshAssetControl->getAssetReference() != cur)
+            const auto cur        = sme->getStaticMeshAsset();      // TAssetHandle<MStaticMeshAsset>
+            const auto controlRef = meshAssetControl->getAssetReference(); // TAssetHandle<MAsset>
+
+            // FIX (A): compare by asset ID — different handle types can't use operator!=
+            if (controlRef.getAssetId() != cur.getAssetId())
+                // FIX (B): cur IS the handle — pass it directly.
+                // Converting constructor: TAssetHandle<MStaticMeshAsset> -> TAssetHandle<MAsset>
                 meshAssetControl->setAssetReference(cur);
 
             ImGui::TableNextRow();
@@ -58,8 +63,13 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::TextUnformatted("Mesh:");
             ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
             if (meshAssetControl->drawControl(""))
-                sme->setStaticMeshAsset(dynamic_cast<MStaticMeshAsset*>(
-                                            meshAssetControl->getAssetReference()));
+            {
+                // Converting constructor: TAssetHandle<MAsset> → TAssetHandle<MStaticMeshAsset>
+                // If the asset isn't actually a MStaticMeshAsset, get() returns nullptr
+                // and setStaticMeshAsset handles the null case.
+                TAssetHandle<MStaticMeshAsset> meshRef = meshAssetControl->getAssetReference();
+                sme->setStaticMeshAsset(meshRef);
+            }
 
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
@@ -87,10 +97,14 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
         {
             ImGui::PushID(i);
 
-            auto* slotAsset = sme->getMaterialAsset(i);
+            // FIX (C): getMaterialAsset returns a handle, not a pointer
+            auto slotAsset = sme->getMaterialAsset(i);  // TAssetHandle<MMaterialAsset>
+
+            // FIX (D): lastKnownAsset is now TAssetHandle<MMaterialAsset> — same-type comparison works
             if (sc.lastKnownAsset != slotAsset)
             {
                 sc.lastKnownAsset = slotAsset;
+                // Converting constructor: TAssetHandle<MMaterialAsset> → TAssetHandle<MAsset>
                 sc.assetRef->setAssetReference(slotAsset);
             }
 
@@ -106,8 +120,9 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
                 if (sc.assetRef->drawControl(""))
                 {
-                    auto* newAsset = dynamic_cast<MMaterialAsset*>(
-                                         sc.assetRef->getAssetReference());
+                    // FIX (E): converting constructor replaces dynamic_cast
+                    // TAssetHandle<MAsset> → TAssetHandle<MMaterialAsset>
+                    TAssetHandle<MMaterialAsset> newAsset = sc.assetRef->getAssetReference();
                     sme->setMaterialAsset(newAsset, i);
                     sc.lastKnownAsset = newAsset;
                 }

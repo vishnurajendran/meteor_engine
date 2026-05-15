@@ -56,8 +56,8 @@ bool MSceneManager::loadScene(const SString& path) {
     }
 
     loadEmptyScene();
-    auto asset = MAssetManager::getInstance()->getAsset<MSceneAsset>(path);
-    if(asset == nullptr) {
+    const auto asset = MAssetManager::getInstance()->getAsset<MSceneAsset>(path);
+    if(asset) {
         MLOG(STR("MSceneManager:: Failed to load Scene Asset"));
         return false;
     }

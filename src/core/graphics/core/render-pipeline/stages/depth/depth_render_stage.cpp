@@ -26,7 +26,7 @@ static constexpr const char* DEPTH_SHADER_PATH =
 void MDepthRenderStage::init(IRenderPipeline* const pipeline)
 {
     // Load depth shader from asset — no GLSL in engine source.
-    auto* shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(DEPTH_SHADER_PATH);
+    const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(DEPTH_SHADER_PATH);
     if (!shaderAsset)
     {
         MERROR("MDepthRenderStage::init — could not load depth shader: " + SString(DEPTH_SHADER_PATH));

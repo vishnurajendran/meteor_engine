@@ -110,7 +110,7 @@ void MShadowStage::init(IRenderPipeline* const pipeline)
                          SShadowBuffer::SHADOW_MAP_RESOLUTION);
     shadowBuffer->initDynamicShadows(1024);
 
-    auto* asset = MAssetManager::getInstance()->getAsset<MShaderAsset>(SHADOW_SHADER_PATH);
+    const auto asset = MAssetManager::getInstance()->getAsset<MShaderAsset>(SHADOW_SHADER_PATH);
     if (!asset)
         MERROR("MShadowStage::init — could not load: " + SString(SHADOW_SHADER_PATH));
     else

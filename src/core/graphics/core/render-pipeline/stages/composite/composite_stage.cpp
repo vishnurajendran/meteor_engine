@@ -26,7 +26,7 @@ static const unsigned int k_quadIdx[] = { 0,1,2, 0,2,3 };
 void MCompositeStage::init(IRenderPipeline* const pipeline)
 {
     initFullscreenQuad();
-    auto* asset = MAssetManager::getInstance()
+    const auto asset = MAssetManager::getInstance()
                                ->getAsset<MShaderAsset>(FINAL_COMPOSITE_SHADER_PATH);
     if (!asset)
         MERROR("MCompositeStage::init — could not load: " + SString(FINAL_COMPOSITE_SHADER_PATH));

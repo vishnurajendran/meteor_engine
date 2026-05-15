@@ -82,7 +82,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     lightsBuffer->unbind();
 
     // Resolve lighting shader fresh each frame — survives asset manager refresh().
-    auto* lightingAsset = MAssetManager::getInstance()
+    const auto lightingAsset = MAssetManager::getInstance()
                               ->getAsset<MShaderAsset>(lightingShaderPath.c_str());
     MShader* lightingShader = lightingAsset ? lightingAsset->getShader() : nullptr;
 

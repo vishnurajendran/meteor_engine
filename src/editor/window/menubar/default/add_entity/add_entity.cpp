@@ -28,9 +28,9 @@ static constexpr const char* MESH_CAPSULE  = "meteor_assets/engine_assets/mesh/p
 static void spawnPrimitive(const char* meshAssetPath, const char* name)
 {
     auto* entity = MSpatialEntity::createInstance<MStaticMeshEntity>(name);
-    auto* mesh = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshAssetPath);
-    auto* material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(MAT_DEFAULT);
-    if (mesh != nullptr && material != nullptr)
+    const auto mesh = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshAssetPath);
+    const auto material = MAssetManager::getInstance()->getAsset<MMaterialAsset>(MAT_DEFAULT);
+    if (!mesh && !material)
     {
         entity->setMaterialAsset(material);
         entity->setStaticMeshAsset(mesh);
@@ -38,8 +38,8 @@ static void spawnPrimitive(const char* meshAssetPath, const char* name)
     else
     {
         MERROR("Failed to load mesh asset");
-        if (mesh == nullptr) MERROR("Missing Mesh Asset");
-        if (material == nullptr) MERROR("Missing Material Asset");
+        if (!mesh) MERROR("Missing Mesh Asset");
+        if (!material) MERROR("Missing Material Asset");
         entity->destroy();
     }
 }

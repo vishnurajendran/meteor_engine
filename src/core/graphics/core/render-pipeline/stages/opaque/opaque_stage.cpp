@@ -51,7 +51,7 @@ void MOpaqueStage::preRender(IRenderPipeline* const pipeline)
 void MOpaqueStage::render(IRenderPipeline* const pipeline)
 {
     // Resolve albedo shader fresh each frame — survives asset manager refresh().
-    auto* albedoAsset = MAssetManager::getInstance()
+    const auto albedoAsset = MAssetManager::getInstance()
                             ->getAsset<MShaderAsset>(albedoShaderPath.c_str());
     MShader* albedoShader = albedoAsset ? albedoAsset->getShader() : nullptr;
 

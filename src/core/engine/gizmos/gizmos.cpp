@@ -56,7 +56,7 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
     auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(
         "meteor_assets/engine_assets/shaders/line.mesl");
 
-    if (shaderAsset == nullptr)
+    if (!shaderAsset)
         return;
 
     auto lineShader =  shaderAsset->getShader();

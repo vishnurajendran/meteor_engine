@@ -4,6 +4,7 @@
 
 #ifndef CUBEMAPTEXTURE_H
 #define CUBEMAPTEXTURE_H
+#include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/texture/texture.h"
 
 class MTextureAsset;
@@ -21,7 +22,7 @@ public:
     unsigned int getTextureID() override {return textureId;};
     void bind(const unsigned int& location, const unsigned int& index) override;
 
-    static MCubemapTexture* createCubeMap(std::vector<MTextureAsset*> textureAssets);
+    static MCubemapTexture* createCubeMap(std::vector<TAssetHandle<MTextureAsset>> textureAssets);
 };
 
 

@@ -31,7 +31,7 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
     const std::string& meshPath = meshAssetPath.get();
     if (!meshPath.empty())
     {
-        auto* asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshPath.c_str());
+        const auto asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshPath.c_str());
         if (asset) setStaticMeshAsset(asset);
         else       MWARN(STR("MStaticMeshEntity: mesh not found: ") + meshPath);
     }
@@ -39,7 +39,7 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
     const std::string& matPath = materialAssetPath.get();
     if (!matPath.empty())
     {
-        auto* asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
+        const auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
         if (asset) setMaterialAsset(asset, 0);
         else       MWARN(STR("MStaticMeshEntity: material not found: ") + matPath);
     }
@@ -55,7 +55,7 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
     // Lazy-load error material once.
     if (!errorMaterialInstance)
     {
-        auto* asset = MAssetManager::getInstance()
+        const auto asset = MAssetManager::getInstance()
             ->getAsset<MMaterialAsset>("meteor_assets/engine_assets/materials/error_material.material");
         if (asset) errorMaterialInstance = asset->getMaterial();
     }
@@ -133,10 +133,10 @@ void MStaticMeshEntity::setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int
         materialAssetPath = (asset && asset.isValid()) ? asset->getPath().str() : std::string("");
 }
 
-MMaterialAsset* MStaticMeshEntity::getMaterialAsset(int slotId) const
+TAssetHandle<MMaterialAsset> MStaticMeshEntity::getMaterialAsset(int slotId) const
 {
-    if (slotId < 0 || slotId >= (int)materialSlots.size()) return nullptr;
-    return materialSlots[slotId].assetHandle.get();
+    if (slotId < 0 || slotId >= (int)materialSlots.size()) return TAssetHandle<MMaterialAsset>();
+    return materialSlots[slotId].assetHandle;
 }
 
 MMaterial* MStaticMeshEntity::getMaterialInstance(int slotId) const

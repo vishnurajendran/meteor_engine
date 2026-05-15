@@ -1,9 +1,10 @@
 //
 // Created by ssj5v on 27-03-2025.
 //
-#include "GL/glew.h"
 #include "cubemaptexture.h"
+#include "GL/glew.h"
 
+#include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
 
@@ -33,7 +34,7 @@ void MCubemapTexture::bind(const unsigned int& location, const unsigned int& ind
 }
 
 MCubemapTexture* MCubemapTexture::
-createCubeMap(std::vector<MTextureAsset*> textureAssets)
+createCubeMap(std::vector<TAssetHandle<MTextureAsset>> textureAssets)
 {
     if (textureAssets.size() != 6)
     {

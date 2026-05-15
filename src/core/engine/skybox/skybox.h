@@ -6,6 +6,7 @@
 #define SKYBOXENTITIY_H
 
 #include "../../graphics/core/render-pipeline/stages/skybox/skyboxdrawcall.h"
+#include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/graphics/core/render-pipeline/interfaces/drawable_interface.h"
 #include "cubemapasset.h"
@@ -24,8 +25,8 @@ public:
     MSkyboxEntity();
     ~MSkyboxEntity() override;
 
-    MCubemapAsset* getCubemapAsset() const { return cubemapAsset; }
-    void setCubemapAsset(MCubemapAsset* cubemap);
+    TAssetHandle<MCubemapAsset> getCubemapAsset() const { return cubemapAsset; }
+    void setCubemapAsset(TAssetHandle<MCubemapAsset> cubemap);
 
     // ── IMeteorDrawable ───────────────────────────────────────────────────────
     void submitRenderItem(IRenderItemCollector* collector) override {}
@@ -39,7 +40,7 @@ protected:
 
 private:
     MSkyboxDrawCall* skyboxDrawCall = nullptr;
-    MCubemapAsset*   cubemapAsset   = nullptr;
+    TAssetHandle<MCubemapAsset>  cubemapAsset;
 };
 
 #endif // SKYBOXENTITIY_H

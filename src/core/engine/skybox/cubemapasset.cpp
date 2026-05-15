@@ -63,7 +63,7 @@ void MCubemapAsset::deferredAssetLoad(bool forced)
 bool MCubemapAsset::buildCubemap()
 {
     auto* assetManager = MAssetManager::getInstance();
-    std::vector<MTextureAsset*> faceAssets;
+    std::vector<TAssetHandle<MTextureAsset>> faceAssets;
 
     for (int i = 0; i < FACE_COUNT; ++i)
     {
@@ -73,7 +73,7 @@ bool MCubemapAsset::buildCubemap()
             return false;
         }
 
-        auto* faceAsset = assetManager->getAsset<MTextureAsset>(facePaths[i]);
+        const auto faceAsset = assetManager->getAsset<MTextureAsset>(facePaths[i]);
         if (!faceAsset)
         {
             MERROR(STR("MCubemapAsset: failed to load face '") + FACE_LABELS[i]

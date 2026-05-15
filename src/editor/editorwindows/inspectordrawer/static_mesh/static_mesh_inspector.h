@@ -2,6 +2,7 @@
 #ifndef STATIC_MESH_INSPECTOR_H
 #define STATIC_MESH_INSPECTOR_H
 
+#include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
 
@@ -24,8 +25,8 @@ private:
     // Material properties are edited by selecting the material asset directly.
     struct SSlotControls
     {
-        MAssetReferenceControl* assetRef       = nullptr;
-        MMaterialAsset*         lastKnownAsset = nullptr;
+        MAssetReferenceControl*      assetRef       = nullptr;
+        TAssetHandle<MMaterialAsset> lastKnownAsset;
     };
 
     void ensureSlotControls(int count);
