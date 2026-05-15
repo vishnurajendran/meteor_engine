@@ -49,6 +49,16 @@ sf::Texture* MAssetReferenceControl::getFileIcon(MAssetManager* am, TAssetHandle
         if (tex->getTexture() && tex->getTexture()->getCoreTexture())
             return tex->getTexture()->getCoreTexture();
 
+    // ── Check the thumbnail cache for rendered previews (materials, meshes) ──
+    // Same pattern the asset browser uses in drawAssetTile().
+    if (auto* editorAM = dynamic_cast<MEditorAssetManager*>(am))
+    {
+        sf::Texture* thumb = editorAM->getThumbnail(asset.get());
+        if (thumb) return thumb;
+        // Not ready yet — queue a render. Next frame it will be cached.
+        editorAM->requestThumbnail(asset.get());
+    }
+
     for (const auto& imp : *MAssetImporter::getImporters())
     {
         auto ext = FileIO::getFileExtension(asset->getPath());

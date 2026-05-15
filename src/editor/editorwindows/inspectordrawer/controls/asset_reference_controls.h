@@ -5,8 +5,6 @@
 #ifndef OBJECT_REFERENCE_CONTROLS_H
 #define OBJECT_REFERENCE_CONTROLS_H
 #include <functional>
-
-
 #include "SFML/Graphics/Texture.hpp"
 #include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/object/object.h"
@@ -19,7 +17,7 @@ class MAssetReferenceControl : public MObject {
 private:
     SString assetIdReference = "";
 private:
-    sf::Texture* getFileIcon(MAssetManager* assetManager,TAssetHandle<MAsset> asset) const;
+    sf::Texture* getFileIcon(MAssetManager* assetManager, TAssetHandle<MAsset> asset) const;
     static bool defaultTestFuncCallback(TAssetHandle<MAsset> asset);
 public:
     static const SString ASSET_REF_TARGET_KEY;

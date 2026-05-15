@@ -131,6 +131,33 @@ void MStaticMeshEntity::setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int
 
     if (slotId == 0)
         materialAssetPath = (asset && asset.isValid()) ? asset->getPath().str() : std::string("");
+
+    MLOG(SString::format("MStaticMeshEntity::Material Slot updated {0}, SlotId:{1}", asset->getPath(), slotId));
+}
+
+void MStaticMeshEntity::swapMaterialSlots(int a, int b)
+{
+    if (a == b) return;
+    if (a < 0 || a >= (int)materialSlots.size() ||
+        b < 0 || b >= (int)materialSlots.size())
+    {
+        MERROR(SString::format(
+            "MStaticMeshEntity::swapMaterialSlots: indices {0}, {1} out of range (size={2})",
+            a, b, (int)materialSlots.size()));
+        return;
+    }
+
+    std::swap(materialSlots[a], materialSlots[b]);
+
+    // materialAssetPath serialises slot 0 only.
+    // If slot 0 was involved in the swap, update it to stay consistent.
+    if (a == 0 || b == 0)
+    {
+        const auto& slot0 = materialSlots[0];
+        materialAssetPath = (slot0.isValid() && slot0.assetHandle.isValid())
+                                ? slot0.assetHandle->getPath().str()
+                                : std::string("");
+    }
 }
 
 TAssetHandle<MMaterialAsset> MStaticMeshEntity::getMaterialAsset(int slotId) const

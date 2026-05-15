@@ -31,6 +31,7 @@ public:
 
     void setStaticMeshAsset(TAssetHandle<MStaticMeshAsset> asset);
     void setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int slotId = 0);
+    void swapMaterialSlots(int a, int b);
     void calculateBounds();
 
     [[nodiscard]] TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()   const { return staticMeshAsset; }

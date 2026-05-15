@@ -153,7 +153,7 @@ bool MMaterialAsset::save()
         return false;
     }
 
-    // Sync enum → field string before saving.
+    // Sync enum -> field string before saving.
     shadingModeStr = std::string(shadingMode == MMaterial::ShadingMode::Lit ? "lit" : "unlit");
 
     pugi::xml_document doc;
@@ -225,7 +225,7 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
 
     MLOG(SString::format("Copying Shader Properties {0}", shaderPath));
     const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(shaderPath);
-    if (shaderAsset)
+    if (!shaderAsset)
     {
         MERROR(SString::format("Invalid Shader Asset {0}", shaderPath));
         return false;
