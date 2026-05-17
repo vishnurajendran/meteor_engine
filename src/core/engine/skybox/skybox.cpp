@@ -4,6 +4,7 @@
 #include "skybox.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
 #include "core/graphics/core/shader/shaderasset.h"
 
@@ -13,7 +14,7 @@ MSkyboxEntity::MSkyboxEntity()
 {
     name = "Skybox";
 
-    const auto shaderAsset = MAssetManager::getInstance()
+    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/skybox.mesl");
     if (!shaderAsset)
     {
@@ -54,7 +55,7 @@ void MSkyboxEntity::onDeserialise(const pugi::xml_node& node)
     const std::string& path = cubemapAssetPath.get();
     if (!path.empty())
     {
-        const auto asset = MAssetManager::getInstance()->getAsset<MCubemapAsset>(path.c_str());
+        const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MCubemapAsset>(path.c_str());
         if (asset)
             setCubemapAsset(asset);
         else
@@ -71,7 +72,7 @@ void MSkyboxEntity::onExit()
 
 void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)
 {
-    const auto texture = MAssetManager::getInstance()
+    const auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox.png");
     if (texture)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());

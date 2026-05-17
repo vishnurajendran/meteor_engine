@@ -8,6 +8,7 @@
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
@@ -265,7 +266,7 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
                 const SString& texPath = val.getTexAssetReference();
                 if (!texPath.empty())
                 {
-                    auto texAsset = MAssetManager::getInstance()
+                    auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                                         ->getAsset<MTextureAsset>(texPath.c_str());
                     if (texAsset && texAsset->getTexture() &&
                         texAsset->getTexture()->getCoreTexture())

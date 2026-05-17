@@ -4,6 +4,7 @@
 #include "camera_spatial_entity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "viewmanagement.h"
 
@@ -68,7 +69,7 @@ SMatrix4 MCameraEntity::getViewMatrix() const
 
 void MCameraEntity::onDrawGizmo(SVector2 renderResolution)
 {
-    const auto texture = MAssetManager::getInstance()
+    const auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/camera.png");
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
     MGizmos::drawWireFrustum(getViewMatrix(), getProjectionMatrix(renderResolution),

@@ -16,6 +16,8 @@
 #include "core/utils/logger.h"
 #include "depth_render_stage.h"
 
+#include "core/engine/subsystem/subsystem_registry.h"
+
 static constexpr const char* DEPTH_SHADER_PATH =
     "meteor_assets/engine_assets/shaders/internal/depth.mesl";
 
@@ -26,7 +28,7 @@ static constexpr const char* DEPTH_SHADER_PATH =
 void MDepthRenderStage::init(IRenderPipeline* const pipeline)
 {
     // Load depth shader from asset — no GLSL in engine source.
-    const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(DEPTH_SHADER_PATH);
+    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(DEPTH_SHADER_PATH);
     if (!shaderAsset)
     {
         MERROR("MDepthRenderStage::init — could not load depth shader: " + SString(DEPTH_SHADER_PATH));

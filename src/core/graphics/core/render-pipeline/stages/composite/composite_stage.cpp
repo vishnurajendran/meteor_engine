@@ -2,15 +2,16 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "composite_stage.h"
 
-#include "core/graphics/core/shader/shader.h"
-#include "core/graphics/core/shader/shaderasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
-#include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
+#include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
 #include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
-#include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
+#include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
+#include "core/graphics/core/shader/shader.h"
+#include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/logger.h"
 
 // ── Static ────────────────────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ void MCompositeStage::init(IRenderPipeline* const pipeline)
     initFullscreenQuad();
     buildDebugShader();
 
-    auto handle = MAssetManager::getInstance()
+    auto handle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                       ->getAsset<MShaderAsset>(FINAL_COMPOSITE_SHADER_PATH);
     if (!handle)
         MERROR("MCompositeStage::init — could not load: " + SString(FINAL_COMPOSITE_SHADER_PATH));
@@ -205,7 +206,7 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
 void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
                                                 int sfmlFBO, int w, int h) const
 {
-    auto compositeHandle = MAssetManager::getInstance()
+    auto compositeHandle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                                ->getAsset<MShaderAsset>(FINAL_COMPOSITE_SHADER_PATH);
     MShader* compositeShader = compositeHandle ? compositeHandle->getShader() : nullptr;
 

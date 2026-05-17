@@ -5,8 +5,10 @@
 #include "editorapplication.h"
 
 #include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorrenderstages/gizmos/gizmo_stage.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
@@ -56,9 +58,20 @@ void MEditorApplication::cleanup() {
     MVERBOSE(STR("Editor Application Cleanup Complete"));
 }
 
+void MEditorApplication::addSubsystems()
+{
+    // Asset Manager
+    assetManagerRef = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::registerSubsystem<IAssetManagerSubsystem, MEditorAssetManager>());
+    // Render pipeline, does not autoInit - we need to delay this.
+    pipelineManager = MEngineSubsystemRegistry::registerSubsystem<IRenderPipelineManagerSubsystem, MRenderPipelineManager>(false);
+    // Audio System
+    MEngineSubsystemRegistry::registerSubsystem<IAudioEngineSubsystem, MMiniAudioEngineSubsystem>();
+}
+
 void MEditorApplication::initialise() {
 
     // init engine settings.
+    addSubsystems();
     MEngineStatics::loadEngineSettings<MEditorSettings>(getEngineSettingsPath());
 
     std::thread splashThread(&MEditorApplication::showSplashScreen, this);
@@ -78,15 +91,14 @@ void MEditorApplication::initialise() {
         MEngineStatics::saveAll();
     });
 
-    // add a gizmo pipelin
-    pipelineManager.getPipeline().addStage<MGizmoStage>();
-
     // call intialise before use
     window->setGraphicsCall([this]()
     {
-        pipelineManager.preRender();
-        pipelineManager.render();
-        pipelineManager.postRender();
+        if (pipelineManager == nullptr) return;
+
+        pipelineManager->preRender();
+        pipelineManager->render();
+        pipelineManager->postRender();
     });
 
     if(window == nullptr){
@@ -186,12 +198,13 @@ void MEditorApplication::showSplashScreen()
     splashWindow.close();
 }
 
+
+
 void MEditorApplication::loadPrerequisites()
 {
-    //Refresh Asset Manager
-    assetManagerRef = new MEditorAssetManager();
-    MAssetManager::registerAssetManagerInstance(assetManagerRef);
-    MAssetManager::getInstance()->refresh();
+    assetManagerRef->refresh();
+    pipelineManager->init(); // manual init
+    pipelineManager->getPipeline()->addStage<MGizmoStage>();
 
     //setup scene manager
     sceneManagerRef = new MEditorSceneManager();
@@ -200,10 +213,8 @@ void MEditorApplication::loadPrerequisites()
     {
         SelectedObject = nullptr;
     });
-
-    //load render pipeline
-    pipelineManager.initalise();
 }
+
 
 void MEditorApplication::exit()
 {
@@ -219,6 +230,8 @@ MCameraEntity* MEditorApplication::getSceneCamera()
 
     return editorInst->sceneManagerRef->getEditorSceneCamera();
 }
+
+
 
 #if EDITOR_APPLICATION
 MApplication* getAppInstance(){

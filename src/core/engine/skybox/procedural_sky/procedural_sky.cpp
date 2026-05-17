@@ -2,13 +2,14 @@
 // procedural_sky.cpp
 //
 #include "procedural_sky.h"
-#include "procedural_skybox_drawcall.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/lighting/ambient/ambient_light.h"
 #include "core/engine/lighting/directional/directional_light.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/shader/shaderasset.h"
+#include "procedural_skybox_drawcall.h"
 #include "procedural_skybox_queue.h"
 
 IMPLEMENT_SPATIAL_CLASS(MProceduralSkyboxEntity)
@@ -17,7 +18,7 @@ IMPLEMENT_SPATIAL_CLASS(MProceduralSkyboxEntity)
 MProceduralSkyboxEntity::MProceduralSkyboxEntity()
 {
     name = "ProceduralSkybox";
-    const auto shaderAsset = MAssetManager::getInstance()
+    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/proceduralskybox.mesl");
     if (!shaderAsset)
     {
@@ -107,7 +108,7 @@ void MProceduralSkyboxEntity::onUpdate(float deltaTime)
 
 void MProceduralSkyboxEntity::onDrawGizmo(SVector2 res)
 {
-    const auto tex = MAssetManager::getInstance()
+    const auto tex = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox_procedural.png");
     if (tex)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), tex->getTexture());

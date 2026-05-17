@@ -51,7 +51,7 @@ void MPlayerApplication::initialise() {
     MAssetManager::registerAssetManagerInstance(new MAssetManager());
     MAssetManager::getInstance()->refresh();
 
-    pipelineManager.initalise();
+    pipelineManager.init();
     pipelineManager.setRenderTarget(window.get()->getRenderBuffer());
 
     MVERBOSE(STR("Player Initialised"));

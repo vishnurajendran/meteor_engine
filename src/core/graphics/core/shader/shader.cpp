@@ -6,12 +6,13 @@
 #include <utility>
 #include "shader.h"
 
-#include "shadercompiler.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/texture.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
 #include "core/utils/serialisation_utils.h"
+#include "shadercompiler.h"
 
 
 void SShaderPropertyValue::print() {
@@ -169,7 +170,7 @@ void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
 }
 
 void MShader::setTexture(const SString &name, const SString& textureAssetPath, const unsigned int& index) const {
-    auto asset = MAssetManager::getInstance()->getAsset<MTextureAsset>(textureAssetPath);
+    auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(textureAssetPath);
     if(!asset) {
         MERROR("Shader: Invalid Texture Asset");
         return;

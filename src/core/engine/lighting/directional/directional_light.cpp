@@ -2,12 +2,14 @@
 // directional_light.cpp
 //
 #include "directional_light.h"
+#include <GL/glew.h>
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/texture/textureasset.h"
-#include <GL/glew.h>
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+
+#include "core/engine/subsystem/subsystem_registry.h"
 
 IMPLEMENT_SPATIAL_CLASS(MDirectionalLight)
 
@@ -81,7 +83,7 @@ void MDirectionalLight::onExit()
 
 void MDirectionalLight::onDrawGizmo(SVector2 renderResolution)
 {
-    auto texture = MAssetManager::getInstance()
+    auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/sun.png");
     MGizmos::drawRay(getWorldPosition(), -getForwardVector(), 0.5f, SColor(1, 1, 1, 1), 3);
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());

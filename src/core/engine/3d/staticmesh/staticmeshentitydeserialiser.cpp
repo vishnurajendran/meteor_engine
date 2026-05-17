@@ -1,9 +1,10 @@
 #include "staticmeshentitydeserialiser.h"
-#include "staticmeshentity.h"
-#include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/material/MMaterialAsset.h"
+#include "staticmeshentity.h"
 
 bool MStaticMeshEntityDeserialiser::registered = []() {
     MSceneEntityTypeMap::registerDeserializer("static_mesh", new MStaticMeshEntityDeserialiser());
@@ -21,13 +22,13 @@ MSpatialEntity* MStaticMeshEntityDeserialiser::deserialize(pugi::xml_node node)
     if (!meshNode) return entity;
 
     if (const auto n = meshNode.child("src")) {
-        if (const auto asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(
+        if (const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MStaticMeshAsset>(
                 n.attribute(ATTRIB_VALUE_KEY.c_str()).value()))
             entity->setStaticMeshAsset(asset);
         else MERROR("Failed to load mesh asset");
     }
     if (const auto n = meshNode.child("material")) {
-        if (const auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(
+        if (const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MMaterialAsset>(
                 n.attribute(ATTRIB_VALUE_KEY.c_str()).value()))
             entity->setMaterialAsset(asset);
         else MERROR("Failed to load material asset");

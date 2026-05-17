@@ -16,6 +16,8 @@
 #include "core/utils/logger.h"
 #include "shadow_stage.h"
 
+#include "core/engine/subsystem/subsystem_registry.h"
+
 static constexpr const char* SHADOW_SHADER_PATH =
     "meteor_assets/engine_assets/shaders/internal/shadow_pass.mesl";
 
@@ -110,7 +112,7 @@ void MShadowStage::init(IRenderPipeline* const pipeline)
                          SShadowBuffer::SHADOW_MAP_RESOLUTION);
     shadowBuffer->initDynamicShadows(1024);
 
-    const auto asset = MAssetManager::getInstance()->getAsset<MShaderAsset>(SHADOW_SHADER_PATH);
+    const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(SHADOW_SHADER_PATH);
     if (!asset)
         MERROR("MShadowStage::init — could not load: " + SString(SHADOW_SHADER_PATH));
     else

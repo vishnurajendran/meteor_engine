@@ -8,27 +8,7 @@
 #include <filesystem>
 #include <iostream>
 #include "assetimporter.h"
-#include "pugixml.hpp"
 #include "core/utils/guid.h"
-
-MAssetManager* MAssetManager::managerInstance = nullptr;
-
-MAssetManager* MAssetManager::getInstance()
-{
-    if (!managerInstance)
-    {
-        MERROR("Asset Manager not registered!!");
-    }
-    return managerInstance;
-}
-
-void MAssetManager::registerAssetManagerInstance(MAssetManager* instance)
-{
-    if (managerInstance != nullptr)
-        delete managerInstance;
-
-    managerInstance = instance;
-}
 
 void MAssetManager::refresh() {
     cleanup();
@@ -156,20 +136,4 @@ bool MAssetManager::loadMetaData(const SString& path, pugi::xml_document& metaDa
 bool MAssetManager::hasMetaData(const SString& path)
 {
     return FileIO::hasFile(path+"."+ META_FILE_EXTENSION);
-}
-
-int MAssetManager::saveDirtyAssets()
-{
-    int savedCount = 0;
-    for (auto& [path, asset] : assetMap)
-    {
-        if (!asset || !asset->isDirty()) continue;
-        if (asset->save())
-        {
-            asset->clearDirty();
-            ++savedCount;
-            MLOG(SString::format("Auto-saved dirty asset: {0}", path));
-        }
-    }
-    return savedCount;
 }

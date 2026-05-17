@@ -15,7 +15,7 @@ private:
     MObjectPtr<MImGuiWindow> window;
     std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
     static MEditorApplication *editorInst;
-    MRenderPipelineManager pipelineManager;
+    IRenderPipelineManagerSubsystem* pipelineManager;
     std::atomic<bool> splashShowing = true;
 
 public:
@@ -35,6 +35,9 @@ public:
 
     static void exit();
     static MCameraEntity* getSceneCamera();
+
+private:
+    void addSubsystems();
 };
 
 #endif

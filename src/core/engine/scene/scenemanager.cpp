@@ -6,6 +6,7 @@
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "functional"
 #include "scene.h"
@@ -56,7 +57,7 @@ bool MSceneManager::loadScene(const SString& path) {
     }
 
     loadEmptyScene();
-    const auto asset = MAssetManager::getInstance()->getAsset<MSceneAsset>(path);
+    const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MSceneAsset>(path);
     if(asset) {
         MLOG(STR("MSceneManager:: Failed to load Scene Asset"));
         return false;

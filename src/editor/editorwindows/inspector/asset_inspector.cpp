@@ -1,17 +1,18 @@
 // asset_inspector.cpp
 
 #include "asset_inspector.h"
-#include "imgui.h"
-#include "imgui-SFML.h"
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/skybox/cubemapasset.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
+#include "core/utils/logger.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/editorwindows/inspectordrawer/controls/material_properties_controls.h"
-#include "core/utils/logger.h"
+#include "imgui-SFML.h"
+#include "imgui.h"
 
 std::map<SString, MMaterialPropertyControl*> MAssetInspector::propControlCache;
 std::map<SString, MAssetInspector::SCubemapFaceControls> MAssetInspector::cubemapFaceCache;
@@ -232,7 +233,7 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
                 // Sync the control with the asset's current face path.
                 SString facePath = asset->getFacePath(i);
                 TAssetHandle<MAsset> expected = !facePath.empty()
-                    ? MAssetManager::getInstance()->getAsset<MTextureAsset>(facePath)
+                    ? MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(facePath)
                     : TAssetHandle<MTextureAsset>();
                 if (ctrls.faces[i]->getAssetReference() != expected)
                     ctrls.faces[i]->setAssetReference(expected);

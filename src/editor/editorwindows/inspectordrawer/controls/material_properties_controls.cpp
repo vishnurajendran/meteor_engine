@@ -3,13 +3,14 @@
 //
 
 #include "material_properties_controls.h"
+#include <vector>
 #include "asset_reference_controls.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
-#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
-#include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
-#include <vector>
 #include "imgui.h"
 
 
@@ -211,7 +212,7 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
             const auto current = texRefControl->getAssetReference();
             if (!current || current->getPath() != assetPath)
             {
-                const auto texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
+                const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MAsset>(assetPath);
                 if (texAsset)
                     texRefControl->setAssetReference(texAsset);
             }
@@ -227,7 +228,7 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
         const auto assetPath = value.getTexAssetReference();
         if (!assetPath.empty())
         {
-            const auto texAsset = MAssetManager::getInstance()->getAsset<MAsset>(assetPath);
+            const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MAsset>(assetPath);
             if (texAsset)
                 texRefControl->setAssetReference(texAsset);
         }

@@ -6,6 +6,7 @@
 
 #include <sstream>
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/shader/shader_utils.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/fileio.h"
@@ -44,7 +45,7 @@ void MMaterialAsset::buildMaterialAsset()
         return;
     }
 
-    const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(sp.c_str());
+    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(sp.c_str());
     if (!shaderAsset)
     {
         MERROR("MMaterialAsset::buildMaterialAsset(): shader asset not found: " + SString(sp.c_str()));
@@ -224,7 +225,7 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
 
 
     MLOG(SString::format("Copying Shader Properties {0}", shaderPath));
-    const auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(shaderPath);
+    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(shaderPath);
     if (!shaderAsset)
     {
         MERROR(SString::format("Invalid Shader Asset {0}", shaderPath));

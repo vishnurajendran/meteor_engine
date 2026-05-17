@@ -1,8 +1,9 @@
 #include <GL/glew.h>
-#include <glm/gtc/type_ptr.hpp>
 #include "lighting_stage.h"
+#include <glm/gtc/type_ptr.hpp>
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/texture.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
@@ -33,7 +34,7 @@ void MLightingStage::init(IRenderPipeline* const pipeline)
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
     if (lightsBuffer) lightsBuffer->setColorFormat(0x881A); // GL_RGBA16F
 
-    auto handle = MAssetManager::getInstance()->getAsset<MShaderAsset>(LIGHTING_SHADER_PATH);
+    auto handle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(LIGHTING_SHADER_PATH);
     if (handle)
         lightingShaderPath = LIGHTING_SHADER_PATH;
     else
@@ -75,7 +76,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     lightsBuffer->unbind();
 
-    auto lightingAsset = MAssetManager::getInstance()
+    auto lightingAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                               ->getAsset<MShaderAsset>(lightingShaderPath.c_str());
     MShader* lightingShader = lightingAsset ? lightingAsset->getShader() : nullptr;
 
@@ -238,7 +239,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
                 {
                     if (val.getTexAssetReference().empty()) continue;
 
-                    const auto texAsset = MAssetManager::getInstance()
+                    const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                         ->getAsset<MTextureAsset>(val.getTexAssetReference());
                     if (!texAsset || !texAsset->getTexture()) continue;
 

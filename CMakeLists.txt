@@ -171,6 +171,17 @@ set(GLEW_LIBRARY "C:/msys64/mingw64/lib/libglew32.dll.a")
 include_directories(${GLEW_INCLUDE_DIR})
 
 # ---------------------------------------------------------------------------
+# Mini Audio
+# ---------------------------------------------------------------------------
+FetchContent_Declare(
+        miniaudio
+        GIT_REPOSITORY https://github.com/mackron/miniaudio.git
+        GIT_TAG 0.11.25
+        GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(miniaudio)
+
+# ---------------------------------------------------------------------------
 # CORE SOURCES (UNCHANGED)
 # ---------------------------------------------------------------------------
 set(CORE_SOURCES
@@ -392,6 +403,24 @@ set(CORE_SOURCES
         src/core/engine/input/input.h
         src/editor/app/shortcut_listener.cpp
         src/editor/app/shortcut_listener.h
+        src/core/engine/audio/interfaces/engine_interface.h
+        src/core/engine/audio/interfaces/audiosource_interface.h
+        src/core/engine/audio/interfaces/audiolistener_interface.h
+        src/core/engine/audio/impl_miniaudio/audio_engine.cpp
+        src/core/engine/audio/impl_miniaudio/audio_engine.h
+        src/core/engine/audio/asset/audioclip_asset.cpp
+        src/core/engine/audio/asset/audioclip_asset.h
+        src/core/engine/audio/impl_miniaudio/audio_listener.cpp
+        src/core/engine/audio/impl_miniaudio/audio_listener.h
+        src/core/engine/audio/impl_miniaudio/audio_source.cpp
+        src/core/engine/audio/impl_miniaudio/audio_source.h
+        src/core/engine/subsystem/subsystem_interface.h
+        src/core/engine/subsystem/subsystem_registry.cpp
+        src/core/engine/subsystem/subsystem_registry.h
+        src/core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h
+        src/core/engine/assetmanagement/assetmanager/asset_manager_subsystem.cpp
+        src/core/graphics/core/render-pipeline/render_pipeline_manager_interface.cpp
+        src/core/graphics/core/render-pipeline/render_pipeline_manager_interface.h
 )
 
 set(EDITOR_SOURCES
@@ -533,6 +562,7 @@ if (BUILD_EDITOR)
             pugixml
             serialized_class
             ImGuiFileDialog
+            miniaudio
     )
 endif()
 
@@ -566,6 +596,7 @@ if (BUILD_PLAYER)
             ${ASSIMP_LIBRARY}
             pugixml
             serialized_class
+            miniaudio
     )
 endif()
 

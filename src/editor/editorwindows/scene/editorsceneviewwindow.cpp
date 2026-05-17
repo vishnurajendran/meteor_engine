@@ -7,6 +7,7 @@
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/scene/scenemanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/composite/composite_stage.h"
 #include "editor/app/editorapplication.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
@@ -185,7 +186,7 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
                 ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
         {
             SString droppedId(static_cast<const char*>(payload->Data));
-            const auto asset = MAssetManager::getInstance()->getAssetById<MStaticMeshAsset>(droppedId);
+            const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetById<MStaticMeshAsset>(droppedId);
 
             if (asset)
             {
@@ -499,11 +500,6 @@ void MEditorSceneViewWindow::drawTransformHandles()
                                : newWorldScale);
 }
 
-// ─── Overlay: unified toolbar (top-left) ─────────────────────────────────────
-//
-//  [ Translate | T  R  S | | Local | L  W | | Gizmos ]
-//  └─ op label ┘└─ icons ┘   └mode ┘└icons┘  └ text toggle ┘
-
 void MEditorSceneViewWindow::drawOverlayToolbar()
 {
     const float margin = 10.0f;
@@ -615,8 +611,6 @@ void MEditorSceneViewWindow::drawOverlayToolbar()
     endOverlayPanel();
 }
 
-// ─── Overlay: camera speed (top-right) ───────────────────────────────────────
-
 void MEditorSceneViewWindow::drawCameraSpeedOverlay()
 {
     const float panelW = 160.0f;
@@ -643,14 +637,6 @@ void MEditorSceneViewWindow::drawCameraSpeedOverlay()
     }
     endOverlayPanel();
 }
-
-// ─── Overlay: selection + camera info (bottom-left) ──────────────────────────
-//
-//  ┌─────────────────────────────┐
-//  │ ● Test Spot Light           │   ← entity name, white when selected
-//  │   (1.2, -4.0, 3.5)         │   ← camera world position, dimmed
-//  │   F · Focus   RMB · Orbit  │   ← hint line, only when something selected
-//  └─────────────────────────────┘
 
 void MEditorSceneViewWindow::drawViewportInfoOverlay()
 {
@@ -680,7 +666,6 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
                       { viewportMin.x + margin, posY },
                       { panelW, panelH });
     {
-        // ── Row 1: dot + entity name ─────────────────────────────────────
         if (sel)
         {
             ImVec2 dotPos = ImGui::GetCursorScreenPos();
@@ -714,12 +699,6 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
     }
     endOverlayPanel();
 
-    // ── FPS overlay (bottom-right) ────────────────────────────────────────────
-    //
-    //  ┌──────────────┐
-    //  │  60 FPS      │  ← green when >= 60, yellow >= 30, red below 30
-    //  │  16.7 ms     │
-    //  └──────────────┘
     {
         const float fpsW = 90.0f;
         const float fpsH = ImGui::GetTextLineHeightWithSpacing() * 2.0f + OVL_PAD * 2.0f;
@@ -757,10 +736,9 @@ void MEditorSceneViewWindow::updateRenderTarget()
 {
     SRenderBuffer* buf = nullptr;
     if (SRenderBuffer::makeFromRenderTarget(&renderTexture, buf))
-        MRenderPipelineManager::getInstance()->setRenderTarget(buf);
+        MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>()->setRenderTarget(buf);
 }
 
-// ─── Text helpers ─────────────────────────────────────────────────────────────
 
 SString MEditorSceneViewWindow::getCurrentTransformGizmoText() const
 {

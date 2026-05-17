@@ -4,6 +4,7 @@
 
 #include "cubemapasset.h"
 
+#include <sstream>
 #include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/texture/textureasset.h"
@@ -11,7 +12,8 @@
 #include "core/utils/logger.h"
 #include "cubemaptexture.h"
 #include "pugixml.hpp"
-#include <sstream>
+
+#include "core/engine/subsystem/subsystem_registry.h"
 
 const char* const MCubemapAsset::FACE_LABELS[FACE_COUNT] = {
     "right", "left", "top", "bottom", "back", "front"
@@ -62,7 +64,7 @@ void MCubemapAsset::deferredAssetLoad(bool forced)
 
 bool MCubemapAsset::buildCubemap()
 {
-    auto* assetManager = MAssetManager::getInstance();
+    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
     std::vector<TAssetHandle<MTextureAsset>> faceAssets;
 
     for (int i = 0; i < FACE_COUNT; ++i)

@@ -19,7 +19,7 @@ class MEditorAssetManager : public MAssetManager
 public:
     void refresh() override;
     void openAsset(MAsset* asset);
-
+    virtual int saveDirtyAssets();
     // Called by MEditorApplication::run() every frame.
     // Handles both hot-reload (1s poll) and delta scan (5s poll).
     // Also ticks the thumbnail renderer — one thumbnail generated per frame.

@@ -2,8 +2,10 @@
 // Created by Vishnu Rajendran on 2024-09-24.
 //
 
-#include <GL/glew.h>
 #include "windowing.h"
+#include <GL/glew.h>
+
+#include "core/engine/subsystem/subsystem_registry.h"
 
 const int MWindow::DEFAULT_FPS = 60;
 const SVector2 MWindow::DEFAULT_WINDOW_SIZE {800, 600};
@@ -69,7 +71,7 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
     // update window title.
     coreWindow.setTitle(SString::format("{0} - {1}", this->title, apiVersion).c_str());
 
-    auto* pipelineManagerInstance = MRenderPipelineManager::getInstance();
+    auto* pipelineManagerInstance = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
     if (pipelineManagerInstance == nullptr) return false;
 
     auto* renderTarget = static_cast<sf::RenderTarget*>(&coreWindow);
@@ -116,7 +118,7 @@ void MWindow::update(float deltaTime) {
 
     coreWindow.clear();
 
-    auto* pipelineManagerInstance = MRenderPipelineManager::getInstance();
+    auto* pipelineManagerInstance = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
     if (pipelineManagerInstance != nullptr)
     {
         pipelineManagerInstance->preRender();

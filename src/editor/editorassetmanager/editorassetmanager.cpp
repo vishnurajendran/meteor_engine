@@ -204,11 +204,29 @@ void MEditorAssetManager::recursiveBuildAssetTree(std::queue<SString>& pathQueue
 
 void MEditorAssetManager::openAsset(MAsset* asset)
 {
-    if (asset == nullptr) return;
+    if (asset == nullptr)
+        return;
     MLOG(SString::format("EditorAssetManager:: Open Asset {0}", asset->getName()));
     if (!asset->openAsset())
     {
         auto cmd = STR("\"") + asset->getFullPath() + STR("\"");
         system(cmd.c_str());
     }
+}
+
+
+int MEditorAssetManager::saveDirtyAssets()
+{
+    int savedCount = 0;
+    for (auto& [path, asset] : assetMap)
+    {
+        if (!asset || !asset->isDirty()) continue;
+        if (asset->save())
+        {
+            asset->clearDirty();
+            ++savedCount;
+            MLOG(SString::format("Auto-saved dirty asset: {0}", path));
+        }
+    }
+    return savedCount;
 }

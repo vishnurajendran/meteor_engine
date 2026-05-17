@@ -29,8 +29,8 @@ public:
     ~MRenderPipeline() override;
 
     // Creates default buffers and registers all pipeline stages.
-    void init();
-    void cleanup();
+    void init() override;
+    void cleanup() override;
 
     // ---- IRenderPipeline — frame lifecycle ----------------------------------
     void preRender()  override;  // collect items, resize buffers if needed, stage preRenders
@@ -57,28 +57,11 @@ public:
     // ---- IRenderItemCollector -----------------------------------------------
     void submitRenderItem(const SRenderItem& item) override;
 
-    template<typename T>
-    bool addStage()
-    {
-        static_assert(std::is_base_of_v<IRenderStage, T>,
-                      "T must derive from IRenderStage");
-        IRenderStage* stage = new T();
-        stage->init(this);
-        renderStages.push_back(stage);
-
-        // sort the render stages after each addition.
-        std::sort(renderStages.begin(), renderStages.end(),
-            [](IRenderStage* a, IRenderStage* b) { return a->getSortingOrder() < b->getSortingOrder(); });
-
-        return true;
-    }
-
 private:
     void forceResetGLStates();
 
 private:
     MBufferRegistery           bufferRegistry;
-    std::vector<IRenderStage*> renderStages;
     std::vector<SRenderItem>   renderItems;
     uint32_t                   compositeFlags = ECF_None;
     bool initialised = false;

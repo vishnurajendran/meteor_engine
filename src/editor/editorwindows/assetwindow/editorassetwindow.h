@@ -29,7 +29,6 @@ class MEditorAssetWindow : public MImGuiSubWindow
 {
     DEFINE_OBJECT_SUBCLASS(MEditorAssetWindow)
 
-    // ── Left panel ────────────────────────────────────────────────────────────
     void drawSourcesPanel();
     void drawDirectoryTree(SAssetDirectoryNode* node, int depth = 0);
 
@@ -40,14 +39,14 @@ class MEditorAssetWindow : public MImGuiSubWindow
     void drawAssetGrid(SAssetDirectoryNode* root);
     void drawAssetList(SAssetDirectoryNode* root);
 
-    void drawAssetTile(SAssetDirectoryNode* node, MAssetManager* am, float iconSize);
-    void drawAssetListRow(SAssetDirectoryNode* node, MAssetManager* am, int rowIndex);
+    void drawAssetTile(SAssetDirectoryNode* node, IAssetManagerSubsystem* am, float iconSize);
+    void drawAssetListRow(SAssetDirectoryNode* node, IAssetManagerSubsystem* am, int rowIndex);
 
     void drawTruncatedLabel(const std::string& text, float maxWidth);
     void navigateTo(SAssetDirectoryNode* node);
     void navigateBack();
     void openContextMenu(SAssetDirectoryNode* node);
-    sf::Texture* getFileIcon(MAssetManager* am, SAssetDirectoryNode* asset) const;
+    sf::Texture* getFileIcon(IAssetManagerSubsystem* am, SAssetDirectoryNode* asset) const;
     void doAssetDragSource(SString key, const sf::Texture& icon, SAssetDirectoryNode* node);
 
     bool matchesSearch(SAssetDirectoryNode* node) const;

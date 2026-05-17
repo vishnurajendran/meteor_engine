@@ -5,14 +5,15 @@
 #include <vector>
 #include <string>
 
-#include "imgui.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
 #include "core/graphics/core/shader/shaderasset.h"
-#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/utils/logger.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/window/menubar/menubartree.h"
-#include "core/utils/logger.h"
+#include "imgui.h"
 
 bool MCreateMaterialItem::registered = []() {
     MMenubarTreeNode::registerItem(new MCreateMaterialItem());
@@ -23,7 +24,7 @@ bool MCreateMaterialItem::registered = []() {
 static std::vector<SShaderEntry> buildShaderList()
 {
     std::vector<SShaderEntry> list;
-    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (!editorAM) return list;
 
     SAssetDirectoryNode* root = editorAM->getAssetRootNode();

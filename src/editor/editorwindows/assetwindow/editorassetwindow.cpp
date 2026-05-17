@@ -14,6 +14,8 @@
 #include <cstring>
 #include <queue>
 
+#include "core/engine/subsystem/subsystem_registry.h"
+
 // ─── Colour palette ────────────────────────────────────────────────────────────
 static constexpr ImU32 COL_PANEL_BG          = IM_COL32(30,  30,  30,  255);
 static constexpr ImU32 COL_TOOLBAR_BG        = IM_COL32(38,  38,  38,  255);
@@ -80,7 +82,7 @@ MEditorAssetWindow::MEditorAssetWindow(int x, int y) : MImGuiSubWindow(x, y)
 {
     title = "Asset Browser";
 
-    auto* editorAssetManager = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+    auto* editorAssetManager = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     rootNode = editorAssetManager ? editorAssetManager->getAssetRootNode() : nullptr;
 
     // Seed the reload counter so we don't flash on startup.
@@ -109,7 +111,7 @@ MEditorAssetWindow::~MEditorAssetWindow() {}
 
 void MEditorAssetWindow::tickAndSync(float deltaTime)
 {
-    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (!editorAM) return;
 
     // ── Tree staleness check ──────────────────────────────────────────────────
@@ -136,7 +138,7 @@ void MEditorAssetWindow::tickAndSync(float deltaTime)
 
 void MEditorAssetWindow::syncWithAssetManager()
 {
-    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (!editorAM) return;
 
     // Snapshot everything as path strings BEFORE touching any pointers.
@@ -193,7 +195,7 @@ void MEditorAssetWindow::syncWithAssetManager()
 
 void MEditorAssetWindow::processPendingPing()
 {
-    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (!editorAM || !rootNode) return;
 
     const SString assetId = editorAM->consumePendingPing();
@@ -726,7 +728,7 @@ void MEditorAssetWindow::drawAssetGrid(SAssetDirectoryNode* root)
 {
     if (!root) return;
 
-    MAssetManager* am  = MAssetManager::getInstance();
+    auto* am  = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
     float iconSize     = 64.0f * zoomLevel;
     // Card width = iconSize + 2*CARD_HPAD, plus a small column gap.
     float cellSize     = iconSize + CARD_HPAD * 2.0f + 6.0f;
@@ -754,7 +756,7 @@ void MEditorAssetWindow::drawAssetGrid(SAssetDirectoryNode* root)
 }
 
 void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
-                                       MAssetManager* am,
+                                       IAssetManagerSubsystem* am,
                                        float iconSize)
 {
     const bool isSelected = (node == selectedNode);
@@ -961,7 +963,7 @@ void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
 {
     if (!root) return;
 
-    MAssetManager* am = MAssetManager::getInstance();
+    auto* am = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
 
     ImGui::Columns(3, "##listcols", false);
     ImGui::SetColumnWidth(0, 300);
@@ -995,7 +997,7 @@ void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
 }
 
 void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
-                                          MAssetManager* am,
+                                          IAssetManagerSubsystem* am,
                                           int rowIndex)
 {
     bool isSelected = (node == selectedNode);
@@ -1154,14 +1156,14 @@ void MEditorAssetWindow::onFileDoubleClicked(SAssetDirectoryNode* node)
 {
     if (!node || node->isDirectory || !node->assetReference)
         return;
-    auto* editorAssetManager = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+    auto* editorAssetManager = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (editorAssetManager)
         editorAssetManager->openAsset(node->assetReference);
 }
 
 
 
-sf::Texture* MEditorAssetWindow::getFileIcon(MAssetManager* am, SAssetDirectoryNode* asset) const
+sf::Texture* MEditorAssetWindow::getFileIcon(IAssetManagerSubsystem* am, SAssetDirectoryNode* asset) const
 {
     auto* texAsset = dynamic_cast<MTextureAsset*>(asset->getAsset());
     if (texAsset && texAsset->getTexture()->getCoreTexture())

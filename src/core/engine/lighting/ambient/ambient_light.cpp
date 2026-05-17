@@ -3,11 +3,12 @@
 //
 #include "ambient_light.h"
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
+#include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
-#include "GL/glew.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 
 IMPLEMENT_SPATIAL_CLASS(MAmbientLightEntity)
 
@@ -87,7 +88,7 @@ void MAmbientLightEntity::onExit()
 
 void MAmbientLightEntity::onDrawGizmo(SVector2 renderResolution)
 {
-    auto texture = MAssetManager::getInstance()
+    auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/arealight.png");
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

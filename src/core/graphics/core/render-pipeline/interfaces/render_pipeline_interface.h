@@ -8,7 +8,9 @@
 
 #include <cstdint>
 #include <vector>
+
 #include "core/graphics/core/render-pipeline/render_item.h"
+#include "render_stage_interface.h"
 
 class MBufferRegistery;
 
@@ -33,6 +35,26 @@ class IRenderPipeline
 public:
     virtual ~IRenderPipeline() = default;
 
+    virtual void init()=0;
+    virtual void cleanup()=0;
+
+    // stages
+    template<typename T>
+    bool addStage()
+    {
+        static_assert(std::is_base_of_v<IRenderStage, T>,
+                      "T must derive from IRenderStage");
+        IRenderStage* stage = new T();
+        stage->init(this);
+        renderStages.push_back(stage);
+
+        // sort the render stages after each addition.
+        std::sort(renderStages.begin(), renderStages.end(),
+            [](IRenderStage* a, IRenderStage* b) { return a->getSortingOrder() < b->getSortingOrder(); });
+
+        return true;
+    }
+
     // Frame lifecycle
     virtual void preRender()  = 0;
     virtual void render()     = 0;
@@ -54,6 +76,9 @@ public:
     virtual void     addCompositeFlag(ECompositeFlags flag)     = 0;
     virtual void     removeCompositeFlag(ECompositeFlags flag)  = 0;
     virtual void     clearCompositeFlags()                      = 0;
+
+protected:
+    std::vector<IRenderStage*> renderStages;
 };
 
 #endif // RENDER_PIPELINE_INTERFACE_H

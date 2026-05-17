@@ -6,6 +6,7 @@
 #include "../../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 
 IMPLEMENT_SPATIAL_CLASS(MSpotLight)
@@ -29,7 +30,7 @@ void  MSpotLight::setSpotAngle(float angleDeg) { lightData.angle = glm::radians(
 void MSpotLight::onDrawGizmo(SVector2 renderResolution)
 {
     drawSpotLightGizmo();
-    auto icon = MAssetManager::getInstance()
+    auto icon = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/spot_light.png");
     if (icon)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f), icon->getTexture());

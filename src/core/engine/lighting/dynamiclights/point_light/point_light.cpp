@@ -6,6 +6,7 @@
 #include "../../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 
 IMPLEMENT_SPATIAL_CLASS(MPointLight)
@@ -25,7 +26,7 @@ void MPointLight::onExit()
 
 void MPointLight::onDrawGizmo(SVector2 renderResolution)
 {
-    auto icon = MAssetManager::getInstance()
+    auto icon = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/point_light.png");
     if (icon)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f), icon->getTexture());

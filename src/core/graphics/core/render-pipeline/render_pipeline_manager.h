@@ -4,28 +4,29 @@
 
 #ifndef RENERER_H
 #define RENERER_H
-
-#include "render_pipeline.h"
 #include "core/object/object.h"
-class MRenderPipelineManager : public MObject {
+#include "render_pipeline.h"
+#include "render_pipeline_manager_interface.h"
+
+class MRenderPipelineManager : public MObject, public IRenderPipelineManagerSubsystem {
     DEFINE_OBJECT_SUBCLASS(MRenderPipelineManager)
 public:
     MRenderPipelineManager();
     ~MRenderPipelineManager() override;
 
-    void setRenderTarget(SRenderBuffer* renderBuffer);
-    SVector2 getRenderResolution() { return pipeline.getRenderResolution(); }
+    void setRenderTarget(SRenderBuffer* renderBuffer) override;
+    SVector2 getRenderResolution() override { return pipeline->getRenderResolution(); }
 
-    inline void initalise() { pipeline.init(); }
-    void preRender() { pipeline.preRender(); }
-    void render() { pipeline.render(); }
-    void postRender() { pipeline.postRender(); }
+    void init() override { pipeline->init(); }
+    void cleanup() override { pipeline->cleanup(); };
 
-    MRenderPipeline& getPipeline() { return pipeline; }
+    void preRender() override { pipeline->preRender(); }
+    void render() override { pipeline->render(); }
+    void postRender() override { pipeline->postRender(); }
 
-    static MRenderPipelineManager* const getInstance() { return activeInstance; }
+    IRenderPipeline* getPipeline() override { return pipeline; }
+
 private:
-    MRenderPipeline pipeline;
-    static MRenderPipelineManager* activeInstance;
+    IRenderPipeline* pipeline;
 };
 #endif //RENERER_H

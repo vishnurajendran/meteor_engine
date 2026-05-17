@@ -7,6 +7,7 @@
 #include <functional>
 #include "SFML/Graphics/Texture.hpp"
 #include "core/engine/assetmanagement/asset/asset_handle.h"
+#include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
 #include "core/object/object.h"
 
 
@@ -17,7 +18,7 @@ class MAssetReferenceControl : public MObject {
 private:
     SString assetIdReference = "";
 private:
-    sf::Texture* getFileIcon(MAssetManager* assetManager, TAssetHandle<MAsset> asset) const;
+    sf::Texture* getFileIcon(IAssetManagerSubsystem* assetManager, TAssetHandle<MAsset> asset) const;
     static bool defaultTestFuncCallback(TAssetHandle<MAsset> asset);
 public:
     static const SString ASSET_REF_TARGET_KEY;

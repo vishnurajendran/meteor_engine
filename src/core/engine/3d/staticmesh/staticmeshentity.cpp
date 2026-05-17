@@ -2,6 +2,7 @@
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/render_queue.h"
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
@@ -50,7 +51,7 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
     const std::string& meshPath = meshAssetPath.get();
     if (!meshPath.empty())
     {
-        auto asset = MAssetManager::getInstance()->getAsset<MStaticMeshAsset>(meshPath.c_str());
+        auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MStaticMeshAsset>(meshPath.c_str());
         if (asset) setStaticMeshAsset(asset);
         else       MWARN(STR("MStaticMeshEntity: mesh not found: ") + meshPath);
     }
@@ -67,7 +68,7 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
             SString matPath = slotNode.text().as_string();
             if (matPath.empty()) continue;
 
-            auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
+            auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MMaterialAsset>(matPath.c_str());
             if (asset) setMaterialAsset(asset, idx);
             else       MWARN(SString::format("MStaticMeshEntity: material not found for slot {0}: {1}", idx, matPath));
         }
@@ -78,7 +79,7 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
         const std::string& matPath = materialAssetPath.get();
         if (!matPath.empty())
         {
-            auto asset = MAssetManager::getInstance()->getAsset<MMaterialAsset>(matPath.c_str());
+            auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MMaterialAsset>(matPath.c_str());
             if (asset) setMaterialAsset(asset, 0);
             else       MWARN(STR("MStaticMeshEntity: material not found: ") + matPath);
         }
@@ -94,7 +95,7 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 
     if (!errorMaterialInstance)
     {
-        auto asset = MAssetManager::getInstance()
+        auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
             ->getAsset<MMaterialAsset>("meteor_assets/engine_assets/materials/error_material.material");
         if (asset) errorMaterialInstance = asset->getMaterial();
     }

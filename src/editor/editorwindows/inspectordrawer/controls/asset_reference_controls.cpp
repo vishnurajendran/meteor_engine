@@ -7,6 +7,7 @@
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/utils/fileio.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
@@ -26,7 +27,7 @@ MAssetReferenceControl::MAssetReferenceControl(TAssetHandle<MAsset> asset)
 TAssetHandle<MAsset> MAssetReferenceControl::getAssetReference() const
 {
     if (assetIdReference.empty()) return TAssetHandle<MAsset>();
-    return MAssetManager::getInstance()->getAssetById<MAsset>(assetIdReference);
+    return MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetById<MAsset>(assetIdReference);
 }
 
 void MAssetReferenceControl::setAssetReference(TAssetHandle<MAsset> asset)
@@ -34,7 +35,7 @@ void MAssetReferenceControl::setAssetReference(TAssetHandle<MAsset> asset)
     if (asset) assetIdReference = asset->getAssetId();
 }
 
-sf::Texture* MAssetReferenceControl::getFileIcon(MAssetManager* am, TAssetHandle<MAsset> asset) const
+sf::Texture* MAssetReferenceControl::getFileIcon(IAssetManagerSubsystem* am, TAssetHandle<MAsset> asset) const
 {
     // Guard every asset + texture lookup — any of these can be null if the
     // asset hasn't loaded yet or the icon file is missing.
@@ -96,7 +97,7 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
     static constexpr float GAP          = 4.0f;
 
     bool modified = false;
-    auto* am      = MAssetManager::getInstance();
+    auto* am      = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
     const auto current   = assetIdReference.empty() ? TAssetHandle<MAsset>() : getAssetReference();
     sf::Texture* icon = getFileIcon(am, current);
 
@@ -152,7 +153,7 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
     // always false so this is a reliable click-not-drag check.
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && current)
     {
-        auto* editorAM = dynamic_cast<MEditorAssetManager*>(MAssetManager::getInstance());
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
         if (editorAM) editorAM->pingAsset(current->getAssetId());
     }
 

@@ -11,6 +11,7 @@
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/texture.h"
 #include "core/graphics/core/render-pipeline/render_pipeline.h"
 #include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
@@ -42,7 +43,7 @@ MCameraEntity* MGizmos::getActiveCamera()
 
 SVector2 MGizmos::getResolution()
 {
-    auto* pipeline = MRenderPipelineManager::getInstance();
+    auto* pipeline = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
     if (pipeline == nullptr) return SVector2(0);
 
     return pipeline->getRenderResolution();
@@ -53,7 +54,7 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
     if (!uiLineVAO || !uiLineVBO)
         createLineVAO();
 
-    auto shaderAsset = MAssetManager::getInstance()->getAsset<MShaderAsset>(
+    auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(
         "meteor_assets/engine_assets/shaders/internal/line.mesl");
 
     if (!shaderAsset)
@@ -99,7 +100,7 @@ void MGizmos::drawLine(const SVector3& start, const SVector3& end, const SColor&
 
 void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture)
 {
-    auto uiShader = MAssetManager::getInstance()->
+    auto uiShader = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->
     getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/gizmo.mesl");
     if (!texture || !uiShader)
     {

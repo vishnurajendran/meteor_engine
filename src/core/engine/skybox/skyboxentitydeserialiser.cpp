@@ -1,8 +1,9 @@
 #include "skyboxentitydeserialiser.h"
-#include "skybox.h"
-#include "cubemapasset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "cubemapasset.h"
+#include "skybox.h"
 
 bool MSkyboxEntityDeserialiser::registered = []() {
     MSceneEntityTypeMap::registerDeserializer("skybox", new MSkyboxEntityDeserialiser());
@@ -20,7 +21,7 @@ MSpatialEntity* MSkyboxEntityDeserialiser::deserialize(pugi::xml_node node)
     if (!sn) return entity;
 
     if (const auto n = sn.child("src")) {
-        if (const auto cube = MAssetManager::getInstance()->getAsset<MCubemapAsset>(
+        if (const auto cube = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MCubemapAsset>(
                 n.attribute(ATTRIB_VALUE_KEY.c_str()).value()))
             entity->setCubemapAsset(cube);
         else MERROR("Failed to load cubemap asset");
