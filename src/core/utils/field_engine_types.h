@@ -10,6 +10,7 @@
 
 #include "data/field.h"
 #include "glmhelper.h"
+#include "core/utils/sstring.h"
 #include "pugixml.hpp"
 
 // ─── SVector3 ────────────────────────────────────────────────────────────────
@@ -56,7 +57,21 @@ inline void Field<SQuaternion>::load(const pugi::xml_node& parent)
     value.w = node.child("w").text().as_float();
 }
 
-// ─── Add more engine types below as needed ───────────────────────────────────
-// e.g. SVector2, SVector4, SMatrix4, SColor …
+// String type
+template<>
+inline void Field<SString>::write(pugi::xml_node& parent) const
+{
+    const auto node = parent.append_child(name.c_str());
+    node.text().set(value.c_str());
+}
+
+template<>
+inline void Field<SString>::load(const pugi::xml_node& parent)
+{
+    const auto node = parent.child(name.c_str());
+    if (!node) return;
+    value = node.text().as_string("");
+}
+
 
 #endif // FIELD_ENGINE_TYPES_H

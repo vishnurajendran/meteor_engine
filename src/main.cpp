@@ -10,7 +10,7 @@ extern MApplication* getAppInstance();
 
 /// Entry point for the application. depending on build mode,
 /// Application will load the appropriate instance and run it.
-int main(){
+int main() {
     MObjectPtr appInst = getAppInstance();
     if(appInst == nullptr)
     {

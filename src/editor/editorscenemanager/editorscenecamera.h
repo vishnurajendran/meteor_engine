@@ -6,7 +6,6 @@
 #define EDITORSCENECAMERA_H
 #include "core/engine/camera/camera_spatial_entity.h"
 
-
 class MEditorSceneCameraEntity : public MCameraEntity {
     DEFINE_SPATIAL_CLASS(MEditorSceneCameraEntity)
 private:
@@ -16,7 +15,5 @@ public:
     MEditorSceneCameraEntity() = default;
     ~MEditorSceneCameraEntity() override;
 };
-
-
 
 #endif //EDITORSCENECAMERA_H

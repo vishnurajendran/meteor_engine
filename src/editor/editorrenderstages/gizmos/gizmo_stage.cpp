@@ -40,7 +40,8 @@ void MGizmoStage::render(IRenderPipeline* const pipeline)
     glBindFramebuffer(GL_FRAMEBUFFER, sfmlFBO);
     glViewport(0, 0, w, h);
 
-    glDisable(GL_DEPTH_TEST);   // ← add this — lines draw on top of everything
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

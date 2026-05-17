@@ -10,19 +10,32 @@
 class MShaderUtility : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MShaderUtility)
+
+    static constexpr std::string TYPE_INT       = "int";
+    static constexpr std::string TYPE_BOOL      = "bool";
+    static constexpr std::string TYPE_FLOAT     = "float";
+    static constexpr std::string TYPE_FLOAT2    = "float2";
+    static constexpr std::string TYPE_FLOAT3    = "float3";
+    static constexpr std::string TYPE_FLOAT4    = "float4";
+    static constexpr std::string TYPE_COLOR     = "color";
+    static constexpr std::string TYPE_TEXTURE   = "tex";
+    static constexpr std::string TYPE_TEXTURE2D = "tex2d";
+    static constexpr std::string TYPE_MATRIX    = "mat4";
+
 public:
     // Helpers
     static SString getTypeStr(SShaderPropertyType type)
     {
         switch (type) {
-        case Int:          return "i";
-        case Float:        return "f";
-        case UniformVec2:  return "u2";
-        case UniformVec3:  return "u3";
-        case UniformVec4:  return "u4";
-        case Color:        return "col";
-        case Matrix4:      return "m4";
-        case Texture:      return "tex2d";
+        case Int:          return TYPE_INT;
+        case Bool:         return TYPE_BOOL;
+        case Float:        return TYPE_FLOAT;
+        case UniformVec2:  return TYPE_FLOAT2;
+        case UniformVec3:  return TYPE_FLOAT3;
+        case UniformVec4:  return TYPE_FLOAT4;
+        case Color:        return TYPE_COLOR;
+        case Matrix4:      return TYPE_MATRIX;
+        case Texture:      return TYPE_TEXTURE2D;
         default:           return "";
         }
     }
@@ -32,6 +45,7 @@ public:
         std::ostringstream ss;
         switch (value.getType()) {
         case Int:         ss << value.getIntVal();   break;
+        case Bool:        ss << (value.getBoolValue() ? "True" : "False");   break;
         case Float:       ss << value.getFloatVal(); break;
         case UniformVec2: { auto u = value.getVec2Val(); ss<<"("<<u.x<<","<<u.y<<")"; break; }
         case UniformVec3: { auto u = value.getVec3Val(); ss<<"("<<u.x<<","<<u.y<<","<<u.z<<")"; break; }
@@ -45,15 +59,17 @@ public:
 
     static SShaderPropertyType parsePropertyType(const SString& str)
     {
-        if (str.toLower() == "i") return Int;
-        if (str.toLower() == "f") return Float;
-        if (str.toLower() == "u2") return UniformVec2;
-        if (str.toLower() == "u3") return UniformVec3;
-        if (str.toLower() == "u4") return UniformVec4;
-        if (str.toLower() == "col") return Color;
-        if (str.toLower() == "m4") return Matrix4;
-        if (str.toLower() == "tex2d") return Texture;
-        if (str.toLower() == "tex") return Texture;
+        if (str.toLower() == TYPE_INT) return Int;
+        if (str.toLower() == TYPE_FLOAT) return Float;
+        if (str.toLower() == TYPE_BOOL) return Bool;
+        if (str.toLower() == TYPE_FLOAT2) return UniformVec2;
+        if (str.toLower() == TYPE_FLOAT3) return UniformVec3;
+        if (str.toLower() == TYPE_FLOAT4) return UniformVec4;
+        if (str.toLower() == TYPE_COLOR) return Color;
+        if (str.toLower() == TYPE_MATRIX) return Matrix4;
+        if (str.toLower() == TYPE_TEXTURE2D) return Texture;
+        if (str.toLower() == TYPE_TEXTURE) return Texture;
+
         return NoVal;
     }
 
@@ -69,6 +85,10 @@ public:
 
         case Float:
             value.setFloatVal(std::stof(str));
+            break;
+
+        case Bool:
+            value.setBoolValue(str.toLower() == "true" ? true : false);
             break;
 
         case UniformVec2: {

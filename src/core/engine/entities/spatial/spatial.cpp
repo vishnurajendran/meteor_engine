@@ -226,6 +226,31 @@ void MSpatialEntity::destroy()
     ownerScene->markForDestroy(this);
 }
 
+void MSpatialEntity::insertChildAt(MSpatialEntity* entity, int index)
+{
+    if (!entity || entity == this) return;
+
+    // Remove from current parent.
+    if (entity->parent)
+    {
+        auto& siblings = entity->parent->children;
+        auto it = std::ranges::find(siblings, entity);
+        if (it != siblings.end()) siblings.erase(it);
+        entity->parent = nullptr;
+    }
+    else
+    {
+        // Remove from scene root list.
+        removeFromSceneRoot(entity);
+    }
+
+    // Clamp and insert at position.
+    index = std::clamp(index, 0, (int)children.size());
+    children.insert(children.begin() + index, entity);
+    entity->parent = this;
+    entity->updateTransforms();
+}
+
 void MSpatialEntity::onCreate()  {}
 void MSpatialEntity::onStart()   { entityStarted = true; }
 void MSpatialEntity::onUpdate(float) {}

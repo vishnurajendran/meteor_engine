@@ -1,8 +1,11 @@
-#include "imgui.h"
 #include "editorscenecamera.h"
+#include "imgui.h"
+
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/engine_statics.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
+#include "editor/settings/editor_settings.h"
 
 void MEditorSceneCameraEntity::onCreate()
 {
@@ -21,6 +24,12 @@ void MEditorSceneCameraEntity::onCreate()
     auto& roots = scene->getRootEntities();
     auto it = std::find(roots.begin(), roots.end(), this);
     if (it != roots.end()) roots.erase(it);
+
+    if (const auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+    {
+        setWorldPosition(settings->lastEdCameraPos.get());
+        setWorldRotation(settings->lastEdCameraRot.get());
+    }
 }
 
 MEditorSceneCameraEntity::~MEditorSceneCameraEntity()

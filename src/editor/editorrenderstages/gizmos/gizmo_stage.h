@@ -17,7 +17,7 @@
 class MGizmoStage : public MRenderStage
 {
 public:
-    int  getSortingOrder() override { return ERenderStageOrder::RS_PostProcessing + 100; }
+    int  getSortingOrder() override { return ERenderStageOrder::RS_Composite + 500; }
 
     void init      (IRenderPipeline* const pipeline) override;
     void cleanup   (IRenderPipeline* const pipeline) override;

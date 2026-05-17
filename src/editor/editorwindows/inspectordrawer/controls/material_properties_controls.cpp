@@ -57,7 +57,7 @@ void MMaterialPropertyControl::drawProperty(const SString& label,
     const auto type = propertyValue.getType();
     if (type != Int && type != Float &&
         type != UniformVec2 && type != UniformVec3 && type != UniformVec4 &&
-        type != Color && type != Texture)
+        type != Color && type != Texture && type != Bool)
         return;
 
     // TableNextRow only after we know we have something to draw.
@@ -75,12 +75,13 @@ void MMaterialPropertyControl::drawProperty(const SString& label,
     switch (type)
     {
         case Int:           drawIntParameter(label, propertyValue, target);      break;
+        case Bool:          drawBoolParameter(label, propertyValue, target);        break;
         case Float:         drawFloatParameter(label, propertyValue, target);    break;
-        case UniformVec2:   drawVec2Parameter(label, propertyValue, target);     break;
-        case UniformVec3:   drawVec3Parameter(label, propertyValue, target);     break;
-        case UniformVec4:   drawVec4Parameter(label, propertyValue, target);     break;
-        case Color:         drawColorParameter(label, propertyValue, target);    break;
-        case Texture:       drawTextureParameter(label, propertyValue, target);  break;
+        case UniformVec2:   drawVec2Parameter(label, propertyValue, target);        break;
+        case UniformVec3:   drawVec3Parameter(label, propertyValue, target);        break;
+        case UniformVec4:   drawVec4Parameter(label, propertyValue, target);        break;
+        case Color:         drawColorParameter(label, propertyValue, target);       break;
+        case Texture:       drawTextureParameter(label, propertyValue, target);     break;
         default:            ImGui::TextDisabled("(unsupported type)");           break;
     }
 }
@@ -124,6 +125,18 @@ void MMaterialPropertyControl::drawVec2Parameter(const SString& label, SShaderPr
         target->setProperty(label, value);
     }
 }
+
+void MMaterialPropertyControl::drawBoolParameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
+{
+    auto id  = STR("##_F2_") + label + "_" + target->getGUID();
+    auto val = value.getBoolValue();
+    if (ImGui::Checkbox(label.c_str(), &val))
+    {
+        value.setBoolValue(val);
+        target->setProperty(label, value);
+    }
+}
+
 
 void MMaterialPropertyControl::drawVec3Parameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
 {

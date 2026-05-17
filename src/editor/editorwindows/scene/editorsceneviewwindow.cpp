@@ -1,11 +1,18 @@
 #include "editorsceneviewwindow.h"
+#include "core/engine/3d/staticmesh/staticmeshasset.h"
+#include "core/engine/3d/staticmesh/staticmeshentity.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/graphics/core/render-pipeline/stages/composite/composite_stage.h"
 #include "editor/app/editorapplication.h"
+#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "editor/settings/editor_settings.h"
 #include "imgui.h"
+#include "scene_raycast.h"
 
 // ─── Style constants ──────────────────────────────────────────────────────────
 static constexpr ImU32  OVL_BG          = IM_COL32(22,  22,  22,  210);
@@ -165,6 +172,49 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
         { viewportMin.x + viewportSize.x, viewportMin.y + viewportSize.y },
         /*clip=*/false);
 
+    // ── Drag-drop: drop a static mesh asset into the viewport ─────────────
+    if (ImGui::BeginDragDropTarget())
+    {
+        // Highlight viewport edge
+        ImGui::GetWindowDrawList()->AddRect(
+            viewportMin,
+            { viewportMin.x + viewportSize.x, viewportMin.y + viewportSize.y },
+            IM_COL32(82, 160, 255, 180), 0.f, 0, 2.f);
+
+        if (const ImGuiPayload* payload =
+                ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
+        {
+            SString droppedId(static_cast<const char*>(payload->Data));
+            const auto asset = MAssetManager::getInstance()->getAssetById<MStaticMeshAsset>(droppedId);
+
+            if (asset)
+            {
+                // Raycast from the mouse position into the scene.
+                auto& cameras = MViewManagement::getCameras();
+                auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+
+                if (!cameras.empty() && scene)
+                {
+                    auto* camera = cameras[0];
+                    SVector3 rayOrigin, rayDir;
+
+                    if (screenPointToRay(camera, ImGui::GetMousePos(), rayOrigin, rayDir))
+                    {
+                        SRaycastHit hit = SceneRaycast::castRay(scene, rayOrigin, rayDir);
+
+                        auto* entity = MSpatialEntity::createInstance<MStaticMeshEntity>(
+                            asset->getName());
+                        entity->setStaticMeshAsset(asset);
+                        entity->setWorldPosition(hit.point);
+
+                        MEditorApplication::SelectedObject = entity;
+                    }
+                }
+            }
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     drawTransformHandles();
     drawOverlayToolbar();
     drawCameraSpeedOverlay();
@@ -229,6 +279,11 @@ bool MEditorSceneViewWindow::handleCameraMouseInputs(MCameraEntity* camera, floa
             glm::radians(-cameraYaw),
             0.0f));
         camera->setWorldRotation(rot);
+
+        if (auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+        {
+            settings->lastEdCameraRot.set(camera->getWorldRotation());
+        }
     }
 
     if (mmbHeld)
@@ -237,6 +292,11 @@ bool MEditorSceneViewWindow::handleCameraMouseInputs(MCameraEntity* camera, floa
             camera->getRightVector() * (-delta.x * cameraMoveSpeed * 0.005f * dt * 60.0f) +
             camera->getUpVector()    * ( delta.y * cameraMoveSpeed * 0.005f * dt * 60.0f);
         camera->setWorldPosition(camera->getWorldPosition() + movement);
+
+        if (auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+        {
+            settings->lastEdCameraPos.set(camera->getWorldPosition());
+        }
     }
 
     return rmbHeld;
@@ -259,6 +319,11 @@ void MEditorSceneViewWindow::handleCameraKeyboardInputs(MCameraEntity* camera, f
     if (ImGui::IsKeyDown(ImGuiKey_Q)) pos += camera->getUpVector()      * -speed;
 
     camera->setWorldPosition(pos);
+
+    if (auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+    {
+        settings->lastEdCameraPos.set(camera->getWorldPosition());
+    }
 }
 
 // ─── Camera — focus ───────────────────────────────────────────────────────────

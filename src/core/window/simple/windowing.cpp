@@ -47,7 +47,7 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
     coreWindow.setFramerateLimit(this->targetFPS);
 
     auto apiVersion = SString::format("OpenGL v{0}.{1}", settings.majorVersion, settings.minorVersion);
-    MLOG(SString::format("INIT WINDOW {0} | {1}x{2} | {3} FPS | API {4}",
+    MVERBOSE(SString::format("INIT WINDOW {0} | {1}x{2} | {3} FPS | API {4}",
         inTitle,
         static_cast<int>(inSize.x),static_cast<int>(inSize.y),
         inFps,
@@ -110,6 +110,9 @@ void MWindow::update(float deltaTime) {
     {
         handleWindowEvents(event);
     }
+
+    if (!coreWindow.isOpen())
+        return;
 
     coreWindow.clear();
 

@@ -2,6 +2,7 @@
 #ifndef ADD_ENTITY_MENU_H
 #define ADD_ENTITY_MENU_H
 
+#include "core/engine/input/input.h"
 #include "editor/window/menubar/menubaritem.h"
 
 // ── Primitives ────────────────────────────────────────────────────────────────
@@ -86,6 +87,12 @@ class MAddEmptySpatialItem : public MMenubarItem {
 public:
     [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
     [[nodiscard]] SString getPath()     const override { return "Add/Empty Spatial"; }
+
+    [[nodiscard]] MShortcutBinding getShortcut() const override
+    {
+        return {EKeyCode::N, true, true};
+    };
+
     void onSelect() override;
 private:
     static bool registered;

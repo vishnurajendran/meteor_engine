@@ -388,6 +388,10 @@ set(CORE_SOURCES
         src/core/graphics/core/shader/shader_utils.h
         src/core/graphics/core/render-pipeline/stages/clear/clear_stage.cpp
         src/core/graphics/core/render-pipeline/stages/clear/clear_stage.h
+        src/core/engine/input/input.cpp
+        src/core/engine/input/input.h
+        src/editor/app/shortcut_listener.cpp
+        src/editor/app/shortcut_listener.h
 )
 
 set(EDITOR_SOURCES
@@ -488,6 +492,8 @@ set(EDITOR_SOURCES
         src/editor/themes/editor_themes.h
         src/editor/editorrenderstages/gizmos/gizmo_stage.cpp
         src/editor/editorrenderstages/gizmos/gizmo_stage.h
+        src/editor/editorwindows/scene/scene_raycast.cpp
+        src/editor/editorwindows/scene/scene_raycast.h
 )
 
 set(PLAYER_SOURCES
@@ -567,6 +573,7 @@ endif()
 # Common Defines
 # ---------------------------------------------------------------------------
 add_compile_definitions(
+        #VERBOSE_LOGGING=1
 )
 
 

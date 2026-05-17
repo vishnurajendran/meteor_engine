@@ -9,12 +9,9 @@
 #include <pugixml.hpp>
 #include <unordered_set>
 
-#include "core/engine/entities/spatial/spatial.h"
-
 
 class MSpatialEntity;
 class MScene : public MObject {
-    DEFINE_OBJECT_SUBCLASS(MScene)
     friend class MSpatialEntity;
 public:
 
@@ -28,6 +25,10 @@ public:
     std::vector<MSpatialEntity*>& getRootEntities() { return rootEntities; }
     bool tryParse(pugi::xml_document* doc);
     bool isClosing() { return sceneClosing; }
+
+    // Removes entity from its current parent/root, inserts into root list at index.
+    void insertRootEntityAt(MSpatialEntity* entity, int index);
+
     template<typename T>
     T* find(SString name) {
         if (rootEntities.size() <= 0)

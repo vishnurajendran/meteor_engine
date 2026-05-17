@@ -16,6 +16,7 @@ class MTexture;
 enum SShaderPropertyType {
     NoVal=0,
     Int,
+    Bool,
     Float,
     UniformVec2,
     UniformVec3,
@@ -30,6 +31,7 @@ private:
     SShaderPropertyType type = NoVal;
     int intVal = 0;
     float floatVal = 0.0f;
+    bool boolValue = false;
     SString textureAssetReference;
     SVector2 vec2Val = glm::vec2(0);
     SVector3 vec3Val = glm::vec3(0);
@@ -44,6 +46,7 @@ public:
     [[nodiscard]] glm::vec4 getVec4Val() const { return vec4Val; }
     [[nodiscard]] glm::vec4 getColor() const { return vec4Val; }
     [[nodiscard]] SMatrix4 getMat4Val() const { return mat4Val; }
+    [[nodiscard]] bool getBoolValue() const { return boolValue; }
     [[nodiscard]] SString getTexAssetReference() const { return textureAssetReference; }
 
     void setIntVal(int val) { intVal = val; type = SShaderPropertyType::Int; }
@@ -53,6 +56,7 @@ public:
     void setColVal(glm::vec4 val) { vec4Val = val; type = SShaderPropertyType::Color; }
     void setVec4Val(glm::vec4 val) { vec4Val = val; type = SShaderPropertyType::UniformVec4; }
     void setMat4Val(glm::mat4 val) { mat4Val = val; type = SShaderPropertyType::Matrix4; }
+    void setBoolValue(bool val) { boolValue = val; type = SShaderPropertyType::Bool; }
     void setTextureReference(SString texturePath) { textureAssetReference = texturePath; type = SShaderPropertyType::Texture; }
     void print();
 };

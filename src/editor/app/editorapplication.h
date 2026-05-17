@@ -18,17 +18,8 @@ private:
     MRenderPipelineManager pipelineManager;
     std::atomic<bool> splashShowing = true;
 
-    // Checks Ctrl+S / Ctrl+Shift+S each frame during the ImGui pass.
-    void processGlobalShortcuts();
-
-    // Save the currently selected asset or scene.
-    void saveSelected();
-
-    // Save all dirty assets and the scene if dirty.
-    void saveAllDirty();
-
 public:
-    // Unified selection — can be MSpatialEntity* or MAsset*.
+    // Unified selection - can be MSpatialEntity* or MAsset*.
     static MObject* SelectedObject;
 
 public:

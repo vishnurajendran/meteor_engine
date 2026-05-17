@@ -30,7 +30,7 @@ void MEditorThemes::applyTheme()
     if (it != map.end())
     {
         it->second();
-        MLOG(SString::format("MEditorThemes:: Applied theme \"{0}\"", id));
+        MVERBOSE(SString::format("MEditorThemes:: Applied theme \"{0}\"", id));
     }
     else
     {
@@ -40,7 +40,6 @@ void MEditorThemes::applyTheme()
     }
 }
 
-// ── Shared layout geometry ──────────────────────────────────────────────────
 // Rounding, padding, spacing — independent of colour so every theme feels
 // structurally identical. Called at the end of each theme function.
 

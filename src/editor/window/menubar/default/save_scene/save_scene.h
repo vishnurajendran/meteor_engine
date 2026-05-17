@@ -4,6 +4,7 @@
 
 #ifndef SAVE_SCENE_MENUBAR_ITEM_H
 #define SAVE_SCENE_MENUBAR_ITEM_H
+#include "core/engine/input/input.h"
 #include "editor/window/menubar/menubaritem.h"
 
 // ── File / Save Scene ─────────────────────────────────────────────────────────
@@ -18,6 +19,11 @@ public:
     [[nodiscard]] SString getPath()     const override;
     void onSelect()  override;
     void drawPopup() override;   // Save As dialog, only shown when path is unknown
+
+    [[nodiscard]] MShortcutBinding getShortcut() const override
+    {
+        return {EKeyCode::S, true};
+    };
 
 private:
     static bool registered;

@@ -9,13 +9,14 @@
 
 #include "ImGuizmo.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "editor/app/shortcut_listener.h"
+#include "editor/themes/editor_themes.h"
 #include "editor/window/menubar/menubartree.h"
 #include "editorcontrolsbuttons.h"
 #include "imgui_internal.h"
 #include "imguisubwindow.h"
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
-#include "editor/themes/editor_themes.h"
 
 bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)
 {
@@ -95,12 +96,18 @@ void MImGuiWindow::drawGUI(const float deltaTime)
     ImGui::SFML::Update(coreWindow, deltaClock.restart());
     ImGuizmo::BeginFrame();
 
+    // Poll raw input state for the frame, then dispatch shortcuts.
+    // Skip shortcut dispatch when ImGui has a text field focused so
+    // that typing "S" into a rename box doesn't trigger Ctrl-less bindings.
+    SInput::poll();
+    if (!ImGui::GetIO().WantTextInput)
+        MShortcutListener::poll();
+
     drawMenuBar();
-    MMenubarTreeNode::drawAllPopups();  // render file dialogs and any other item popups
+    MMenubarTreeNode::drawAllPopups();
     showDockSpace();
     drawImGuiSubWindows(deltaTime);
 
-    // Force SFML/GL back to the default framebuffer before ImGui renders
     coreWindow.setActive(true);
     ImGui::SFML::Render(coreWindow);
 }

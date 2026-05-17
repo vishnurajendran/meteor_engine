@@ -37,8 +37,13 @@ void MMenubarTreeNode::renderMenubar() const
     ImGui::PushID(this);
     if (itemInstance != nullptr)
     {
-        if (ImGui::MenuItem(menuTreeNodeTitle.c_str()))
+        // Pass the shortcut display text so ImGui right-aligns it in the menu.
+        const std::string hint = itemInstance->getShortcut().getDisplayText();
+        if (ImGui::MenuItem(menuTreeNodeTitle.c_str(),
+                            hint.empty() ? nullptr : hint.c_str()))
+        {
             itemInstance->onSelect();
+        }
     }
     else if (!children.empty())
     {
@@ -105,7 +110,21 @@ void MMenubarTreeNode::buildTree()
     for (const auto itemInstance : registeredMenuItems)
         getRoot()->registerItemInternal(itemInstance, 0);
 
+    // Wire up keyboard shortcuts after the tree is fully assembled.
+    registerShortcuts();
+
     MLOG("Registered Menubar items : " + std::to_string(registeredMenuItems.size()));
+}
+
+void MMenubarTreeNode::registerShortcuts()
+{
+    MShortcutListener::clear();
+    for (auto* item : registeredMenuItems)
+    {
+        MShortcutBinding binding = item->getShortcut();
+        if (binding.isValid())
+            MShortcutListener::registerShortcut(item, binding);
+    }
 }
 
 void MMenubarTreeNode::drawAllPopups()
@@ -113,9 +132,8 @@ void MMenubarTreeNode::drawAllPopups()
     for (auto* item : registeredMenuItems)
         item->drawPopup();
 }
-// ── getNodeAtPath ─────────────────────────────────────────────────────────────
-// Walk the tree following each path segment. Returns the node at the end of
-// the path, or nullptr if any segment is missing.
+
+// -- getNodeAtPath ------------------------------------------------------------
 
 MMenubarTreeNode* MMenubarTreeNode::getNodeAtPath(const SString& path)
 {
@@ -132,10 +150,7 @@ MMenubarTreeNode* MMenubarTreeNode::getNodeAtPath(const SString& path)
     return current;
 }
 
-// ── renderAsContextMenu ───────────────────────────────────────────────────────
-// Renders this node's children as a flat list of ImGui menu items / submenus.
-// Leaf nodes (itemInstance != nullptr) become MenuItem; branch nodes become BeginMenu.
-// Mirrors renderMenubar() but works outside the main menu bar context.
+// -- renderAsContextMenu ------------------------------------------------------
 
 void MMenubarTreeNode::renderAsContextMenu() const
 {
@@ -146,13 +161,15 @@ void MMenubarTreeNode::renderAsContextMenu() const
 
         if (child->itemInstance != nullptr)
         {
-            // Leaf — clicking it fires onSelect() just like the menubar.
-            if (ImGui::MenuItem(child->menuTreeNodeTitle.c_str()))
+            const std::string hint = child->itemInstance->getShortcut().getDisplayText();
+            if (ImGui::MenuItem(child->menuTreeNodeTitle.c_str(),
+                                hint.empty() ? nullptr : hint.c_str()))
+            {
                 child->itemInstance->onSelect();
+            }
         }
         else if (!child->children.empty())
         {
-            // Branch — recurse into a submenu.
             if (ImGui::BeginMenu(child->menuTreeNodeTitle.c_str()))
             {
                 child->renderAsContextMenu();

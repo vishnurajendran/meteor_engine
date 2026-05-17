@@ -3,6 +3,8 @@
 #include "lighting_stage.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/texture/texture.h"
+#include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
@@ -21,6 +23,10 @@ static constexpr int TEX_UNIT_DIR_SHADOW   = 0;
 static constexpr int TEX_UNIT_SPOT_BASE    = 1;
 static constexpr int TEX_UNIT_POINT_BASE   = 5;
 
+// Material textures start here to avoid collisions with shadow map
+// units (0-8). Most GPUs expose at least 16 fragment texture units.
+static constexpr int TEX_UNIT_MAT_BASE     = 10;
+
 void MLightingStage::init(IRenderPipeline* const pipeline)
 {
     lightsBuffer = pipeline->getBufferRegistry()
@@ -31,7 +37,7 @@ void MLightingStage::init(IRenderPipeline* const pipeline)
     if (handle)
         lightingShaderPath = LIGHTING_SHADER_PATH;
     else
-        MERROR("MLightingStage::init — could not find: " + SString(LIGHTING_SHADER_PATH));
+        MERROR("MLightingStage::init -- could not find: " + SString(LIGHTING_SHADER_PATH));
 }
 
 void MLightingStage::cleanup(IRenderPipeline* const pipeline)
@@ -75,7 +81,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     if (!lightingShader)
     {
-        MWARN("MLightingStage::render — lightingShader is null, rendering without lighting");
+        MWARN("MLightingStage::render -- lightingShader is null, rendering without lighting");
         return;
     }
 
@@ -137,7 +143,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         if (l >= 0) glUniform1i(l, dirSmoothShadow ? 1 : 0);
     }
 
-    // ---- Spot shadow maps ──────────────────────────────────────────────────
+    // ---- Spot shadow maps --------------------------------------------------
     static const char* spotMapNames[]    = {"spotShadowMap0","spotShadowMap1","spotShadowMap2","spotShadowMap3"};
     static const char* spotMatrixNames[] = {"spotLightSpaceMatrix0","spotLightSpaceMatrix1","spotLightSpaceMatrix2","spotLightSpaceMatrix3"};
     static const char* spotPosNames[]    = {"spotLightPos0","spotLightPos1","spotLightPos2","spotLightPos3"};
@@ -169,7 +175,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         }
     }
 
-    // ---- Point shadow cube maps ────────────────────────────────────────────
+    // ---- Point shadow cube maps --------------------------------------------
     static const char* pointMapNames[] = {"pointShadowMap0","pointShadowMap1","pointShadowMap2","pointShadowMap3"};
     static const char* pointFarNames[] = {"pointFarPlane0","pointFarPlane1","pointFarPlane2","pointFarPlane3"};
 
@@ -190,7 +196,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         }
     }
 
-    // ---- Per-item draw — lit items only ────────────────────────────────────
+    // ---- Per-item draw -- lit items only ------------------------------------
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
@@ -199,6 +205,59 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         SShaderPropertyValue modelVal;
         modelVal.setMat4Val(item.transform);
         lightingShader->setPropertyValue("model", modelVal);
+
+        // -- Reset material-specific uniforms to safe defaults ---------------
+        // Items whose material lacks these properties (e.g. a different
+        // shader) must not inherit values from the previous draw call.
+        {
+            GLint l;
+            l = glGetUniformLocation(prog, "_useNormalMap");
+            if (l >= 0) glUniform1i(l, 0);
+            l = glGetUniformLocation(prog, "_metallic");
+            if (l >= 0) glUniform1f(l, 0.0f);
+            l = glGetUniformLocation(prog, "_smoothness");
+            if (l >= 0) glUniform1f(l, 0.5f);
+        }
+
+        // -- Forward material properties to the lighting shader --------------
+        // Non-texture properties go through setPropertyValue (sets the GL
+        // uniform via glGetUniformLocation -- returns -1 and silently skips
+        // for properties that the lighting shader does not declare).
+        //
+        // Texture properties are bound manually to units >= TEX_UNIT_MAT_BASE
+        // so they do not overwrite shadow map units 0-8.  setPropertyValue
+        // for textures would bind to unit 0 (its hardcoded default), which
+        // would clobber the directional shadow map.
+        int matTexUnit = TEX_UNIT_MAT_BASE;
+
+        if (item.material)
+        {
+            for (const auto& [key, val] : item.material->getProperties())
+            {
+                if (val.getType() == SShaderPropertyType::Texture)
+                {
+                    if (val.getTexAssetReference().empty()) continue;
+
+                    const auto texAsset = MAssetManager::getInstance()
+                        ->getAsset<MTextureAsset>(val.getTexAssetReference());
+                    if (!texAsset || !texAsset->getTexture()) continue;
+
+                    glActiveTexture(GL_TEXTURE0 + matTexUnit);
+                    glBindTexture(GL_TEXTURE_2D,
+                                  texAsset->getTexture()->getTextureID());
+
+                    GLint loc = glGetUniformLocation(prog, key.c_str());
+                    if (loc >= 0)
+                        glUniform1i(loc, matTexUnit);
+
+                    matTexUnit++;
+                }
+                else
+                {
+                    lightingShader->setPropertyValue(key, val);
+                }
+            }
+        }
 
         AABB queryBounds  = item.bounds;
         queryBounds.min  -= SVector3(5.0f);
@@ -223,7 +282,8 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
 
-    for (int i = 0; i < 9; ++i)
+    // Unbind shadow map units (0-8) and material texture units (10+).
+    for (int i = 0; i < 16; ++i)
     {
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D,       0);

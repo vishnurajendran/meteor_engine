@@ -11,14 +11,11 @@
 class MEditorHierarchyWindow : public MImGuiSubWindow
 {
     DEFINE_OBJECT_SUBCLASS(MEditorHierarchyWindow)
-    // ── Top bar ───────────────────────────────────────────────────────────────
     void drawToolbar();
 
-    // ── Tree ─────────────────────────────────────────────────────────────────
     void drawSceneRoot(MScene* scene);
     void drawEntityRow(MSpatialEntity* entity);
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
     bool matchesSearch(MSpatialEntity* entity) const;
     bool subtreeMatchesSearch(MSpatialEntity* entity) const;
     void openContextMenu(MSpatialEntity* entity);
@@ -33,19 +30,19 @@ public:
 private:
     sf::Texture sceneTex;
     sf::Texture entityTex;
+
+    std::unordered_map<MTypeInfo, sf::Texture> typeToIcon;
+
     sf::Vector2f sceneTexSize;
     sf::Vector2f entityTexSize;
 
-    // ── Search ────────────────────────────────────────────────────────────────
     char searchBuffer[256] = {};
 
-    // ── Interaction state ─────────────────────────────────────────────────────
     MSpatialEntity* rightClickedEntity  = nullptr;
     MSpatialEntity* renamingEntity      = nullptr;
     char            renameBuffer[256]   = {};
     bool            pendingFocusRename  = false;
 
-    // ── Drag & drop ───────────────────────────────────────────────────────────
     MSpatialEntity* draggedEntity       = nullptr;
     MSpatialEntity* dropTargetEntity    = nullptr;
 };

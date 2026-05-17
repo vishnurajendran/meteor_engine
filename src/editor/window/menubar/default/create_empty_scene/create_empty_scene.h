@@ -4,6 +4,7 @@
 
 #ifndef CREATEEMPTYSCENE_H
 #define CREATEEMPTYSCENE_H
+#include "core/engine/input/input.h"
 #include "editor/window/menubar/menubaritem.h"
 
 
@@ -12,6 +13,12 @@ class MCreateEmptySceneMenubarItem : public MMenubarItem {
 public:
     [[nodiscard]] int getPriority() const override;
     [[nodiscard]] SString getPath() const override;
+
+    [[nodiscard]] MShortcutBinding getShortcut() const override
+    {
+        return {EKeyCode::N, true};
+    };
+
     void onSelect() override;
 
 private:

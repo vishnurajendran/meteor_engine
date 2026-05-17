@@ -3,13 +3,13 @@
 //
 
 #include "editorscenemanager.h"
-
-#include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/engine_statics.h"
 #include "core/engine/scene/serialisation/scene_serialiser.h"
+#include "editor/app/editorapplication.h"
+#include "editor/settings/editor_settings.h"
 #include "editorscenecamera.h"
 
-// ── Empty scene ───────────────────────────────────────────────────────────────
 
 bool MEditorSceneManager::loadEmptyScene()
 {
@@ -19,26 +19,31 @@ bool MEditorSceneManager::loadEmptyScene()
     return res;
 }
 
-// ── Load scene ────────────────────────────────────────────────────────────────
 
 bool MEditorSceneManager::loadScene(const SString& path)
 {
     if (!MSceneManager::loadEmptyScene())
     {
-        MERROR("MEditorSceneManager::loadScene — failed to create empty scene");
+        MERROR("MEditorSceneManager::loadScene -- failed to create empty scene");
         return false;
     }
     if (!MSceneSerializer::load(path, activeScene))
     {
-        MERROR("MEditorSceneManager::loadScene — MSceneSerializer failed for: " + path);
+        MERROR("MEditorSceneManager::loadScene -- MSceneSerializer failed for: " + path);
         return false;
     }
     currentScenePath = path;
     createEditorSceneCamera();
+
+    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+    {
+        MVERBOSE(SString::format("[MEditorApplication]::Setting last opened scene {0}", currentScenePath));
+        settings->lastOpenedScene.set(currentScenePath);
+    }
+
     return true;
 }
 
-// ── Save scene ────────────────────────────────────────────────────────────────
 
 bool MEditorSceneManager::saveCurrentScene(const SString& pathOverride)
 {
@@ -47,7 +52,7 @@ bool MEditorSceneManager::saveCurrentScene(const SString& pathOverride)
 
     if (savePath.empty())
     {
-        MWARN("MEditorSceneManager::saveCurrentScene — no path set. Open a scene first.");
+        MWARN("MEditorSceneManager::saveCurrentScene -- no path set. Open a scene first.");
         return false;
     }
 
@@ -57,10 +62,15 @@ bool MEditorSceneManager::saveCurrentScene(const SString& pathOverride)
     return MSceneSerializer::save(activeScene, currentScenePath);
 }
 
-// ── Close scene ───────────────────────────────────────────────────────────────
 
 bool MEditorSceneManager::closeActiveScene()
 {
+    // Clear the editor selection before destroying any entities. SelectedObject
+    // is a raw MObject* that would otherwise dangle after the scene frees its
+    // entities, crashing on the next frame when the hierarchy or scene view
+    // tries to dereference it.
+    MEditorApplication::SelectedObject = nullptr;
+
     if (editorSceneCamera)
     {
         editorSceneCamera->destroy();
@@ -69,7 +79,6 @@ bool MEditorSceneManager::closeActiveScene()
     return MSceneManager::closeActiveScene();
 }
 
-// ── Editor camera ─────────────────────────────────────────────────────────────
 
 MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const
 {

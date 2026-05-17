@@ -4,6 +4,7 @@
 
 #ifndef ENGINE_SETTINGS_H
 #define ENGINE_SETTINGS_H
+
 #include "core/object/object.h"
 #include "data/serialized_class_base.h"
 

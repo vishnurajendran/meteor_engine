@@ -21,10 +21,8 @@ MStaticMeshEntity::MStaticMeshEntity()
 MStaticMeshEntity::~MStaticMeshEntity()
 {
     MRenderQueue::removeFromSubmitables(this);
-    delete errorMaterialInstance;
+    errorMaterialInstance = nullptr;
 }
-
-// ── Serialisation ─────────────────────────────────────────────────────────────
 
 void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
 {
@@ -49,7 +47,6 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
 {
     MSpatialEntity::onDeserialise(node);
 
-    // ── Load mesh first — this resizes materialSlots ──────────────────────
     const std::string& meshPath = meshAssetPath.get();
     if (!meshPath.empty())
     {
@@ -58,7 +55,6 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
         else       MWARN(STR("MStaticMeshEntity: mesh not found: ") + meshPath);
     }
 
-    // ── Load material slots ───────────────────────────────────────────────
     auto slotsNode = node.child("materialSlots");
     if (slotsNode)
     {
@@ -88,8 +84,6 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
         }
     }
 }
-
-// ── Render ────────────────────────────────────────────────────────────────────
 
 void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 {
@@ -146,7 +140,6 @@ void MStaticMeshEntity::onUpdate(float dt)
 
 void MStaticMeshEntity::onDrawGizmo(SVector2 res) { MSpatialEntity::onDrawGizmo(res); }
 
-// ── Asset setters ─────────────────────────────────────────────────────────────
 
 void MStaticMeshEntity::setStaticMeshAsset(TAssetHandle<MStaticMeshAsset> asset)
 {
@@ -194,7 +187,6 @@ void MStaticMeshEntity::swapMaterialSlots(int a, int b)
     }
 }
 
-// ── Accessors ─────────────────────────────────────────────────────────────────
 
 TAssetHandle<MMaterialAsset> MStaticMeshEntity::getMaterialAsset(int slotId) const
 {

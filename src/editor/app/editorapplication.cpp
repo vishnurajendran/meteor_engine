@@ -40,102 +40,20 @@ void MEditorApplication::run() {
         assetManagerRef->tickHotReload();
 
     window->update(deltaTime);
-
-    // Process global keyboard shortcuts after ImGui has processed input.
-    processGlobalShortcuts();
-
     endFrame();
 }
 
-void MEditorApplication::processGlobalShortcuts()
-{
-    // Only process when no text input is active — avoids capturing
-    // Ctrl+S while the user is typing in a text field.
-    if (ImGui::GetIO().WantTextInput) return;
-
-    const bool ctrl  = ImGui::GetIO().KeyCtrl;
-    const bool shift = ImGui::GetIO().KeyShift;
-
-    if (ctrl && ImGui::IsKeyPressed(ImGuiKey_S, false))
-    {
-        if (shift)
-            saveAllDirty();
-        else
-            saveSelected();
-    }
-}
-
-void MEditorApplication::saveSelected()
-{
-    // If an asset is selected, save it.
-    if (auto* asset = dynamic_cast<MAsset*>(SelectedObject))
-    {
-        if (asset->save())
-        {
-            asset->clearDirty();
-            MLOG(SString::format("Saved asset: {0}", asset->getPath()));
-        }
-        return;
-    }
-
-    // Otherwise, save the current scene.
-    if (!sceneManagerRef) return;
-
-    SString path = sceneManagerRef->getActiveScenePath();
-    if (path.empty())
-        path = MSceneIO::getCurrentPath();
-
-    if (!path.empty())
-    {
-        sceneManagerRef->saveCurrentScene(path);
-        auto* scene = sceneManagerRef->getActiveScene();
-        if (scene) scene->clearDirty();
-        MLOG(SString::format("Saved scene: {0}", path));
-    }
-    else
-    {
-        MWARN("No scene path known — use File > Save Scene As");
-    }
-}
-
-void MEditorApplication::saveAllDirty()
-{
-    // Save all dirty assets.
-    int count = MAssetManager::getInstance()->saveDirtyAssets();
-
-    // Save scene if dirty.
-    if (sceneManagerRef)
-    {
-        auto* scene = sceneManagerRef->getActiveScene();
-        if (scene && scene->isDirty())
-        {
-            SString path = sceneManagerRef->getActiveScenePath();
-            if (path.empty()) path = MSceneIO::getCurrentPath();
-
-            if (!path.empty())
-            {
-                sceneManagerRef->saveCurrentScene(path);
-                scene->clearDirty();
-                ++count;
-            }
-        }
-    }
-
-    MLOG(SString::format("Save All: {0} items saved", count));
-}
-
-
 void MEditorApplication::cleanup() {
-    MLOG(STR("Cleanup..."));
+    MVERBOSE(STR("Cleanup..."));
 
-    MLOG(STR("Deleting SceneManager"));
+    MVERBOSE(STR("Deleting SceneManager"));
     delete sceneManagerRef;
 
-    MLOG(STR("Closing Window"));
+    MVERBOSE(STR("Closing Window"));
     if (window != nullptr)
         window->close();
     window = nullptr;
-    MLOG(STR("Editor Application Cleanup Complete"));
+    MVERBOSE(STR("Editor Application Cleanup Complete"));
 }
 
 void MEditorApplication::initialise() {
@@ -146,7 +64,7 @@ void MEditorApplication::initialise() {
     std::thread splashThread(&MEditorApplication::showSplashScreen, this);
     editorInst = this;
     //appRunning = true;
-    MLOG(STR("Initialising Editor"));
+    MVERBOSE(STR("Initialising Editor"));
     window = new MImGuiWindow();
     const auto winX = MEngineStatics::getEngineSettings()->resX.get();
     const auto winY = MEngineStatics::getEngineSettings()->resY.get();
@@ -154,7 +72,7 @@ void MEditorApplication::initialise() {
     window->initialiseWindow(STR("Meteorite Editor"), SVector2(winX, winY), fps);
     window->setWindowResizeCallback([this](const SVector2& size)
     {
-        MLOG(STR("Meteorite:: Resized Window"));
+        MVERBOSE(STR("Meteorite:: Resized Window"));
         MEngineStatics::getEngineSettings()->resX.set(size.x);
         MEngineStatics::getEngineSettings()->resY.set(size.y);
         MEngineStatics::saveAll();
@@ -188,16 +106,27 @@ void MEditorApplication::initialise() {
     subWindows.push_back(new MEditorInspectorWindow());
     subWindows.push_back(new MEditorSceneViewWindow());
     subWindows.push_back(new MEditorAssetWindow());
-    MLOG(STR("Loaded Editor Windows"));
+    MVERBOSE(STR("Loaded Editor Windows"));
 
     MMenubarTreeNode::buildTree();
-    MLOG(STR("Built Menubar Items"));
+    MVERBOSE(STR("Built Menubar Items"));
 
     MGizmos::enableGizmos(true);
 
     window->setVisible(true);
     splashShowing = false;
     splashThread.join();
+
+
+    // post-load
+    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings())){
+        const auto path = SString(settings->lastOpenedScene.get());
+        if (path.empty())
+            return;
+        MVERBOSE(SString::format("[MEditorApplication]::Loading last opened scene {0}", path));
+        sceneManagerRef->loadScene(path);
+    }
+
 }
 
 bool MEditorApplication::isRunning() const
@@ -278,6 +207,7 @@ void MEditorApplication::loadPrerequisites()
 
 void MEditorApplication::exit()
 {
+    MEngineStatics::saveAll();
     if (editorInst != nullptr)
         editorInst->window->close();
 }
@@ -292,7 +222,7 @@ MCameraEntity* MEditorApplication::getSceneCamera()
 
 #if EDITOR_APPLICATION
 MApplication* getAppInstance(){
-    MLOG("Creating Editor Application instance");
+    MVERBOSE("Creating Editor Application instance");
     return new MEditorApplication();
 }
 #endif

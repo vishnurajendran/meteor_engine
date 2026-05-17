@@ -65,13 +65,16 @@ bool MSceneSerializer::load(const std::string& filePath, MScene* scene)
         return false;
     }
 
+    // Restore the scene name that save() wrote into the name attribute.
+    if (auto nameAttr = root.attribute("name"); nameAttr)
+        scene->setName(nameAttr.value());
+
     // Deserialise each top-level <entity> node.
     // MSpatialEntity::deserialiseEntity handles type dispatch, field loading,
     // and recursive child restoration.
     for (pugi::xml_node entityNode : root.children("entity"))
     {
-        MSpatialEntity* entity = MSpatialEntity::deserialiseEntity(entityNode);
-        if (entity)
+        if (MSpatialEntity* entity = MSpatialEntity::deserialiseEntity(entityNode))
             scene->addToRoot(entity);
     }
 

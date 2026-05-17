@@ -4,10 +4,10 @@
 #ifndef MENUBARITEM_H
 #define MENUBARITEM_H
 #include "core/object/object.h"
+#include "editor/app/shortcut_listener.h"
 
 class MMenubarItem : public MObject
 {
-    DEFINE_OBJECT_SUBCLASS(MMenubarItem)
 public:
     [[nodiscard]] virtual int     getPriority() const = 0;
     [[nodiscard]] virtual SString getPath()     const = 0;
@@ -17,6 +17,11 @@ public:
     // Called every frame from MImGuiWindow::drawGUI via drawAllPopups().
     // Default is a no-op so items that have no popup need not override.
     virtual void drawPopup() {}
+
+    // Override to declare a keyboard shortcut for this item.
+    // Return a binding with key == EKeyCode::Unknown (the default) to
+    // indicate that no shortcut is assigned.
+    [[nodiscard]] virtual MShortcutBinding getShortcut() const { return {}; }
 
 public:
     static constexpr int PRIORITY_HIGHEST = -999;

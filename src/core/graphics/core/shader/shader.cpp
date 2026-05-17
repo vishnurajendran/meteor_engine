@@ -98,6 +98,9 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
         case Int:
             setUniform1i(name, value.getIntVal());
             break;
+    case Bool:
+        setUniform1i(name, value.getBoolValue() ? 1 : 0);
+        break;
         case Float:
             setUniform1f(name, value.getFloatVal());
             break;
@@ -117,6 +120,7 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
         case Texture:
             if (!value.getTexAssetReference().empty())
                 setTexture(name, value.getTexAssetReference());
+            break;
         default:
             break;
     }

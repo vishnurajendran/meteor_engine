@@ -132,15 +132,9 @@ void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExte
     texture->bind(0,0);
 
     // Save and restore depth state — don't leak "depth ON" to line draws.
-    GLboolean depthWasEnabled = glIsEnabled(GL_DEPTH_TEST);
-    glDisable(GL_DEPTH_TEST);
-
     glBindVertexArray(uiQuadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
-
-    if (depthWasEnabled)
-        glEnable(GL_DEPTH_TEST);
 }
 
 void MGizmos::drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness)

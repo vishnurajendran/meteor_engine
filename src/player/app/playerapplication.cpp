@@ -35,13 +35,13 @@ void MPlayerApplication::initialise() {
     MEngineStatics::loadEngineSettings<MEngineSettings>(getEngineSettingsPath());
 
     //appRunning = true;
-    MLOG(STR("Initialising Player"));
+    MVERBOSE(STR("Initialising Player"));
     window = new MWindow();
 
 
-    const auto winX = MEngineStatics::getEngineSettings().resX.get();
-    const auto winY = MEngineStatics::getEngineSettings().resY.get();
-    const auto fps= MEngineStatics::getEngineSettings().fps.get();
+    const auto winX = MEngineStatics::getEngineSettings()->resX.get();
+    const auto winY = MEngineStatics::getEngineSettings()->resY.get();
+    const auto fps= MEngineStatics::getEngineSettings()->fps.get();
     window->initialiseWindow(STR("Meteor Player"), SVector2(winX, winY), fps);
 
     if(!window->isOpen())
@@ -54,7 +54,7 @@ void MPlayerApplication::initialise() {
     pipelineManager.initalise();
     pipelineManager.setRenderTarget(window.get()->getRenderBuffer());
 
-    MLOG(STR("Player Initialised"));
+    MVERBOSE(STR("Player Initialised"));
 }
 
 bool MPlayerApplication::isRunning() const {

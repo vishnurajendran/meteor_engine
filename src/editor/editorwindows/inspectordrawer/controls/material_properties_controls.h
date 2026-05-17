@@ -35,6 +35,7 @@ private:
     void drawProperty(const SString& label, SShaderPropertyValue& propertyValue, MMaterial* target);
     static void drawFloatParameter(SString label, SShaderPropertyValue& value, MMaterial* target);
     static void drawIntParameter(SString label, SShaderPropertyValue& value, MMaterial* target);
+    static void drawBoolParameter(const SString& label, SShaderPropertyValue& value, MMaterial* target);
     static void drawVec2Parameter(const SString& label, SShaderPropertyValue& value, MMaterial* target);
     static void drawVec3Parameter(const SString& label, SShaderPropertyValue& value, MMaterial* target);
     static void drawVec4Parameter(const SString& label, SShaderPropertyValue& value, MMaterial* target);

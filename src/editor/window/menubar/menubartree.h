@@ -20,7 +20,6 @@ enum class EMenubarTreeNodeType
 
 class MMenubarTreeNode : public MObject
 {
-    DEFINE_OBJECT_SUBCLASS(MMenubarTreeNode)
 public:
     MMenubarTreeNode();
     MMenubarTreeNode(EMenubarTreeNodeType type);
@@ -56,6 +55,10 @@ private:
     static MMenubarTreeNode* root;
 
     void registerItemInternal(MMenubarItem* itemInstance, int depth);
+
+    // Iterates all registered items and registers their shortcuts with
+    // MShortcutListener. Called at the end of buildTree().
+    static void registerShortcuts();
 };
 
 #endif // MENUBARTREE_H
