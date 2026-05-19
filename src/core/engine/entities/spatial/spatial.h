@@ -15,6 +15,7 @@
 #include "entityflags.h"
 #include "spatial_class_macros.h"
 #include "core/utils/field_engine_types.h"
+#include "core/engine/assetmanagement/asset/field_asset_ref_types.h"
 
 class MSpatialEntity : public MObject, public SerializedClassBase
 {

@@ -25,22 +25,34 @@ MStaticMeshEntity::~MStaticMeshEntity()
     errorMaterialInstance = nullptr;
 }
 
+// -- serialization -----------------------------------------------------------
+
 void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
 {
     MSpatialEntity::onSerialise(node);
 
-    // Write all material slots as:
+    // DECLARE_FIELDs (meshAsset, castsShadow) are written automatically by
+    // SerializedClassBase before this method is called.
+
+    // Write material slots manually since they are a dynamic-length array.
+    // Each slot stores both asset ID and path for the same fallback behavior
+    // that TAssetRef provides.
+    //
+    // Format:
     //   <materialSlots>
-    //       <slot index="0">assets/materials/brick.material</slot>
-    //       <slot index="1">assets/materials/wood.material</slot>
+    //       <slot index="0">
+    //           <id>guid-string</id>
+    //           <path>assets/materials/brick.material</path>
+    //       </slot>
     //   </materialSlots>
     auto slotsNode = node.append_child("materialSlots");
     for (int i = 0; i < (int)materialSlots.size(); ++i)
     {
         auto slotNode = slotsNode.append_child("slot");
         slotNode.append_attribute("index").set_value(i);
-        if (materialSlots[i].isValid())
-            slotNode.text().set(materialSlots[i].assetHandle->getPath().c_str());
+        const auto& ref = materialSlots[i].assetRef;
+        slotNode.append_child("id").text().set(ref.getAssetId().c_str());
+        slotNode.append_child("path").text().set(ref.getPath().c_str());
     }
 }
 
@@ -48,59 +60,103 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
 {
     MSpatialEntity::onDeserialise(node);
 
-    const std::string& meshPath = meshAssetPath.get();
-    if (!meshPath.empty())
+    // At this point DECLARE_FIELDs are already loaded by SerializedClassBase.
+    // meshAsset.get() has its id and/or path populated from the <meshAsset>
+    // XML node (if present in the file).
+
+    // -- backward compat: old <meshAssetPath> string field -------------------
+    // Older scene files wrote a plain path string under <meshAssetPath>.
+    // That DECLARE_FIELD no longer exists, so the node was not auto-loaded.
+    // Check for it and populate meshAsset from the path if needed.
+    if (meshAsset.get().isEmpty())
     {
-        auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MStaticMeshAsset>(meshPath.c_str());
-        if (asset) setStaticMeshAsset(asset);
-        else       MWARN(STR("MStaticMeshEntity: mesh not found: ") + meshPath);
+        auto oldNode = node.child("meshAssetPath");
+        if (oldNode)
+        {
+            SString oldPath = oldNode.text().as_string("");
+            if (!oldPath.empty())
+                meshAsset = TAssetRef<MStaticMeshAsset>(SString{}, oldPath);
+        }
     }
 
+    // Resolve the mesh and resize material slots to match sub-mesh count.
+    // This must happen before reading material slot data from XML.
+    auto* resolvedMesh = meshAsset.get().resolve();
+    if (resolvedMesh)
+    {
+        const int meshCount = (int)resolvedMesh->getMeshes().size();
+        const int oldCount  = (int)materialSlots.size();
+        if (meshCount > oldCount)
+            materialSlots.resize(meshCount);
+        else if (meshCount < oldCount)
+            materialSlots.erase(materialSlots.begin() + meshCount, materialSlots.end());
+    }
+
+    // -- read material slots -------------------------------------------------
     auto slotsNode = node.child("materialSlots");
     if (slotsNode)
     {
-        // New format — multiple slots.
         for (auto slotNode : slotsNode.children("slot"))
         {
             int idx = slotNode.attribute("index").as_int(-1);
             if (idx < 0 || idx >= (int)materialSlots.size()) continue;
 
-            SString matPath = slotNode.text().as_string();
-            if (matPath.empty()) continue;
+            // New format: <slot> has <id> and <path> children.
+            auto idNode   = slotNode.child("id");
+            auto pathNode = slotNode.child("path");
 
-            auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MMaterialAsset>(matPath.c_str());
-            if (asset) setMaterialAsset(asset, idx);
-            else       MWARN(SString::format("MStaticMeshEntity: material not found for slot {0}: {1}", idx, matPath));
+            if (idNode || pathNode)
+            {
+                SString id   = idNode   ? SString(idNode.text().as_string(""))   : SString{};
+                SString path = pathNode ? SString(pathNode.text().as_string("")) : SString{};
+                materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(id, path);
+            }
+            else
+            {
+                // Old format: slot text content is the path directly.
+                //   <slot index="0">assets/materials/brick.material</slot>
+                SString matPath = slotNode.text().as_string("");
+                if (!matPath.empty())
+                    materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(SString{}, matPath);
+            }
         }
     }
     else
     {
-        // Backward compat — old format with single materialAssetPath (slot 0 only).
-        const std::string& matPath = materialAssetPath.get();
-        if (!matPath.empty())
+        // Legacy format: single <materialAssetPath> string (slot 0 only).
+        auto oldMatNode = node.child("materialAssetPath");
+        if (oldMatNode)
         {
-            auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MMaterialAsset>(matPath.c_str());
-            if (asset) setMaterialAsset(asset, 0);
-            else       MWARN(STR("MStaticMeshEntity: material not found: ") + matPath);
+            SString matPath = oldMatNode.text().as_string("");
+            if (!matPath.empty() && !materialSlots.empty())
+                materialSlots[0].assetRef = TAssetRef<MMaterialAsset>(SString{}, matPath);
         }
     }
+
+    calculateBounds();
 }
+
+// -- rendering ---------------------------------------------------------------
 
 void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 {
-    if (staticMeshAsset.isNull()) return;
+    // Resolve the mesh once per frame. Avoids repeated map lookups inside
+    // the per-sub-mesh loop.
+    auto* meshPtr = meshAsset.get().resolve();
+    if (!meshPtr) return;
 
     const SMatrix4 current = getTransformMatrix();
     if (current != prevTransformMatrix) { prevTransformMatrix = current; calculateBounds(); }
 
+    // Lazy-load error material once.
     if (!errorMaterialInstance)
     {
-        auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+        const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
             ->getAsset<MMaterialAsset>("meteor_assets/engine_assets/materials/error_material.material");
         if (asset) errorMaterialInstance = asset->getMaterial();
     }
 
-    const auto meshes    = staticMeshAsset->getMeshes();
+    const auto meshes    = meshPtr->getMeshes();
     const int  drawCount = std::min((int)meshes.size(), (int)materialSlots.size());
 
     for (int i = 0; i < drawCount; ++i)
@@ -126,6 +182,8 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
     }
 }
 
+// -- lifecycle ---------------------------------------------------------------
+
 void MStaticMeshEntity::onExit()
 {
     MSpatialEntity::onExit();
@@ -141,15 +199,21 @@ void MStaticMeshEntity::onUpdate(float dt)
 
 void MStaticMeshEntity::onDrawGizmo(SVector2 res) { MSpatialEntity::onDrawGizmo(res); }
 
+// -- mutators ----------------------------------------------------------------
 
-void MStaticMeshEntity::setStaticMeshAsset(TAssetHandle<MStaticMeshAsset> asset)
+void MStaticMeshEntity::setStaticMeshAsset(TAssetRef<MStaticMeshAsset> asset)
 {
-    if (!asset) { staticMeshAsset = {}; meshAssetPath = std::string(""); return; }
+    meshAsset = asset;
 
-    staticMeshAsset = asset;
-    meshAssetPath   = asset->getPath().str();
+    auto* resolved = meshAsset.get().resolve();
+    if (!resolved)
+    {
+        materialSlots.clear();
+        materialSlots.resize(1);
+        return;
+    }
 
-    const int newCount = (int)asset->getMeshes().size();
+    const int newCount = (int)resolved->getMeshes().size();
     const int oldCount = (int)materialSlots.size();
 
     if (newCount > oldCount)
@@ -160,17 +224,14 @@ void MStaticMeshEntity::setStaticMeshAsset(TAssetHandle<MStaticMeshAsset> asset)
     calculateBounds();
 }
 
-void MStaticMeshEntity::setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int slotId)
+void MStaticMeshEntity::setMaterialAsset(TAssetRef<MMaterialAsset> asset, int slotId)
 {
     if (slotId < 0 || slotId >= (int)materialSlots.size())
     {
         MERROR(SString::format("MStaticMeshEntity::setMaterialAsset: slotId {0} out of range", slotId));
         return;
     }
-    materialSlots[slotId].assetHandle = asset;
-
-    if (slotId == 0)
-        materialAssetPath = (asset && asset.isValid()) ? asset->getPath().str() : std::string("");
+    materialSlots[slotId].assetRef = asset;
 }
 
 void MStaticMeshEntity::swapMaterialSlots(int a, int b)
@@ -179,20 +240,12 @@ void MStaticMeshEntity::swapMaterialSlots(int a, int b)
     if (b < 0 || b >= (int)materialSlots.size()) return;
     if (a == b) return;
     std::swap(materialSlots[a], materialSlots[b]);
-
-    // Keep materialAssetPath in sync if slot 0 was involved.
-    if (a == 0 || b == 0)
-    {
-        auto& slot0 = materialSlots[0];
-        materialAssetPath = (slot0.isValid()) ? slot0.assetHandle->getPath().str() : std::string("");
-    }
 }
-
 
 TAssetHandle<MMaterialAsset> MStaticMeshEntity::getMaterialAsset(int slotId) const
 {
     if (slotId < 0 || slotId >= (int)materialSlots.size()) return TAssetHandle<MMaterialAsset>();
-    return materialSlots[slotId].assetHandle;
+    return materialSlots[slotId].assetRef.getHandle();
 }
 
 MMaterial* MStaticMeshEntity::getMaterialInstance(int slotId) const
@@ -203,10 +256,11 @@ MMaterial* MStaticMeshEntity::getMaterialInstance(int slotId) const
 
 void MStaticMeshEntity::calculateBounds()
 {
-    if (!staticMeshAsset) return;
+    auto* meshPtr = meshAsset.get().resolve();
+    if (!meshPtr) return;
     SVector3 mn(FLT_MAX), mx(-FLT_MAX);
     const SMatrix4 world = getTransformMatrix();
-    for (const auto* mesh : staticMeshAsset->getMeshes())
+    for (const auto* mesh : meshPtr->getMeshes())
         for (const auto& v : mesh->getVertices())
         {
             SVector3 wp = world * SVector4(v.Position, 1.f);

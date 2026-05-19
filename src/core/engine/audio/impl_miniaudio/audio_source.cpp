@@ -38,22 +38,26 @@ void MMiniAudioSource::cleanup()
     MLOG("MMiniAudioSource:: Cleaning up audio source");
 }
 
-void MMiniAudioSource::setClip(TAssetHandle<MAudioClipAsset> clip)
+void MMiniAudioSource::setClip(IAudioClip* inClip)
 {
     if (!initialized)
         return;
 
-    if (!clip.isValid())
+    if (!inClip)
         return;
 
     ma_sound_stop(&soundHandle);
     ma_sound_uninit(&soundHandle);
 
-    this->clip = clip;
-    auto* assetPath = clip.get()->getPath().c_str();
-    ma_fence* fence = nullptr;
+    this->clip = inClip;
+    const auto* assetPath = clip->getFilePath().c_str();
+
+    // If the clip is preloaded, tell miniaudio to decode the entire file
+    // into memory up front. Otherwise stream from disk (flags = 0).
+    const ma_uint32 flags = clip->isPreloaded() ? MA_SOUND_FLAG_DECODE : 0;
+
+    ma_fence* fence       = nullptr;
     ma_sound_group* group = nullptr;
-    constexpr ma_uint32 flags = 0;
     const ma_result result = ma_sound_init_from_file(engineHandle, assetPath, flags, group, fence, &soundHandle);
 
     if (result != MA_SUCCESS)

@@ -428,6 +428,12 @@ set(CORE_SOURCES
         src/core/engine/audio/asset/audio_asset_importer.cpp
         src/core/engine/audio/asset/audio_asset_importer.h
         src/default_engine_icon_paths.h
+        src/core/engine/assetmanagement/asset/asset_ref_handle.cpp
+        src/core/engine/assetmanagement/asset/asset_ref_handle.h
+        src/core/engine/assetmanagement/asset/field_asset_ref_types.h
+        src/core/engine/audio/interfaces/audioclip_interface.h
+        src/core/engine/audio/impl_miniaudio/audio_clip.cpp
+        src/core/engine/audio/impl_miniaudio/audio_clip.h
 )
 
 set(EDITOR_SOURCES
@@ -530,6 +536,10 @@ set(EDITOR_SOURCES
         src/editor/editorrenderstages/gizmos/gizmo_stage.h
         src/editor/editorwindows/scene/scene_raycast.cpp
         src/editor/editorwindows/scene/scene_raycast.h
+        src/editor/editorwindows/inspectordrawer/audio/audio_source_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/audio/audio_source_inspectordrawer.h
+        src/editor/audio_helpers/audio_waveform.cpp
+        src/editor/audio_helpers/audio_waveform.h
 )
 
 set(PLAYER_SOURCES

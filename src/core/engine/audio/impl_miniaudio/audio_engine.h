@@ -17,18 +17,25 @@ public:
 
     [[nodiscard]] bool isInitialized() const { return initialized; }
 
+    // -- Source ----------------------------------------------------------------
     [[nodiscard]] IAudioSource* createAudioSource() override;
     [[nodiscard]] bool releaseAudioSource(IAudioSource* source) override;
 
+    // -- Listener -------------------------------------------------------------
     [[nodiscard]] IAudioListener* createAudioListener() override;
     [[nodiscard]] bool releaseAudioListener(IAudioListener* listener) override;
+
+    // -- Clip -----------------------------------------------------------------
+    [[nodiscard]] IAudioClip* createAudioClip(const SString& filePath) override;
+    [[nodiscard]] bool releaseAudioClip(IAudioClip* clip) override;
 
 private:
     ma_engine engine = {};
     bool initialized = false;
 
-    std::vector<IAudioSource*> audioSources;
+    std::vector<IAudioSource*>   audioSources;
     std::vector<IAudioListener*> audioListeners;
+    std::vector<IAudioClip*>     audioClips;
 };
 
 

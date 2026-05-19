@@ -3,6 +3,9 @@
 #include "asset_inspector.h"
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/audio/asset/audioclip_asset.h"
+#include "core/engine/audio/interfaces/audioclip_interface.h"
+#include "core/engine/audio/interfaces/engine_interface.h"
 #include "core/engine/skybox/cubemapasset.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
@@ -14,8 +17,19 @@
 #include "imgui-SFML.h"
 #include "imgui.h"
 
+#include <algorithm>
+#include <cstdio>
+
+#include "editor/audio_helpers/audio_waveform.h"
+
 std::map<SString, MMaterialPropertyControl*> MAssetInspector::propControlCache;
 std::map<SString, MAssetInspector::SCubemapFaceControls> MAssetInspector::cubemapFaceCache;
+std::map<SString, MAudioWaveform*> MAssetInspector::waveformCache;
+MAssetInspector::SAudioPreviewState MAssetInspector::audioPreview;
+
+// Number of bins for waveform peak reduction. 512 gives good resolution
+// for typical inspector widths (300-500 px) without excessive memory.
+static constexpr int WAVEFORM_BINS = 512;
 
 // -- dispatch -----------------------------------------------------------------
 
@@ -23,16 +37,318 @@ void MAssetInspector::draw(MAsset* asset)
 {
     if (!asset) return;
 
+    // If the inspected asset changed while a preview was playing, release it.
+    if (audioPreview.source && asset->getAssetId() != audioPreview.activeAssetId)
+        releaseAudioPreview();
+
     if (auto* mat = dynamic_cast<MMaterialAsset*>(asset))
         drawMaterialAsset(mat);
     else if (auto* cube = dynamic_cast<MCubemapAsset*>(asset))
         drawCubemapAsset(cube);
+    else if (auto* clip = dynamic_cast<MAudioClipAsset*>(asset))
+        drawAudioClipAsset(clip);
     else if (auto* tex = dynamic_cast<MTextureAsset*>(asset))
         drawTextureAsset(tex);
     else if (auto* txt = dynamic_cast<MTextAsset*>(asset))
         drawTextAsset(txt);
     else
         drawGenericAsset(asset);
+}
+
+// -- audio clip ---------------------------------------------------------------
+
+void MAssetInspector::drawAudioClipAsset(MAudioClipAsset* asset)
+{
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.85f, 0.75f, 1.f));
+    ImGui::TextUnformatted("Audio Clip Asset");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+
+    constexpr float LW = 120.f;
+    if (ImGui::BeginTable("##audioclip_info", 2, ImGuiTableFlags_None))
+    {
+        ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
+        ImGui::TableSetupColumn("v", ImGuiTableColumnFlags_WidthStretch);
+
+        auto row = [&](const char* label, const char* value) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.55f, 0.55f, 1.f));
+            ImGui::TextUnformatted(label);
+            ImGui::PopStyleColor();
+            ImGui::TableSetColumnIndex(1);
+            ImGui::TextUnformatted(value);
+        };
+
+        row("Name:", asset->getName().c_str());
+        row("Path:", asset->getPath().c_str());
+
+        // -- Metadata from the runtime clip -----------------------------------
+        IAudioClip* clip = asset->getAudioClip();
+        if (clip)
+        {
+            char buf[64];
+
+            float len = clip->getLength();
+            if (len >= 60.f)
+            {
+                int mins = static_cast<int>(len) / 60;
+                float secs = len - static_cast<float>(mins * 60);
+                std::snprintf(buf, sizeof(buf), "%d:%05.2f", mins, secs);
+            }
+            else
+            {
+                std::snprintf(buf, sizeof(buf), "%.2f s", len);
+            }
+            row("Duration:", buf);
+
+            std::snprintf(buf, sizeof(buf), "%u", clip->getNoOfChannels());
+            row("Channels:", buf);
+
+            std::snprintf(buf, sizeof(buf), "%u Hz", clip->getSampleRate());
+            row("Sample Rate:", buf);
+
+            std::snprintf(buf, sizeof(buf), "%llu",
+                          static_cast<unsigned long long>(clip->getFrameCount()));
+            row("Frames:", buf);
+        }
+        else
+        {
+            row("Info:", "(clip not loaded)");
+        }
+
+        ImGui::EndTable();
+    }
+
+    ImGui::Spacing();
+
+    // -- Waveform -------------------------------------------------------------
+    {
+        const SString& id = asset->getAssetId();
+        MAudioWaveform*& wf = waveformCache[id];
+
+        // Kick off async generation on first view.
+        if (!wf)
+            wf = MAudioWaveform::generate(asset->getPath(), WAVEFORM_BINS);
+
+        drawWaveform(wf);
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // -- Preload toggle -------------------------------------------------------
+    {
+        bool preload = asset->isPreloaded();
+        if (ImGui::Checkbox("Preload Audio", &preload))
+        {
+            asset->setPreloaded(preload);
+
+            if (audioPreview.source)
+                releaseAudioPreview();
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip(
+                "Preload decodes the entire file into memory up front.\n"
+                "Streaming reads from disk during playback (lower memory, "
+                "slightly higher CPU).");
+    }
+
+    ImGui::Spacing();
+
+    // -- Save -----------------------------------------------------------------
+
+    if (ImGui::Button("Save##audioclip_save", ImVec2(-FLT_MIN, 0)))
+    {
+        if (!asset->save())
+            ImGui::OpenPopup("##audioclip_save_err");
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Persist the preload setting to the .meta file");
+
+    if (ImGui::BeginPopup("##audioclip_save_err"))
+    {
+        ImGui::TextUnformatted("Failed to save audio clip settings. Check logs.");
+        if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // -- Preview player -------------------------------------------------------
+
+    const bool isPlaying = audioPreview.source != nullptr;
+
+    if (!isPlaying)
+    {
+        if (ImGui::Button("Play##audioclip_play", ImVec2(-FLT_MIN, 0)))
+        {
+            auto* engine = MEngineSubsystemRegistry::getSubsystem<IAudioEngineSubsystem>();
+            if (engine)
+            {
+                IAudioClip* clip = asset->getAudioClip();
+                if (clip)
+                {
+                    IAudioSource* src = engine->createAudioSource();
+                    if (src)
+                    {
+                        src->setClip(clip);
+                        src->setVolume(audioPreview.volume);
+                        src->setLooping(false);
+                        src->play();
+
+                        audioPreview.source        = src;
+                        audioPreview.engine        = engine;
+                        audioPreview.activeAssetId = asset->getAssetId();
+                    }
+                }
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(1.f, 0.4f, 0.4f, 1.f),
+                                   "Audio engine subsystem not available.");
+            }
+        }
+    }
+    else
+    {
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.15f, 0.15f, 0.85f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered,  ImVec4(0.75f, 0.20f, 0.20f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,   ImVec4(0.40f, 0.10f, 0.10f, 1.00f));
+        if (ImGui::Button("Stop##audioclip_stop", ImVec2(-FLT_MIN, 0)))
+            releaseAudioPreview();
+        ImGui::PopStyleColor(3);
+
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        if (ImGui::DragFloat("##audioclip_vol", &audioPreview.volume,
+                             0.005f, 0.0f, 1.0f, "Volume: %.2f"))
+        {
+            audioPreview.volume = std::clamp(audioPreview.volume, 0.0f, 1.0f);
+            if (audioPreview.source)
+                audioPreview.source->setVolume(audioPreview.volume);
+        }
+    }
+}
+
+// -- waveform rendering -------------------------------------------------------
+
+void MAssetInspector::drawWaveform(MAudioWaveform* waveform)
+{
+    if (!waveform)
+        return;
+
+    if (!waveform->isReady())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+        ImGui::TextUnformatted("Generating waveform...");
+        ImGui::PopStyleColor();
+        return;
+    }
+
+    if (waveform->hasFailed())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.4f, 0.4f, 1.f));
+        ImGui::TextUnformatted("Could not generate waveform.");
+        ImGui::PopStyleColor();
+        return;
+    }
+
+    const auto& mins     = waveform->getMinPeaks();
+    const auto& maxs     = waveform->getMaxPeaks();
+    const int   bins     = waveform->getBinCount();
+    const int   channels = waveform->getChannelCount();
+    if (bins == 0 || channels == 0)
+        return;
+
+    // Total height scales with channel count. Each channel gets its own
+    // strip so the user can see per-channel detail (stereo spread, etc.).
+    static constexpr float CHANNEL_H = 48.f;
+    static constexpr float GAP       = 2.f;
+    const float totalH = static_cast<float>(channels) * CHANNEL_H
+                       + static_cast<float>(channels - 1) * GAP;
+
+    const float avail = ImGui::GetContentRegionAvail().x;
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+
+    // One colour per channel so they're visually distinct.
+    // Falls back to the first colour for channels beyond the palette.
+    static constexpr ImU32 channelColors[] = {
+        IM_COL32( 70, 210, 180, 220),   // teal   (Left / Mono)
+        IM_COL32(100, 160, 240, 220),   // blue   (Right)
+        IM_COL32(220, 180,  70, 220),   // gold   (Center)
+        IM_COL32(200, 100, 200, 220),   // purple (LFE)
+        IM_COL32( 80, 200, 120, 220),   // green  (Surround L)
+        IM_COL32(230, 120,  90, 220),   // orange (Surround R)
+    };
+    static constexpr int paletteSize = sizeof(channelColors) / sizeof(channelColors[0]);
+
+    static const char* channelLabels[] = {
+        "L", "R", "C", "LFE", "SL", "SR"
+    };
+    static constexpr int labelCount = sizeof(channelLabels) / sizeof(channelLabels[0]);
+
+    for (int ch = 0; ch < channels; ++ch)
+    {
+        const float stripY = origin.y + static_cast<float>(ch) * (CHANNEL_H + GAP);
+
+        // Dark background per channel strip.
+        dl->AddRectFilled(
+            { origin.x, stripY },
+            { origin.x + avail, stripY + CHANNEL_H },
+            IM_COL32(20, 20, 20, 255), 4.f);
+
+        const float centerY = stripY + CHANNEL_H * 0.5f;
+        const float halfH   = CHANNEL_H * 0.45f;
+        const ImU32 color   = channelColors[ch % paletteSize];
+
+        for (int i = 0; i < bins; ++i)
+        {
+            const float t  = static_cast<float>(i) / static_cast<float>(bins);
+            const float x  = origin.x + t * avail;
+            const float y0 = centerY - maxs[ch][i] * halfH;
+            const float y1 = centerY - mins[ch][i] * halfH;
+            dl->AddLine({ x, y0 }, { x, y1 }, color);
+        }
+
+        // Subtle center line.
+        dl->AddLine({ origin.x, centerY },
+                    { origin.x + avail, centerY },
+                    IM_COL32(255, 255, 255, 20));
+
+        // Channel label in the top-left corner of each strip.
+        const char* label = (ch < labelCount) ? channelLabels[ch] : "?";
+        // Mono files get no label -- there's only one strip, it's obvious.
+        if (channels > 1)
+        {
+            dl->AddText({ origin.x + 4.f, stripY + 2.f },
+                        IM_COL32(255, 255, 255, 90), label);
+        }
+    }
+
+    // Reserve layout space for the entire waveform block.
+    ImGui::Dummy({ avail, totalH });
+}
+
+void MAssetInspector::releaseAudioPreview()
+{
+    if (!audioPreview.source)
+        return;
+
+    IAudioEngineSubsystem* engine = audioPreview.engine;
+    if (!engine)
+        engine = MEngineSubsystemRegistry::getSubsystem<IAudioEngineSubsystem>();
+
+    if (engine)
+        engine->releaseAudioSource(audioPreview.source);
+
+    audioPreview.source        = nullptr;
+    audioPreview.clip          = nullptr;
+    audioPreview.engine        = nullptr;
+    audioPreview.activeAssetId.clear();
 }
 
 // -- material -----------------------------------------------------------------
@@ -199,8 +515,6 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
 
     ImGui::Spacing();
 
-    // -- Face reference controls ----------------------------------------------
-
     const SString& id = asset->getAssetId();
     if (!cubemapFaceCache.contains(id))
     {
@@ -230,7 +544,6 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
 
             for (int i = 0; i < MCubemapAsset::FACE_COUNT; ++i)
             {
-                // Sync the control with the asset's current face path.
                 SString facePath = asset->getFacePath(i);
                 TAssetHandle<MAsset> expected = !facePath.empty()
                     ? MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(facePath)
@@ -262,8 +575,6 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
-
-    // -- Save & Rebuild -------------------------------------------------------
 
     if (ImGui::Button("Save & Rebuild##cube_save", ImVec2(-FLT_MIN, 0)))
     {

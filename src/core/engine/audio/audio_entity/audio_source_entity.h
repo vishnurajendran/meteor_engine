@@ -4,9 +4,11 @@
 
 #ifndef AUDIO_ENTITY_H
 #define AUDIO_ENTITY_H
+#include "core/engine/audio/asset/audioclip_asset.h"
 #include "core/engine/audio/interfaces/audiosource_interface.h"
 #include "core/engine/audio/interfaces/engine_interface.h"
 #include "core/engine/entities/spatial/spatial.h"
+#include "core/engine/assetmanagement/asset/field_asset_ref_types.h"
 
 class MAudioSource : public MSpatialEntity {
     DEFINE_SPATIAL_CLASS(MAudioSource)
@@ -25,6 +27,9 @@ class MAudioSource : public MSpatialEntity {
     DECLARE_FIELD(maxDist, float, 100.0f)
     DECLARE_FIELD(dopplerStrength, float, 0.0f)
 
+    // Asset reference -- auto-serialized to XML via Field<TAssetRef<T>>
+    DECLARE_FIELD(clipRef, TAssetRef<MAudioClipAsset>, {})
+
 public:
     MAudioSource() = default;
     ~MAudioSource() override = default;
@@ -37,16 +42,45 @@ public:
 
 // Public API
 public:
-    /// Set clip to play
+    /// Set clip to play -- accepts a handle; TAssetRef converts implicitly
     void setClip(TAssetHandle<MAudioClipAsset> clip);
-    /// Get current clip
-    TAssetHandle<MAudioClipAsset> getClip() const { return clipRef; }
+    /// Get current clip reference (carries both GUID and path)
+    TAssetRef<MAudioClipAsset> getClip() const { return clipRef.get(); }
     /// Play this source
     void play();
     /// Stop this source
     void stop();
     /// Play this clip as oneshot
     void playOneShot(TAssetHandle<MAudioClipAsset> clip);
+
+    // -- Audio control accessors (used by the inspector) ----------------------
+
+    bool  getLoop()   const { return loop.get(); }
+    void  setLoop(bool v)   { loop.set(v); }
+
+    float getVolume() const { return volume.get(); }
+    void  setVolume(float v){ volume.set(v); }
+
+    float getPitch()  const { return pitch.get(); }
+    void  setPitch(float v) { pitch.set(v); }
+
+    // -- Spatialization accessors ---------------------------------------------
+
+    bool  getUseSpatial()   const { return useSpatial.get(); }
+    void  setUseSpatial(bool v)   { useSpatial.set(v); }
+
+    float getRollOff()      const { return rollOff.get(); }
+    void  setRollOff(float v)     { rollOff.set(v); }
+
+    float getMinDist()      const { return minDist.get(); }
+    void  setMinDist(float v)     { minDist.set(v); }
+
+    float getMaxDist()      const { return maxDist.get(); }
+    void  setMaxDist(float v)     { maxDist.set(v); }
+
+    float getDopplerStrength()  const { return dopplerStrength.get(); }
+    void  setDopplerStrength(float v) { dopplerStrength.set(v); }
+
 private:
     void syncAudioEngineState();
 
@@ -57,7 +91,6 @@ private:
 
     // velocity
     SVector3 prevPos = {0,0,0};
-    TAssetHandle<MAudioClipAsset> clipRef;
 
     // initially out of sync, the next play syncs the state.
     bool outOfSync = true;

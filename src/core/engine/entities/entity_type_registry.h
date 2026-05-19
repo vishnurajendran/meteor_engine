@@ -13,7 +13,6 @@
 #include <string>
 #include <unordered_map>
 #include <iostream>
-#include "core/object/type_info.h"
 
 class MSpatialEntity;
 class MEntityTypeRegistry : public MObject

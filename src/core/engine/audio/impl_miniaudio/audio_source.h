@@ -20,8 +20,8 @@ public:
     // internal
     void internal_setEngineHandle(ma_engine* internalEngineHandle) { engineHandle = internalEngineHandle; }
 
-    // clip related
-    void setClip(TAssetHandle<MAudioClipAsset> clip) override;
+    // clip -- now takes an IAudioClip* instead of the raw asset handle
+    void setClip(IAudioClip* clip) override;
 
     void play() override;
     void stop() override;
@@ -46,9 +46,9 @@ private:
     ma_engine* engineHandle = nullptr;
     ma_sound soundHandle = {};
     bool initialized = false;
-    TAssetHandle<MAudioClipAsset> clip;
+    IAudioClip* clip = nullptr;
 
-    // sound flags.
+    // sound flags
     ma_sound_flags soundFlags = MA_SOUND_FLAG_NO_SPATIALIZATION;
 };
 

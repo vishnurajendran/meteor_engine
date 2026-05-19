@@ -2,21 +2,23 @@
 #ifndef STATICMESHENTITY_H
 #define STATICMESHENTITY_H
 
-#include "../../../graphics/core/render-pipeline/interfaces/drawable_interface.h"
-#include "core/engine/assetmanagement/asset/asset_handle.h"
+#include "core/graphics/core/render-pipeline/interfaces/drawable_interface.h"
+#include "core/engine/assetmanagement/asset/asset_ref_handle.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
 #include "core/utils/aabb.h"
 #include "staticmeshasset.h"
+#include "core/engine/assetmanagement/asset/asset_ref_handle.h"
 
 class MStaticMeshEntity : public MSpatialEntity, public IMeteorDrawable
 {
     DEFINE_SPATIAL_CLASS(MStaticMeshEntity)
 
-    DECLARE_FIELD(meshAssetPath,     std::string, "")
-    DECLARE_FIELD(materialAssetPath, std::string, "")  // slot 0 — kept for backward compat
-    DECLARE_FIELD(castsShadow,       bool,        true)
+    // Serialized via Field<TAssetRef<T>> -- writes both GUID and path to XML.
+    // Replaces the old meshAssetPath (std::string) + separate TAssetHandle pair.
+    DECLARE_FIELD(meshAsset, TAssetRef<MStaticMeshAsset>, {})
+    DECLARE_FIELD(castsShadow, bool, true)
 
 public:
     MStaticMeshEntity();
@@ -29,13 +31,14 @@ public:
     void onExit()           override;
     void onUpdate(float dt) override;
 
-    void setStaticMeshAsset(TAssetHandle<MStaticMeshAsset> asset);
-    void setMaterialAsset(TAssetHandle<MMaterialAsset> asset, int slotId = 0);
+    void setStaticMeshAsset(TAssetRef<MStaticMeshAsset> asset);
+    void setMaterialAsset(TAssetRef<MMaterialAsset> asset, int slotId = 0);
     void swapMaterialSlots(int a, int b);
     void calculateBounds();
 
-    [[nodiscard]] TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()   const { return staticMeshAsset; }
-    [[nodiscard]] TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0)    const;
+    // Returns a TAssetHandle for API compatibility with existing callers.
+    [[nodiscard]] TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()        const { return meshAsset.get().getHandle(); }
+    [[nodiscard]] TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0) const;
     [[nodiscard]] MMaterial*        getMaterialInstance(int slotId = 0) const;
     [[nodiscard]] int               getMaterialSlotCount()              const { return (int)materialSlots.size(); }
     [[nodiscard]] AABB              getBounds()                         const { return bounds; }
@@ -47,19 +50,21 @@ protected:
     void onDeserialise(const pugi::xml_node& node) override;
 
 private:
+    // Each slot holds a serializable ref to a material asset.
+    // Replaces the old TAssetHandle-only slot.
     struct SMaterialSlot
     {
-        TAssetHandle<MMaterialAsset> assetHandle;
+        TAssetRef<MMaterialAsset> assetRef;
 
-        [[nodiscard]] bool      isValid()     const { return assetHandle.isValid(); }
+        [[nodiscard]] bool isValid() const { return assetRef.isValid(); }
         [[nodiscard]] MMaterial* getMaterial() const
         {
-            return isValid() ? assetHandle->getMaterial() : nullptr;
+            auto* asset = assetRef.resolve();
+            return asset ? asset->getMaterial() : nullptr;
         }
     };
 
 private:
-    TAssetHandle<MStaticMeshAsset> staticMeshAsset;
     std::vector<SMaterialSlot>     materialSlots;
     AABB                           bounds              = { {0,0,0}, {0,0,0} };
     SMatrix4                       prevTransformMatrix{};

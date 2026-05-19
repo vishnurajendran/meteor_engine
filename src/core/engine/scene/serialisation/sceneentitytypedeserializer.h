@@ -2,13 +2,12 @@
 #ifndef SCENEENTITYTYPEDESERIALIZER_H
 #define SCENEENTITYTYPEDESERIALIZER_H
 
+#include "core/engine/entities/spatial/spatial.h"
 #include "core/object/object.h"
 #include "core/utils/color.h"
 #include "core/utils/glmhelper.h"
 #include "core/utils/sstring.h"
 #include "pugixml.hpp"
-
-class MSpatialEntity;
 
 class MSceneEntityTypeDeserializer : public MObject
 {

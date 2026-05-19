@@ -33,7 +33,7 @@ It’s currently in active development, focused on exploring rendering architect
 - Scene system with spatial entities
 - Basic engine loop (Editor + Player separation)
 - Plugin system (early design phase)
-
+- Audio engine powered by MiniAudio, supports 2D and spatial audio
 ---
 
 ## In Progress / Actively Being Worked On
@@ -47,31 +47,31 @@ It’s currently in active development, focused on exploring rendering architect
 
 ## Missing Systems (Not Implemented Yet)
 
+- ~~Audio System~~
 - Physics system
 - Scripting layer (planned DSL / runtime scripting)
-- Audio system
 - Animation system
 - Build pipeline / packaging
 - Extending engine with plugins
 - Networking
 
 ---
-
 ## Tech Stack
 
-- **Language:** C++20  
-- **Rendering:** OpenGL
-- **Windowing:** SFML, SFML-ImGui
-- **GUI:** : ImGui
-- **Model Loading:** : Assimp 
-- **XML:** : pugixml
+| Category          | Technology                                                                                                |
+|-------------------|-----------------------------------------------------------------------------------------------------------|
+| **Language**      | [C++20](https://en.cppreference.com/cpp/20)                                                               |
+| **Rendering**     | [OpenGL](https://www.opengl.org/)                                                                         |
+| **Windowing**     | [SFML](https://www.sfml-dev.org/), [SFML-ImGui](https://github.com/SFML/imgui-sfml)                       |
+| **Audio**         | [MiniAudio](https://miniaud.io/index.html)                                                                |
+| **GUI**           | [ImGui](https://github.com/ocornut/imgui)                                                                 |
+| **Model Loading** | [Assimp](https://www.assimp.org/)                                                                         |
+| **Serlization**   | [PugiXML](https://pugixml.org/), [Serialized Class](https://github.com/vishnurajendran/serialized_class)  |
 
 ---
 
 ## Goals
-
 Meteor is primarily a **learning + experimentation project**, with focus on:
-
 - Modular rendering architecture
 - Clean engine/editor separation
 - Scalable asset pipeline
@@ -80,7 +80,6 @@ Meteor is primarily a **learning + experimentation project**, with focus on:
 ---
 
 ## Building the Project
-
 > Build instructions may break as the project evolves.
 
 ### Requirements
@@ -88,23 +87,22 @@ Meteor is primarily a **learning + experimentation project**, with focus on:
 - CMake (3.26+)
 
 ### Dependencies
-- Assimp
-- GLEW
+- Assimp*
+- GLEW*
 - SFML
 - ImGui-SFML
 - pugixml
+- Serialized Class
+- Mini Audio
 
-*(Manual setup required depending on platform)*
+*\*(Manual setup required depending on platform)*
 
 ---
-
 ## Notes
-
 - Editor performance and memory usage are **not optimized yet**
 - APIs and systems are **subject to change frequently**
 - Many systems are being rewritten as the architecture evolves
 
 ---
-
 ## License
 MIT License

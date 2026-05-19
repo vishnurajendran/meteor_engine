@@ -6,7 +6,7 @@
 
 #include "SFML/Audio/Listener.hpp"
 #include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
-#include "core/engine/audio/impl_miniaudio/audio_source.h"
+#include "core/engine/audio/asset/audioclip_asset.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
@@ -81,19 +81,6 @@ void MAudioSource::onCreate()
 void MAudioSource::onStart()
 {
     MSpatialEntity::onStart();
-
-    // Test code, Remove once we have assets ready to load
-    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
-    if (assetManager)
-    {
-        setClip(assetManager->getAsset<MAudioClipAsset>("assets/audio/test.mp3"));
-        volume.set(0.1f);
-
-        // enable spatialization
-        useSpatial.set(true);
-        play();
-    }
-
 }
 
 void MAudioSource::onUpdate(float deltaTime)
@@ -150,7 +137,17 @@ void MAudioSource::setClip(TAssetHandle<MAudioClipAsset> clip)
     if (!initialized) return;
     if (!clip.isValid()) return;
 
-    source->setClip(clip);
+    // Store in the field -- TAssetRef converts from TAssetHandle implicitly,
+    // capturing both GUID and path for auto-serialization.
+    clipRef.set(clip);
+
+    MAudioClipAsset* asset = clip.get();
+    if (!asset) return;
+
+    IAudioClip* audioClip = asset->getAudioClip();
+    if (!audioClip) return;
+
+    source->setClip(audioClip);
     outOfSync = true;
 }
 
@@ -178,8 +175,16 @@ void MAudioSource::playOneShot(TAssetHandle<MAudioClipAsset> clip)
     if (!initialized)
         return;
 
-    // set new clip, makes a new sound instance, so manually sync the states.
-    source->setClip(clip);
+    if (!clip.isValid())
+        return;
+
+    MAudioClipAsset* asset = clip.get();
+    if (!asset) return;
+
+    IAudioClip* audioClip = asset->getAudioClip();
+    if (!audioClip) return;
+
+    source->setClip(audioClip);
     syncAudioEngineState();
     source->setLooping(false);
     source->play();

@@ -4,6 +4,7 @@
 
 #include "audio_engine.h"
 
+#include "audio_clip.h"
 #include "audio_listener.h"
 #include "audio_source.h"
 #include "core/utils/logger.h"
@@ -36,11 +37,20 @@ void MMiniAudioEngineSubsystem::cleanup()
         releaseAudioListener(listener);
     }
 
+    auto clipCopy = std::vector(audioClips);
+    for (auto* clip : clipCopy)
+    {
+        releaseAudioClip(clip);
+    }
+
     audioSources.clear();
     audioListeners.clear();
+    audioClips.clear();
 
     MLOG("MiniAudioEngine::Shutdown audio engine");
 }
+
+// -- Source --------------------------------------------------------------------
 
 IAudioSource* MMiniAudioEngineSubsystem::createAudioSource()
 {
@@ -65,6 +75,8 @@ bool MMiniAudioEngineSubsystem::releaseAudioSource(IAudioSource* source)
     return true;
 }
 
+// -- Listener -----------------------------------------------------------------
+
 IAudioListener* MMiniAudioEngineSubsystem::createAudioListener()
 {
     if (!initialized)
@@ -86,5 +98,31 @@ bool MMiniAudioEngineSubsystem::releaseAudioListener(IAudioListener* listener)
     listener->cleanup();
     std::erase(audioListeners, listener);
     delete listener;
+    return true;
+}
+
+// -- Clip ---------------------------------------------------------------------
+
+IAudioClip* MMiniAudioEngineSubsystem::createAudioClip(const SString& filePath)
+{
+    if (!initialized)
+        return nullptr;
+
+    auto* inst = new MMiniAudioClip();
+    inst->internal_setEngineHandle(&engine);
+    inst->internal_setFilePath(filePath);
+    inst->init();
+    audioClips.push_back(inst);
+    return inst;
+}
+
+bool MMiniAudioEngineSubsystem::releaseAudioClip(IAudioClip* clip)
+{
+    if (clip == nullptr)
+        return false;
+
+    clip->cleanup();
+    std::erase(audioClips, clip);
+    delete clip;
     return true;
 }

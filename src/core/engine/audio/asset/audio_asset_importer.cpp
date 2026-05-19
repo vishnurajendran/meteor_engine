@@ -13,12 +13,12 @@ bool MAudioAssetImporter::registeredAssetImporter = []()
 
 bool MAudioAssetImporter::canImport(SString fileExtension)
 {
-    return fileExtension == "wav" || fileExtension == "mp3" || fileExtension == ".flac";
+    return fileExtension == "wav" || fileExtension == "mp3" || fileExtension == "flac";
 }
 
 MAsset* MAudioAssetImporter::importAsset(SString path, const pugi::xml_document& metaData)
 {
-    // for now, it's a simple asset, that holds asset path.
-    // this is used only to track assets for audio is all.
-    return new MAudioClipAsset(path);
+    auto* asset = new MAudioClipAsset(path);
+    asset->loadSettings(metaData);
+    return asset;
 }
