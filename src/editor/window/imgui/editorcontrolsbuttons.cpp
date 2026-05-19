@@ -3,15 +3,17 @@
 //
 
 #include "editorcontrolsbuttons.h"
-#include "imgui.h"
-#include "imgui-SFML.h"
+
 #include "core/utils/dpihelper.h"
+#include "default_engine_icon_paths.h"
+#include "imgui-SFML.h"
+#include "imgui.h"
 
 sf::Texture MEditorControlsButtons::playTexture;
 
 void MEditorControlsButtons::playButton() {
     const SString METEOR_PLAYER_PROC_NAME = "meteor_player.exe";
-    const SString METEOR_PLAYER_ICO_PATH = "meteor_assets/icons/play.png";
+    const SString METEOR_PLAYER_ICO_PATH = SEditorAssetPaths::LOWRES_TEX_BTTN_PLAY;
     if(playTexture.getSize().x <= 0) {
         playTexture.loadFromFile(METEOR_PLAYER_ICO_PATH.c_str());
     }

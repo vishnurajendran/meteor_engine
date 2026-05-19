@@ -421,6 +421,13 @@ set(CORE_SOURCES
         src/core/engine/assetmanagement/assetmanager/asset_manager_subsystem.cpp
         src/core/graphics/core/render-pipeline/render_pipeline_manager_interface.cpp
         src/core/graphics/core/render-pipeline/render_pipeline_manager_interface.h
+        src/core/engine/audio/audio_entity/audio_source_entity.cpp
+        src/core/engine/audio/audio_entity/audio_source_entity.h
+        src/core/engine/audio/audio_entity/audio_listener_entity.cpp
+        src/core/engine/audio/audio_entity/audio_listener_entity.h
+        src/core/engine/audio/asset/audio_asset_importer.cpp
+        src/core/engine/audio/asset/audio_asset_importer.h
+        src/default_engine_icon_paths.h
 )
 
 set(EDITOR_SOURCES

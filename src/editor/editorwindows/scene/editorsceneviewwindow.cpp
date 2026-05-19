@@ -1,4 +1,5 @@
 #include "editorsceneviewwindow.h"
+
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
@@ -9,6 +10,7 @@
 #include "core/engine/scene/scenemanager.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/composite/composite_stage.h"
+#include "default_engine_icon_paths.h"
 #include "editor/app/editorapplication.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/settings/editor_settings.h"
@@ -118,13 +120,13 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     renderTexture = sf::RenderTexture({ 1920, 1080 }, settings);
     updateRenderTarget();
 
-    translateIcon.loadFromFile("meteor_assets/icons/gizmo_translate.png");
-    rotateIcon.loadFromFile("meteor_assets/icons/gizmo_rotate.png");
-    scaleIcon.loadFromFile("meteor_assets/icons/gizmo_scale.png");
-    localSpaceIcon.loadFromFile("meteor_assets/icons/gizmo_local.png");
-    worldSpaceIcon.loadFromFile("meteor_assets/icons/gizmo_world.png");
-    gizmoOnIcon.loadFromFile("meteor_assets/icons/gizmo_visible.png");
-    gizmoOffIcon.loadFromFile("meteor_assets/icons/gizmo_hidden.png");
+    translateIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_MOVE);
+    rotateIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_ROTATE);
+    scaleIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_SCALE);
+    localSpaceIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_LOCALSPACE);
+    worldSpaceIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_WORLDSPACE);
+    gizmoOnIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_ENABLED);
+    gizmoOffIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_DISABLED);
 
     auto* cam = MEditorApplication::getSceneCamera();
     if (cam)
@@ -220,6 +222,7 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     drawOverlayToolbar();
     drawCameraSpeedOverlay();
     drawViewportInfoOverlay();
+    drawAxisLegend();
 }
 
 // ─── handleInput ──────────────────────────────────────────────────────────────
@@ -730,6 +733,65 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
         }
         endOverlayPanel();
     }
+}
+
+// ─── Axis legend ─────────────────────────────────────────────────────────────
+
+void MEditorSceneViewWindow::drawAxisLegend()
+{
+    auto& cameras = MViewManagement::getCameras();
+    if (cameras.empty()) return;
+    auto* camera = cameras[0];
+    if (!camera) return;
+
+    const float axisLen = 28.0f;
+    const float margin  = 20.0f;
+
+    // Place the legend in the top-right, below the camera speed overlay
+    ImVec2 center = {
+        viewportMin.x + viewportSize.x - margin - axisLen,
+        viewportMin.y + margin + 48.0f + axisLen + 10.0f
+    };
+
+    // Extract rotation part of the view matrix.
+    // Multiplying a world-space axis by this gives us the direction
+    // in view space (X-right, Y-up, Z-out-of-screen).
+    glm::mat3 viewRot = glm::mat3(camera->getViewMatrix());
+
+    glm::vec3 xWorld = viewRot * glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec3 yWorld = viewRot * glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::vec3 zWorld = viewRot * glm::vec3(0.0f, 0.0f, 1.0f);
+
+    // View X maps to screen right, view Y maps to screen up (ImGui Y is down,
+    // so we negate it).
+    ImVec2 xEnd = { center.x + xWorld.x * axisLen, center.y - xWorld.y * axisLen };
+    ImVec2 yEnd = { center.x + yWorld.x * axisLen, center.y - yWorld.y * axisLen };
+    ImVec2 zEnd = { center.x + zWorld.x * axisLen, center.y - zWorld.y * axisLen };
+
+    auto* dl = ImGui::GetWindowDrawList();
+    const float thickness = 2.0f;
+
+    const ImU32 colX = IM_COL32(220, 50,  50,  255);
+    const ImU32 colY = IM_COL32(50,  220, 50,  255);
+    const ImU32 colZ = IM_COL32(50,  100, 220, 255);
+
+    dl->AddLine(center, xEnd, colX, thickness);
+    dl->AddLine(center, yEnd, colY, thickness);
+    dl->AddLine(center, zEnd, colZ, thickness);
+
+    // Place labels slightly beyond each axis endpoint
+    auto nudge = [&](ImVec2 end) -> ImVec2 {
+        float dx = end.x - center.x;
+        float dy = end.y - center.y;
+        float len = std::sqrt(dx * dx + dy * dy);
+        if (len < 0.001f) return end;
+        float scale = 6.0f / len;
+        return { end.x + dx * scale - 3.0f, end.y + dy * scale - 5.0f };
+    };
+
+    dl->AddText(nudge(xEnd), colX, "X");
+    dl->AddText(nudge(yEnd), colY, "Y");
+    dl->AddText(nudge(zEnd), colZ, "Z");
 }
 
 void MEditorSceneViewWindow::updateRenderTarget()

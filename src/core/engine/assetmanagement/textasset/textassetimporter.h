@@ -5,6 +5,7 @@
 #ifndef TEXTASSETIMPORTER_H
 #define TEXTASSETIMPORTER_H
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
+#include "default_engine_icon_paths.h"
 
 /// Importer for Text Assets
 class MTextAssetImporter : public MAssetImporter {
@@ -17,7 +18,7 @@ public:
 
     bool canImport(SString fileExtension) override;
     MAsset * importAsset(SString path, const pugi::xml_document& metaData) override;
-    [[nodiscard]] SString getIconPath() const override { return "meteor_assets/engine_assets/icons/file-text.png";}
+    [[nodiscard]] SString getIconPath() const override { return SEditorAssetPaths::HIGHRES_TEX_ASSET_TEXT; }
 };
 
 

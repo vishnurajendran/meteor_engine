@@ -3,6 +3,8 @@
 //
 #include "assetimporter.h"
 
+#include "default_engine_icon_paths.h"
+
 std::vector<MAssetImporter*>* MAssetImporter::importers;
 
 void MAssetImporter::addImporter(MAssetImporter *importer) {
@@ -19,5 +21,5 @@ std::vector<MAssetImporter*>* MAssetImporter::getImporters() { return importers;
 
 SString MAssetImporter::getIconPath() const
 {
-    return "meteor_assets/engine_assets/icons/file-default.png";
+    return SEditorAssetPaths::HIGHRES_TEX_ASSET_DEFAULT;
 }

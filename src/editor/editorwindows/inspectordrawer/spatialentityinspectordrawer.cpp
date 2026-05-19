@@ -9,6 +9,122 @@
 #include "imgui-SFML.h"
 #include "misc/cpp/imgui_stdlib.h"
 
+#include <typeindex>
+#include <cctype>
+
+// ---------------------------------------------------------------------------
+// Display-name formatting helpers
+// ---------------------------------------------------------------------------
+
+// Converts camelCase or PascalCase into "Pascal Case With Spaces".
+// Examples: "dopplerStrength" -> "Doppler Strength"
+//           "useSpatial"     -> "Use Spatial"
+//           "rollOff"        -> "Roll Off"
+//           "loop"           -> "Loop"
+static std::string formatDisplayName(const std::string& raw)
+{
+    if (raw.empty()) return raw;
+
+    std::string result;
+    result += static_cast<char>(std::toupper(raw[0]));
+
+    for (size_t i = 1; i < raw.size(); ++i)
+    {
+        if (std::isupper(raw[i]) && i > 0 && std::islower(raw[i - 1]))
+            result += ' ';
+        result += raw[i];
+    }
+    return result;
+}
+
+// Strips the leading "M" prefix (when followed by an uppercase letter)
+// and inserts spaces between PascalCase words.
+// Example: "MAudioSource" -> "Audio Source"
+static std::string formatTypeName(const char* raw)
+{
+    std::string name(raw);
+    if (name.size() >= 2 && name[0] == 'M' && std::isupper(name[1]))
+        name = name.substr(1);
+
+    std::string result;
+    result += name[0];
+    for (size_t i = 1; i < name.size(); ++i)
+    {
+        if (std::isupper(name[i]) && i > 0 && std::islower(name[i - 1]))
+            result += ' ';
+        result += name[i];
+    }
+    return result;
+}
+
+// ---------------------------------------------------------------------------
+// Supported-type dispatch map (built once, never modified)
+// ---------------------------------------------------------------------------
+
+const std::unordered_map<std::type_index, MSpatialEntityInspectorDrawer::FieldDrawFn>
+MSpatialEntityInspectorDrawer::fieldDrawerMap =
+{
+    { std::type_index(typeid(Field<float>)), [](MSpatialEntityInspectorDrawer*, FieldBase* f) -> bool {
+        auto* tf = static_cast<Field<float>*>(f);
+        float val = tf->get();
+        if (ImGui::DragFloat("##v", &val, 0.01f, 0.0f, 0.0f, "%.3f")) {
+            tf->set(val);
+            return true;
+        }
+        return false;
+    }},
+
+    { std::type_index(typeid(Field<int>)), [](MSpatialEntityInspectorDrawer*, FieldBase* f) -> bool {
+        auto* tf = static_cast<Field<int>*>(f);
+        int val = tf->get();
+        if (ImGui::DragInt("##v", &val)) {
+            tf->set(val);
+            return true;
+        }
+        return false;
+    }},
+
+    { std::type_index(typeid(Field<bool>)), [](MSpatialEntityInspectorDrawer*, FieldBase* f) -> bool {
+        auto* tf = static_cast<Field<bool>*>(f);
+        bool val = tf->get();
+        if (ImGui::Checkbox("##v", &val)) {
+            tf->set(val);
+            return true;
+        }
+        return false;
+    }},
+
+    { std::type_index(typeid(Field<std::string>)), [](MSpatialEntityInspectorDrawer*, FieldBase* f) -> bool {
+        auto* tf = static_cast<Field<std::string>*>(f);
+        std::string val = tf->get();
+        if (ImGui::InputText("##v", &val)) {
+            tf->set(val);
+            return true;
+        }
+        return false;
+    }},
+
+    { std::type_index(typeid(Field<SVector3>)), [](MSpatialEntityInspectorDrawer* drawer, FieldBase* f) -> bool {
+        auto* tf = static_cast<Field<SVector3>*>(f);
+        SVector3 val = tf->get();
+        if (drawer->drawXYZComponent(SString(formatDisplayName(f->name)), val)) {
+            tf->set(val);
+            return true;
+        }
+        return false;
+    }},
+
+    { std::type_index(typeid(Field<SVector2>)), [](MSpatialEntityInspectorDrawer* drawer, FieldBase* f) -> bool {
+        auto* tf = static_cast<Field<SVector2>*>(f);
+        SVector2 val = tf->get();
+        if (drawer->drawXYComponent(SString(formatDisplayName(f->name)), val)) {
+            tf->set(val);
+            return true;
+        }
+        return false;
+    }},
+};
+
 // ---------------------------------------------------------------------------
 // Construction
 // ---------------------------------------------------------------------------
@@ -41,6 +157,87 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target) {
     }
 
     drawTransformField(target);
+}
+
+// ---------------------------------------------------------------------------
+// Fallback field drawing (only runs when no custom drawer matched)
+// ---------------------------------------------------------------------------
+
+void MSpatialEntityInspectorDrawer::drawDefaultFields(MSpatialEntity* target) {
+    drawFields(target);
+}
+
+// ---------------------------------------------------------------------------
+// Generic field drawing
+// ---------------------------------------------------------------------------
+
+void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
+{
+    const auto& fields = target->getFields();
+    if (fields.empty())
+        return;
+
+    // Strip the "M" prefix and space out PascalCase words for the header.
+    const std::string headerName = formatTypeName(target->typeInfo().name);
+    if (!ImGui::CollapsingHeader(headerName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+        return;
+
+    const float dpi = DPIHelper::GetDPIScaleFactor();
+
+    // Label column width -- wide enough for most two-word formatted names.
+    // Very long names will clip, which is acceptable.
+    const float labelWidth = 110.0f * dpi;
+
+    for (auto* f : fields)
+    {
+        ImGui::PushID(f);
+
+        const std::type_index tid(typeid(*f));
+        auto it = fieldDrawerMap.find(tid);
+
+        if (it != fieldDrawerMap.end())
+        {
+            // Vector types produce their own multi-column table layout,
+            // so they are called standalone. Scalar types get wrapped in
+            // a shared two-column label | widget table.
+            const bool isVector =
+                tid == std::type_index(typeid(Field<SVector3>)) ||
+                tid == std::type_index(typeid(Field<SVector2>));
+
+            if (isVector)
+            {
+                it->second(this, f);
+            }
+            else
+            {
+                const std::string displayName = formatDisplayName(f->name);
+
+                if (ImGui::BeginTable("##field_row", 2, ImGuiTableFlags_None,
+                                      ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+                {
+                    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,
+                                            labelWidth);
+                    ImGui::TableSetupColumn("val", ImGuiTableColumnFlags_WidthStretch);
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::TextUnformatted(displayName.c_str());
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::SetNextItemWidth(-FLT_MIN);
+
+                    it->second(this, f);
+
+                    ImGui::EndTable();
+                }
+            }
+        }
+        // Unsupported types are silently skipped. Add an else branch here
+        // if you want a visible placeholder (e.g. a grayed-out label).
+
+        ImGui::PopID();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +278,7 @@ bool MSpatialEntityInspectorDrawer::drawLightIntensityAndColor(float& intensity,
     ImGui::TextUnformatted("Color");
 
     ImGui::TableSetColumnIndex(1);
-    // Show a compact swatch. Clicking it opens a popup with the full picker —
+    // Show a compact swatch. Clicking it opens a popup with the full picker --
     // this keeps the panel compact when the user doesn't need to edit color.
     float cols[4] = { color.r, color.g, color.b, color.a };
     const ImVec2 swatchSize = { ImGui::GetContentRegionAvail().x, 20.0f * dpi };
@@ -199,8 +396,8 @@ void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity* target)
     if (drawXYZComponent("Rotation", cache.euler))
     {
         // Rebuild quaternion from the absolute cached Euler angles (YXZ order).
-        // This is a direct construction — no delta, no re-read from the entity —
-        // so there is nothing to round-trip through quat → Euler.
+        // This is a direct construction -- no delta, no re-read from the entity --
+        // so there is nothing to round-trip through quat -> Euler.
         const SQuaternion qY = glm::angleAxis(glm::radians(cache.euler.y), SVector3(0, 1, 0));
         const SQuaternion qX = glm::angleAxis(glm::radians(cache.euler.x), SVector3(1, 0, 0));
         const SQuaternion qZ = glm::angleAxis(glm::radians(cache.euler.z), SVector3(0, 0, 1));
@@ -257,4 +454,43 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
     ImGui::EndTable();
     ImGui::PopStyleVar();
     return res1 || res2 || res3;
+}
+
+bool MSpatialEntityInspectorDrawer::drawXYComponent(const SString& label, SVector2& value) {
+    const float dpi    = DPIHelper::GetDPIScaleFactor();
+    const float badgeW = ImGui::GetFrameHeight();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f * dpi, 5.0f * dpi));
+
+    if (!ImGui::BeginTable(STR("##xy_" + label.str()).c_str(), 3, ImGuiTableFlags_None)) {
+        ImGui::PopStyleVar();
+        return false;
+    }
+
+    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f * dpi);
+    ImGui::TableSetupColumn("x",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
+    ImGui::TableSetupColumn("y",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
+    ImGui::TableNextRow();
+
+    ImGui::TableSetColumnIndex(0);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label.c_str());
+
+    auto drawAxis = [&](int col, const char* badge, ImVec4 badgeColor,
+                        float& component, const char* id) -> bool {
+        ImGui::TableSetColumnIndex(col);
+        drawColoredBoxOverLabel(badge, badgeColor, badgeW);
+        ImGui::SameLine(0.0f, 2.0f * dpi);
+        ImGui::SetNextItemWidth(-FLT_MIN);
+        return ImGui::DragFloat(id, &component, 0.1f, 0.0f, 0.0f, "%.2f");
+    };
+
+    const bool res1 = drawAxis(1, "X", ImVec4(0.75f, 0.12f, 0.12f, 1.0f), value.x,
+                               STR("##" + label.str() + "X").c_str());
+    const bool res2 = drawAxis(2, "Y", ImVec4(0.12f, 0.65f, 0.12f, 1.0f), value.y,
+                               STR("##" + label.str() + "Y").c_str());
+
+    ImGui::EndTable();
+    ImGui::PopStyleVar();
+    return res1 || res2;
 }

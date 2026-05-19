@@ -3,11 +3,13 @@
 //
 #include "directional_light.h"
 #include <GL/glew.h>
+
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "default_engine_icon_paths.h"
 
 #include "core/engine/subsystem/subsystem_registry.h"
 
@@ -84,7 +86,7 @@ void MDirectionalLight::onExit()
 void MDirectionalLight::onDrawGizmo(SVector2 renderResolution)
 {
     auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/sun.png");
+        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_DIRECTIONAL_LIGHT);
     MGizmos::drawRay(getWorldPosition(), -getForwardVector(), 0.5f, SColor(1, 1, 1, 1), 3);
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

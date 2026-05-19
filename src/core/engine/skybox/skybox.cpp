@@ -2,11 +2,13 @@
 // skybox.cpp
 //
 #include "skybox.h"
+
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
 #include "core/graphics/core/shader/shaderasset.h"
+#include "default_engine_icon_paths.h"
 
 IMPLEMENT_SPATIAL_CLASS(MSkyboxEntity)
 
@@ -73,7 +75,7 @@ void MSkyboxEntity::onExit()
 void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)
 {
     const auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/skybox.png");
+        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_SKYBOX);
     if (texture)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

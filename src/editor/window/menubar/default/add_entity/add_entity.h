@@ -82,10 +82,30 @@ private:
     static bool registered;
 };
 
+class MAddAudioListenerItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddAudioListenerItem)
+public:
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] SString getPath()     const override { return "Add/Audio/Listener"; }
+    void onSelect() override;
+private:
+    static bool registered;
+};
+
+class MAddAudioSourceItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddAudioSourceItem)
+public:
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] SString getPath()     const override { return "Add/Audio/Source"; }
+    void onSelect() override;
+private:
+    static bool registered;
+};
+
 class MAddEmptySpatialItem : public MMenubarItem {
     DEFINE_OBJECT_SUBCLASS(MAddEmptySpatialItem)
 public:
-    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 999; }
     [[nodiscard]] SString getPath()     const override { return "Add/Empty Spatial"; }
 
     [[nodiscard]] MShortcutBinding getShortcut() const override

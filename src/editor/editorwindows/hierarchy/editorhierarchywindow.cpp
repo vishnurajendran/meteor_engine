@@ -2,7 +2,10 @@
 #include "imgui.h" // must precede ImGuizmo.h and any header that pulls it in
 
 #include <algorithm>
-
+#include <filesystem>
+#include "../../../default_engine_icon_paths.h"
+#include "core/engine/audio/audio_entity/audio_listener_entity.h"
+#include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/ambient/ambient_light.h"
@@ -34,24 +37,31 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
     title = "Hierarchy";
 
     // mesh
-    typeToIcon[MStaticMesh::staticTypeInfo()] = sf::Texture("meteor_assets/icons/static_mesh.png");
+    typeToIcon[MStaticMesh::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_STATICMESH);
 
     // lights
-    typeToIcon[MDirectionalLight::staticTypeInfo()] = sf::Texture("meteor_assets/icons/sun.png");
-    typeToIcon[MPointLight::staticTypeInfo()] = sf::Texture("meteor_assets/icons/point-light.png");
-    typeToIcon[MSpotLight::staticTypeInfo()] = sf::Texture("meteor_assets/icons/spot-light.png");
-    typeToIcon[MAmbientLightEntity::staticTypeInfo()] = sf::Texture("meteor_assets/icons/ambient-light.png");
+    typeToIcon[MDirectionalLight::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_DIRECTIONAL_LIGHT);
+    typeToIcon[MPointLight::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_POINT_LIGHT);
+    typeToIcon[MSpotLight::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_SPOT_LIGHT);
+    typeToIcon[MAmbientLightEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_AMBIENT_LIGHT);
+
+    // audio
+    typeToIcon[MAudioListener::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_AUDIO_LISTENER);
+    typeToIcon[MAudioSource::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_AUDIO_SOURCE);
 
     // skybox
-    typeToIcon[MSkyboxEntity::staticTypeInfo()] = sf::Texture("meteor_assets/icons/sky.png");
-    typeToIcon[MProceduralSkyboxEntity::staticTypeInfo()] = sf::Texture("meteor_assets/icons/sky.png");
+    typeToIcon[MSkyboxEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_SKY);
+    typeToIcon[MProceduralSkyboxEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_PROC_SKY);
 
     // camera
-    typeToIcon[MCameraEntity::staticTypeInfo()] = sf::Texture("meteor_assets/icons/camera.png");
+    typeToIcon[MCameraEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_CAMERA);
 
+    // default
+    const std::filesystem::path sceneTexPath(SEditorAssetPaths::LOWRES_TEX_SCENE);
+    const std::filesystem::path entityTexPath(SEditorAssetPaths::LOWRES_TEX_SPATIAL);
 
-    sceneTex.loadFromFile("meteor_assets/icons/scene.png");
-    entityTex.loadFromFile("meteor_assets/icons/spatial.png");
+    sceneTex.loadFromFile( sceneTexPath);
+    entityTex.loadFromFile(entityTexPath);
 
     float dpi    = DPIHelper::GetDPIScaleFactor();
     sceneTexSize  = sf::Vector2f(sceneTex.getSize().x  * dpi, sceneTex.getSize().y  * dpi);

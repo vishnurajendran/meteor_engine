@@ -4,9 +4,9 @@
 
 #ifndef ENGINE_INTERFACE_H
 #define ENGINE_INTERFACE_H
+#include "core/engine/subsystem/subsystem_interface.h"
 #include "audiolistener_interface.h"
 #include "audiosource_interface.h"
-#include "core/engine/subsystem/subsystem_interface.h"
 
 class IAudioEngineSubsystem : public IEngineSubSystem
 {

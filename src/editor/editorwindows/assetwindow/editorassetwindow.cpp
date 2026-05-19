@@ -15,6 +15,7 @@
 #include <queue>
 
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "default_engine_icon_paths.h"
 
 // ─── Colour palette ────────────────────────────────────────────────────────────
 static constexpr ImU32 COL_PANEL_BG          = IM_COL32(30,  30,  30,  255);
@@ -773,7 +774,7 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
 
     if (node->isDirectory)
     {
-        icon = am->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/folder.png")
+        icon = am->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER)
                   ->getTexture()->getCoreTexture();
     }
     else if (node->assetReference)
@@ -1015,7 +1016,7 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
     sf::Texture* icon = nullptr;
     if (node->isDirectory)
     {
-        icon = am->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/folder.png")
+        icon = am->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER)
                   ->getTexture()->getCoreTexture();
     }
     else if (node->assetReference)
@@ -1178,7 +1179,7 @@ sf::Texture* MEditorAssetWindow::getFileIcon(IAssetManagerSubsystem* am, SAssetD
     }
 
     return am->getAsset<MTextureAsset>(
-               "meteor_assets/engine_assets/icons/file-default.png")
+               SEditorAssetPaths::HIGHRES_TEX_ASSET_DEFAULT)
                ->getTexture()->getCoreTexture();
 }
 

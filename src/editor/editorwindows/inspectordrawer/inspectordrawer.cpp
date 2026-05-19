@@ -18,9 +18,14 @@ void MInspectorDrawer::registerDrawer(MInspectorDrawer* drawer) {
     drawers.push_back(drawer);
 }
 
-// Delegates straight to the virtual; the unused getName() call has been removed.
 void MInspectorDrawer::onDraw(MSpatialEntity* target) {
     onDrawInspector(target);
+
+    // When the default drawer is handling the entity (no custom drawer matched),
+    // run the generic field-based fallback so DECLARE_FIELD members get widgets
+    // automatically. Custom drawers skip this -- they draw their own controls.
+    if (this == defaultDrawer)
+        drawDefaultFields(target);
 }
 
 MInspectorDrawer* MInspectorDrawer::getDrawer(MSpatialEntity* entity) {

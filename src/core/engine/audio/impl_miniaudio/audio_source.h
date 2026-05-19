@@ -27,8 +27,14 @@ public:
     void stop() override;
     void setLooping(const bool& looping) override;
     void setVolume(const float& volume) override;
+    void setPitch(const float& pitch) override;
 
     // spatialization
+    void setSpatializationEnabled(const bool& enabled) override;
+    void setRollOff(const float& rollOff) override;
+    void setMinDist(const float& minDist) override;
+    void setMaxDist(const float& maxDist) override;
+    void setDopplerStrength(const float& strength) override;
     void setPosition(const SVector3& position) override;
     void setDirection(const SVector3& direction) override;
     void setVelocity(const SVector3& velocity) override;

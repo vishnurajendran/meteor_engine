@@ -4,21 +4,18 @@
 
 #ifndef AUDIOCLIP_ASSET_H
 #define AUDIOCLIP_ASSET_H
+
 #include "core/engine/assetmanagement/asset/asset.h"
 
-typedef void Byte;
 class MAudioClipAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MAudioClipAsset)
 
 public:
     explicit MAudioClipAsset(const SString& path);
-    ~MAudioClipAsset() override;
+    ~MAudioClipAsset() override = default;
 
-    [[nodiscard]] bool requestReload() override;
-    [[nodiscard]] bool hasDeferredLoad() const override { return false; };
-    [[nodiscard]] Byte* getRawData();
+    [[nodiscard]] bool requestReload() override { return true; }
+    [[nodiscard]] bool hasDeferredLoad() const override { return false; }
 };
-
-
 
 #endif //AUDIOCLIP_ASSET_H

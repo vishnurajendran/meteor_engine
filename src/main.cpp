@@ -26,17 +26,6 @@ int main() {
     MEngineSubsystemRegistry::init();
     appInst->initialise();
 
-    auto* engine = MEngineSubsystemRegistry::getSubsystem<IAudioEngineSubsystem>();
-    if (engine)
-    {
-        auto* listener = engine->createAudioListener();
-        auto source = dynamic_cast<MMiniAudioSource*>(engine->createAudioSource());
-
-        source->internal_testClip("assets/audio/test.mp3");
-        source->setVolume(0.1f);
-        source->play();
-    }
-
     while(appInst->isRunning()){
         appInst->run();
     }

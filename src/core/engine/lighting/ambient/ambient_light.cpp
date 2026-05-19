@@ -2,6 +2,7 @@
 // ambient_light.cpp
 //
 #include "ambient_light.h"
+
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
@@ -9,6 +10,7 @@
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "default_engine_icon_paths.h"
 
 IMPLEMENT_SPATIAL_CLASS(MAmbientLightEntity)
 
@@ -89,6 +91,6 @@ void MAmbientLightEntity::onExit()
 void MAmbientLightEntity::onDrawGizmo(SVector2 renderResolution)
 {
     auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/arealight.png");
+        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AMBIENT_LIGHT);
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

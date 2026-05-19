@@ -50,16 +50,17 @@ void MMiniAudioSource::setClip(TAssetHandle<MAudioClipAsset> clip)
     ma_sound_uninit(&soundHandle);
 
     this->clip = clip;
-    ma_data_source* src = clip->getRawData();
+    auto* assetPath = clip.get()->getPath().c_str();
+    ma_fence* fence = nullptr;
+    ma_sound_group* group = nullptr;
+    constexpr ma_uint32 flags = 0;
+    const ma_result result = ma_sound_init_from_file(engineHandle, assetPath, flags, group, fence, &soundHandle);
 
-    ma_result result =
-        ma_sound_init_from_data_source(engineHandle, src, MA_SOUND_FLAG_NO_SPATIALIZATION, nullptr, &soundHandle);
     if (result != MA_SUCCESS)
     {
         MERROR("MMiniAudioSource:: Failed to set sound clip");
         return;
     }
-
     MLOG("MMiniAudioSource:: Successfully set clip");
 }
 
@@ -95,6 +96,36 @@ void MMiniAudioSource::setVelocity(const SVector3& velocity)
     ma_sound_set_velocity(&soundHandle, velocity.x, velocity.y, velocity.z);
 }
 
+void MMiniAudioSource::setRollOff(const float& rollOff)
+{
+    if (!initialized)
+        return;
+
+    ma_sound_set_rolloff(&soundHandle, rollOff);
+}
+
+void MMiniAudioSource::setMinDist(const float& minDist)
+{
+    if (!initialized)
+        return;
+    ma_sound_set_min_distance(&soundHandle, minDist);
+}
+
+void MMiniAudioSource::setMaxDist(const float& maxDist)
+{
+    if (!initialized)
+        return;
+    ma_sound_set_max_distance(&soundHandle, maxDist);
+}
+
+void MMiniAudioSource::setDopplerStrength(const float& strength)
+{
+    if (!initialized)
+        return;
+
+    ma_sound_set_doppler_factor(&soundHandle, std::clamp(strength, 0.0f, 1.0f));
+}
+
 void MMiniAudioSource::internal_testClip(SString clipPath)
 {
     ma_sound_stop(&soundHandle);
@@ -102,7 +133,7 @@ void MMiniAudioSource::internal_testClip(SString clipPath)
     ma_result result = ma_sound_init_from_file(
             engineHandle,
             clipPath.c_str(),
-            MA_SOUND_FLAG_NO_SPATIALIZATION,
+            0,
             nullptr,
             nullptr,
             &soundHandle);
@@ -122,7 +153,21 @@ void MMiniAudioSource::setVolume(const float& volume)
     if (!initialized)
         return;
 
-    ma_sound_set_volume(&soundHandle, std::clamp(volume, 0.0f,1.0f));
+    ma_sound_set_volume(&soundHandle, std::clamp(volume, 0.0f, 1.0f));
+}
+
+void MMiniAudioSource::setPitch(const float& pitch)
+{
+    if (!initialized)
+        return;
+    ma_sound_set_pitch(&soundHandle, pitch);
+}
+
+void MMiniAudioSource::setSpatializationEnabled(const bool& enabled)
+{
+    if (!initialized)
+        return;
+    ma_sound_set_spatialization_enabled(&soundHandle, enabled);
 }
 
 void MMiniAudioSource::play()

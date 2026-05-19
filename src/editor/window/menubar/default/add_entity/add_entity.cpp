@@ -3,6 +3,8 @@
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/audio/audio_entity/audio_listener_entity.h"
+#include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/ambient/ambient_light.h"
@@ -141,7 +143,7 @@ void MAddProceduralSkyboxItem::onSelect()
     MSpatialEntity::createInstance<MProceduralSkyboxEntity>("Procedural Skybox");
 }
 
-// ── Misc ──────────────────────────────────────────────────────────────────────
+// ── Camera ──────────────────────────────────────────────────────────────────────
 
 bool MAddCameraItem::registered = []() {
     MMenubarTreeNode::registerItem(new MAddCameraItem());
@@ -150,8 +152,31 @@ bool MAddCameraItem::registered = []() {
 
 void MAddCameraItem::onSelect()
 {
-    auto* e = MSpatialEntity::createInstance("Camera");
+    MSpatialEntity::createInstance<MCameraEntity>("Camera");
 }
+
+// ── Audio ──────────────────────────────────────────────────────────────────────
+
+bool MAddAudioListenerItem::registered = []() {
+    MMenubarTreeNode::registerItem(new MAddAudioListenerItem());
+    return true;
+}();
+
+void MAddAudioListenerItem::onSelect()
+{
+    MSpatialEntity::createInstance<MAudioListener>("AudioListener");
+}
+
+void MAddAudioSourceItem::onSelect()
+{
+    MSpatialEntity::createInstance<MAudioSource>("AudioSource");
+}
+bool MAddAudioSourceItem::registered = []() {
+    MMenubarTreeNode::registerItem(new MAddAudioSourceItem());
+    return true;
+}();
+
+// ── Misc ──────────────────────────────────────────────────────────────────────
 
 bool MAddEmptySpatialItem::registered = []() {
     MMenubarTreeNode::registerItem(new MAddEmptySpatialItem());

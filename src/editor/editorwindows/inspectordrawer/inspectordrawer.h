@@ -17,7 +17,9 @@ public:
     static void registerDrawer(MInspectorDrawer* drawer);
     static MInspectorDrawer* getDrawer(MSpatialEntity* entity);
 
-    // Entry point called by the inspector window
+    // Entry point called by the inspector window.
+    // Calls onDrawInspector, then -- only when no custom drawer matched --
+    // calls drawDefaultFields as a fallback for DECLARE_FIELD members.
     void onDraw(MSpatialEntity* target);
 
     virtual SString getInspectorName() const = 0;
@@ -25,6 +27,12 @@ public:
 
 protected:
     virtual void onDrawInspector(MSpatialEntity* target) = 0;
+
+    // Fallback field drawing. Only invoked by onDraw when the default drawer
+    // is handling the entity (i.e. no custom drawer matched). Override in
+    // the default drawer to iterate DECLARE_FIELD members. Custom drawers
+    // never need to touch this.
+    virtual void drawDefaultFields(MSpatialEntity*) {}
 
 private:
     static std::vector<MInspectorDrawer*> drawers;

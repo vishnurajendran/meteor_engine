@@ -6,21 +6,5 @@
 
 MAudioClipAsset::MAudioClipAsset(const SString& path) : MAsset(path)
 {
-    //Todo: load path to asset
-}
 
-MAudioClipAsset::~MAudioClipAsset()
-{
-    //Todo: cleanup
-}
-
-bool MAudioClipAsset::requestReload()
-{
-    //Todo: reload call
-}
-
-Byte* MAudioClipAsset::getRawData()
-{
-    //Todo: return raw data;
-    return nullptr;
 }
