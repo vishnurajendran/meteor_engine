@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <sstream>
 
-// ── String ↔ enum helpers (file-local) ────────────────────────────────────────
+// -- String <-> enum helpers (file-local) ----------------------------------------
 
 static const char* filterMinToString(ETextureFilterMin f)
 {
@@ -91,7 +91,7 @@ static ETextureCompression stringToCompression(const char* s)
     return ETextureCompression::None;
 }
 
-// ── GL enum helpers ───────────────────────────────────────────────────────────
+// -- GL enum helpers -----------------------------------------------------------
 
 static GLenum toGLFilterMin(ETextureFilterMin f)
 {
@@ -134,7 +134,7 @@ static bool needsMipmaps(ETextureFilterMin f)
         || f == ETextureFilterMin::LinearMipmapLinear;
 }
 
-// ── Bilinear resize helper ────────────────────────────────────────────────────
+// -- Bilinear resize helper ----------------------------------------------------
 // CPU-side bilinear interpolation.  Runs once at import time.
 // For a 4096→1024 downscale this is ~1 M pixel iterations — sub-millisecond.
 
@@ -153,10 +153,10 @@ static sf::Image resizeImage(const sf::Image& src, unsigned int newW, unsigned i
             float fx = (x + 0.5f) * scaleX - 0.5f;
             float fy = (y + 0.5f) * scaleY - 0.5f;
 
-            uint8_t x0 = std::max(0, (int)fx);
-            uint8_t y0 = std::max(0, (int)fy);
-            uint8_t x1 = std::min(x0 + 1, (int)srcSize.x - 1);
-            uint8_t y1 = std::min(y0 + 1, (int)srcSize.y - 1);
+            unsigned int x0 = std::max(0, (int)fx);
+            unsigned int y0 = std::max(0, (int)fy);
+            unsigned int x1 = std::min((int)x0 + 1, (int)srcSize.x - 1);
+            unsigned int y1 = std::min((int)y0 + 1, (int)srcSize.y - 1);
 
             float dx = fx - (float)x0;
             float dy = fy - (float)y0;
@@ -183,7 +183,7 @@ static sf::Image resizeImage(const sf::Image& src, unsigned int newW, unsigned i
     return dst;
 }
 
-// ── Constructors ──────────────────────────────────────────────────────────────
+// -- Constructors --------------------------------------------------------------
 
 MTextureAsset::MTextureAsset() : MAsset("") {}
 
@@ -207,7 +207,7 @@ bool MTextureAsset::requestReload()
     return valid;
 }
 
-// ── Core load path ────────────────────────────────────────────────────────────
+// -- Core load path ------------------------------------------------------------
 
 bool MTextureAsset::loadWithSettings()
 {
@@ -232,7 +232,7 @@ bool MTextureAsset::loadWithSettings()
         return false;
     }
 
-    // ── Resize ────────────────────────────────────────────────────────────
+    // -- Resize ------------------------------------------------------------
     if (maxImportSize > 0)
     {
         auto sz = img.getSize();
@@ -252,7 +252,7 @@ bool MTextureAsset::loadWithSettings()
         return false;
     }
 
-    // ── Compression ───────────────────────────────────────────────────────
+    // -- Compression -------------------------------------------------------
     // Re-upload the same pixel data with a compressed internal format on the
     // same GL handle.  The driver compresses on the fly.
     //
@@ -280,7 +280,7 @@ bool MTextureAsset::loadWithSettings()
     return true;
 }
 
-// ── GL parameter application ──────────────────────────────────────────────────
+// -- GL parameter application --------------------------------------------------
 
 void MTextureAsset::applyGLParams()
 {
@@ -301,7 +301,7 @@ void MTextureAsset::applyGLParams()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-// ── Import settings persistence ───────────────────────────────────────────────
+// -- Import settings persistence -----------------------------------------------
 
 void MTextureAsset::loadImportSettings(const pugi::xml_node& node)
 {

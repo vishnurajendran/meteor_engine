@@ -438,7 +438,8 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
     ImGui::PopStyleColor();
     ImGui::Separator();
 
-    constexpr float LW = 100.f;
+    // Bumped from 100 to 120 so "Compression:" does not clip
+    constexpr float LW = 120.f;
     if (ImGui::BeginTable("##tex_info", 2, ImGuiTableFlags_None))
     {
         ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
@@ -471,14 +472,191 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
 
     ImGui::Spacing();
 
+    // -- Preview -- fits to available width, preserves aspect ratio
     auto* tex = asset->getTexture();
     if (tex && tex->getCoreTexture())
     {
-        auto sfSize  = tex->getCoreTexture()->getSize();
-        float avail  = ImGui::GetContentRegionAvail().x;
-        float aspect = sfSize.x > 0 ? (float)sfSize.y / (float)sfSize.x : 1.f;
-        float w      = std::min(avail, 256.f);
-        ImGui::Image(*tex->getCoreTexture(), { w, w * aspect });
+        auto sfSize    = tex->getCoreTexture()->getSize();
+        float avail    = ImGui::GetContentRegionAvail().x;
+        float aspect   = sfSize.x > 0 ? (float)sfSize.y / (float)sfSize.x : 1.f;
+        float previewW = std::min(avail, 256.f);
+        float previewH = previewW * aspect;
+
+        // Center the preview horizontally within the available region
+        float indent = (avail - previewW) * 0.5f;
+        if (indent > 0.f)
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
+
+        // Subtle border around the preview so it reads against dark backgrounds
+        ImVec2 tl = ImGui::GetCursorScreenPos();
+        ImGui::GetWindowDrawList()->AddRectFilled(
+            ImVec2(tl.x - 1, tl.y - 1),
+            ImVec2(tl.x + previewW + 1, tl.y + previewH + 1),
+            IM_COL32(60, 60, 60, 255));
+
+        ImGui::Image(*tex->getCoreTexture(), ImVec2(previewW, previewH));
+    }
+    else
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
+        ImGui::TextUnformatted("Texture not loaded.");
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // -- Import settings -- all changes are in-memory until Save & Reimport
+    if (ImGui::CollapsingHeader("Import Settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::BeginTable("##tex_import", 2, ImGuiTableFlags_None))
+        {
+            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed, LW);
+            ImGui::TableSetupColumn("v", ImGuiTableColumnFlags_WidthStretch);
+
+            // Filter Min -- controls how the texture is sampled when minified.
+            // Mipmap modes require glGenerateMipmap; loadWithSettings handles this.
+            {
+                static const char* labels[] = {
+                    "Nearest",
+                    "Linear",
+                    "Nearest Mipmap Nearest",
+                    "Linear Mipmap Nearest",
+                    "Nearest Mipmap Linear",
+                    "Linear Mipmap Linear"
+                };
+                int cur = static_cast<int>(asset->getFilterMin());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Filter Min:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::Combo("##filterMin", &cur, labels, IM_ARRAYSIZE(labels)))
+                    asset->setFilterMin(static_cast<ETextureFilterMin>(cur));
+            }
+
+            // Filter Mag -- controls how the texture is sampled when magnified.
+            // Only Nearest and Linear are valid GL mag filters.
+            {
+                static const char* labels[] = { "Nearest", "Linear" };
+                int cur = static_cast<int>(asset->getFilterMag());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Filter Mag:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::Combo("##filterMag", &cur, labels, IM_ARRAYSIZE(labels)))
+                    asset->setFilterMag(static_cast<ETextureFilterMag>(cur));
+            }
+
+            // Wrap S -- horizontal wrap mode
+            {
+                static const char* labels[] = {
+                    "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border"
+                };
+                int cur = static_cast<int>(asset->getWrapS());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Wrap S:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::Combo("##wrapS", &cur, labels, IM_ARRAYSIZE(labels)))
+                    asset->setWrapS(static_cast<ETextureWrap>(cur));
+            }
+
+            // Wrap T -- vertical wrap mode
+            {
+                static const char* labels[] = {
+                    "Repeat", "Mirrored Repeat", "Clamp to Edge", "Clamp to Border"
+                };
+                int cur = static_cast<int>(asset->getWrapT());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Wrap T:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::Combo("##wrapT", &cur, labels, IM_ARRAYSIZE(labels)))
+                    asset->setWrapT(static_cast<ETextureWrap>(cur));
+            }
+
+            // Max Import Size -- images above this are CPU-downscaled at load time
+            {
+                int maxSize = asset->getMaxImportSize();
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Max Size:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::InputInt("##maxSize", &maxSize, 128, 1024))
+                {
+                    if (maxSize < 0) maxSize = 0;
+                    asset->setMaxImportSize(maxSize);
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip(
+                        "Maximum dimension in pixels (0 = no limit).\n"
+                        "Textures larger than this are downscaled on import.");
+            }
+
+            // Compression -- re-uploads to a compressed internal format on the GPU
+            {
+                static const char* labels[] = {
+                    "None",
+                    "DXT1 (BC1, no alpha)",
+                    "DXT5 (BC3, with alpha)"
+                };
+                int cur = static_cast<int>(asset->getCompression());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Compression:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::Combo("##compression", &cur, labels, IM_ARRAYSIZE(labels)))
+                    asset->setCompression(static_cast<ETextureCompression>(cur));
+            }
+
+            ImGui::EndTable();
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // -- Save & Reimport -- persists to .meta, then reloads the GL texture
+    if (ImGui::Button("Save & Reimport##tex_save", ImVec2(-FLT_MIN, 0)))
+    {
+        if (asset->saveImportSettings())
+        {
+            if (!asset->requestReload())
+                MWARN("Texture reimport failed for: " + asset->getPath());
+        }
+        else
+        {
+            ImGui::OpenPopup("##tex_save_err");
+        }
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Write import settings to .meta and reload the texture on the GPU");
+
+    if (ImGui::BeginPopup("##tex_save_err"))
+    {
+        ImGui::TextUnformatted("Failed to save texture settings. Check logs.");
+        if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
     }
 }
 
