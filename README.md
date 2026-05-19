@@ -34,6 +34,7 @@ It’s currently in active development, focused on exploring rendering architect
 - Basic engine loop (Editor + Player separation)
 - Plugin system (early design phase)
 - Audio engine powered by MiniAudio, supports 2D and spatial audio
+
 ---
 
 ## In Progress / Actively Being Worked On
