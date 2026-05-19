@@ -25,6 +25,7 @@
 var NAVTREE =
 [
   [ "Meteor Engine", "index.html", [
+    [ "Meteor Engine (Work in Progress)", "index.html", "index" ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [

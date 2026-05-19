@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Meteor Engine: Main Page</title>
+<title>Meteor Engine: Meteor Engine (Work in Progress)</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="codefolding.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
@@ -156,10 +156,140 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('index.html',''
 </div>
 </div>
 
-<div class="header">
-  <div class="headertitle"><div class="title">Meteor Engine Documentation</div></div>
+<div><div class="header">
+  <div class="headertitle"><div class="title">Meteor Engine (Work in Progress) </div></div>
 </div><!--header-->
 <div class="contents">
+<div class="textblock"><p><a class="anchor" id="md__r_e_a_d_m_e"></a></p>
+<p>Meteor is an experimental custom game engine built in C++20. <br  />
+ It’s currently in active development, focused on exploring rendering architecture, tooling, and engine design.</p>
+<blockquote class="doxtable">
+<p>This project is <b>not ready for building games yet</b>. Expect breaking changes, missing systems and features, and rough edges. </p>
+</blockquote>
+<hr  />
+<h1 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
+Current State (What Exists Right Now)</h1>
+<p><img src="https://i.ibb.co/KpMznLYG/engine-editor-ss.png" alt="meteorite_editor" class="inline"/></p>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md3"></a>
+Rendering</h2>
+<ul>
+<li>Custom <b>scalable render pipeline (WIP refactor ongoing)</b></li>
+<li>Basic forward+ rendering</li>
+<li>Procedural skybox</li>
+<li>Shadow support (early stage / experimental)</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md4"></a>
+Assets</h2>
+<ul>
+<li>Model loading via Assimp</li>
+<li>XML-based asset serialization using <b>pugixml</b></li>
+<li>Path-based asset referencing <em>(moving to Asset ID system)</em></li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md5"></a>
+Editor</h2>
+<ul>
+<li>Immediate-mode editor built with <b>Imgui, SFML-Imgui</b></li>
+<li>Scene hierarchy (basic)</li>
+<li>Inspector (early)</li>
+<li>Scene viewport</li>
+<li>Debug tooling (in progress)</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md6"></a>
+Core</h2>
+<ul>
+<li>Scene system with spatial entities</li>
+<li>Basic engine loop (Editor + Player separation)</li>
+<li>Plugin system (early design phase)</li>
+<li>Audio engine powered by MiniAudio, supports 2D and spatial audio</li>
+</ul>
+<hr  />
+<h1 class="doxsection"><a class="anchor" id="autotoc_md8"></a>
+In Progress / Actively Being Worked On</h1>
+<ul>
+<li>Render pipeline rewrite (modular render passes)</li>
+<li>Scene picking (currently naive, will move to physics-based raycast)</li>
+<li>Asset system overhaul (Asset IDs, dependency tracking)</li>
+<li>Editor UX improvements (layout, tooling polish)</li>
+</ul>
+<hr  />
+<h1 class="doxsection"><a class="anchor" id="autotoc_md10"></a>
+Missing Systems (Not Implemented Yet)</h1>
+<ul>
+<li><strike>Audio System</strike></li>
+<li>Physics system</li>
+<li>Scripting layer (planned DSL / runtime scripting)</li>
+<li>Animation system</li>
+<li>Build pipeline / packaging</li>
+<li>Extending engine with plugins</li>
+<li>Networking</li>
+</ul>
+<hr  />
+ <h1 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
+Tech Stack</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Category  </th><th class="markdownTableHeadNone">Technology  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Language</b>  </td><td class="markdownTableBodyNone"><a href="https://en.cppreference.com/cpp/20">C++20</a>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Rendering</b>  </td><td class="markdownTableBodyNone"><a href="https://www.opengl.org/">OpenGL</a>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Windowing</b>  </td><td class="markdownTableBodyNone"><a href="https://www.sfml-dev.org/">SFML</a>, <a href="https://github.com/SFML/imgui-sfml">SFML-ImGui</a>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Audio</b>  </td><td class="markdownTableBodyNone"><a href="https://miniaud.io/index.html">MiniAudio</a>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>GUI</b>  </td><td class="markdownTableBodyNone"><a href="https://github.com/ocornut/imgui">ImGui</a>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><b>Model Loading</b>  </td><td class="markdownTableBodyNone"><a href="https://www.assimp.org/">Assimp</a>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><b>Serlization</b>  </td><td class="markdownTableBodyNone"><a href="https://pugixml.org/">PugiXML</a>, <a href="https://github.com/vishnurajendran/serialized_class">Serialized Class</a>  </td></tr>
+</table>
+<hr  />
+<h1 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
+Goals</h1>
+<p>Meteor is primarily a <b>learning + experimentation project</b>, with focus on:</p><ul>
+<li>Modular rendering architecture</li>
+<li>Clean engine/editor separation</li>
+<li>Scalable asset pipeline</li>
+<li>Tooling-first workflow</li>
+</ul>
+<hr  />
+<h1 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
+Building the Project</h1>
+<blockquote class="doxtable">
+<p>Build instructions may break as the project evolves. </p>
+</blockquote>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
+Requirements</h2>
+<ul>
+<li>C++20 compiler</li>
+<li>CMake (3.26+)</li>
+</ul>
+<h2 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
+Dependencies</h2>
+<ul>
+<li>Assimp*</li>
+<li>GLEW*</li>
+<li>SFML</li>
+<li>ImGui-SFML</li>
+<li>pugixml</li>
+<li>Serialized Class</li>
+<li>Mini Audio</li>
+</ul>
+<p><em>*(Manual setup required depending on platform)</em></p>
+<hr  />
+ <h1 class="doxsection"><a class="anchor" id="autotoc_md20"></a>
+Notes</h1>
+<ul>
+<li>Editor performance and memory usage are <b>not optimized yet</b></li>
+<li>APIs and systems are <b>subject to change frequently</b></li>
+<li>Many systems are being rewritten as the architecture evolves</li>
+</ul>
+<hr  />
+ <h1 class="doxsection"><a class="anchor" id="autotoc_md22"></a>
+License</h1>
+<p>MIT License </p>
+</div></div><!-- PageDoc -->
 <a href="doxygen_crawl.html"></a>
 </div><!-- contents -->
 </div><!-- doc-content -->
