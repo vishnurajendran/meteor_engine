@@ -9,7 +9,7 @@ It’s currently in active development, focused on exploring rendering architect
 
 ## Current State (What Exists Right Now)
 
-![meteorite_editor](https://i.ibb.co/ccKXr9tC/Screenshot-2026-04-20-104203.png)
+![meteorite_editor](https://i.ibb.co/KpMznLYG/engine-editor-ss.png)
 
 ### Rendering
 - Custom **scalable render pipeline (WIP refactor ongoing)**
