@@ -4,20 +4,23 @@
 
 #include "editorconsolewindow.h"
 #include "editor/window/imgui/imguisubwindow.h"
+#include <cstring>
+#include <cstdio>
+#include <ctime>
 
-// ─── Style constants ──────────────────────────────────────────────────────────
+// -- Style constants -------------------------------------------------------
 static constexpr ImU32 ROW_SELECTED_BG  = IM_COL32(60,  90,  160, 80);
 static constexpr ImU32 ROW_HOVER_BG     = IM_COL32(255, 255, 255, 12);
-static constexpr float BORDER_STRIP_W   = 3.0f;   // coloured left-border width
+static constexpr ImU32 ROW_ALT_BG       = IM_COL32(255, 255, 255, 4);
+static constexpr float BORDER_STRIP_W   = 3.0f;
+static constexpr float DETAIL_PANE_H    = 130.0f;
 
-// ─── Construction ─────────────────────────────────────────────────────────────
+// -- Construction ----------------------------------------------------------
 
 MEditorConsoleWindow::MEditorConsoleWindow() : MEditorConsoleWindow(700, 300) {}
 
 MEditorConsoleWindow::MEditorConsoleWindow(int x, int y) : MImGuiSubWindow(x, y) {
     title = "Console";
-    // BUG FIX: subscription was in the default constructor, so it ran before
-    // the delegated constructor finished initialising the base class.
     subscriptionId = MLogger::subscribe(
         std::bind(&MEditorConsoleWindow::onLogReceived, this, std::placeholders::_1));
 }
@@ -26,34 +29,71 @@ MEditorConsoleWindow::~MEditorConsoleWindow() {
     MLogger::unsubscribe(subscriptionId);
 }
 
-// ─── Log ingestion ────────────────────────────────────────────────────────────
+// -- Utility ---------------------------------------------------------------
 
-void MEditorConsoleWindow::onLogReceived(SString raw) {
-    // Expected format: "TAG: message" where TAG is 3 characters
+SString MEditorConsoleWindow::shortenPath(const SString& fullPath) {
+    const char* raw   = fullPath.c_str();
+    const char* slash = strrchr(raw, '/');
+    if (!slash) slash = strrchr(raw, '\\');
+    return SString(slash ? slash + 1 : raw);
+}
+
+// -- Log ingestion ---------------------------------------------------------
+
+void MEditorConsoleWindow::onLogReceived(const SLogMessage& msg) {
     SLogEntry entry;
-    entry.tag  = raw.substring(0, 3);
-    entry.text = raw.length() > 5 ? raw.substring(5, raw.length()) : SString("");
+    entry.tag        = msg.tag;
+    entry.text       = msg.text;
+    entry.fullFile   = SString(msg.location.file);
+    entry.shortFile  = shortenPath(entry.fullFile);
+    entry.line       = msg.location.line;
+    entry.function   = SString(msg.location.function);
+    entry.stackTrace = msg.stackTrace;
 
     if      (entry.tag == "WRN") entry.level = ELogLevel::Warning;
     else if (entry.tag == "ERR") entry.level = ELogLevel::Error;
     else                          entry.level = ELogLevel::Log;
 
+    // Format timestamp as HH:MM:SS.mmm
+    auto epoch_ms   = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          msg.timestamp.time_since_epoch());
+    auto time_t_val = std::chrono::system_clock::to_time_t(msg.timestamp);
+    int  ms         = static_cast<int>(epoch_ms.count() % 1000);
+
+    std::tm tm_buf{};
+#if defined(_WIN32)
+    localtime_s(&tm_buf, &time_t_val);
+#else
+    localtime_r(&time_t_val, &tm_buf);
+#endif
+
+    char tsBuf[16];
+    snprintf(tsBuf, sizeof(tsBuf), "%02d:%02d:%02d.%03d",
+             tm_buf.tm_hour, tm_buf.tm_min, tm_buf.tm_sec, ms);
+    entry.timestamp = SString(tsBuf);
+
     ++levelCounts[static_cast<int>(entry.level)];
     entries.push_back(std::move(entry));
 }
 
-// ─── onGui ────────────────────────────────────────────────────────────────────
+// -- onGui -----------------------------------------------------------------
 
 void MEditorConsoleWindow::onGui(float deltaTime) {
     drawToolbar();
     ImGui::Separator();
     drawLogList();
+
+    // Detail pane when an entry is selected
+    if (selectedIndex >= 0 && selectedIndex < (int)entries.size()) {
+        ImGui::Separator();
+        drawDetailPane();
+    }
 }
 
-// ─── Toolbar ──────────────────────────────────────────────────────────────────
+// -- Toolbar ---------------------------------------------------------------
 
 void MEditorConsoleWindow::drawToolbar() {
-    // ── Clear ──
+    // -- Clear --
     if (ImGui::Button("Clear")) {
         entries.clear();
         levelCounts = {};
@@ -62,7 +102,7 @@ void MEditorConsoleWindow::drawToolbar() {
 
     ImGui::SameLine(0, 10);
 
-    // ── Auto-scroll toggle ──
+    // -- Auto-scroll toggle --
     ImGui::PushStyleColor(ImGuiCol_Button,
         autoScroll ? ImVec4(0.2f, 0.5f, 0.9f, 0.6f) : ImVec4(0, 0, 0, 0));
     if (ImGui::Button(autoScroll ? "  Scroll \xe2\x86\x93  " : "  Scroll \xe2\x86\x91  "))
@@ -73,7 +113,7 @@ void MEditorConsoleWindow::drawToolbar() {
 
     ImGui::SameLine(0, 10);
 
-    // ── Copy selected ──
+    // -- Copy selected --
     const bool hasSelection = (selectedIndex >= 0 &&
                                selectedIndex < (int)entries.size());
     ImGui::BeginDisabled(!hasSelection);
@@ -88,7 +128,7 @@ void MEditorConsoleWindow::drawToolbar() {
 
     ImGui::SameLine(0, 16);
 
-    // ── Level filter buttons ── [All N] [LOG N] [WRN N] [ERR N]
+    // -- Level filter buttons -- [All N] [LOG N] [WRN N] [ERR N]
     const int total = (int)entries.size();
 
     struct FilterBtn { const char* label; int idx; ImVec4 col; };
@@ -112,7 +152,7 @@ void MEditorConsoleWindow::drawToolbar() {
 
         ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, active ? 1.0f : 0.0f);
         if (ImGui::Button(label.c_str()))
-            activeFilter = (activeFilter == b.idx) ? -1 : b.idx;  // toggle off if re-clicked
+            activeFilter = (activeFilter == b.idx) ? -1 : b.idx;
         ImGui::PopStyleVar();
         ImGui::PopStyleColor(3);
         ImGui::SameLine(0, 4);
@@ -120,17 +160,22 @@ void MEditorConsoleWindow::drawToolbar() {
 
     ImGui::SameLine(0, 12);
 
-    // ── Search ──
+    // -- Search --
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.12f, 0.12f, 0.12f, 1.0f));
     ImGui::InputTextWithHint("##search", "\xf0\x9f\x94\x8d  Filter...", searchBuf, sizeof(searchBuf));
     ImGui::PopStyleColor();
 }
 
-// ─── Log list ─────────────────────────────────────────────────────────────────
+// -- Log list --------------------------------------------------------------
 
 void MEditorConsoleWindow::drawLogList() {
     ImVec2 avail = ImGui::GetContentRegionAvail();
+
+    // Reserve vertical space for the detail pane when a row is selected
+    const bool hasDetail = (selectedIndex >= 0 && selectedIndex < (int)entries.size());
+    if (hasDetail)
+        avail.y -= (DETAIL_PANE_H + 8.0f);
 
     // Transparent child bg so the window bg shows through between rows
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0));
@@ -141,6 +186,7 @@ void MEditorConsoleWindow::drawLogList() {
     const float lineH   = ImGui::GetTextLineHeightWithSpacing() + 4.0f;
     const float winX    = ImGui::GetWindowPos().x;
     const float winW    = ImGui::GetWindowSize().x;
+    int         visIdx  = 0;   // counter for alternating row tint
 
     for (int i = 0; i < (int)entries.size(); ++i) {
         const SLogEntry& e = entries[i];
@@ -150,46 +196,64 @@ void MEditorConsoleWindow::drawLogList() {
         ImVec2     rowMin     = ImGui::GetCursorScreenPos();
         ImVec2     rowMax     = { winX + winW, rowMin.y + lineH };
 
-        // ── Row background ──────────────────────────────────────────────
+        // -- Row background (alternating tint, selection, hover) ----------
         if (isSelected)
             dl->AddRectFilled(rowMin, rowMax, ROW_SELECTED_BG);
         else if (ImGui::IsMouseHoveringRect(rowMin, rowMax))
             dl->AddRectFilled(rowMin, rowMax, ROW_HOVER_BG);
+        else if (visIdx % 2 == 1)
+            dl->AddRectFilled(rowMin, rowMax, ROW_ALT_BG);
 
-        // ── Coloured left-border strip ──────────────────────────────────
+        // -- Coloured left-border strip -----------------------------------
         dl->AddRectFilled(rowMin,
                           { rowMin.x + BORDER_STRIP_W, rowMax.y },
                           levelBgColor(e.level));
 
-        // ── Invisible full-row selectable ───────────────────────────────
-        // BUG FIX: original used &log (pointer into vector) as ID — dangling
-        // after any push_back. We use the stable integer index instead.
+        // -- Invisible full-row selectable --------------------------------
         ImGui::PushID(i);
         ImGui::SetCursorScreenPos({ rowMin.x + BORDER_STRIP_W + 4.0f, rowMin.y + 2.0f });
         if (ImGui::Selectable("##row", isSelected,
                               ImGuiSelectableFlags_SpanAllColumns,
                               { winW - BORDER_STRIP_W - 4.0f, lineH - 2.0f }))
         {
-            selectedIndex = isSelected ? -1 : i;   // click again to deselect
+            selectedIndex = isSelected ? -1 : i;
         }
         ImGui::PopID();
 
-        // ── Tag badge ───────────────────────────────────────────────────
+        // -- Timestamp (dim) ----------------------------------------------
         ImGui::SameLine(BORDER_STRIP_W + 8.0f);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.40f, 0.40f, 0.40f, 1.0f));
+        ImGui::TextUnformatted(e.timestamp.c_str());
+        ImGui::PopStyleColor();
+
+        // -- Tag badge ----------------------------------------------------
+        ImGui::SameLine(0, 8);
         ImGui::PushStyleColor(ImGuiCol_Text, levelColor(e.level));
         ImGui::TextUnformatted(levelTag(e.level));
         ImGui::PopStyleColor();
 
-        // ── Message ─────────────────────────────────────────────────────
+        // -- Message ------------------------------------------------------
         ImGui::SameLine(0, 8);
         ImGui::PushStyleColor(ImGuiCol_Text,
             isSelected ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
                        : ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
         ImGui::TextUnformatted(e.text.c_str());
         ImGui::PopStyleColor();
+
+        // -- Source location (dim, after message) -------------------------
+        if (e.line > 0) {
+            ImGui::SameLine(0, 12);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+            char locBuf[128];
+            snprintf(locBuf, sizeof(locBuf), "%s:%d", e.shortFile.c_str(), e.line);
+            ImGui::TextUnformatted(locBuf);
+            ImGui::PopStyleColor();
+        }
+
+        ++visIdx;
     }
 
-    // ── Auto-scroll ─────────────────────────────────────────────────────────
+    // -- Auto-scroll ------------------------------------------------------
     if (autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
         ImGui::SetScrollHereY(1.0f);
 
@@ -198,7 +262,52 @@ void MEditorConsoleWindow::drawLogList() {
     ImGui::PopStyleColor();
 }
 
-// ─── Filter ───────────────────────────────────────────────────────────────────
+// -- Detail pane -----------------------------------------------------------
+// Shows full info for the selected entry, including stack trace for errors.
+
+void MEditorConsoleWindow::drawDetailPane() {
+    const SLogEntry& e = entries[selectedIndex];
+
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.08f, 0.08f, 1.0f));
+    ImGui::BeginChild("##detail_pane", ImVec2(0, DETAIL_PANE_H), true);
+
+    // Header line: [TAG] message
+    ImGui::PushStyleColor(ImGuiCol_Text, levelColor(e.level));
+    ImGui::TextUnformatted(levelTag(e.level));
+    ImGui::PopStyleColor();
+    ImGui::SameLine(0, 8);
+    ImGui::TextWrapped("%s", e.text.c_str());
+
+    ImGui::Spacing();
+
+    // Source location
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.50f, 0.50f, 0.50f, 1.0f));
+    if (e.line > 0) {
+        ImGui::Text("Location: %s:%d  in  %s()",
+                     e.fullFile.c_str(), e.line, e.function.c_str());
+    }
+    ImGui::Text("Time: %s", e.timestamp.c_str());
+    ImGui::PopStyleColor();
+
+    // Stack trace (errors only, when available)
+    if (e.stackTrace.length() > 0) {
+        ImGui::Spacing();
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.55f, 0.55f, 1.0f));
+        ImGui::TextUnformatted("Stack Trace:");
+        ImGui::PopStyleColor();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.42f, 0.42f, 0.42f, 1.0f));
+        ImGui::BeginChild("##stacktrace", ImVec2(0, 0), false);
+        ImGui::TextUnformatted(e.stackTrace.c_str());
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
+}
+
+// -- Filter ----------------------------------------------------------------
 
 bool MEditorConsoleWindow::passesFilter(const SLogEntry& e) const {
     if (activeFilter >= 0 && static_cast<int>(e.level) != activeFilter)
@@ -214,7 +323,7 @@ bool MEditorConsoleWindow::passesFilter(const SLogEntry& e) const {
     return true;
 }
 
-// ─── Static colour helpers ────────────────────────────────────────────────────
+// -- Static colour helpers -------------------------------------------------
 
 ImVec4 MEditorConsoleWindow::levelColor(ELogLevel level) {
     switch (level) {

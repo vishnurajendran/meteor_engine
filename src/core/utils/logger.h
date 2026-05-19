@@ -8,34 +8,55 @@
 #include "map"
 #include "spdlog/spdlog.h"
 #include "sstring.h"
+#include <chrono>
+#include <functional>
 
-#define MLOG(...) MLogger::log(__VA_ARGS__)
-#define MWARN(...) MLogger::warn(__VA_ARGS__)
-#define MERROR(...) MLogger::error(__VA_ARGS__)
+// Source location captured at the macro call site.
+// Has defaults so direct MLogger::log() calls still compile.
+struct SLogLocation {
+    const char* file     = "";
+    int         line     = 0;
+    const char* function = "";
+};
 
-#define MVERBOSE(...) MLogger::verbose(__VA_ARGS__)
+// Structured log message delivered to subscribers
+struct SLogMessage {
+    SString      tag;         // "LOG", "WRN", "ERR"
+    SString      text;
+    SLogLocation location;
+    SString      stackTrace;  // non-empty only for errors
+    std::chrono::system_clock::time_point timestamp;
+};
 
-using LogEventHandler = std::function<void(SString)>;
+// Macros inject source location transparently.
+// Call-site usage is unchanged: MLOG("something happened").
+#define MLOG(msg) MLogger::log(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
+#define MWARN(msg) MLogger::warn(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
+#define MERROR(msg) MLogger::error(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
+#define MVERBOSE(msg) MLogger::verbose(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
+
+using LogEventHandler = std::function<void(const SLogMessage&)>;
+
 class MLogger {
 private:
-    // Construct-on-first-use accessors — avoids static initialization order
-    // fiasco when MObject (or any other static-init code) logs before main().
+    // Construct-on-first-use accessors to avoid static initialization order
+    // issues when MObject (or any other static-init code) logs before main().
     static std::map<int,LogEventHandler>& getListeners();
     static int& getNextId();
     static SString& getLastMsg();
 
-    static void notify(SString msg);
+    static void notify(const SLogMessage& msg);
+    static SString captureStackTrace();
 public:
-    static void log(SString msg);
-    static void verbose(SString msg);
-    static void warn(SString warning);
-    static void error(SString error);
+    static void log(SString msg,      SLogLocation loc = {});
+    static void verbose(SString msg,   SLogLocation loc = {});
+    static void warn(SString warning,  SLogLocation loc = {});
+    static void error(SString error,   SLogLocation loc = {});
 
     static int subscribe(const LogEventHandler& handler);
     static void unsubscribe(const int& id);
 
     static SString getLastMessage();
 };
-
 
 #endif //METEOR_ENGINE_LOGGER_H
