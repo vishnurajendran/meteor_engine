@@ -102,7 +102,7 @@ public:
         return nullptr;
     }
 
-    void updateTransforms();
+    virtual void updateTransforms();
 
     virtual void onCreate();
     virtual void onStart();

@@ -197,7 +197,26 @@ void MStaticMeshEntity::onUpdate(float dt)
     if (m != prevTransformMatrix) { prevTransformMatrix = m; calculateBounds(); }
 }
 
-void MStaticMeshEntity::onDrawGizmo(SVector2 res) { MSpatialEntity::onDrawGizmo(res); }
+void MStaticMeshEntity::onDrawGizmo(SVector2 res)
+{
+    MSpatialEntity::onDrawGizmo(res);
+
+#if METEOR_EDITOR
+    if (!debug_drawBounds)
+        return;
+
+    const auto& bounds = getBounds();
+    const SVector3& extents = {
+        (bounds.max.x - bounds.min.x)/2,
+        (bounds.max.y - bounds.min.y)/2,
+        (bounds.max.z - bounds.min.z)/2
+    };
+
+    MGizmos::drawWireCube(bounds.getCentre(), extents, SColor::yellow(), 2.0f);
+
+#endif
+
+}
 
 // -- mutators ----------------------------------------------------------------
 

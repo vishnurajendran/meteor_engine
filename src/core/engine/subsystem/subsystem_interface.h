@@ -12,7 +12,7 @@ public:
     virtual void init() = 0;
     virtual void cleanup() = 0;
     virtual bool canTick() { return false; }
-    virtual void tick(float deltaTime) {};\
+    virtual void tick(float deltaTime) {};
 };
 
 #endif //SUBSYSTEM_INTERFACE_H

@@ -321,6 +321,8 @@ void MGizmos::requestGizmoDraws()
     if (!gizmosEnabled)
         return;
 
+    // Completely block gizmos in the player
+#if METEOR_EDITOR
     auto sceneManager = MSceneManager::getSceneManagerInstance();
     if (sceneManager == nullptr) return;
 
@@ -331,6 +333,8 @@ void MGizmos::requestGizmoDraws()
     {
        recursiveGizmoDraws(root);
     }
+#endif
+
 }
 
 void MGizmos::recursiveGizmoDraws(MSpatialEntity* entity)
@@ -338,6 +342,8 @@ void MGizmos::recursiveGizmoDraws(MSpatialEntity* entity)
     if (!gizmosEnabled)
         return;
 
+    // Completely block gizmos in the player
+#if METEOR_EDITOR
     if (entity == nullptr)
     {
         return;
@@ -350,4 +356,6 @@ void MGizmos::recursiveGizmoDraws(MSpatialEntity* entity)
     {
         recursiveGizmoDraws(child);
     }
+#endif
+
 }

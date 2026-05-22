@@ -8,6 +8,7 @@
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorrenderstages/gizmos/gizmo_stage.h"
@@ -60,12 +61,17 @@ void MEditorApplication::cleanup() {
 
 void MEditorApplication::addSubsystems()
 {
+    // Physics System
     // Asset Manager
     assetManagerRef = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::registerSubsystem<IAssetManagerSubsystem, MEditorAssetManager>());
     // Render pipeline, does not autoInit - we need to delay this.
     pipelineManager = MEngineSubsystemRegistry::registerSubsystem<IRenderPipelineManagerSubsystem, MRenderPipelineManager>(false);
     // Audio System
     MEngineSubsystemRegistry::registerSubsystem<IAudioEngineSubsystem, MMiniAudioEngineSubsystem>();
+
+    // Init Physics engine
+    MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
+
 }
 
 void MEditorApplication::initialise() {
