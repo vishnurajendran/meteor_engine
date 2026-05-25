@@ -38,7 +38,25 @@ struct Field<TAssetRef<T>> : public FieldBase
 
     const TAssetRef<T>& get() const { return rawValue; }
     TAssetRef<T>&       get()       { return rawValue; }
-    void                set(const TAssetRef<T>& v) { rawValue = v; }
+
+    // kinda hacky but f*ck it
+    TAssetHandle<T> getHandle() const
+    {
+        auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+        if (assetManager == nullptr)
+            return TAssetHandle<T>();
+
+        return assetManager->getAssetById<T>(rawValue.getAssetId());
+    }
+
+    void set(const TAssetRef<T>& v)
+    {
+        rawValue = v;
+        if (onChangeCallback)
+            onChangeCallback(rawValue);
+    }
+
+    void setOnChangeCallback(std::function<void(const TAssetRef<T>&)> v) { onChangeCallback = v; }
 
     Field& operator=(const TAssetRef<T>& v) { rawValue = v; return *this; }
 
@@ -63,6 +81,9 @@ struct Field<TAssetRef<T>> : public FieldBase
         if (auto pathNode = node.child("path"))
             rawValue.setPath(SString(pathNode.text().as_string("")));
     }
+
+private:
+    std::function<void(const TAssetRef<T>&)> onChangeCallback;
 };
 
 #endif // FIELD_ASSET_REF_TYPES_H

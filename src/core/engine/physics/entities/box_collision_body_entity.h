@@ -24,6 +24,8 @@ class MBoxCollisionBody : public MSpatialEntity, public IPhysicsCallbackReceiver
     DECLARE_FIELD(isSensor,          bool,               false)
     DECLARE_FIELD(linearDamping,     float,              0.0f)
     DECLARE_FIELD(angularDamping,    float,              0.0f)
+    DECLARE_FIELD(restitution,       float,              0.3f)   // 0 = no bounce, 1 = fully elastic
+    DECLARE_FIELD(friction,          float,              0.6f)
     DECLARE_FIELD(halfExtentX,       float,              0.5f)
     DECLARE_FIELD(halfExtentY,       float,              0.5f)
     DECLARE_FIELD(halfExtentZ,       float,              0.5f)
@@ -39,28 +41,17 @@ public:
     void onDrawGizmo(SVector2 res) override;
     void updateTransforms()        override;
 
-
     // ---- Scene creation helpers --------------------------------------------
 
-    // Returns a pre-configured entity ready to be added to the scene.
-    // Fields are set before onCreate fires, so the physics body picks up
-    // all values at creation time.
-    //
-    // NOTE: replace the call-site with your engine's scene-spawn API, e.g.
-    //   auto* box = MBoxCollisionBody::create(...);
-    //   myScene->addEntity(box);          // triggers onCreate
     static MBoxCollisionBody* create(ECollisionBodyType type        = ECollisionBodyType::StaticBody,
                                      SVector3           halfExtents = { 0.5f, 0.5f, 0.5f },
                                      float              mass        = 10.0f);
 
-    // Shorthand for a dynamic rigid body at a given position.
     static MBoxCollisionBody* createDynamic(SVector3 halfExtents = { 0.5f, 0.5f, 0.5f },
                                             float    mass        = 10.0f);
 
-    // Shorthand for a static collider.
     static MBoxCollisionBody* createStatic(SVector3 halfExtents = { 0.5f, 0.5f, 0.5f });
 
-    // Shorthand for a trigger volume.
     static MBoxCollisionBody* createTrigger(SVector3 halfExtents = { 0.5f, 0.5f, 0.5f });
 
     // ---- IPhysicsCallbackReceiver ------------------------------------------
@@ -83,13 +74,15 @@ public:
     [[nodiscard]] IBoxCollisionBody* getPhysicsBody() const { return physicsBody; }
 
 private:
+    [[nodiscard]] SBoxPhysicsBodySettings buildSettings() const;
     void syncBounds();
     void syncFieldsToBody();
+    void createCollisionBody();
 
 private:
-    IPhysicsEngineSubsystem*    physicsEngine = nullptr;
-    IBoxCollisionBody* physicsBody   = nullptr;
-    bool               initialized   = false;
+    IPhysicsEngineSubsystem*   physicsEngine = nullptr;
+    IBoxCollisionBody*         physicsBody   = nullptr;
+    bool                       initialized   = false;
 
     std::function<void(const SCollisionData&)> onCollisionStartCb;
     std::function<void(const SCollisionData&)> onCollisionStayCb;

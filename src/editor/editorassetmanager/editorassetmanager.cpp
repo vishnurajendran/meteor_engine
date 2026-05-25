@@ -40,9 +40,7 @@ int MEditorAssetManager::tickHotReload()
     }
 
     deltaRefresh();
-
     thumbnailRenderer.tick(thumbnailCache);
-
     return count;
 }
 

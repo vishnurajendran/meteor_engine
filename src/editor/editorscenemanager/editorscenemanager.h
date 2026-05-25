@@ -16,9 +16,14 @@ public:
     bool loadEmptyScene() override;
     bool loadScene(const SString& path) override;
     bool saveCurrentScene(const SString& pathOverride="");
-
     bool closeActiveScene() override;
+    void update(float deltaTime) override;
+
     MCameraEntity* getEditorSceneCamera() const;
+
+    void internal_OverrideCurrentScenePath(const SString& path) { currentScenePath = path; };
+    SString internal_getCurrentScenePath() const { return currentScenePath; };
+
 private:
     void createEditorSceneCamera();
 private:

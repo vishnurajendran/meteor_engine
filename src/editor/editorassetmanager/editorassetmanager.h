@@ -29,14 +29,14 @@ public:
 
     [[nodiscard]] SAssetDirectoryNode* getAssetRootNode() const { return assetsTreeRoot; }
 
-    // ── Asset ping — "focus in browser" ──────────────────────────────────────
+    // -- Asset ping — "focus in browser" --------------------------------------
     // Called by MAssetReferenceControl when the user clicks a reference slot.
     // The asset window consumes this once per frame in tickAndSync() and
     // navigates to the asset's folder, selecting it.
     void    pingAsset(const SString& assetId) { pendingPingAssetId = assetId; }
     SString consumePendingPing()              { SString id = pendingPingAssetId; pendingPingAssetId.clear(); return id; }
 
-    // ── Thumbnail API ─────────────────────────────────────────────────────────
+    // -- Thumbnail API ---------------------------------------------------------
     // Call from the asset window's drawAssetTile(). Returns immediately —
     // if the thumbnail isn't ready yet, nullptr is returned and generation
     // is queued for the next available frame.

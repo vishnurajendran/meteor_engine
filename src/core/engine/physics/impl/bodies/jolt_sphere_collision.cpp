@@ -7,12 +7,16 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include "core/utils/logger.h"
 
+IMPLEMENT_BASE_COLLISION_BODY(MJoltSphereCollision)
+
 MJoltSphereCollision::MJoltSphereCollision(JPH::BodyID         bodyId,
-                                           JPH::BodyInterface& bodyInterface,
-                                           JPH::PhysicsSystem& physicsSystem)
-    : MJoltBaseCollisionBody(bodyInterface, physicsSystem, bodyId)
+                                     JPH::BodyInterface& bodyInterface,
+                                     JPH::PhysicsSystem& physicsSystem)
+    : joltBodyInterface(bodyInterface) , joltPhysicsSystem(physicsSystem), joltBodyID(bodyId)
 {
+
 }
+
 
 float MJoltSphereCollision::setRadius(const float& radius)
 {
@@ -22,7 +26,7 @@ float MJoltSphereCollision::setRadius(const float& radius)
         return radius;
     }
 
-    // Jolt shapes are immutable after creation — resizing requires swapping to a
+    // Jolt shapes are immutable after creation - resizing requires swapping to a
     // new shape entirely. This allocates a new shape object on the Jolt heap and
     // may briefly pause any threads waiting to read this body's broadphase entry.
     JPH::SphereShapeSettings settings(radius);

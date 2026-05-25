@@ -11,7 +11,11 @@ class MEditorControlsButtons : public MObject {
     DEFINE_OBJECT_SUBCLASS(MEditorControlsButtons)
 private:
     static sf::Texture playTexture;
-    static void playButton();
+    static sf::Texture stopTexture;
+
+    static void simulationStartButton();
+    static void simulationStopButton();
+
 public:
    static void runtimeControls();
 };

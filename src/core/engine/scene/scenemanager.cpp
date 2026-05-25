@@ -86,6 +86,11 @@ void MSceneManager::update(float deltaTime)
 
     activeScene->update(deltaTime);
 }
+void MSceneManager::fixedUpdate(float fixedDeltaTime)
+{
+    activeScene->update(fixedDeltaTime);
+}
+
 SString MSceneManager::registerOnLoadCallback(std::function<void(MScene*)> callback)
 {
     auto id = SGuid::newGUID();

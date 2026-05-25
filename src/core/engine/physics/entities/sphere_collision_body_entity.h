@@ -24,6 +24,8 @@ class MSphereCollisionBody : public MSpatialEntity, public IPhysicsCallbackRecei
     DECLARE_FIELD(isSensor,          bool,               false)
     DECLARE_FIELD(linearDamping,     float,              0.0f)
     DECLARE_FIELD(angularDamping,    float,              0.0f)
+    DECLARE_FIELD(restitution,       float,              0.3f)   // 0 = no bounce, 1 = fully elastic
+    DECLARE_FIELD(friction,          float,              0.6f)
     DECLARE_FIELD(radius,            float,              1.0f)
 
 public:
@@ -67,12 +69,15 @@ public:
     [[nodiscard]] ISphereCollisionBody* getPhysicsBody() const { return physicsBody; }
 
 private:
+    [[nodiscard]] SSphereBodySettings buildSettings() const;
     void syncFieldsToBody();
     void syncRadius();
+    void createCollisionBody();
+
 private:
-    IPhysicsEngineSubsystem*       physicsEngine = nullptr;
-    ISphereCollisionBody* physicsBody   = nullptr;
-    bool                  initialized   = false;
+    IPhysicsEngineSubsystem*  physicsEngine = nullptr;
+    ISphereCollisionBody*     physicsBody   = nullptr;
+    bool                      initialized   = false;
 
     std::function<void(const SCollisionData&)> onCollisionStartCb;
     std::function<void(const SCollisionData&)> onCollisionStayCb;

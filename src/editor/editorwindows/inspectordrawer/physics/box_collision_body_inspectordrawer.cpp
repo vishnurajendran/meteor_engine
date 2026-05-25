@@ -4,8 +4,8 @@
 
 #include "box_collision_body_inspectordrawer.h"
 
+#include "../../../../core/engine/physics/data/default_body_settings.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
-#include "core/engine/physics/interface/default_body_settings.h"
 
 bool MBoxCollisionBodyInspectorDrawer::registered = []()
 {

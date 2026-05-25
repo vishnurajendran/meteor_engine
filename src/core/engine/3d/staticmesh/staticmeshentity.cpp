@@ -30,7 +30,6 @@ MStaticMeshEntity::~MStaticMeshEntity()
 void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
 {
     MSpatialEntity::onSerialise(node);
-
     // DECLARE_FIELDs (meshAsset, castsShadow) are written automatically by
     // SerializedClassBase before this method is called.
 

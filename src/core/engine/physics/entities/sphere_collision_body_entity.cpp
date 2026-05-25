@@ -4,6 +4,7 @@
 
 #include "sphere_collision_body_entity.h"
 
+#include "core/application/application.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 
@@ -58,8 +59,14 @@ void MSphereCollisionBody::onCreate()
         return;
     }
 
+    initialized = true;
+    setCanTick(true);
+}
+
+void MSphereCollisionBody::createCollisionBody()
+{
     // Determine absolute uniform multiplier from scale vector components
-    const auto& scale = getRelativeScale();
+    const auto& scale = getWorldScale();
     float maxScale = std::max({scale.x, scale.y, scale.z});
 
     SSphereBodySettings settings;
@@ -87,16 +94,42 @@ void MSphereCollisionBody::onCreate()
     isSensor.setOnChangeCallback([this](auto v)         { if (physicsBody) physicsBody->setIsSensor(v); });
     linearDamping.setOnChangeCallback([this](auto v)    { if (physicsBody) physicsBody->setLinearDamping(v); });
     angularDamping.setOnChangeCallback([this](auto v)   { if (physicsBody) physicsBody->setAngularDamping(v); });
-    bodyType.setOnChangeCallback([this](auto v)         { if (physicsBody) physicsBody->setBodyType(v); });
-    radius.setOnChangeCallback([this](auto)             { syncRadius(); });
+    bodyType.setOnChangeCallback([this](auto v)
+    {
+        // Jolt allocates MotionProperties only at body creation time.
+        // Static->Dynamic/Kinematic (and back) requires a full body recreation.
+        if (!physicsEngine || !physicsBody) return;
 
-    initialized = true;
-    setCanTick(true);
+        physicsEngine->unregisterCallbackReceiver(physicsBody);
+        physicsEngine->releaseSphereCollisionBody(physicsBody);
+        physicsBody = nullptr;
+
+        const auto& scale = getWorldScale();
+        const float maxScale = std::max({scale.x, scale.y, scale.z});
+        SSphereBodySettings settings;
+        settings.position          = getWorldPosition();
+        settings.rotation          = getWorldRotation();
+        settings.bodyType          = v;
+        settings.mass              = mass.get();
+        settings.affectedByGravity = affectedByGravity.get();
+        settings.radius            = radius.get() * maxScale;
+
+        physicsBody = physicsEngine->createSphereCollisionBody(settings);
+        if (!physicsBody)
+        {
+            MERROR("MSphereCollisionBody::bodyType onChange -- failed to recreate sphere collider");
+            return;
+        }
+        physicsEngine->registerCallbackReceiver(physicsBody, this);
+        syncFieldsToBody();
+    });
+    radius.setOnChangeCallback([this](auto)             { syncRadius(); });
 }
 
 void MSphereCollisionBody::syncRadius()
 {
-    if (!physicsBody) return;
+    if (!physicsBody)
+        return;
     const auto& scale = getRelativeScale();
     float maxScale = std::max({scale.x, scale.y, scale.z});
     physicsBody->setRadius(radius.get() * maxScale);
@@ -111,21 +144,10 @@ void MSphereCollisionBody::updateTransforms()
     }
 }
 
-// Ensure the debug gizmo renders at the actual scaled sizing too!
-void MSphereCollisionBody::onDrawGizmo(SVector2 res)
-{
-    const SColor color = isSensor.get()
-                         ? SColor(0.2f, 0.8f, 1.0f, 1.0f)
-                         : SColor(0.2f, 1.0f, 0.2f, 1.0f);
-    const auto& scale = getRelativeScale();
-    float maxScale = std::max({scale.x, scale.y, scale.z});
-
-    MGizmos::drawWireSphere(getWorldPosition(), radius.get() * maxScale, color, 1.0f);
-}
-
 void MSphereCollisionBody::onStart()
 {
     MSpatialEntity::onStart();
+    createCollisionBody();
 }
 
 void MSphereCollisionBody::onUpdate(float deltaTime)
@@ -133,20 +155,20 @@ void MSphereCollisionBody::onUpdate(float deltaTime)
     MSpatialEntity::onUpdate(deltaTime);
     if (!initialized) return;
 
+    // sync internal positions with physics body
     physicsBody->physicsTick(deltaTime);
 
-    switch (bodyType.get())
+    auto appInst = MApplication::getAppInstance();
+    if (appInst && appInst->isPlaying())
     {
-    case ECollisionBodyType::DynamicBody:
+        //sync
         setWorldPosition(physicsBody->getBodySyncPosition());
         setWorldRotation(physicsBody->getBodySyncRotation());
-        break;
-    case ECollisionBodyType::KinematicBody:
-        physicsBody->setPositionAndRotation(getWorldPosition(), getWorldRotation());
-        break;
-    case ECollisionBodyType::StaticBody:
-        break;
+        return;
     }
+
+    // force-editor positions into internal body
+    physicsBody->setPositionAndRotation(getWorldPosition(), getWorldRotation());
 }
 
 void MSphereCollisionBody::onExit()
@@ -176,4 +198,16 @@ void MSphereCollisionBody::syncFieldsToBody()
     physicsBody->setIsSensor(isSensor.get());
     physicsBody->setLinearDamping(linearDamping.get());
     physicsBody->setAngularDamping(angularDamping.get());
+}
+
+// Ensure the debug gizmo renders at the actual scaled sizing too!
+void MSphereCollisionBody::onDrawGizmo(SVector2 res)
+{
+    const SColor color = isSensor.get()
+                         ? SColor(0.2f, 0.8f, 1.0f, 1.0f)
+                         : SColor(0.2f, 1.0f, 0.2f, 1.0f);
+    const auto& scale = getRelativeScale();
+    float maxScale = std::max({scale.x, scale.y, scale.z});
+
+    MGizmos::drawWireSphere(getWorldPosition(), radius.get() * maxScale, color, 1.0f, getWorldRotation());
 }

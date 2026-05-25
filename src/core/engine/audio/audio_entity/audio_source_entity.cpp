@@ -5,6 +5,7 @@
 #include "audio_source_entity.h"
 
 #include "SFML/Audio/Listener.hpp"
+#include "core/application/application.h"
 #include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
 #include "core/engine/audio/asset/audioclip_asset.h"
 #include "core/engine/gizmos/gizmos.h"
@@ -73,6 +74,11 @@ void MAudioSource::onCreate()
            source->setDopplerStrength(newVal);
     });
 
+    clipRef.setOnChangeCallback([this](auto newVal)
+    {
+        setClip(newVal.getHandle());
+    });
+
     syncAudioEngineState();
     initialized = true;
     setCanTick(true);
@@ -81,6 +87,17 @@ void MAudioSource::onCreate()
 void MAudioSource::onStart()
 {
     MSpatialEntity::onStart();
+
+    // By onStart(), de-serialisation is complete and clipRef is populated.
+    // Forward the stored reference to the audio backend now that we can.
+    if (!clipRef.get().isEmpty())
+        setClip(clipRef.getHandle());
+
+    if (autoStart.get() && MApplication::getAppInstance()->isPlaying())
+    {
+        play();
+        MLOG("MAudioSource:: Autoplaying");
+    }
 }
 
 void MAudioSource::onUpdate(float deltaTime)
@@ -135,20 +152,24 @@ void MAudioSource::onDrawGizmo(SVector2 res)
 void MAudioSource::setClip(TAssetHandle<MAudioClipAsset> clip)
 {
     if (!initialized) return;
-    if (!clip.isValid()) return;
 
-    // Store in the field -- TAssetRef converts from TAssetHandle implicitly,
-    // capturing both GUID and path for auto-serialization.
-    clipRef.set(clip);
+    IAudioClip* audioClip = nullptr;
 
-    MAudioClipAsset* asset = clip.get();
-    if (!asset) return;
-
-    IAudioClip* audioClip = asset->getAudioClip();
-    if (!audioClip) return;
+    if (clip.isNull())
+    {
+        clipRef.rawValue = TAssetRef<MAudioClipAsset>();
+    }
+    else
+    {
+        clipRef.rawValue = TAssetRef<MAudioClipAsset>(clip);
+        MAudioClipAsset* asset = clip.get();
+        if (asset)
+            audioClip = asset->getAudioClip(); // getAudioClip() returns nullptr on failure itself
+    }
 
     source->setClip(audioClip);
     outOfSync = true;
+    MLOG("MAudioSource::updated clip reference");
 }
 
 void MAudioSource::play()
@@ -159,7 +180,14 @@ void MAudioSource::play()
     if (outOfSync)
         syncAudioEngineState();
 
+    if (!clipRef.get().isValid())
+    {
+        MERROR("MAudioSource:: Clip reference is invalid");
+        return;
+    }
+
     source->play();
+    sourcePlaying = true;
 }
 
 void MAudioSource::stop()
@@ -167,7 +195,9 @@ void MAudioSource::stop()
     if (!initialized)
         return;
 
-    source->stop();
+    if (clipRef.get().isValid())
+        source->stop();
+    sourcePlaying = false;
 }
 
 void MAudioSource::playOneShot(TAssetHandle<MAudioClipAsset> clip)
@@ -179,8 +209,10 @@ void MAudioSource::playOneShot(TAssetHandle<MAudioClipAsset> clip)
         return;
 
     MAudioClipAsset* asset = clip.get();
-    if (!asset) return;
+    if (!asset)
+        return;
 
+    clipRef.set(clip);
     IAudioClip* audioClip = asset->getAudioClip();
     if (!audioClip) return;
 

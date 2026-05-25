@@ -5,44 +5,61 @@
 #include "jolt_physics_engine.h"
 
 #include <Jolt/Jolt.h>
-#include "Jolt/RegisterTypes.h"
 #include "Jolt/Physics/Body/BodyCreationSettings.h"
 #include "Jolt/Physics/Collision/Shape/BoxShape.h"
 #include "Jolt/Physics/Collision/Shape/SphereShape.h"
-
-
-#include "core/engine/physics/impl/bodies/jolt_base_collision_body.h"
+#include "Jolt/RegisterTypes.h"
+#include "SFML/Graphics/Glsl.hpp"
+#include "core/engine/engine_statics.h"
 #include "core/engine/physics/impl/bodies/jolt_box_collision.h"
 #include "core/engine/physics/impl/bodies/jolt_sphere_collision.h"
 
 void MJoltPhysicsEngine::init()
 {
     MLOG("MJoltPhysicsEngine:: Initializing Physics engine");
-    MLOG("MJoltPhysicsEngine:: Registering Allocator");
     RegisterDefaultAllocator();
-
-    MLOG("MJoltPhysicsEngine:: Creating factory");
     Factory::sInstance = new Factory();
-    MLOG("MJoltPhysicsEngine:: Registering types");
     RegisterTypes();
 
-    MLOG("MJoltPhysicsEngine:: Engine Init");
+    const auto* settings = MEngineStatics::getEngineSettings();
+
+    // default creation settings.
+    uint maxTempAllocs = 10 * 1024 * 1024;
+    uint maxPhysicsBodies = 1024;
+    uint numBodyMutexes = 0;
+    uint maxBodyPairs = 1024;
+    uint maxContactConstraints = 1024;
+    SVector3 gravity= {0.0f,-9.8f, 0.0f};
+
+    if (settings)
+    {
+        // if settings is found, use those values
+        maxTempAllocs = static_cast<uint>(settings->maxPhysicsTempAllocSize.get());
+        maxPhysicsBodies = static_cast<uint>(settings->maxPhysicsBodies.get());
+        numBodyMutexes = static_cast<uint>(settings->numPhysicsBodyMutexes.get());
+        maxBodyPairs = static_cast<uint>(settings->maxPhysicsBodyPairs.get());
+        maxContactConstraints = static_cast<uint>(settings->maxPhysicsContactConstraints.get());
+        gravity = settings->gravity.get();
+    }
+
+    MLOG(SString::format(
+        "Using settings: alloc {0}", maxTempAllocs));
+
+    tempAlloc = new TempAllocatorImpl(maxTempAllocs);
+    jobSystem = new JobSystemThreadPool(cMaxPhysicsJobs,cMaxPhysicsBarriers,std::thread::hardware_concurrency() - 1);
+
+
+
     physicsSystem.Init(maxPhysicsBodies, numBodyMutexes, maxBodyPairs, maxContactConstraints,
                        broadPhaseLayerInterface, objVsBroadPhaseLayerFilter, objVsObjLayerFilter);
 
-    MLOG("MJoltPhysicsEngine:: Setting activation listener");
+    physicsSystem.SetGravity({gravity.x, gravity.y, gravity.z});
     physicsSystem.SetBodyActivationListener(&bodyActivationListener);
-
-    MLOG("MJoltPhysicsEngine:: Setting contact listener");
     physicsSystem.SetContactListener(&contactListener);
-
-    MLOG("MJoltPhysicsEngine:: Fetching body interface");
     bodyInterface = &physicsSystem.GetBodyInterface();
-
-    // Wire the contact listener to the receiver registry so it can dispatch events.
-    MLOG("MJoltPhysicsEngine:: Init contact listener");
     contactListener.init(&receiverRegistry, &receiverRegistryMutex);
     MLOG("MJoltPhysicsEngine:: Initialized Physics engine");
+    allowTick = true;
 }
 
 void MJoltPhysicsEngine::cleanup()
@@ -53,6 +70,9 @@ void MJoltPhysicsEngine::cleanup()
 
     delete Factory::sInstance;
     Factory::sInstance = nullptr;
+
+    delete jobSystem;  jobSystem  = nullptr;
+    delete tempAlloc;  tempAlloc  = nullptr;
 }
 
 void MJoltPhysicsEngine::releaseAllBodies()
@@ -68,8 +88,10 @@ void MJoltPhysicsEngine::releaseAllBodies()
 
 void MJoltPhysicsEngine::tick(float fixedDeltaTime)
 {
-    physicsSystem.Update(fixedDeltaTime, 1, &tempAlloc, &jobSystem);
+    if (!allowTick)
+        return;
 
+    physicsSystem.Update(fixedDeltaTime, 1, tempAlloc, jobSystem);
     // Contact callbacks were queued on worker threads during Update() — dispatch
     // them now on the main thread so entity callbacks always run here.
     dispatchPendingEvents();
@@ -118,12 +140,21 @@ IBoxCollisionBody* MJoltPhysicsEngine::createBoxCollider(const SBoxPhysicsBodySe
     const RVec3 position = { settings.position.x, settings.position.y, settings.position.z };
     const Quat  rotation = { settings.rotation.x, settings.rotation.y, settings.rotation.z, settings.rotation.w };
 
-    BoxShapeSettings     boxShapeSettings(Vec3(halfX, halfY, halfZ));
-    BodyCreationSettings bodySettings(&boxShapeSettings, position, rotation, motionType, objectLayer);
+    BoxShapeSettings boxShapeSettings(Vec3(halfX, halfY, halfZ));
+    ShapeSettings::ShapeResult shapeResult = boxShapeSettings.Create();
+    if (!shapeResult.IsValid())
+    {
+        MERROR("MJoltPhysicsEngine::createBoxCollider - failed to create BoxShape");
+        return nullptr;
+    }
+
+    BodyCreationSettings bodySettings(shapeResult.Get(), position, rotation, motionType, objectLayer);
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
+    {
         return new MJoltBoxCollision(bodyId, *bodyInterface, physicsSystem);
+    }
 
     return nullptr;
 }
@@ -160,8 +191,17 @@ ISphereCollisionBody* MJoltPhysicsEngine::createSphereCollisionBody(const SSpher
     const RVec3 position = { settings.position.x, settings.position.y, settings.position.z };
     const Quat  rotation = { settings.rotation.x, settings.rotation.y, settings.rotation.z, settings.rotation.w };
 
-    SphereShapeSettings  sphereShapeSettings(settings.radius);
-    BodyCreationSettings bodySettings(&sphereShapeSettings, position, rotation, motionType, objectLayer);
+    // FIX: same as createBoxCollider — use .Create() to get a ref-counted Shape*
+    // rather than storing a pointer to a stack-allocated SphereShapeSettings.
+    SphereShapeSettings sphereShapeSettings(settings.radius);
+    ShapeSettings::ShapeResult shapeResult = sphereShapeSettings.Create();
+    if (!shapeResult.IsValid())
+    {
+        MERROR("MJoltPhysicsEngine::createSphereCollisionBody — failed to create SphereShape");
+        return nullptr;
+    }
+
+    BodyCreationSettings bodySettings(shapeResult.Get(), position, rotation, motionType, objectLayer);
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
@@ -193,7 +233,7 @@ void MJoltPhysicsEngine::registerCallbackReceiver(ICollisionBody* body,
 
     // Cast to the Jolt base to get the body index — this is internal knowledge
     // that belongs in the concrete engine, not the abstract interface.
-    const auto* joltBody = dynamic_cast<MJoltBaseCollisionBody*>(body);
+    const auto* joltBody = dynamic_cast<IJoltCollisionBodyInterface*>(body);
     if (!joltBody) return;
 
     std::unique_lock lock(receiverRegistryMutex);
@@ -204,7 +244,7 @@ void MJoltPhysicsEngine::unregisterCallbackReceiver(ICollisionBody* body)
 {
     if (!body) return;
 
-    const auto* joltBody = dynamic_cast<MJoltBaseCollisionBody*>(body);
+    const auto* joltBody = dynamic_cast<IJoltCollisionBodyInterface*>(body);
     if (!joltBody) return;
 
     std::unique_lock lock(receiverRegistryMutex);

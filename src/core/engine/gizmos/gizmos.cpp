@@ -26,19 +26,7 @@ bool MGizmos::gizmosEnabled = false;
 
 MCameraEntity* MGizmos::getActiveCamera()
 {
-    auto& cameras = MViewManagement::getCameras();
-    if (cameras.empty())
-        return nullptr;
-
-    for (auto camera : cameras)
-    {
-        if (camera != nullptr && camera->getEnabled())
-        {
-            return camera;
-        }
-    }
-
-    return nullptr;
+    return MViewManagement::getFirstActiveCamera();
 }
 
 SVector2 MGizmos::getResolution()
@@ -138,21 +126,24 @@ void MGizmos::drawTextureRect(const SVector3& position, const SVector2& halfExte
     glBindVertexArray(0);
 }
 
-void MGizmos::drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness)
+void MGizmos::drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness, SQuaternion rotation)
 {
-    SVector3 min = position - halfExtents;
-    SVector3 max = position + halfExtents;
-
-    SVector3 corners[8] = {
-        {min.x, min.y, min.z}, // 0
-        {max.x, min.y, min.z}, // 1
-        {max.x, max.y, min.z}, // 2
-        {min.x, max.y, min.z}, // 3
-        {min.x, min.y, max.z}, // 4
-        {max.x, min.y, max.z}, // 5
-        {max.x, max.y, max.z}, // 6
-        {min.x, max.y, max.z}  // 7
+    // Build corners in local space, rotate them, then translate to world space.
+    // This keeps the box centred on `position` regardless of orientation.
+    const SVector3 localCorners[8] = {
+        {-halfExtents.x, -halfExtents.y, -halfExtents.z}, // 0
+        { halfExtents.x, -halfExtents.y, -halfExtents.z}, // 1
+        { halfExtents.x,  halfExtents.y, -halfExtents.z}, // 2
+        {-halfExtents.x,  halfExtents.y, -halfExtents.z}, // 3
+        {-halfExtents.x, -halfExtents.y,  halfExtents.z}, // 4
+        { halfExtents.x, -halfExtents.y,  halfExtents.z}, // 5
+        { halfExtents.x,  halfExtents.y,  halfExtents.z}, // 6
+        {-halfExtents.x,  halfExtents.y,  halfExtents.z}  // 7
     };
+
+    SVector3 corners[8];
+    for (int i = 0; i < 8; ++i)
+        corners[i] = position + rotation * localCorners[i];
 
     // Bottom face
     drawLine(corners[0], corners[1], color, thickness, false);
@@ -173,41 +164,47 @@ void MGizmos::drawWireCube(SVector3 position, SVector3 halfExtents, SColor color
     drawLine(corners[3], corners[7], color, thickness, false);
 }
 
-void MGizmos::drawWireSphere(SVector3 position, float radius, SColor color, float thickness)
+void MGizmos::drawWireSphere(SVector3 position, float radius, SColor color, float thickness, glm::quat rotation)
 {
+    // `scale` acts as a per-axis radius multiplier, turning the sphere into an
+    // oriented ellipsoid.  Each great-circle ring is built in local space,
+    // rotated by `rotation`, and then offset to `position`.
     const int segments = 32;
 
+    // XY ring  (local Z = 0)
     for (int i = 0; i < segments; ++i)
     {
-        float theta1 = (float)i / segments * glm::two_pi<float>();
+        float theta1 = (float)i       / segments * glm::two_pi<float>();
         float theta2 = (float)(i + 1) / segments * glm::two_pi<float>();
 
-        SVector3 p1 = position + SVector3(radius * cos(theta1), radius * sin(theta1), 0);
-        SVector3 p2 = position + SVector3(radius * cos(theta2), radius * sin(theta2), 0);
+        SVector3 local1(radius * cos(theta1), radius *  sin(theta1), 0.0f);
+        SVector3 local2(radius *  cos(theta2), radius * sin(theta2), 0.0f);
 
-        drawLine(p1, p2, color, thickness, false);
+        drawLine(position + rotation * local1, position + rotation * local2, color, thickness, false);
     }
 
+    // YZ ring  (local X = 0)
     for (int i = 0; i < segments; ++i)
     {
-        float theta1 = (float)i / segments * glm::two_pi<float>();
+        float theta1 = (float)i       / segments * glm::two_pi<float>();
         float theta2 = (float)(i + 1) / segments * glm::two_pi<float>();
 
-        SVector3 p1 = position + SVector3(0, radius * cos(theta1), radius * sin(theta1));
-        SVector3 p2 = position + SVector3(0, radius * cos(theta2), radius * sin(theta2));
+        SVector3 local1(0.0f, radius * cos(theta1), radius * sin(theta1));
+        SVector3 local2(0.0f, radius * cos(theta2), radius * sin(theta2));
 
-        drawLine(p1, p2, color, thickness, false);
+        drawLine(position + rotation * local1, position + rotation * local2, color, thickness, false);
     }
 
+    // XZ ring  (local Y = 0)
     for (int i = 0; i < segments; ++i)
     {
-        float theta1 = (float)i / segments * glm::two_pi<float>();
+        float theta1 = (float)i       / segments * glm::two_pi<float>();
         float theta2 = (float)(i + 1) / segments * glm::two_pi<float>();
 
-        SVector3 p1 = position + SVector3(radius * cos(theta1), 0, radius * sin(theta1));
-        SVector3 p2 = position + SVector3(radius * cos(theta2), 0, radius * sin(theta2));
+        SVector3 local1(radius * cos(theta1), 0.0f, radius * sin(theta1));
+        SVector3 local2(radius * cos(theta2), 0.0f, radius * sin(theta2));
 
-        drawLine(p1, p2, color, thickness, false);
+        drawLine(position + rotation * local1, position + rotation * local2, color, thickness, false);
     }
 }
 

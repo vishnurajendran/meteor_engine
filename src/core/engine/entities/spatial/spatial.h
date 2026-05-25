@@ -61,6 +61,7 @@ public:
 
     [[nodiscard]] SVector3    getWorldPosition() const;
     [[nodiscard]] SQuaternion getWorldRotation() const;
+    [[nodiscard]] SVector3    getWorldScale()    const;
     [[nodiscard]] SMatrix4    getModelMatrix()     const { return modelMatrix; }
     [[nodiscard]] SMatrix4    getTransformMatrix() const { return modelMatrix; }
 
@@ -107,6 +108,7 @@ public:
     virtual void onCreate();
     virtual void onStart();
     virtual void onUpdate(float deltaTime);
+    virtual void onFixedUpdate(float fixedDeltaTime) {}; // no impl here.
     virtual void onExit();
     virtual void onDrawGizmo(SVector2 renderResolution);
 

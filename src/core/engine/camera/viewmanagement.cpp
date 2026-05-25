@@ -20,8 +20,18 @@ void MViewManagement::removeCamera(MCameraEntity *camera) {
     cameras.erase(it);
 }
 
-std::vector<MCameraEntity *>& MViewManagement::getCameras() {
-    return cameras;
+std::vector<MCameraEntity*>& MViewManagement::getCameras() { return cameras; }
+
+MCameraEntity* MViewManagement::getFirstActiveCamera()
+{
+    for (auto camera : cameras)
+    {
+        if (camera == nullptr)
+            continue;
+        if (camera->getEnabled())
+            return camera;
+    }
+    return nullptr;
 }
 
 void MViewManagement::updateCameraOrder() {

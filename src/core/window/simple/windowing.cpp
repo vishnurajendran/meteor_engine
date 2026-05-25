@@ -45,6 +45,7 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
 
     const auto& size = sf::Vector2u(inSize.x, inSize.y);
     auto videoMode = sf::VideoMode(size, 32);
+    DPIHelper::InitDPIAwareness();
     coreWindow.create(videoMode, this->title.str(),  sf::State::Windowed, this->settings);
     coreWindow.setFramerateLimit(this->targetFPS);
 

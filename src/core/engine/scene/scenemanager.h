@@ -22,6 +22,7 @@ public:
     virtual bool loadScene(const SString& path);
     virtual bool closeActiveScene();
     virtual void update(float deltaTime);
+    virtual void fixedUpdate(float fixedDeltaTime);
 
     SString registerOnLoadCallback(std::function<void(MScene*)> callback);
     void deregisterOnLoadCallback(SString callbackId);

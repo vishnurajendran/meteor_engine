@@ -7,11 +7,11 @@
 #include "core/engine/physics/interface/bodies/collision_body_interface.h"
 #include "core/utils/aabb.h"
 
-class IBoxCollisionBody : public virtual ICollisionBody
+class IBoxCollisionBody : public ICollisionBody
 {
 public:
     IBoxCollisionBody()  = default;
-    ~IBoxCollisionBody() override = default;
+    virtual ~IBoxCollisionBody() = default;
 
     virtual void setBounds(const AABB& aabb) = 0;
 };

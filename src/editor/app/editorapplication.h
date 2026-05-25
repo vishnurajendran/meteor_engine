@@ -6,38 +6,75 @@
 #define METEOR_ENGINE_EDITORAPPLICATION_H
 
 
+class MEditorSimulationManagerSubsystem;
 class MEditorAssetManager;
+class IAudioEngineSubsystem;
+class IPhysicsEngineSubsystem;
 class MEditorSceneManager;
+
+enum EEditorSimulationState
+{
+    Stopped = 0,
+    Simulating,
+    SimulationPaused,
+};
+
 class MEditorApplication : public MApplication {
-private:
-    MEditorSceneManager* sceneManagerRef;
-    MEditorAssetManager* assetManagerRef;
-    MObjectPtr<MImGuiWindow> window;
-    std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
-    static MEditorApplication *editorInst;
-    IRenderPipelineManagerSubsystem* pipelineManager;
-    std::atomic<bool> splashShowing = true;
-
-public:
-    // Unified selection - can be MSpatialEntity* or MAsset*.
-    static MObject* SelectedObject;
-
 public:
     MEditorApplication();
     void initialise() override;
     void run() override;
     void cleanup() override;
     bool isRunning() const override;
+
+    void pause(const bool& pause) override {}; // no API support for this func here
+
+    [[nodiscard]] bool isPaused()  const override  { return simulationState == SimulationPaused; };
+    [[nodiscard]] bool isPlaying() const override  { return simulationState == Simulating;       };
+    float getPhysicsStep() const;
+
     SString getEngineSettingsPath() const override { return "EditorSettings.xml"; }
 
     void showSplashScreen();
     void loadPrerequisites();
 
-    static void exit();
-    static MCameraEntity* getSceneCamera();
+    void startSimulation();
+    void stopSimulation();
+    void pauseSimulation();
+
+    // registers a callback function callback, returns it Id handle.
+    SString registerToSimulationStateChangedCallback(std::function<void(const EEditorSimulationState&)> callback);
+    void unregisterFromSimulationStateChangedCallback(const SString& callbackId);
 
 private:
-    void addSubsystems();
+    void registerSubsystems();
+    void notifySimulationStateChange();
+    void tickPhysics(float deltaTime);
+
+public:
+    static void exit();
+    static MCameraEntity* getSceneCamera();
+    static MObject* SelectedObject;
+
+private:
+    MEditorSceneManager* sceneManagerRef = nullptr;
+    MEditorAssetManager* assetManagerRef = nullptr;
+    MEditorSimulationManagerSubsystem* simulationManagerSubsystem = nullptr;
+
+    // sub-system interfaces
+    IAudioEngineSubsystem* audioEngineRef = nullptr;
+    IPhysicsEngineSubsystem* physicsEngineRef = nullptr;
+    IRenderPipelineManagerSubsystem* pipelineManager= nullptr;
+
+    MObjectPtr<MImGuiWindow> window = nullptr;
+    std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
+    std::atomic<bool> splashShowing = true;
+
+    float physicsAccumulator = 0.0f;  // seconds carried over between frames
+    std::unordered_map<SString, std::function<void(EEditorSimulationState)>> simulationStateChangedCallbacks;
+    EEditorSimulationState simulationState = EEditorSimulationState::Stopped;
+
+    bool internal_tickSpatialFixedUpdateFlag   = false;
 };
 
 #endif

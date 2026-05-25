@@ -4,6 +4,7 @@
 
 #include "box_collision_body_entity.h"
 
+#include "core/application/application.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 
@@ -54,50 +55,12 @@ MBoxCollisionBody* MBoxCollisionBody::createTrigger(SVector3 halfExtents)
 void MBoxCollisionBody::onCreate()
 {
     MSpatialEntity::onCreate();
-
     physicsEngine = MEngineSubsystemRegistry::getSubsystem<IPhysicsEngineSubsystem>();
     if (!physicsEngine)
     {
-        MERROR("MBoxCollisionBody::onCreate — physics engine subsystem not found");
+        MERROR("MBoxCollisionBody::onCreate - physics engine subsystem not found");
         return;
     }
-
-    // Factor in relative scale immediately upon creation
-    const auto& scale = getRelativeScale();
-
-    SBoxPhysicsBodySettings settings;
-    settings.position          = getWorldPosition();
-    settings.rotation          = getWorldRotation();
-    settings.bodyType          = bodyType.get();
-    settings.mass              = mass.get();
-    settings.affectedByGravity = affectedByGravity.get();
-    settings.bounds            = {
-        .min = { -halfExtentX.get() * scale.x, -halfExtentY.get() * scale.y, -halfExtentZ.get() * scale.z },
-        .max = {  halfExtentX.get() * scale.x,  halfExtentY.get() * scale.y,  halfExtentZ.get() * scale.z }
-    };
-
-    physicsBody = physicsEngine->createBoxCollider(settings);
-    if (!physicsBody)
-    {
-        MERROR("MBoxCollisionBody::onCreate — failed to create box collider");
-        return;
-    }
-
-    physicsEngine->registerCallbackReceiver(physicsBody, this);
-
-    syncFieldsToBody();
-
-    mass.setOnChangeCallback([this](auto v)             { if (physicsBody) physicsBody->setMass(v); });
-    affectedByGravity.setOnChangeCallback([this](auto v){ if (physicsBody) physicsBody->enableGravity(v); });
-    gravityScale.setOnChangeCallback([this](auto v)     { if (physicsBody) physicsBody->setGravity(v); });
-    isSensor.setOnChangeCallback([this](auto v)         { if (physicsBody) physicsBody->setIsSensor(v); });
-    linearDamping.setOnChangeCallback([this](auto v)    { if (physicsBody) physicsBody->setLinearDamping(v); });
-    angularDamping.setOnChangeCallback([this](auto v)   { if (physicsBody) physicsBody->setAngularDamping(v); });
-    bodyType.setOnChangeCallback([this](auto v)         { if (physicsBody) physicsBody->setBodyType(v); });
-
-    halfExtentX.setOnChangeCallback([this](auto) { syncBounds(); });
-    halfExtentY.setOnChangeCallback([this](auto) { syncBounds(); });
-    halfExtentZ.setOnChangeCallback([this](auto) { syncBounds(); });
 
     initialized = true;
     setCanTick(true);
@@ -116,27 +79,99 @@ void MBoxCollisionBody::updateTransforms()
 void MBoxCollisionBody::onStart()
 {
     MSpatialEntity::onStart();
+    createCollisionBody();
 }
+
+void MBoxCollisionBody::createCollisionBody()
+{
+    updateTransforms();
+     // Factor in relative scale immediately upon creation
+    const auto& scale = getWorldScale();
+    SBoxPhysicsBodySettings settings;
+    settings.position          = getWorldPosition();
+    settings.rotation          = getWorldRotation();
+    settings.bodyType          = bodyType.get();
+    settings.mass              = mass.get();
+    settings.affectedByGravity = affectedByGravity.get();
+    settings.bounds            = {
+        .min = { -halfExtentX.get() * scale.x, -halfExtentY.get() * scale.y, -halfExtentZ.get() * scale.z },
+        .max = {  halfExtentX.get() * scale.x,  halfExtentY.get() * scale.y,  halfExtentZ.get() * scale.z }
+    };
+
+    physicsBody = physicsEngine->createBoxCollider(settings);
+    if (!physicsBody)
+    {
+        MERROR("MBoxCollisionBody::onCreate - failed to create box collider");
+        return;
+    }
+
+    physicsEngine->registerCallbackReceiver(physicsBody, this);
+    syncFieldsToBody();
+
+    mass.setOnChangeCallback([this](auto v)             { if (physicsBody) physicsBody->setMass(v); });
+    affectedByGravity.setOnChangeCallback([this](auto v){ if (physicsBody) physicsBody->enableGravity(v); });
+    gravityScale.setOnChangeCallback([this](auto v)     { if (physicsBody) physicsBody->setGravity(v); });
+    isSensor.setOnChangeCallback([this](auto v)         { if (physicsBody) physicsBody->setIsSensor(v); });
+    linearDamping.setOnChangeCallback([this](auto v)    { if (physicsBody) physicsBody->setLinearDamping(v); });
+    angularDamping.setOnChangeCallback([this](auto v)   { if (physicsBody) physicsBody->setAngularDamping(v); });
+    bodyType.setOnChangeCallback([this](auto v)
+    {
+        // Jolt allocates MotionProperties only at body creation time.
+        // Static->Dynamic/Kinematic (and back) requires a full body recreation.
+        if (!physicsEngine || !physicsBody) return;
+
+        physicsEngine->unregisterCallbackReceiver(physicsBody);
+        physicsEngine->releaseBoxCollider(physicsBody);
+        physicsBody = nullptr;
+
+        const auto& scale = getWorldScale();
+        SBoxPhysicsBodySettings settings;
+        settings.position          = getWorldPosition();
+        settings.rotation          = getWorldRotation();
+        settings.bodyType          = v;
+        settings.mass              = mass.get();
+        settings.affectedByGravity = affectedByGravity.get();
+        settings.bounds = {
+            .min = { -halfExtentX.get() * scale.x, -halfExtentY.get() * scale.y, -halfExtentZ.get() * scale.z },
+            .max = {  halfExtentX.get() * scale.x,  halfExtentY.get() * scale.y,  halfExtentZ.get() * scale.z }
+        };
+
+        physicsBody = physicsEngine->createBoxCollider(settings);
+        if (!physicsBody)
+        {
+            MERROR("MBoxCollisionBody::bodyType onChange -- failed to recreate box collider");
+            return;
+        }
+        physicsEngine->registerCallbackReceiver(physicsBody, this);
+        syncFieldsToBody();
+    });
+
+    halfExtentX.setOnChangeCallback([this](auto) { syncBounds(); });
+    halfExtentY.setOnChangeCallback([this](auto) { syncBounds(); });
+    halfExtentZ.setOnChangeCallback([this](auto) { syncBounds(); });
+
+}
+
 
 void MBoxCollisionBody::onUpdate(float deltaTime)
 {
     MSpatialEntity::onUpdate(deltaTime);
     if (!initialized) return;
 
+    // sync internal positions with physics body
     physicsBody->physicsTick(deltaTime);
 
-    switch (bodyType.get())
+    auto appInst = MApplication::getAppInstance();
+    if (appInst && appInst->isPlaying())
     {
-    case ECollisionBodyType::DynamicBody:
+        //sync
         setWorldPosition(physicsBody->getBodySyncPosition());
         setWorldRotation(physicsBody->getBodySyncRotation());
-        break;
-    case ECollisionBodyType::KinematicBody:
-        physicsBody->setPositionAndRotation(getWorldPosition(), getWorldRotation());
-        break;
-    case ECollisionBodyType::StaticBody:
-        break;
+        return;
     }
+
+    // force-editor positions into internal body
+    physicsBody->setPositionAndRotation(getWorldPosition(), getWorldRotation());
 }
 
 void MBoxCollisionBody::onExit()
@@ -159,7 +194,7 @@ void MBoxCollisionBody::onDrawGizmo(SVector2 res)
     const SColor   color   = isSensor.get()
                              ? SColor(0.2f, 0.8f, 1.0f, 1.0f)
                              : SColor(0.2f, 1.0f, 0.2f, 1.0f);
-    MGizmos::drawWireCube(getWorldPosition(), halfExt, color, 1.0f);
+    MGizmos::drawWireCube(getWorldPosition(), halfExt, color, 1.0f, getWorldRotation());
 }
 
 // ---------------------------------------------------------------------------

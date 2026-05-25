@@ -456,10 +456,10 @@ set(CORE_SOURCES
         src/core/engine/audio/impl_miniaudio/audio_clip.h
         src/core/engine/physics/interface/physics_engine_interface.h
         src/core/engine/physics/interface/bodies/box/box_collision_body.h
-        src/core/engine/physics/interface/bodies/box/box_body_settings.h
-        src/core/engine/physics/interface/default_body_settings.h
+        src/core/engine/physics/data/box_body_settings.h
+        src/core/engine/physics/data/default_body_settings.h
         src/core/engine/physics/interface/bodies/sphere/sphere_collision_body.h
-        src/core/engine/physics/interface/bodies/sphere/sphere_body_settings.h
+        src/core/engine/physics/data/sphere_body_settings.h
         src/core/engine/physics/interface/bodies/collision_body_interface.h
         src/core/engine/physics/impl/engine/jolt_physics_engine.h
         src/core/engine/physics/impl/contact_listener.h
@@ -469,11 +469,7 @@ set(CORE_SOURCES
         src/core/engine/physics/impl/bodies/jolt_box_collision.h
         src/core/engine/physics/impl/bodies/jolt_sphere_collision.cpp
         src/core/engine/physics/impl/bodies/jolt_sphere_collision.h
-        src/core/engine/physics/impl/jolt_collider.cpp
-        src/core/engine/physics/impl/jolt_collider.h
         src/core/engine/physics/impl/jolt_layers_filters.h
-        src/core/engine/physics/impl/bodies/jolt_base_collision_body.cpp
-        src/core/engine/physics/impl/bodies/jolt_base_collision_body.h
         src/core/engine/physics/entities/box_collision_body_entity.cpp
         src/core/engine/physics/entities/box_collision_body_entity.h
         src/core/engine/physics/entities/sphere_collision_body_entity.cpp
@@ -485,6 +481,8 @@ set(CORE_SOURCES
         src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.h
         src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.cpp
         src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.h
+        src/core/engine/physics/impl/bodies/macros/jolt_base_collision_body_macros.h
+        src/core/engine/physics/impl/jolt_body_interface.h
 )
 
 set(EDITOR_SOURCES
@@ -592,6 +590,9 @@ set(EDITOR_SOURCES
         src/editor/audio_helpers/audio_waveform.cpp
         src/editor/audio_helpers/audio_waveform.h
         src/editor/window/menubar/default/add_entity/menu_additem_macros.h
+        src/editor/app/simulation_manager.cpp
+        src/editor/app/simulation_manager.h
+        src/editor/editor_paths.h
 )
 
 set(PLAYER_SOURCES

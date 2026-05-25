@@ -41,24 +41,32 @@ void MMiniAudioSource::cleanup()
 void MMiniAudioSource::setClip(IAudioClip* inClip)
 {
     if (!initialized)
+    {
+        MERROR("MMiniAudioSource:: Trying to set clip without initialized audio source");
         return;
+    }
 
-    if (!inClip)
-        return;
-
+    // Always tear down the current sound before reinitializing,
+    // regardless of whether the new clip is null or not.
     ma_sound_stop(&soundHandle);
     ma_sound_uninit(&soundHandle);
 
     this->clip = inClip;
-    const auto* assetPath = clip->getFilePath().c_str();
 
-    // If the clip is preloaded, tell miniaudio to decode the entire file
-    // into memory up front. Otherwise stream from disk (flags = 0).
+    if (inClip == nullptr)
+    {
+        // Reinitialize as a silent/empty source so the handle stays valid.
+        ma_sound_init_from_data_source(engineHandle, nullptr,
+            MA_SOUND_FLAG_NO_SPATIALIZATION, nullptr, &soundHandle);
+        MLOG("MMiniAudioSource:: Successfully reset clip");
+        return;
+    }
+
+    const auto* assetPath = clip->getFilePath().c_str();
     const ma_uint32 flags = clip->isPreloaded() ? MA_SOUND_FLAG_DECODE : 0;
 
-    ma_fence* fence       = nullptr;
-    ma_sound_group* group = nullptr;
-    const ma_result result = ma_sound_init_from_file(engineHandle, assetPath, flags, group, fence, &soundHandle);
+    const ma_result result = ma_sound_init_from_file(
+        engineHandle, assetPath, flags, nullptr, nullptr, &soundHandle);
 
     if (result != MA_SUCCESS)
     {

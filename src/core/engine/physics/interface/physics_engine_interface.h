@@ -5,8 +5,8 @@
 #ifndef PHYSICS_ENGINE_INTERFACE_H
 #define PHYSICS_ENGINE_INTERFACE_H
 
-#include "bodies/box/box_body_settings.h"
-#include "bodies/sphere/sphere_body_settings.h"
+#include "../data/box_body_settings.h"
+#include "core/engine/physics/data/sphere_body_settings.h"
 #include "core/engine/subsystem/subsystem_interface.h"
 
 
@@ -18,7 +18,6 @@ class ICollisionBody;
 class IPhysicsEngineSubsystem : public IEngineSubSystem
 {
 public:
-    IPhysicsEngineSubsystem()  = default;
     ~IPhysicsEngineSubsystem() override = default;
 
     virtual void init()    override = 0;

@@ -18,6 +18,7 @@ public:
     static void addCamera(MCameraEntity* camera);
     static void removeCamera(MCameraEntity* camera);
     static std::vector<MCameraEntity*>& getCameras();
+    static MCameraEntity* getFirstActiveCamera();
     static void updateCameraOrder();
 };
 

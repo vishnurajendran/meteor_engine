@@ -25,7 +25,6 @@ private:
 
     MAssetReferenceControl*        clipAssetControl = nullptr;
     TAssetRef<MAudioClipAsset>     lastKnownClip;
-
     static bool registered;
 };
 

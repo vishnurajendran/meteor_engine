@@ -93,9 +93,6 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     glDepthMask(GL_FALSE);
     glEnable(GL_CULL_FACE);
 
-    MCameraEntity* camera = nullptr;
-    for (auto* c : MViewManagement::getCameras())
-        if (c && c->getEnabled()) { camera = c; break; }
 
     auto* sb = pipeline->getBufferRegistry()
                          .getBuffer<SShadowBuffer>(MBufferNames::BUFFER_SHADOW);
@@ -109,7 +106,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     lightingShader->bind();
 
-    if (camera)
+    if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
     {
         SShaderPropertyValue viewVal, projVal;
         viewVal.setMat4Val(camera->getViewMatrix());

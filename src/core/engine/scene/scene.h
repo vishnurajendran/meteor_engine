@@ -19,6 +19,7 @@ public:
     ~MScene() override;
     void startScene() const;
     void update(float deltaTime);
+    void fixedUpdate(float fixedDeltaTime);
     void close();
     void addToRoot(MSpatialEntity* entity);
     size_t getRootSize() { return rootEntities.size(); }

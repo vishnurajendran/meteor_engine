@@ -4,8 +4,8 @@
 
 #ifndef PHYSICS_BODY_SETTINGS_H
 #define PHYSICS_BODY_SETTINGS_H
-#include "core/engine/physics/interface/default_body_settings.h"
-#include "core/utils/aabb.h"
+#include "../../../utils/aabb.h"
+#include "default_body_settings.h"
 
 struct SBoxPhysicsBodySettings : public SBasePhysicsBodySettings
 {

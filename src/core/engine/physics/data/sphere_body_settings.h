@@ -4,7 +4,7 @@
 
 #ifndef SPHERE_BODY_SETTINGS_H
 #define SPHERE_BODY_SETTINGS_H
-#include "core/engine/physics/interface/default_body_settings.h"
+#include "default_body_settings.h"
 
 struct SSphereBodySettings : public SBasePhysicsBodySettings
 {

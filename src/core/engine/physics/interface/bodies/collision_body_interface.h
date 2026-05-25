@@ -4,7 +4,7 @@
 
 #ifndef IPHYSICSBODY_H
 #define IPHYSICSBODY_H
-#include "core/engine/physics/interface/default_body_settings.h"
+#include "../../data/default_body_settings.h"
 
 class ICollisionBody
 {

@@ -17,8 +17,8 @@ class MGizmos : public MObject {
     DEFINE_OBJECT_SUBCLASS(MGizmos)
 public:
     static void drawTextureRect(const SVector3& position, const SVector2& halfExtents, MTexture* texture);
-    static void drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness);
-    static void drawWireSphere(SVector3 position, float radius, SColor color, float thickness);
+    static void drawWireCube(SVector3 position, SVector3 halfExtents, SColor color, float thickness,SQuaternion rotation = SQuaternion(1.0f, 0.0f, 0.0f, 0.0f));
+    static void drawWireSphere(SVector3 position, float radius, SColor color, float thickness, SQuaternion rotation = SQuaternion(1.0f, 0.0f, 0.0f, 0.0f));
     static void drawRay(const SVector3& origin, const SVector3& direction, const float& length, const SColor& color, const float& thickness);
     static void drawLine(const SVector3& start, const SVector3& end, const SColor& color, const float& thickness, bool ignoreZDepth=false);
     static void drawWireFrustum(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, SColor color, float thickness);

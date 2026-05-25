@@ -4,11 +4,11 @@
 
 #ifndef DEFAULT_BODY_SETTINGS_H
 #define DEFAULT_BODY_SETTINGS_H
-#include "core/utils/glmhelper.h"
+#include "../../../utils/glmhelper.h"
 
 enum ECollisionBodyType
 {
-    StaticBody,
+    StaticBody=0,
     DynamicBody,
     KinematicBody
 };
@@ -23,6 +23,16 @@ struct SBasePhysicsBodySettings
     bool    affectedByGravity          = false;
     bool    movementConstraints[3]     = { true, true, true }; // true = axis is free
     bool    rotationConstraints[3]     = { true, true, true }; // true = axis is free
+    bool    isSensor                   = false;
+
+    // Restitution: 0 = perfectly inelastic (dead stop), 1 = perfectly elastic (full bounce).
+    // Jolt combines restitution from both bodies using: max(a.restitution, b.restitution),
+    // so setting either the sphere OR the floor to a non-zero value produces bouncing.
+    float   restitution                = 0.3f;
+
+    // Friction: 0 = frictionless, 1 = high friction.
+    // Jolt combines friction from both bodies using: sqrt(a.friction * b.friction).
+    float   friction                   = 0.6f;
 };
 
 #endif //DEFAULT_BODY_SETTINGS_H

@@ -7,6 +7,9 @@
 #include "core/engine/scene/scenemanager.h"
 #include "editor/settings/editor_settings.h"
 
+SVector3 MEditorSceneCameraEntity::lastPosition = SVector3(0, 0, 0);
+SQuaternion MEditorSceneCameraEntity::lastRotation = SQuaternion(0, 0, 0, 0);
+
 void MEditorSceneCameraEntity::onCreate()
 {
     setPriority(-9999);
@@ -20,15 +23,37 @@ void MEditorSceneCameraEntity::onCreate()
 
     // Remove from scene root list — editor camera is not a scene entity.
     auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
-    if (!scene) return;
+    if (!scene)
+        return;
     auto& roots = scene->getRootEntities();
     auto it = std::find(roots.begin(), roots.end(), this);
-    if (it != roots.end()) roots.erase(it);
+    if (it != roots.end())
+        roots.erase(it);
 
-    if (const auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+    if (settingsRef = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
     {
-        setWorldPosition(settings->lastEdCameraPos.get());
-        setWorldRotation(settings->lastEdCameraRot.get());
+        setWorldPosition(settingsRef->lastEdCameraPos.get());
+        setWorldRotation(settingsRef->lastEdCameraRot.get());
+
+        lastPosition = settingsRef->lastEdCameraPos.get();
+        lastRotation = settingsRef->lastEdCameraRot.get();
+    }
+    setCanTick(true);
+}
+
+void MEditorSceneCameraEntity::onUpdate(float deltaTime)
+{
+    MCameraEntity::onUpdate(deltaTime);
+
+    if (lastPosition != getWorldPosition() || lastRotation != getWorldRotation())
+    {
+       if (!settingsRef)
+           return;
+
+        settingsRef->lastEdCameraPos.set(getWorldPosition());
+        settingsRef->lastEdCameraRot.set(getWorldRotation());
+        lastPosition = getWorldPosition();
+        lastRotation = getWorldRotation();
     }
 }
 
