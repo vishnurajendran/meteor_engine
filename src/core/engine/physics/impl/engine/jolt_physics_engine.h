@@ -1,5 +1,5 @@
 //
-// Created by ssj5v on 21-05-2026.
+// jolt_physics_engine.h
 //
 
 #ifndef JOLT_PHYSICS_ENGINE_H
@@ -48,7 +48,19 @@ public:
     ISphereCollisionBody* createSphereCollisionBody(const SSphereBodySettings& settings) override;
     void releaseSphereCollisionBody(ISphereCollisionBody* body) override;
 
-    void registerCallbackReceiver(ICollisionBody* body,IPhysicsCallbackReceiver* receiver) override;
+    ICylinderCollisionBody* createCylinderCollisionBody(const SCylinderBodySettings& settings) override;
+    void releaseCylinderCollisionBody(ICylinderCollisionBody* body) override;
+
+    ICapsuleCollisionBody* createCapsuleCollisionBody(const SCapsuleBodySettings& settings) override;
+    void releaseCapsuleCollisionBody(ICapsuleCollisionBody* body) override;
+
+    IMeshCollisionBody* createMeshCollisionBody(const SMeshBodySettings& settings) override;
+    void releaseMeshCollisionBody(IMeshCollisionBody* body) override;
+
+    IConvexHullCollisionBody* createConvexHullCollisionBody(const SConvexHullBodySettings& settings) override;
+    void releaseConvexHullCollisionBody(IConvexHullCollisionBody* body) override;
+
+    void registerCallbackReceiver(ICollisionBody* body, IPhysicsCallbackReceiver* receiver) override;
     void unregisterCallbackReceiver(ICollisionBody* body) override;
 
 private:

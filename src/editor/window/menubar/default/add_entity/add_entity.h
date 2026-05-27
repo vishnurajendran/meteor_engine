@@ -1,7 +1,6 @@
 #pragma once
 #ifndef ADD_ENTITY_MENU_H
 #define ADD_ENTITY_MENU_H
-#include "editor/window/menubar/menubaritem.h"
 #include "core/engine/audio/audio_entity/audio_listener_entity.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"
@@ -11,8 +10,13 @@
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
+#include "core/engine/physics/entities/capsule_collision_body_entity.h"
+#include "core/engine/physics/entities/convexhull_collision_body_entity.h"
+#include "core/engine/physics/entities/cylinder_collision_body_entity.h"
+#include "core/engine/physics/entities/mesh_collision_body_entity.h"
 #include "core/engine/physics/entities/sphere_collision_body_entity.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
+#include "editor/window/menubar/menubaritem.h"
 #include "menu_additem_macros.h"
 
 // -- Empty --------------------------------------------------------------------
@@ -141,6 +145,38 @@ REGISTER_SPATIAL_ENTITY_CREATE_MENU(
     MMenubarItem::PRIORITY_REGULAR + 4,
     MSphereCollisionBody,
     "Sphere Collision Body"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddCylinderCollisionBodyItem,
+    "Add/Physics/Cylinder Collision Body",
+    MMenubarItem::PRIORITY_REGULAR + 4,
+    MCylinderCollisionBody,
+    "Cylinder Collision Body"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddCapsuleCollisionBodyItem,
+    "Add/Physics/Capsule Collision Body",
+    MMenubarItem::PRIORITY_REGULAR + 4,
+    MCapsuleCollisionBody,
+    "Capsule Collision Body"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddMeshCollisionBodyItem,
+    "Add/Physics/Mesh Collision Body",
+    MMenubarItem::PRIORITY_REGULAR + 4,
+    MMeshCollisionBody,
+    "Mesh Collision Body"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddConvexHullCollisionBodyItem,
+    "Add/Physics/Convex Hull Collision Body",
+    MMenubarItem::PRIORITY_REGULAR + 4,
+    MConvexHullCollisionBody,
+    "Convex Hull Collision Body"
 )
 
 

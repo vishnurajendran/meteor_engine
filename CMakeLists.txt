@@ -477,12 +477,33 @@ set(CORE_SOURCES
         src/core/engine/physics/data/collision_data.h
         src/core/engine/physics/callback/physics_callback_reciever.h
         src/core/engine/physics/callback/contact_listener.h
-        src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.cpp
-        src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.h
-        src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.cpp
-        src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.h
         src/core/engine/physics/impl/bodies/macros/jolt_base_collision_body_macros.h
         src/core/engine/physics/impl/jolt_body_interface.h
+        src/core/engine/physics/interface/bodies/shape_axis.h
+        src/core/engine/physics/interface/bodies/cylinder/cylinder_collision_body.h
+        src/core/engine/physics/interface/bodies/capsule/capsule_collision_body.h
+        src/core/engine/physics/interface/bodies/mesh/mesh_collision_body.h
+        src/core/engine/physics/interface/bodies/convexhull/convexhull_collsion_body.h
+        src/core/engine/physics/data/cylinder_body_settings.h
+        src/core/engine/physics/data/capsule_body_settings.h
+        src/core/engine/physics/data/mesh_body_settings.h
+        src/core/engine/physics/data/convexhull_body_settings.h
+        src/core/engine/physics/impl/bodies/jolt_cylinder_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_cylinder_collision.h
+        src/core/engine/physics/impl/bodies/jolt_capsule_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_capsule_collision.h
+        src/core/engine/physics/impl/bodies/jolt_mesh_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_mesh_collision.h
+        src/core/engine/physics/impl/bodies/jolt_convexhull_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_convexhull_collision.h
+        src/core/engine/physics/entities/cylinder_collision_body_entity.cpp
+        src/core/engine/physics/entities/cylinder_collision_body_entity.h
+        src/core/engine/physics/entities/capsule_collision_body_entity.cpp
+        src/core/engine/physics/entities/capsule_collision_body_entity.h
+        src/core/engine/physics/entities/mesh_collision_body_entity.cpp
+        src/core/engine/physics/entities/mesh_collision_body_entity.h
+        src/core/engine/physics/entities/convexhull_collision_body_entity.cpp
+        src/core/engine/physics/entities/convexhull_collision_body_entity.h
 )
 
 set(EDITOR_SOURCES
@@ -593,6 +614,18 @@ set(EDITOR_SOURCES
         src/editor/app/simulation_manager.cpp
         src/editor/app/simulation_manager.h
         src/editor/editor_paths.h
+        src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/cylinder_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/cylinder_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/capsule_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/capsule_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/mesh_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/mesh_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.h
 )
 
 set(PLAYER_SOURCES

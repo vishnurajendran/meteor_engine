@@ -3,6 +3,7 @@
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/BodyID.h>
+#include <Jolt/Physics/Body/BodyLockInterface.h>
 #include "core/engine/physics/interface/bodies/collision_body_interface.h"
 
 namespace JPH {
@@ -32,6 +33,10 @@ public: \
     void setAngularDamping(float drag)                  override; \
     void setPositionAndRotation(const SVector3& position, \
                                 const SQuaternion& rotation) override; \
+\
+    void applyForce(const SVector3& force, EForceMode mode) override; \
+    void applyForceAtPosition(const SVector3& force, const SVector3& worldPoint, EForceMode mode) override; \
+    void applyTorque(const SVector3& torque, EForceMode mode) override; \
 \
     [[nodiscard]] uint32_t getJoltBodyIndex() const override { return joltBodyID.GetIndex(); } \
     [[nodiscard]] JPH::BodyID getBodyID() const override { return joltBodyID; } \
@@ -222,6 +227,119 @@ SVector3 ClassName::getCenterOfMass() const \
     if (!isValidBody()) return {}; \
     const JPH::RVec3 com = joltBodyInterface.GetCenterOfMassPosition(joltBodyID); \
     return { com.GetX(), com.GetY(), com.GetZ() }; \
+} \
+void ClassName::applyForce(const SVector3& force, EForceMode mode) \
+{ \
+    if (!isValidBody()) return; \
+    if (joltBodyInterface.GetMotionType(joltBodyID) == JPH::EMotionType::Static) \
+    { \
+        MWARN(SString::format("{0}::applyForce — called on a Static body; force has no effect", #ClassName)); \
+        return; \
+    } \
+    const JPH::Vec3 jphForce(force.x, force.y, force.z); \
+    switch (mode) \
+    { \
+    case EForceMode::Force: \
+        joltBodyInterface.AddForce(joltBodyID, jphForce); \
+        break; \
+    case EForceMode::Impulse: \
+        joltBodyInterface.AddImpulse(joltBodyID, jphForce); \
+        break; \
+    case EForceMode::Acceleration: \
+    { \
+        float invMass = 0.0f; \
+        { \
+            JPH::BodyLockRead lock(joltPhysicsSystem.GetBodyLockInterface(), joltBodyID); \
+            if (!lock.Succeeded()) return; \
+            const JPH::MotionProperties* mp = lock.GetBody().GetMotionPropertiesUnchecked(); \
+            if (!mp) return; \
+            invMass = mp->GetInverseMass(); \
+        } \
+        if (invMass <= 0.0f) return; \
+        joltBodyInterface.AddForce(joltBodyID, jphForce * (1.0f / invMass)); \
+        break; \
+    } \
+    case EForceMode::VelocityChange: \
+        joltBodyInterface.AddLinearVelocity(joltBodyID, jphForce); \
+        break; \
+    } \
+} \
+void ClassName::applyForceAtPosition(const SVector3& force, const SVector3& worldPoint, EForceMode mode) \
+{ \
+    if (!isValidBody()) return; \
+    if (joltBodyInterface.GetMotionType(joltBodyID) == JPH::EMotionType::Static) \
+    { \
+        MWARN(SString::format("{0}::applyForceAtPosition — called on a Static body; force has no effect", #ClassName)); \
+        return; \
+    } \
+    const JPH::Vec3  jphForce(force.x, force.y, force.z); \
+    const JPH::RVec3 jphPoint(worldPoint.x, worldPoint.y, worldPoint.z); \
+    switch (mode) \
+    { \
+    case EForceMode::Force: \
+        joltBodyInterface.AddForce(joltBodyID, jphForce, jphPoint); \
+        break; \
+    case EForceMode::Impulse: \
+        joltBodyInterface.AddImpulse(joltBodyID, jphForce, jphPoint); \
+        break; \
+    case EForceMode::Acceleration: \
+    { \
+        float invMass = 0.0f; \
+        { \
+            JPH::BodyLockRead lock(joltPhysicsSystem.GetBodyLockInterface(), joltBodyID); \
+            if (!lock.Succeeded()) return; \
+            const JPH::MotionProperties* mp = lock.GetBody().GetMotionPropertiesUnchecked(); \
+            if (!mp) return; \
+            invMass = mp->GetInverseMass(); \
+        } \
+        if (invMass <= 0.0f) return; \
+        joltBodyInterface.AddForce(joltBodyID, jphForce * (1.0f / invMass), jphPoint); \
+        break; \
+    } \
+    case EForceMode::VelocityChange: \
+        MWARN(SString::format("{0}::applyForceAtPosition — VelocityChange has no point-of-application variant in Jolt; falling back to Impulse at the given point", #ClassName)); \
+        joltBodyInterface.AddImpulse(joltBodyID, jphForce, jphPoint); \
+        break; \
+    } \
+} \
+void ClassName::applyTorque(const SVector3& torque, EForceMode mode) \
+{ \
+    if (!isValidBody()) return; \
+    if (joltBodyInterface.GetMotionType(joltBodyID) == JPH::EMotionType::Static) \
+    { \
+        MWARN(SString::format("{0}::applyTorque — called on a Static body; torque has no effect", #ClassName)); \
+        return; \
+    } \
+    const JPH::Vec3 jphTorque(torque.x, torque.y, torque.z); \
+    switch (mode) \
+    { \
+    case EForceMode::Force: \
+        joltBodyInterface.AddTorque(joltBodyID, jphTorque); \
+        break; \
+    case EForceMode::Impulse: \
+        joltBodyInterface.AddAngularImpulse(joltBodyID, jphTorque); \
+        break; \
+    case EForceMode::Acceleration: \
+    { \
+        float invMass = 0.0f; \
+        { \
+            JPH::BodyLockRead lock(joltPhysicsSystem.GetBodyLockInterface(), joltBodyID); \
+            if (!lock.Succeeded()) return; \
+            const JPH::MotionProperties* mp = lock.GetBody().GetMotionPropertiesUnchecked(); \
+            if (!mp) return; \
+            invMass = mp->GetInverseMass(); \
+        } \
+        if (invMass <= 0.0f) return; \
+        joltBodyInterface.AddTorque(joltBodyID, jphTorque * (1.0f / invMass)); \
+        break; \
+    } \
+    case EForceMode::VelocityChange: \
+    { \
+        const JPH::Vec3 current = joltBodyInterface.GetAngularVelocity(joltBodyID); \
+        joltBodyInterface.SetAngularVelocity(joltBodyID, current + jphTorque); \
+        break; \
+    } \
+    } \
 }
 
 #endif // JOLT_BASE_COLLISION_MACROS_H
