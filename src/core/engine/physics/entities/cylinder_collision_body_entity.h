@@ -5,88 +5,42 @@
 #ifndef CYLINDER_COLLISION_BODY_ENTITY_H
 #define CYLINDER_COLLISION_BODY_ENTITY_H
 
-#include <functional>
-
-#include "core/engine/entities/spatial/spatial.h"
-#include "core/engine/physics/callback/physics_callback_reciever.h"
-#include "core/engine/physics/data/collision_data.h"
+#include "core/engine/physics/entities/collision_body_entity.h"
 #include "core/engine/physics/interface/bodies/cylinder/cylinder_collision_body.h"
-#include "core/engine/physics/interface/physics_engine_interface.h"
+#include "core/engine/physics/data/shape_axis.h"
 
-
-class MCylinderCollisionBody : public MSpatialEntity, public IPhysicsCallbackReceiver
+class MCylinderCollisionBody : public MCollisionBodyEntity
 {
     DEFINE_SPATIAL_CLASS(MCylinderCollisionBody)
 
-    DECLARE_FIELD(bodyType,          ECollisionBodyType, ECollisionBodyType::StaticBody)
-    DECLARE_FIELD(mass,              float,              10.0f)
-    DECLARE_FIELD(affectedByGravity, bool,               false)
-    DECLARE_FIELD(gravityScale,      float,              1.0f)
-    DECLARE_FIELD(isSensor,          bool,               false)
-    DECLARE_FIELD(linearDamping,     float,              0.0f)
-    DECLARE_FIELD(angularDamping,    float,              0.0f)
-    DECLARE_FIELD(restitution,       float,              0.3f)
-    DECLARE_FIELD(friction,          float,              0.6f)
-    DECLARE_FIELD(halfHeight,        float,              0.5f)
-    DECLARE_FIELD(radius,            float,              0.5f)
-    DECLARE_FIELD(axis,              EShapeAxis,         EShapeAxis::Y)
+    DECLARE_FIELD(halfHeight, float,      0.5f)
+    DECLARE_FIELD(radius,     float,      0.5f)
+    DECLARE_FIELD(axis,       EShapeAxis, EShapeAxis::Y)
 
 public:
     MCylinderCollisionBody()  = default;
     ~MCylinderCollisionBody() override = default;
 
-    void onCreate()                override;
-    void onStart()                 override;
-    void onUpdate(float deltaTime) override;
-    void onExit()                  override;
     void onDrawGizmo(SVector2 res) override;
     void updateTransforms()        override;
 
-    // ---- Scene creation helpers --------------------------------------------
+    [[nodiscard]] ICylinderCollisionBody* getPhysicsBody() const { return physicsBody; }
 
-    static MCylinderCollisionBody* create(ECollisionBodyType type       = ECollisionBodyType::StaticBody,
-                                          float              halfHeight = 0.5f,
-                                          float              radius     = 0.5f,
-                                          float              mass       = 10.0f);
-
+    static MCylinderCollisionBody* create(ECollisionBodyType type = ECollisionBodyType::StaticBody, float halfHeight = 0.5f, float radius = 0.5f, float mass = 10.0f);
     static MCylinderCollisionBody* createDynamic(float halfHeight = 0.5f, float radius = 0.5f, float mass = 10.0f);
     static MCylinderCollisionBody* createStatic (float halfHeight = 0.5f, float radius = 0.5f);
 
-    // ---- IPhysicsCallbackReceiver ------------------------------------------
-    [[nodiscard]] MSpatialEntity* getEntity() override { return this; }
-    void dispatchCollisionStart(const SCollisionData& data) override;
-    void dispatchCollisionStay (const SCollisionData& data) override;
-    void dispatchCollisionEnd  (const SCollisionData& data) override;
-    void dispatchTriggerStart  (const SOverlapData&   data) override;
-    void dispatchTriggerStay   (const SOverlapData&   data) override;
-    void dispatchTriggerEnd    (const SOverlapData&   data) override;
-
-    // ---- Callback registration ---------------------------------------------
-    void setOnCollisionStart(std::function<void(const SCollisionData&)> cb) { onCollisionStartCb = std::move(cb); }
-    void setOnCollisionStay (std::function<void(const SCollisionData&)> cb) { onCollisionStayCb  = std::move(cb); }
-    void setOnCollisionEnd  (std::function<void(const SCollisionData&)> cb) { onCollisionEndCb   = std::move(cb); }
-    void setOnTriggerStart  (std::function<void(const SOverlapData&)>   cb) { onTriggerStartCb   = std::move(cb); }
-    void setOnTriggerStay   (std::function<void(const SOverlapData&)>   cb) { onTriggerStayCb    = std::move(cb); }
-    void setOnTriggerEnd    (std::function<void(const SOverlapData&)>   cb) { onTriggerEndCb     = std::move(cb); }
-
-    [[nodiscard]] ICylinderCollisionBody* getPhysicsBody() const { return physicsBody; }
+protected:
+    void createCollisionBody()                               override;
+    void releaseBody()                                       override;
+    [[nodiscard]] ICollisionBody* getBasePhysicsBody() const override { return physicsBody; }
+    void setupShapeCallbacks()                               override;
 
 private:
-    void createCollisionBody();
     void syncShape();
-    void syncFieldsToBody();
+    void axisScaleFactors(float& outScaleR, float& outScaleH, const SVector3& scale) const;
 
-private:
-    IPhysicsEngineSubsystem*  physicsEngine = nullptr;
-    ICylinderCollisionBody*   physicsBody   = nullptr;
-    bool                      initialized   = false;
-
-    std::function<void(const SCollisionData&)> onCollisionStartCb;
-    std::function<void(const SCollisionData&)> onCollisionStayCb;
-    std::function<void(const SCollisionData&)> onCollisionEndCb;
-    std::function<void(const SOverlapData&)>   onTriggerStartCb;
-    std::function<void(const SOverlapData&)>   onTriggerStayCb;
-    std::function<void(const SOverlapData&)>   onTriggerEndCb;
+    ICylinderCollisionBody* physicsBody = nullptr;
 };
 
 #endif // CYLINDER_COLLISION_BODY_ENTITY_H

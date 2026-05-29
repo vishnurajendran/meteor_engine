@@ -5,6 +5,7 @@
 #include "editorapplication.h"
 
 #include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include "core/default_settings_paths.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
@@ -130,7 +131,12 @@ void MEditorApplication::initialise() {
     MApplication::initialise();
 
     // init engine settings.
-    MEngineStatics::loadEngineSettings<MEditorSettings>(getEngineSettingsPath());
+    MEngineStatics::loadSettings<MEditorSettings>(SSettingsPaths
+    {
+        .engineSettingsPath = getEngineSettingsPath(),
+        .physicsLayerSettingsPath = DEFAULT_PHYSICS_SETTINGS_PATH
+    });
+
     registerSubsystems();
 
     std::thread splashThread(&MEditorApplication::showSplashScreen, this);

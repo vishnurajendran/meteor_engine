@@ -1,27 +1,19 @@
 //
 // cylinder_collision_body_inspectordrawer.h
 //
-
 #pragma once
-#ifndef CYLINDER_COLLISION_BODY_INSPECTOR_H
-#define CYLINDER_COLLISION_BODY_INSPECTOR_H
+#ifndef CYLINDER_COLLISION_BODY_INSPECTORDRAWER_H
+#define CYLINDER_COLLISION_BODY_INSPECTORDRAWER_H
 
-#include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
+#include "collision_body_inspectordrawer.h"
 
-class MCylinderCollisionBodyInspectorDrawer : public MSpatialEntityInspectorDrawer
+class MCylinderCollisionBodyInspectorDrawer : public MCollisionBodyEntityInspectorDrawer
 {
-    DEFINE_OBJECT_SUBCLASS(MCylinderCollisionBodyInspectorDrawer)
 public:
-    SString getInspectorName() const override { return "Cylinder Collision Body"; }
-    bool    canDraw(MSpatialEntity* entity)       override;
-
-protected:
-    void onDrawInspector(MSpatialEntity* target)  override;
-
+    bool canDraw(MSpatialEntity* entity) override;
+    void onDrawInspector(MSpatialEntity* target) override;
 private:
-    MCylinderCollisionBodyInspectorDrawer() = default;
-
     static bool registered;
 };
 
-#endif // CYLINDER_COLLISION_BODY_INSPECTOR_H
+#endif // CYLINDER_COLLISION_BODY_INSPECTORDRAWER_H

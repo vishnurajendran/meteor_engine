@@ -1,27 +1,19 @@
 //
-// Created by ssj5v on 22-05-2026.
+// sphere_collision_body_inspectordrawer.h
 //
-
 #pragma once
-#ifndef SPHERE_COLLISION_BODY_INSPECTOR_H
-#define SPHERE_COLLISION_BODY_INSPECTOR_H
+#ifndef SPHERE_COLLISION_BODY_INSPECTORDRAWER_H
+#define SPHERE_COLLISION_BODY_INSPECTORDRAWER_H
 
-#include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
+#include "collision_body_inspectordrawer.h"
 
-class MSphereCollisionBodyInspectorDrawer : public MSpatialEntityInspectorDrawer
+class MSphereCollisionBodyInspectorDrawer : public MCollisionBodyEntityInspectorDrawer
 {
-    DEFINE_OBJECT_SUBCLASS(MSphereCollisionBodyInspectorDrawer)
 public:
-    SString getInspectorName() const override { return "Sphere Collision Body"; }
-    bool    canDraw(MSpatialEntity* entity)       override;
-
-protected:
-    void onDrawInspector(MSpatialEntity* target)  override;
-
+    bool canDraw(MSpatialEntity* entity) override;
+    void onDrawInspector(MSpatialEntity* target) override;
 private:
-    MSphereCollisionBodyInspectorDrawer() = default;
-
     static bool registered;
 };
 
-#endif // SPHERE_COLLISION_BODY_INSPECTOR_H
+#endif // SPHERE_COLLISION_BODY_INSPECTORDRAWER_H

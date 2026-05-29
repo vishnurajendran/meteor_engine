@@ -1,213 +1,78 @@
 //
-// Created by ssj5v on 22-05-2026.
+// sphere_collision_body_entity.cpp
 //
 
 #include "sphere_collision_body_entity.h"
 
-#include "core/application/application.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/engine/subsystem/subsystem_registry.h"
 
 IMPLEMENT_SPATIAL_CLASS(MSphereCollisionBody)
 
-// ---------------------------------------------------------------------------
-// Scene creation helpers
-// ---------------------------------------------------------------------------
-
-MSphereCollisionBody* MSphereCollisionBody::create(ECollisionBodyType type,
-                                                   float              radius,
-                                                   float              mass)
+MSphereCollisionBody* MSphereCollisionBody::create(ECollisionBodyType type, float r, float m)
 {
-    auto* entity = new MSphereCollisionBody();
-    entity->bodyType.set(type);
-    entity->radius.set(radius);
-    entity->mass.set(mass);
-    return entity;
+    auto* e = new MSphereCollisionBody();
+    e->bodyType.set(type); e->radius.set(r); e->mass.set(m);
+    return e;
 }
-
-MSphereCollisionBody* MSphereCollisionBody::createDynamic(float radius, float mass)
+MSphereCollisionBody* MSphereCollisionBody::createDynamic(float r, float m)
 {
-    auto* entity = create(ECollisionBodyType::DynamicBody, radius, mass);
-    entity->affectedByGravity.set(true);
-    return entity;
+    auto* e = create(ECollisionBodyType::DynamicBody, r, m);
+    e->affectedByGravity.set(true);
+    return e;
 }
-
-MSphereCollisionBody* MSphereCollisionBody::createStatic(float radius)
+MSphereCollisionBody* MSphereCollisionBody::createStatic (float r) { return create(ECollisionBodyType::StaticBody,  r, 0.0f); }
+MSphereCollisionBody* MSphereCollisionBody::createTrigger(float r)
 {
-    return create(ECollisionBodyType::StaticBody, radius, 0.0f);
-}
-
-MSphereCollisionBody* MSphereCollisionBody::createTrigger(float radius)
-{
-    auto* entity = create(ECollisionBodyType::StaticBody, radius, 0.0f);
-    entity->isSensor.set(true);
-    return entity;
-}
-
-// ---------------------------------------------------------------------------
-// Lifecycle
-// ---------------------------------------------------------------------------
-
-void MSphereCollisionBody::onCreate()
-{
-    MSpatialEntity::onCreate();
-
-    physicsEngine = MEngineSubsystemRegistry::getSubsystem<IPhysicsEngineSubsystem>();
-    if (!physicsEngine)
-    {
-        MERROR("MSphereCollisionBody::onCreate — physics engine subsystem not found");
-        return;
-    }
-
-    initialized = true;
-    setCanTick(true);
+    auto* e = create(ECollisionBodyType::StaticBody, r, 0.0f);
+    e->isSensor.set(true);
+    return e;
 }
 
 void MSphereCollisionBody::createCollisionBody()
 {
-    // Determine absolute uniform multiplier from scale vector components
     const auto& scale = getWorldScale();
-    float maxScale = std::max({scale.x, scale.y, scale.z});
-
     SSphereBodySettings settings;
     settings.position          = getWorldPosition();
     settings.rotation          = getWorldRotation();
     settings.bodyType          = bodyType.get();
     settings.mass              = mass.get();
     settings.affectedByGravity = affectedByGravity.get();
-    settings.radius            = radius.get() * maxScale;
+    settings.radius            = radius.get() * std::max({ scale.x, scale.y, scale.z });
 
     physicsBody = physicsEngine->createSphereCollisionBody(settings);
     if (!physicsBody)
-    {
-        MERROR("MSphereCollisionBody::onCreate — failed to create sphere collider");
-        return;
-    }
-
-    physicsEngine->registerCallbackReceiver(physicsBody, this);
-
-    syncFieldsToBody();
-
-    mass.setOnChangeCallback([this](auto v)             { if (physicsBody) physicsBody->setMass(v); });
-    affectedByGravity.setOnChangeCallback([this](auto v){ if (physicsBody) physicsBody->enableGravity(v); });
-    gravityScale.setOnChangeCallback([this](auto v)     { if (physicsBody) physicsBody->setGravity(v); });
-    isSensor.setOnChangeCallback([this](auto v)         { if (physicsBody) physicsBody->setIsSensor(v); });
-    linearDamping.setOnChangeCallback([this](auto v)    { if (physicsBody) physicsBody->setLinearDamping(v); });
-    angularDamping.setOnChangeCallback([this](auto v)   { if (physicsBody) physicsBody->setAngularDamping(v); });
-    bodyType.setOnChangeCallback([this](auto v)
-    {
-        // Jolt allocates MotionProperties only at body creation time.
-        // Static->Dynamic/Kinematic (and back) requires a full body recreation.
-        if (!physicsEngine || !physicsBody) return;
-
-        physicsEngine->unregisterCallbackReceiver(physicsBody);
-        physicsEngine->releaseSphereCollisionBody(physicsBody);
-        physicsBody = nullptr;
-
-        const auto& scale = getWorldScale();
-        const float maxScale = std::max({scale.x, scale.y, scale.z});
-        SSphereBodySettings settings;
-        settings.position          = getWorldPosition();
-        settings.rotation          = getWorldRotation();
-        settings.bodyType          = v;
-        settings.mass              = mass.get();
-        settings.affectedByGravity = affectedByGravity.get();
-        settings.radius            = radius.get() * maxScale;
-
-        physicsBody = physicsEngine->createSphereCollisionBody(settings);
-        if (!physicsBody)
-        {
-            MERROR("MSphereCollisionBody::bodyType onChange -- failed to recreate sphere collider");
-            return;
-        }
-        physicsEngine->registerCallbackReceiver(physicsBody, this);
-        syncFieldsToBody();
-    });
-    radius.setOnChangeCallback([this](auto)             { syncRadius(); });
+        MERROR("MSphereCollisionBody::createCollisionBody — failed to create sphere collider");
 }
 
-void MSphereCollisionBody::syncRadius()
+void MSphereCollisionBody::releaseBody()
 {
-    if (!physicsBody)
-        return;
-    const auto& scale = getRelativeScale();
-    float maxScale = std::max({scale.x, scale.y, scale.z});
-    physicsBody->setRadius(radius.get() * maxScale);
+    if (!physicsBody) return;
+    physicsEngine->releaseSphereCollisionBody(physicsBody);
+    physicsBody = nullptr;
+}
+
+void MSphereCollisionBody::setupShapeCallbacks()
+{
+    radius.setOnChangeCallback([this](auto) { syncRadius(); });
 }
 
 void MSphereCollisionBody::updateTransforms()
 {
     MSpatialEntity::updateTransforms();
-    if (initialized && physicsBody)
-    {
-        syncRadius();
-    }
+    if (initialized && physicsBody) syncRadius();
 }
 
-void MSphereCollisionBody::onStart()
+void MSphereCollisionBody::syncRadius()
 {
-    MSpatialEntity::onStart();
-    createCollisionBody();
-}
-
-void MSphereCollisionBody::onUpdate(float deltaTime)
-{
-    MSpatialEntity::onUpdate(deltaTime);
-    if (!initialized) return;
-
-    // sync internal positions with physics body
-    physicsBody->physicsTick(deltaTime);
-
-    auto appInst = MApplication::getAppInstance();
-    if (appInst && appInst->isPlaying())
-    {
-        //sync
-        setWorldPosition(physicsBody->getBodySyncPosition());
-        setWorldRotation(physicsBody->getBodySyncRotation());
-        return;
-    }
-
-    // force-editor positions into internal body
-    physicsBody->setPositionAndRotation(getWorldPosition(), getWorldRotation());
-}
-
-void MSphereCollisionBody::onExit()
-{
-    MSpatialEntity::onExit();
-    if (!initialized) return;
-
-    physicsEngine->unregisterCallbackReceiver(physicsBody);
-    physicsEngine->releaseSphereCollisionBody(physicsBody);
-
-    physicsBody   = nullptr;
-    physicsEngine = nullptr;
-    initialized   = false;
-}
-
-void MSphereCollisionBody::dispatchCollisionStart(const SCollisionData& data) { if (onCollisionStartCb) onCollisionStartCb(data); }
-void MSphereCollisionBody::dispatchCollisionStay (const SCollisionData& data) { if (onCollisionStayCb)  onCollisionStayCb(data);  }
-void MSphereCollisionBody::dispatchCollisionEnd  (const SCollisionData& data) { if (onCollisionEndCb)   onCollisionEndCb(data);   }
-void MSphereCollisionBody::dispatchTriggerStart  (const SOverlapData&   data) { if (onTriggerStartCb)   onTriggerStartCb(data);   }
-void MSphereCollisionBody::dispatchTriggerStay   (const SOverlapData&   data) { if (onTriggerStayCb)    onTriggerStayCb(data);    }
-void MSphereCollisionBody::dispatchTriggerEnd    (const SOverlapData&   data) { if (onTriggerEndCb)     onTriggerEndCb(data);     }
-
-void MSphereCollisionBody::syncFieldsToBody()
-{
-    physicsBody->enableGravity(affectedByGravity.get());
-    physicsBody->setGravity(gravityScale.get());
-    physicsBody->setIsSensor(isSensor.get());
-    physicsBody->setLinearDamping(linearDamping.get());
-    physicsBody->setAngularDamping(angularDamping.get());
-}
-
-// Ensure the debug gizmo renders at the actual scaled sizing too!
-void MSphereCollisionBody::onDrawGizmo(SVector2 res)
-{
-    const SColor color = isSensor.get()
-                         ? SColor(0.2f, 0.8f, 1.0f, 1.0f)
-                         : SColor(0.2f, 1.0f, 0.2f, 1.0f);
+    if (!physicsBody) return;
     const auto& scale = getRelativeScale();
-    float maxScale = std::max({scale.x, scale.y, scale.z});
+    physicsBody->setRadius(radius.get() * std::max({ scale.x, scale.y, scale.z }));
+}
 
-    MGizmos::drawWireSphere(getWorldPosition(), radius.get() * maxScale, color, 1.0f, getWorldRotation());
+void MSphereCollisionBody::onDrawGizmo(SVector2)
+{
+    const auto& scale = getRelativeScale();
+    const SColor color = isSensor.get() ? SColor(0.2f, 0.8f, 1.0f, 1.0f) : SColor(0.2f, 1.0f, 0.2f, 1.0f);
+    MGizmos::drawWireSphere(getWorldPosition(),
+        radius.get() * std::max({ scale.x, scale.y, scale.z }), color, 1.0f, getWorldRotation());
 }

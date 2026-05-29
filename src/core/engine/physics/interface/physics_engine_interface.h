@@ -6,11 +6,13 @@
 #define PHYSICS_ENGINE_INTERFACE_H
 
 #include "../data/box_body_settings.h"
-#include "core/engine/physics/data/capsule_body_settings.h"
-#include "core/engine/physics/data/convexhull_body_settings.h"
-#include "core/engine/physics/data/cylinder_body_settings.h"
-#include "core/engine/physics/data/mesh_body_settings.h"
 #include "core/engine/physics/data/sphere_body_settings.h"
+#include "core/engine/physics/data/cylinder_body_settings.h"
+#include "core/engine/physics/data/capsule_body_settings.h"
+#include "core/engine/physics/data/mesh_body_settings.h"
+#include "core/engine/physics/data/convexhull_body_settings.h"
+#include "core/engine/physics/data/raycast_data.h"
+#include "core/engine/physics/data/layer_filter.h"
 #include "core/engine/subsystem/subsystem_interface.h"
 
 
@@ -55,12 +57,29 @@ public:
     virtual void                      releaseConvexHullCollisionBody(IConvexHullCollisionBody* body)          = 0;
 
     // ---- Callback receiver registry ----------------------------------------
-    // Entities call these in onCreate / onExit. The engine maps the body's
-    // internal index to the receiver so the contact listener can dispatch
-    // events without knowing about spatial entities.
+
+    // physicsLayer is the 0–31 layer index this body belongs to. It is stored
+    // in the engine's layer registry so rayCast can filter hits by layer without
+    // needing to touch Jolt's internal object layer system.
     virtual void registerCallbackReceiver(ICollisionBody* body,
-                                          IPhysicsCallbackReceiver* receiver) = 0;
-    virtual void unregisterCallbackReceiver(ICollisionBody* body)             = 0;
+                                          IPhysicsCallbackReceiver* receiver,
+                                          unsigned int physicsLayer = 0) = 0;
+
+    virtual void unregisterCallbackReceiver(ICollisionBody* body) = 0;
+
+    // ---- Raycast -----------------------------------------------------------
+
+    // Casts a ray through the physics world and populates `outHit` with the
+    // closest hit that belongs to a layer included in `layerFilter`.
+    //
+    // Returns true if any layer-matching body was hit; false otherwise.
+    // outHit is only valid when the return value is true.
+    //
+    // Threading: must be called from the main thread. Do not call during
+    // physicsSystem.Update() (i.e. not from inside a Jolt contact callback).
+    virtual bool rayCast(const SRay&         ray,
+                         const SLayerFilter& layerFilter,
+                         SRayCastHitResult&  outHit) = 0;
 };
 
-#endif //PHYSICS_ENGINE_INTERFACE_H
+#endif // PHYSICS_ENGINE_INTERFACE_H

@@ -21,7 +21,7 @@ public:
 
     MCameraEntity* getEditorSceneCamera() const;
 
-    void internal_OverrideCurrentScenePath(const SString& path) { currentScenePath = path; };
+    void internal_OverrideCurrentScenePath(const SString& path);
     SString internal_getCurrentScenePath() const { return currentScenePath; };
 
 private:

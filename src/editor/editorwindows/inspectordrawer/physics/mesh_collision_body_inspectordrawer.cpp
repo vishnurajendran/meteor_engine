@@ -3,6 +3,8 @@
 //
 
 #include "mesh_collision_body_inspectordrawer.h"
+
+#include "imgui.h"
 #include "core/engine/physics/entities/mesh_collision_body_entity.h"
 
 bool MMeshCollisionBodyInspectorDrawer::registered = []()
@@ -18,36 +20,40 @@ bool MMeshCollisionBodyInspectorDrawer::canDraw(MSpatialEntity* entity)
 
 void MMeshCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 {
-    auto* body = dynamic_cast<MMeshCollisionBody*>(target);
-
+    // The base drawer draws Body Type as a simple Combo. For mesh we need to
+    // gray out Dynamic, so we draw everything ourselves rather than calling
+    // the base and then patching over it.
+    //
+    // We call the spatial base directly to get the transform section, then
+    // draw a custom Physics Body section, then our shape section.
     MSpatialEntityInspectorDrawer::onDrawInspector(target);
 
-    // ---- Physics Body -------------------------------------------------------
+    auto* body = dynamic_cast<MMeshCollisionBody*>(target);
+
+    // ---- Physics Body (custom — blocks Dynamic) ----------------------------
 
     if (ImGui::CollapsingHeader("Physics Body", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        constexpr float LW = 140.f;
+        constexpr float LW = 140.0f;
         if (ImGui::BeginTable("##mesh_phys", 2, ImGuiTableFlags_None))
         {
             ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
             ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
 
-            // Dynamic is not supported by MeshShape — show all three options
-            // but disable Dynamic and display a tooltip explaining why.
+            // Body Type — Dynamic selectable but visually disabled with tooltip
             static constexpr const char* kBodyTypeNames[] = { "Static", "Dynamic", "Kinematic" };
-
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Body Type:");
             ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            const int currentTypeIdx = static_cast<int>(body->bodyType.get());
-            if (ImGui::BeginCombo("##bodytype", kBodyTypeNames[currentTypeIdx]))
+            const int curType = static_cast<int>(body->bodyType.get());
+            if (ImGui::BeginCombo("##bodytype", kBodyTypeNames[curType]))
             {
                 for (int i = 0; i < 3; ++i)
                 {
                     const bool isDynamic = (i == static_cast<int>(ECollisionBodyType::DynamicBody));
                     ImGui::BeginDisabled(isDynamic);
-                    if (ImGui::Selectable(kBodyTypeNames[i], currentTypeIdx == i))
+                    if (ImGui::Selectable(kBodyTypeNames[i], curType == i))
                         body->bodyType.set(static_cast<ECollisionBodyType>(i));
                     ImGui::EndDisabled();
                     if (isDynamic && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
@@ -56,26 +62,22 @@ void MMeshCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
                 ImGui::EndCombo();
             }
 
-            // Mass is irrelevant for static/kinematic mesh bodies — always disabled.
-            ImGui::BeginDisabled(true);
-
+            // Physics Layer
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Mass (kg):");
+            ImGui::TextUnformatted("Physics Layer:");
             ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-            float mass = body->mass.get();
-            ImGui::DragFloat("##mass", &mass, 0.1f, 0.001f, FLT_MAX, "%.3f");
+            drawPhysicsLayerRow(body);
 
-            ImGui::EndDisabled();
-
+            // Sensor
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Is Sensor:");
             ImGui::TableSetColumnIndex(1);
             bool sensor = body->isSensor.get();
-            if (ImGui::Checkbox("##sensor", &sensor))
-                body->isSensor.set(sensor);
+            if (ImGui::Checkbox("##sensor", &sensor)) body->isSensor.set(sensor);
 
+            // Damping
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
             ImGui::TextUnformatted("Linear Drag:");
@@ -92,50 +94,48 @@ void MMeshCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             if (ImGui::DragFloat("##angdamp", &ad, 0.01f, 0.0f, FLT_MAX, "%.3f"))
                 body->angularDamping.set(glm::max(ad, 0.0f));
 
-            ImGui::EndTable();
-        }
-    }
-
-    // ---- Mesh Shape ---------------------------------------------------------
-
-    if (ImGui::CollapsingHeader("Mesh Shape", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        constexpr float LW = 140.f;
-        if (ImGui::BeginTable("##mesh_shape", 2, ImGuiTableFlags_None))
-        {
-            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
-            ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Mesh Asset:");
-            ImGui::TableSetColumnIndex(1);
-            // TAssetRef::isEmpty() and getPath() — adjust to your TAssetRef API
-            // if the method names differ.
-            const auto& assetRef = body->meshAsset.get();
-            if (assetRef.isEmpty())
-                ImGui::TextDisabled("(auto from child)");
-            else
-                ImGui::TextDisabled("%s", assetRef.getPath().c_str());
-
-            if (body->getPhysicsBody())
+            if (auto* pb = body->getPhysicsBody())
             {
-                const SVector3 com = body->getPhysicsBody()->getCenterOfMass();
+                const SVector3 com = pb->getCenterOfMass();
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
                 ImGui::TextDisabled("CoM (world):");
                 ImGui::TableSetColumnIndex(1);
                 ImGui::TextDisabled("%.2f  %.2f  %.2f", com.x, com.y, com.z);
             }
-            else
-            {
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::TableSetColumnIndex(1);
-                ImGui::TextDisabled("(pending mesh data...)");
-            }
 
             ImGui::EndTable();
         }
     }
+
+    // ---- Mesh Shape --------------------------------------------------------
+
+    if (!ImGui::CollapsingHeader("Mesh Shape", ImGuiTreeNodeFlags_DefaultOpen))
+        return;
+
+    constexpr float LW = 140.0f;
+    if (!ImGui::BeginTable("##mesh_shape", 2, ImGuiTableFlags_None))
+        return;
+
+    ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
+    ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Mesh Asset:");
+    ImGui::TableSetColumnIndex(1);
+    const auto& assetRef = body->meshAsset.get();
+    if (assetRef.isEmpty())
+        ImGui::TextDisabled("(auto from child)");
+    else
+        ImGui::TextDisabled("%s", assetRef.getPath().c_str());
+
+    if (!body->getPhysicsBody())
+    {
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(1);
+        ImGui::TextDisabled("(waiting for mesh data...)");
+    }
+
+    ImGui::EndTable();
 }

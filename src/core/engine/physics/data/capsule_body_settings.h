@@ -6,7 +6,7 @@
 #define CAPSULE_BODY_SETTINGS_H
 
 #include "core/engine/physics/data/default_body_settings.h"
-#include "core/engine/physics/interface/bodies/shape_axis.h"
+#include "shape_axis.h"
 
 struct SCapsuleBodySettings
 {

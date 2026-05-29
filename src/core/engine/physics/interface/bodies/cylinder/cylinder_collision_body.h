@@ -5,8 +5,8 @@
 #ifndef CYLINDER_COLLISION_BODY_H
 #define CYLINDER_COLLISION_BODY_H
 
+#include "../../../data/shape_axis.h"
 #include "core/engine/physics/interface/bodies/collision_body_interface.h"
-#include "core/engine/physics/interface/bodies/shape_axis.h"
 
 class ICylinderCollisionBody : public virtual ICollisionBody
 {

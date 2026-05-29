@@ -479,7 +479,7 @@ set(CORE_SOURCES
         src/core/engine/physics/callback/contact_listener.h
         src/core/engine/physics/impl/bodies/macros/jolt_base_collision_body_macros.h
         src/core/engine/physics/impl/jolt_body_interface.h
-        src/core/engine/physics/interface/bodies/shape_axis.h
+        src/core/engine/physics/data/shape_axis.h
         src/core/engine/physics/interface/bodies/cylinder/cylinder_collision_body.h
         src/core/engine/physics/interface/bodies/capsule/capsule_collision_body.h
         src/core/engine/physics/interface/bodies/mesh/mesh_collision_body.h
@@ -504,6 +504,14 @@ set(CORE_SOURCES
         src/core/engine/physics/entities/mesh_collision_body_entity.h
         src/core/engine/physics/entities/convexhull_collision_body_entity.cpp
         src/core/engine/physics/entities/convexhull_collision_body_entity.h
+        src/core/engine/settings/physics_layers_settings.cpp
+        src/core/engine/settings/physics_layers_settings.h
+        src/core/engine/physics/data/layer_filter.cpp
+        src/core/engine/physics/data/layer_filter.h
+        src/core/engine/physics/data/raycast_data.h
+        src/core/engine/physics/entities/collision_body_entity.cpp
+        src/core/engine/physics/entities/collision_body_entity.h
+        src/core/default_settings_paths.h
 )
 
 set(EDITOR_SOURCES
@@ -626,6 +634,8 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/physics/mesh_collision_body_inspectordrawer.h
         src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.cpp
         src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/collision_body_inspectordrawer.h
 )
 
 set(PLAYER_SOURCES

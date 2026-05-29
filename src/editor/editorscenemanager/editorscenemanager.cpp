@@ -94,10 +94,20 @@ void MEditorSceneManager::update(float deltaTime)
     }
 }
 
+MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const { return editorSceneCamera; }
 
-MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const
+void MEditorSceneManager::internal_OverrideCurrentScenePath(const SString& path)
 {
-    return editorSceneCamera;
+    currentScenePath = path;
+    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+    {
+        const auto* appInstRef = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+        if (appInstRef)
+        {
+            MVERBOSE(SString::format("[MEditorApplication]::Setting last opened scene {0}", currentScenePath));
+            settings->lastOpenedScene.set(currentScenePath);
+        }
+    }
 }
 
 void MEditorSceneManager::createEditorSceneCamera()
