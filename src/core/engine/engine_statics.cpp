@@ -1,20 +1,25 @@
 //
 // Created by ssj5v on 20-04-2026.
 //
+
 #include "engine_statics.h"
 
 #include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 
-// static field inits
-MEngineSettings* MEngineStatics::engineSettings = nullptr;
-SString MEngineStatics::engineSettingsPath = SString();
-
+// Static member definitions
+MEngineSettings*    MEngineStatics::engineSettings        = nullptr;
+SString             MEngineStatics::engineSettingsPath    = SString();
+MPhysicsLayersSettings* MEngineStatics::physicsLayersAsset   = nullptr;
+SString             MEngineStatics::physicsLayersAssetPath = SString();
 
 void MEngineStatics::saveAll()
 {
     MLOG("MEngineStatics:: Saving data");
-    // save engine data
-    if (!engineSettingsPath.empty())
+
+    if (engineSettings && !engineSettingsPath.empty())
         engineSettings->serialiseToFile(engineSettingsPath);
+
+    if (physicsLayersAsset && !physicsLayersAssetPath.empty())
+        physicsLayersAsset->serialiseToFile(physicsLayersAssetPath);
 }

@@ -5,6 +5,7 @@
 #include "save_scene.h"
 #include <filesystem>
 #include "ImGuiFileDialog.h"
+#include "core/application/application.h"
 #include "core/engine/scene/scenemanager.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/window/menubar/menubartree.h"
@@ -101,6 +102,12 @@ SString MSaveSceneMenubarItem::getPath()  const { return "File/Save Scene"; }
 
 void MSaveSceneMenubarItem::onSelect()
 {
+    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    {
+        MWARN("Scene Save operation blocked during play-mode");
+        return;
+    }
+
     SString path = resolveCurrentScenePath();
     if (!path.empty())
     {
@@ -142,6 +149,11 @@ SString MSaveSceneAsMenubarItem::getPath()  const { return "File/Save Scene As";
 
 void MSaveSceneAsMenubarItem::onSelect()
 {
+    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    {
+        MWARN("Scene Save operation blocked during play-mode");
+        return;
+    }
     s_saveAsWantOpen = true;
 }
 

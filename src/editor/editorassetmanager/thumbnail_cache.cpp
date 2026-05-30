@@ -2,12 +2,13 @@
 
 #include "thumbnail_cache.h"
 #include <filesystem>
+
+#include "../../../cmake-build-debug/_deps/sfml-src/src/SFML/Audio/AudioDevice.hpp"
 #include "SFML/Graphics/Image.hpp"
+#include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 
 namespace fs = std::filesystem;
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 fs::path MThumbnailCache::diskPath(const SString& assetId)
 {
@@ -16,21 +17,20 @@ fs::path MThumbnailCache::diskPath(const SString& assetId)
 
 void MThumbnailCache::ensureCacheDir()
 {
-    std::error_code ec;
-    fs::create_directories(CACHE_DIR, ec);
-    if (ec)
-        MWARN("MThumbnailCache: could not create cache dir: " + SString(ec.message().c_str()));
+    if (!FileIO::directoryExists(CACHE_DIR))
+    {
+        if (!FileIO::createDirectory(CACHE_DIR))
+        {
+            MWARN(SString::format("MThumbnailCache: could not create cache dir: {0}", CACHE_DIR));
+        }
+    }
 }
-
-// ── Lifetime ──────────────────────────────────────────────────────────────────
 
 MThumbnailCache::~MThumbnailCache()
 {
     // evictAll() clears memory only — disk files are intentionally kept.
     evictAll();
 }
-
-// ── store ─────────────────────────────────────────────────────────────────────
 
 void MThumbnailCache::store(const SString& assetId, sf::Texture* texture)
 {
@@ -56,8 +56,6 @@ void MThumbnailCache::store(const SString& assetId, sf::Texture* texture)
             MWARN("MThumbnailCache: failed to save thumbnail to " + SString(p.string().c_str()));
     }
 }
-
-// ── get ───────────────────────────────────────────────────────────────────────
 
 sf::Texture* MThumbnailCache::get(const SString& assetId)
 {
@@ -86,8 +84,6 @@ sf::Texture* MThumbnailCache::get(const SString& assetId)
     return tex;
 }
 
-// ── has ───────────────────────────────────────────────────────────────────────
-
 bool MThumbnailCache::has(const SString& assetId) const
 {
     if (memCache.contains(assetId))
@@ -97,8 +93,6 @@ bool MThumbnailCache::has(const SString& assetId) const
     // queueing assets whose PNG already exists.
     return fs::exists(diskPath(assetId));
 }
-
-// ── evict ─────────────────────────────────────────────────────────────────────
 
 void MThumbnailCache::evict(const SString& assetId)
 {
@@ -114,8 +108,6 @@ void MThumbnailCache::evict(const SString& assetId)
     std::error_code ec;
     fs::remove(diskPath(assetId), ec);
 }
-
-// ── evictAll ──────────────────────────────────────────────────────────────────
 
 void MThumbnailCache::evictAll()
 {

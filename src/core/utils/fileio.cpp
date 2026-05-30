@@ -182,12 +182,14 @@ bool FileIO::deleteFile(const SString& path)
 bool FileIO::copyFile(const SString& src, const SString& dst)
 {
     std::error_code ec;
-    std::filesystem::copy_file(
-        std::filesystem::path(std::string(src)),
-        std::filesystem::path(std::string(dst)),
-        std::filesystem::copy_options::overwrite_existing,
-        ec);
+    std::filesystem::copy_file(std::filesystem::path(std::string(src)), std::filesystem::path(std::string(dst)),
+                               std::filesystem::copy_options::overwrite_existing, ec);
     return !ec;
+}
+
+bool FileIO::directoryExists(const SString& path)
+{
+    return std::filesystem::is_directory(std::filesystem::path(std::string(path)));
 }
 
 bool FileIO::createDirectory(const SString& path)

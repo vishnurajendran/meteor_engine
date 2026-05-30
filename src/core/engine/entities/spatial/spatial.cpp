@@ -126,6 +126,16 @@ SQuaternion MSpatialEntity::getWorldRotation() const
     return glm::quat_cast(rot);
 }
 
+SVector3 MSpatialEntity::getWorldScale() const
+{
+    // Each column's length encodes the scale applied along that axis.
+    return SVector3(
+        glm::length(SVector3(modelMatrix[0])),
+        glm::length(SVector3(modelMatrix[1])),
+        glm::length(SVector3(modelMatrix[2]))
+    );
+}
+
 void MSpatialEntity::setWorldPosition(const SVector3& worldPosition)
 {
     relativePosition = parent

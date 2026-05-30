@@ -7,7 +7,6 @@ MObject::MObject()
 {
     guid = SGuid::newGUID();
     name = "MObject";
-
     MVERBOSE(SString::format("Created MObject {0} ({1})", name, guid));
 }
 

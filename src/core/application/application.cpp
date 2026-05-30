@@ -4,6 +4,8 @@
 
 #include "application.h"
 
+MApplication* MApplication::appInst = nullptr;
+
 void MApplication::startFrame()
 {
     startTime = std::clock();

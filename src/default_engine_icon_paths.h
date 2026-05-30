@@ -20,9 +20,14 @@ struct SEditorAssetPaths
     static constexpr const char* LOWRES_TEX_CAMERA            = "meteor_assets/engine_assets/icons/lowres/camera.png";
     static constexpr const char* LOWRES_TEX_SCENE             = "meteor_assets/engine_assets/icons/lowres/scene.png";
     static constexpr const char* LOWRES_TEX_SPATIAL           = "meteor_assets/engine_assets/icons/lowres/spatial.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_BOX     = "meteor_assets/engine_assets/icons/lowres/collision_cube.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_SPHERE  = "meteor_assets/engine_assets/icons/lowres/collision_sphere.png";
+
 
     // Editor Button Icons
     static constexpr const char* LOWRES_TEX_BTTN_PLAY             = "meteor_assets/engine_assets/icons/lowres/play.png";
+    static constexpr const char* LOWRES_TEX_BTTN_STOP             = "meteor_assets/engine_assets/icons/lowres/stop.png";
+    static constexpr const char* LOWRES_TEX_BTTN_PAUSE            = "meteor_assets/engine_assets/icons/lowres/pause.png";
     static constexpr const char* LOWRES_TEX_BTTN_MOVE             = "meteor_assets/engine_assets/icons/lowres/gizmo_translate.png";
     static constexpr const char* LOWRES_TEX_BTTN_ROTATE           = "meteor_assets/engine_assets/icons/lowres/gizmo_rotate.png";
     static constexpr const char* LOWRES_TEX_BTTN_SCALE            = "meteor_assets/engine_assets/icons/lowres/gizmo_scale.png";

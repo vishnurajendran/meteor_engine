@@ -48,10 +48,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     glEnable(GL_CULL_FACE);
     // No glClear — MClearStage handles clearing before skybox and geometry.
 
-    MCameraEntity* camera = nullptr;
-    for (auto* c : MViewManagement::getCameras())
-        if (c && c->getEnabled()) { camera = c; break; }
-
+    const MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
     const glm::mat4 viewMat = camera ? camera->getViewMatrix()          : glm::mat4(1.f);
     const glm::mat4 projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
 

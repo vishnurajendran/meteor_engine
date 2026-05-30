@@ -40,8 +40,6 @@ void MAudioSourceInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
 
             // -- Clip asset reference --
-            // getClip() returns TAssetRef; the control works with TAssetHandle,
-            // so convert via getHandle() when syncing.
             const auto curClip     = src->getClip();
             const auto controlClip = clipAssetControl->getAssetReference();
 
@@ -86,12 +84,19 @@ void MAudioSourceInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             if (ImGui::Checkbox("##loop", &lp))
                 src->setLoop(lp);
 
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Auto Start:");
+            ImGui::TableSetColumnIndex(1);
+            bool as = src->getAutoStart();
+            if (ImGui::Checkbox("##autoStart", &as))
+                src->setAutoStart(as);
+
             ImGui::EndTable();
         }
     }
 
     // ---- Spatialization section ----------------------------------------------
-
     if (ImGui::CollapsingHeader("Spatialization", ImGuiTreeNodeFlags_DefaultOpen))
     {
         constexpr float LW = 120.f;
@@ -152,5 +157,26 @@ void MAudioSourceInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::EndDisabled();
             ImGui::EndTable();
         }
+    }
+
+    if (ImGui::BeginTable("##audio_controls", 2, ImGuiTableFlags_None))
+    {
+        const bool isPlaying = src->isPlaying();
+
+        ImGui::TableNextRow();
+
+        // Play / Stop button
+        ImGui::TableNextColumn();
+        if (ImGui::Button(isPlaying ? "Stop" : "Play"))
+        {
+            const bool nowPlaying = !isPlaying;
+            nowPlaying ? src->play() : src->stop();
+        }
+
+        // Status indicator
+        ImGui::TableNextColumn();
+        ImGui::TextDisabled(isPlaying ? "Playing..." : "Stopped");
+
+        ImGui::EndTable();
     }
 }

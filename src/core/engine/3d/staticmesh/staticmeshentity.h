@@ -19,7 +19,6 @@ class MStaticMeshEntity : public MSpatialEntity, public IMeteorDrawable
     // Replaces the old meshAssetPath (std::string) + separate TAssetHandle pair.
     DECLARE_FIELD(meshAsset, TAssetRef<MStaticMeshAsset>, {})
     DECLARE_FIELD(castsShadow, bool, true)
-
 public:
     MStaticMeshEntity();
     ~MStaticMeshEntity() override;
@@ -45,6 +44,14 @@ public:
     [[nodiscard]] bool              getCastsShadow()                    const { return castsShadow.get(); }
     void setCastsShadow(bool v) { castsShadow = v; }
 
+
+// Editor only API
+#if METEOR_EDITOR
+public:
+    void setDrawGizmo(bool enabled) { debug_drawBounds = enabled; };
+    bool getDrawGizmo() const { return debug_drawBounds; };
+#endif
+
 protected:
     void onSerialise(pugi::xml_node& node)         override;
     void onDeserialise(const pugi::xml_node& node) override;
@@ -69,6 +76,10 @@ private:
     AABB                           bounds              = { {0,0,0}, {0,0,0} };
     SMatrix4                       prevTransformMatrix{};
     MMaterial*                     errorMaterialInstance = nullptr;
+
+#if METEOR_EDITOR
+    bool                           debug_drawBounds = false;
+#endif
 };
 
 #endif

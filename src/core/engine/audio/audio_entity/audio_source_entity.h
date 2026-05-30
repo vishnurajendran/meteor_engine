@@ -19,6 +19,7 @@ class MAudioSource : public MSpatialEntity {
     DECLARE_FIELD(loop, bool, false)
     DECLARE_FIELD(volume, float, 1.0f)
     DECLARE_FIELD(pitch, float, 1.0f)
+    DECLARE_FIELD(autoStart, bool, true);
 
     // Spatialization
     DECLARE_FIELD(useSpatial, bool, false)
@@ -54,15 +55,19 @@ public:
     void playOneShot(TAssetHandle<MAudioClipAsset> clip);
 
     // -- Audio control accessors (used by the inspector) ----------------------
+    bool isPlaying() const { return sourcePlaying; }
+
+    bool getAutoStart() const { return autoStart.get(); }
+    void setAutoStart(const bool& as) { autoStart.set(as); }
 
     bool  getLoop()   const { return loop.get(); }
-    void  setLoop(bool v)   { loop.set(v); }
+    void  setLoop(const bool&  v)   { loop.set(v); }
 
     float getVolume() const { return volume.get(); }
-    void  setVolume(float v){ volume.set(v); }
+    void  setVolume(const float&  v){ volume.set(v); }
 
     float getPitch()  const { return pitch.get(); }
-    void  setPitch(float v) { pitch.set(v); }
+    void  setPitch(const float&  v) { pitch.set(v); }
 
     // -- Spatialization accessors ---------------------------------------------
 
@@ -94,6 +99,7 @@ private:
 
     // initially out of sync, the next play syncs the state.
     bool outOfSync = true;
+    bool sourcePlaying = false;
 };
 
 

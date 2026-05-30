@@ -5,13 +5,11 @@
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
 
-// ─── Save ─────────────────────────────────────────────────────────────────────
-
 bool MSceneSerializer::save(MScene* scene, const std::string& filePath)
 {
     if (!scene)
     {
-        std::cerr << "[SceneSerializer] save() called with null scene\n";
+       MERROR("SceneSerializer::save() called with null scene");
         return false;
     }
 
@@ -19,9 +17,6 @@ bool MSceneSerializer::save(MScene* scene, const std::string& filePath)
     pugi::xml_node     root = doc.append_child("scene");
     root.append_attribute("name") = scene->getName().c_str();
 
-    // Iterate only ROOT entities — children are written recursively inside
-    // each entity's <children> block by serialiseEntity().
-    // Skip editor-only entities (e.g. the editor scene camera).
     for (const auto* entity : scene->getRootEntities())
     {
         if (!entity) continue;
@@ -33,11 +28,11 @@ bool MSceneSerializer::save(MScene* scene, const std::string& filePath)
 
     if (!doc.save_file(filePath.c_str()))
     {
-        std::cerr << "[SceneSerializer] Failed to write: " << filePath << "\n";
+        MERROR(SString::format("SceneSerializer::Failed to write: {0}",filePath));
         return false;
     }
 
-    std::cout << "[SceneSerializer] Scene saved to: " << filePath << "\n";
+    MLOG(SString::format("SceneSerializer::Scene saved to: {0}",filePath));
     return true;
 }
 
@@ -45,7 +40,7 @@ bool MSceneSerializer::load(const std::string& filePath, MScene* scene)
 {
     if (!scene)
     {
-        std::cerr << "[SceneSerializer] load() called with null scene\n";
+        MERROR("SceneSerializer::load() called with null scene");
         return false;
     }
 
@@ -53,15 +48,14 @@ bool MSceneSerializer::load(const std::string& filePath, MScene* scene)
     pugi::xml_parse_result result = doc.load_file(filePath.c_str());
     if (!result)
     {
-        std::cerr << "[SceneSerializer] Failed to parse: " << filePath
-                  << " — " << result.description() << "\n";
+        MERROR(SString::format("SceneSerializer::Failed to parse: {0} - {1}", filePath, result.description()));
         return false;
     }
 
     pugi::xml_node root = doc.child("scene");
     if (!root)
     {
-        std::cerr << "[SceneSerializer] No <scene> root element in: " << filePath << "\n";
+        MERROR(SString::format("SceneSerializer::No <scene> root element in: {0}",filePath));;
         return false;
     }
 
@@ -69,15 +63,12 @@ bool MSceneSerializer::load(const std::string& filePath, MScene* scene)
     if (auto nameAttr = root.attribute("name"); nameAttr)
         scene->setName(nameAttr.value());
 
-    // Deserialise each top-level <entity> node.
-    // MSpatialEntity::deserialiseEntity handles type dispatch, field loading,
-    // and recursive child restoration.
     for (pugi::xml_node entityNode : root.children("entity"))
     {
         if (MSpatialEntity* entity = MSpatialEntity::deserialiseEntity(entityNode))
             scene->addToRoot(entity);
     }
 
-    std::cout << "[SceneSerializer] Scene loaded from: " << filePath << "\n";
+    MLOG(SString::format("SceneSerializer::Scene loaded from: {0}", filePath));
     return true;
 }

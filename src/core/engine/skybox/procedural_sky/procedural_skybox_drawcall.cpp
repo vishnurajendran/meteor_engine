@@ -85,14 +85,13 @@ void MProceduralSkyboxDrawCall::draw()
         return;
     }
 
-    const auto& cameras = MViewManagement::getCameras();
-    if (cameras.empty())
+    MCameraEntity* cam  = MViewManagement::getFirstActiveCamera();
+    if (!cam)
     {
-        MERROR("MProceduralSkyboxDrawCall::draw — no camera");
+        MERROR("MProceduralSkyboxDrawCall::draw - no camera");
         return;
     }
 
-    MCameraEntity* cam  = cameras.front();
     SMatrix4 proj       = cam->getProjectionMatrix(resolution);
     SMatrix4 rotView    = SMatrix4(SMatrix3(cam->getViewMatrix()));
 
