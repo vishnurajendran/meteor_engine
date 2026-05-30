@@ -1,3 +1,5 @@
+[![Doxygen to GitHub Pages](https://github.com/vishnurajendran/meteor_engine/actions/workflows/doxygen.yml/badge.svg)](https://github.com/vishnurajendran/meteor_engine/actions/workflows/doxygen.yml)
+
 # Meteor Engine (Work in Progress)
 
 Meteor is an experimental custom game engine built in C++20.  
