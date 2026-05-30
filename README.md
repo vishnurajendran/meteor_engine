@@ -6,6 +6,7 @@ Meteor is an experimental custom game engine built in C++20.
 It’s currently in active development, focused on exploring rendering architecture, tooling, and engine design.
 
 > This project is **not ready for building games yet**. Expect breaking changes, missing systems and features, and rough edges.
+&nbsp;
 
 ---
 
