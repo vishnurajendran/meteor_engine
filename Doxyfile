@@ -6,13 +6,15 @@ PROJECT_BRIEF          = "A C++ game engine built with OpenGL"
 OUTPUT_DIRECTORY       = docs
 
 # -- Input sources --
-# Which directories Doxygen should scan for documented code.
-# Adjust if your layout differs on the documentation branch.
-INPUT                  = src/
+# Scans src/ for code and uses README.md as the landing page.
+INPUT                  = src/ README.md
 RECURSIVE              = YES
 FILE_PATTERNS          = *.h *.hpp *.cpp
+USE_MDFILE_AS_MAINPAGE = README.md
 
 # -- What gets extracted --
+# EXTRACT_ALL = YES documents everything, even without Doxygen
+# comments. Set to NO later once you have proper doc coverage.
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_STATIC         = YES
@@ -22,13 +24,20 @@ GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
 HTML_OUTPUT            = html
 
-# -- Source browsing (inline code in docs) --
+# -- Theme (doxygen-awesome-css) --
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_EXTRA_STYLESHEET  = doxygen-awesome-css/doxygen-awesome.css
+HTML_COLORSTYLE        = LIGHT
+
+# -- Source browsing --
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = NO
 
-# -- Diagrams --
-# Graphviz class/call graphs. Set to NO if you want faster builds
-# and don't need relationship diagrams.
+# -- Diagrams (Graphviz) --
+# Set HAVE_DOT to NO and remove the graphviz install step
+# in the workflow if you want faster builds without diagrams.
 HAVE_DOT               = YES
 DOT_IMAGE_FORMAT       = svg
 CALL_GRAPH             = YES

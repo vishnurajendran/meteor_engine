@@ -1,23 +1,20 @@
 name: Doxygen to GitHub Pages
 
-# -- Trigger --
 # Runs only when commits are pushed to the documentation branch.
 on:
   push:
     branches:
       - documentation
 
-# -- Permissions --
 # The GITHUB_TOKEN needs these to create a Pages deployment.
-# Without them the deploy step fails silently.
+# pages:write and id-token:write are required by actions/deploy-pages.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# -- Concurrency --
-# If you push twice in quick succession, this cancels the
-# in-progress run instead of queueing both. Saves runner minutes.
+# Cancels in-progress runs on new pushes to avoid
+# race conditions during deployment.
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -26,9 +23,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    # -- Environment --
-    # Links this job to the github-pages deployment environment.
-    # Required by actions/deploy-pages.
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -41,25 +35,26 @@ jobs:
           ref: documentation
 
       # 2. Install Doxygen and Graphviz
-      #    graphviz is only needed if HAVE_DOT = YES in the Doxyfile.
       - name: Install Doxygen and Graphviz
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz
 
-      # 3. Run Doxygen
+      # 3. Fetch the doxygen-awesome theme (shallow clone, only need the CSS)
+      - name: Clone doxygen-awesome-css
+        run: git clone --depth 1 https://github.com/jothepro/doxygen-awesome-css.git
+
+      # 4. Run Doxygen
       - name: Generate documentation
         run: doxygen Doxyfile
 
-      # 4. Prepare the artifact for Pages
-      #    actions/upload-pages-artifact expects a directory path.
-      #    Our Doxyfile writes HTML to docs/html/.
+      # 5. Upload the generated HTML for Pages
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/html
 
-      # 5. Deploy to GitHub Pages
+      # 6. Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
