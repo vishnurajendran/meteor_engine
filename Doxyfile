@@ -40,6 +40,6 @@ INLINE_SOURCES         = NO
 # in the workflow if you want faster builds without diagrams.
 HAVE_DOT               = YES
 DOT_IMAGE_FORMAT       = svg
-CALL_GRAPH             = YES
-CALLER_GRAPH           = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
 CLASS_DIAGRAMS         = YES
