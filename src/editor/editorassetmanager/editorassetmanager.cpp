@@ -23,6 +23,10 @@ void MEditorAssetManager::refresh()
 
     MAssetManager::refresh();
 
+    // Discover all directories and create sibling meta files before building
+    // the tree, so empty directories get nodes too.
+    scanDirectories();
+
     buildAssetTree();
     registerAssetsWithWatcher();
 
@@ -75,7 +79,12 @@ void MEditorAssetManager::deltaRefresh()
     lastDeltaScanTime = now;
     bool changed = false;
     SString lastLoadedAsset = "";
-    // Pass 1: new files
+
+    // Collect directories alongside the existing file scan so we
+    // do not pay for a second filesystem walk.
+    std::set<SString> currentDirs;
+
+    // Pass 1: new files + directory discovery
     for (const auto& searchPath : ASSET_SEARCH_PATHS)
     {
         std::filesystem::path dir(searchPath.str());
@@ -83,6 +92,15 @@ void MEditorAssetManager::deltaRefresh()
 
         for (const auto& entry : std::filesystem::recursive_directory_iterator(dir))
         {
+            // Track directories as we encounter them
+            if (entry.is_directory())
+            {
+                SString path = STR(entry.path().string());
+                path.replace("\\", "/");
+                currentDirs.insert(path);
+                continue;
+            }
+
             if (!entry.is_regular_file()) continue;
             auto fileName = STR(entry.path().filename().string());
             if (fileName[0] == '~') continue;
@@ -111,6 +129,19 @@ void MEditorAssetManager::deltaRefresh()
                 failedAssetPaths.insert(path);
             }
         }
+    }
+
+    // Detect directory additions or removals
+    if (currentDirs != directoryPaths)
+    {
+        // Create sibling meta files for newly discovered directories
+        for (const auto& dirPath : currentDirs)
+        {
+            if (!directoryPaths.contains(dirPath) && !hasMetaData(dirPath))
+                createMetaFile(dirPath);
+        }
+        directoryPaths = currentDirs;
+        changed = true;
     }
 
     // Pass 2: deleted files
@@ -149,6 +180,61 @@ void MEditorAssetManager::registerAssetsWithWatcher()
         hotReloadWatcher.watchAsset(asset);
 }
 
+// Walk ASSET_SEARCH_PATHS and collect every directory. Create a sibling
+// .meta file for any directory that lacks one, giving it a stable GUID.
+void MEditorAssetManager::scanDirectories()
+{
+    directoryPaths.clear();
+
+    for (const auto& searchPath : ASSET_SEARCH_PATHS)
+    {
+        std::filesystem::path dir(searchPath.str());
+        if (!std::filesystem::exists(dir)) continue;
+
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(dir))
+        {
+            if (!entry.is_directory()) continue;
+
+            SString path = STR(entry.path().string());
+            path.replace("\\", "/");
+
+            // Create a sibling meta file (e.g. assets/textures.meta) if missing
+            if (!hasMetaData(path))
+                createMetaFile(path);
+
+            directoryPaths.insert(path);
+        }
+    }
+}
+
+// Walk path segments and create directory nodes that do not already exist.
+// Nodes created by the asset pass are reused; only missing intermediaries and
+// leaf directories are added.
+void MEditorAssetManager::ensureDirectoryNodeExists(const SString& dirPath)
+{
+    auto segments = dirPath.split("/");
+    SAssetDirectoryNode* current = assetsTreeRoot;
+    SString builtPath;
+
+    for (const auto& segment : segments)
+    {
+        if (!builtPath.empty()) builtPath += "/";
+        builtPath += segment;
+
+        auto* child = current->getChild(segment);
+        if (!child)
+        {
+            auto* node = new SAssetDirectoryNode();
+            node->nodeName    = segment;
+            node->nodePath    = builtPath;
+            node->isDirectory = true;
+            current->childrenNodes.push_back(node);
+            child = node;
+        }
+        current = child;
+    }
+}
+
 void MEditorAssetManager::buildAssetTree()
 {
     if (assetsTreeRoot != nullptr)
@@ -165,6 +251,13 @@ void MEditorAssetManager::buildAssetTree()
         for (const auto& sComp : kv.first.split("/"))
             pathQueue.push(sComp);
         recursiveBuildAssetTree(pathQueue, assetsTreeRoot, kv.second, "");
+    }
+
+    // Ensure every discovered directory has a node in the tree,
+    // even if it contains no files.
+    for (const auto& dirPath : directoryPaths)
+    {
+        ensureDirectoryNodeExists(dirPath);
     }
 }
 
@@ -249,7 +342,7 @@ bool MEditorAssetManager::deleteAsset(MAsset* asset)
 
     if (targetPath.empty())
     {
-        MWARN("EditorAssetManager:: deleteAsset — asset not found in map");
+        MWARN("EditorAssetManager:: deleteAsset -- asset not found in map");
         return false;
     }
 

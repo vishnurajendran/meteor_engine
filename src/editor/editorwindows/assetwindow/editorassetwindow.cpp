@@ -718,7 +718,8 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
 
     if (node->isDirectory)
     {
-        icon = am->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER)
+        const char* folderIcon = node->isEmptyLeafDirectory() ? SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER;
+        icon = am->getAsset<MTextureAsset>(folderIcon)
                   ->getTexture()->getCoreTexture();
     }
     else if (node->assetReference)
@@ -944,7 +945,8 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
     sf::Texture* icon = nullptr;
     if (node->isDirectory)
     {
-        icon = am->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER)
+        const char* folderIcon = node->isEmptyLeafDirectory() ? SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER;
+        icon = am->getAsset<MTextureAsset>(folderIcon)
                   ->getTexture()->getCoreTexture();
     }
     else if (node->assetReference)

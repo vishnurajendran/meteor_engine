@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] SAssetDirectoryNode* getAssetRootNode() const { return assetsTreeRoot; }
 
-    // -- Asset ping — "focus in browser" --------------------------------------
+    // -- Asset ping -- "focus in browser" --------------------------------------
     void    pingAsset(const SString& assetId) { pendingPingAssetId = assetId; }
     SString consumePendingPing()              { SString id = pendingPingAssetId; pendingPingAssetId.clear(); return id; }
 
@@ -43,12 +43,8 @@ public:
     void           requestThumbnail(MAsset* asset);
 
     // -- Asset creation --------------------------------------------------------
-    // Creates a .mesl shader file from a template in DIR_TEMPLATES.
-    // Returns true on success.  Forces an immediate delta scan.
     bool createShaderAsset(const SString& directory, const SString& name,
                            EShaderTemplate shaderTemplate);
-
-    // Creates a .cubemap skybox definition file from a template.
     bool createSkyboxAsset(const SString& directory, const SString& name);
 
     // -- Asset deletion --------------------------------------------------------
@@ -62,12 +58,16 @@ private:
     void registerAssetsWithWatcher();
     void deltaRefresh();
 
+    // Walks ASSET_SEARCH_PATHS and collects every directory into directoryPaths.
+    // Creates a sibling .meta file for each directory that lacks one.
+    void scanDirectories();
+
+    // Ensures a directory node chain exists in the tree for the given path.
+    // Reuses existing nodes where they already exist (created by the asset pass).
+    void ensureDirectoryNodeExists(const SString& dirPath);
+
     static bool writeNewAssetFile(const SString& filePath, const SString& content);
-
-    // Reads a template from DIR_TEMPLATES, replaces __ASSET_NAME__ with
-    // `assetName`, returns the result.  Empty string on failure.
     static SString loadTemplate(const SString& templateFileName, const SString& assetName);
-
     static const char* getShaderTemplateFileName(EShaderTemplate tmpl);
 
     static constexpr const char* DIR_TEMPLATES        = SEditorPaths::DIR_TEMPLATES_PATH;
@@ -86,6 +86,10 @@ private:
 
     std::set<SString> failedAssetPaths;
     SString           pendingPingAssetId;
+
+    // All directory paths discovered on disk, used by buildAssetTree()
+    // to ensure empty directories appear in the tree.
+    std::set<SString> directoryPaths;
 };
 
 #endif // EDITORASSETMANAGER_H
