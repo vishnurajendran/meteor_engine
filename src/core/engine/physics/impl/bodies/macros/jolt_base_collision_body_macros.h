@@ -19,6 +19,8 @@ public: \
     [[nodiscard]] SVector3    getLinearVelocity()   const override { return internalLinearVelocity; } \
     [[nodiscard]] SVector3    getAngularVelocity()  const override { return internalAngularVelocity; } \
     [[nodiscard]] SVector3    getCenterOfMass()     const override; \
+    [[nodiscard]] float       getLinearDamping()    const override; \
+    [[nodiscard]] float       getAngularDamping()   const override; \
 \
     void physicsTick(const float& fixedDeltaTime) override; \
 \
@@ -31,6 +33,8 @@ public: \
     void setIsSensor(bool sensor)                       override; \
     void setLinearDamping(float drag)                   override; \
     void setAngularDamping(float drag)                  override; \
+    void setLinearVelocity(const SVector3& linearVelocity)  override; \
+    void setAngularVelocity(const SVector3& angularVelocity) override; \
     void setPositionAndRotation(const SVector3& position, \
                                 const SQuaternion& rotation) override; \
 \
@@ -193,6 +197,24 @@ void ClassName::setLinearDamping(const float drag) \
     } \
     mp->SetLinearDamping(drag); \
 } \
+float ClassName::getLinearDamping() const \
+{ \
+    if (!isValidBody()) return 0.0f; \
+    JPH::BodyLockRead lock(joltPhysicsSystem.GetBodyLockInterface(), joltBodyID); \
+    if (!lock.Succeeded()) return 0.0f; \
+    const JPH::MotionProperties* mp = lock.GetBody().GetMotionPropertiesUnchecked(); \
+    if (!mp) return 0.0f; \
+    return mp->GetLinearDamping(); \
+} \
+float ClassName::getAngularDamping() const \
+{ \
+    if (!isValidBody()) return 0.0f; \
+    JPH::BodyLockRead lock(joltPhysicsSystem.GetBodyLockInterface(), joltBodyID); \
+    if (!lock.Succeeded()) return 0.0f; \
+    const JPH::MotionProperties* mp = lock.GetBody().GetMotionPropertiesUnchecked(); \
+    if (!mp) return 0.0f; \
+    return mp->GetAngularDamping(); \
+} \
 void ClassName::setAngularDamping(const float drag) \
 { \
     if (!isValidBody()) { \
@@ -211,6 +233,18 @@ void ClassName::setAngularDamping(const float drag) \
         return; \
     } \
     mp->SetAngularDamping(drag); \
+} \
+void ClassName::setLinearVelocity(const SVector3& linearVelocity) \
+{ \
+    if (!isValidBody()) return; \
+    const JPH::Vec3 vel(linearVelocity.x, linearVelocity.y, linearVelocity.z); \
+    joltBodyInterface.SetLinearVelocity(joltBodyID, vel); \
+} \
+void ClassName::setAngularVelocity(const SVector3& angularVelocity) \
+{ \
+    if (!isValidBody()) return; \
+    const JPH::Vec3 vel(angularVelocity.x, angularVelocity.y, angularVelocity.z); \
+    joltBodyInterface.SetAngularVelocity(joltBodyID, vel); \
 } \
 void ClassName::setPositionAndRotation(const SVector3& position, const SQuaternion& rotation) \
 { \

@@ -34,6 +34,12 @@ public:
     virtual void setLinearDamping(float drag)                    = 0;
     virtual void setAngularDamping(float drag)                   = 0;
 
+    [[nodiscard]] virtual float getLinearDamping()  const = 0;
+    [[nodiscard]] virtual float getAngularDamping() const = 0;
+
+    virtual void setLinearVelocity(const SVector3& linearVelocity) = 0;
+    virtual void setAngularVelocity(const SVector3& velocity)      = 0;
+
     // Directly move the body to a world position and rotation.
     // For kinematic bodies this is the correct way to drive motion — Jolt computes
     // the implied velocity internally. For dynamic bodies this teleports the body

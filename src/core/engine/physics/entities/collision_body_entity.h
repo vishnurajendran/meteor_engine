@@ -79,6 +79,105 @@ public:
     void setOnTriggerStay   (std::function<void(const SOverlapData&)>   cb) { onTriggerStayCb    = std::move(cb); }
     void setOnTriggerEnd    (std::function<void(const SOverlapData&)>   cb) { onTriggerEndCb     = std::move(cb); }
 
+    // ---- Damping accessors --------------------------------------------------
+
+    [[nodiscard]] float getLinearDamping() const
+    {
+        auto* b = getBasePhysicsBody();
+        return b ? b->getLinearDamping() : linearDamping.get();
+    }
+
+    void setLinearDamping(float value)
+    {
+        linearDamping.set(value);
+    }
+
+    [[nodiscard]] float getAngularDamping() const
+    {
+        auto* b = getBasePhysicsBody();
+        return b ? b->getAngularDamping() : angularDamping.get();
+    }
+
+    void setAngularDamping(float value)
+    {
+        angularDamping.set(value);
+    }
+
+    // ---- Velocity accessors ------------------------------------------------
+
+    [[nodiscard]] SVector3 getLinearVelocity() const
+    {
+        auto* b = getBasePhysicsBody();
+        return b ? b->getLinearVelocity() : SVector3{};
+    }
+
+    [[nodiscard]] SVector3 getAngularVelocity() const
+    {
+        auto* b = getBasePhysicsBody();
+        return b ? b->getAngularVelocity() : SVector3{};
+    }
+
+    void setLinearVelocity(const SVector3& velocity)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->setLinearVelocity(velocity);
+    }
+
+    void setAngularVelocity(const SVector3& velocity)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->setAngularVelocity(velocity);
+    }
+
+    // ---- Force application -------------------------------------------------
+
+    void applyForce(const SVector3& force, EForceMode mode = EForceMode::Force)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->applyForce(force, mode);
+    }
+
+    void applyForceAtPosition(const SVector3& force, const SVector3& worldPoint,
+                              EForceMode mode = EForceMode::Force)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->applyForceAtPosition(force, worldPoint, mode);
+    }
+
+    void applyTorque(const SVector3& torque, EForceMode mode = EForceMode::Force)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->applyTorque(torque, mode);
+    }
+
+    // ---- Body state queries ------------------------------------------------
+
+    [[nodiscard]] bool isValidBody() const
+    {
+        auto* b = getBasePhysicsBody();
+        return b && b->isValidBody();
+    }
+
+    [[nodiscard]] SVector3 getCenterOfMass() const
+    {
+        auto* b = getBasePhysicsBody();
+        return b ? b->getCenterOfMass() : SVector3{};
+    }
+
+    // ---- Constraint accessors ----------------------------------------------
+
+    void setMovementConstraints(bool x, bool y, bool z)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->setMovementConstraints(x, y, z);
+    }
+
+    void setRotationConstraints(bool x, bool y, bool z)
+    {
+        auto* b = getBasePhysicsBody();
+        if (b) b->setRotationConstraints(x, y, z);
+    }
+
     // Return the subclass typed pointer as ICollisionBody*. Returns nullptr if
     // no body has been created yet.
     [[nodiscard]] virtual ICollisionBody* getBasePhysicsBody() const = 0;
