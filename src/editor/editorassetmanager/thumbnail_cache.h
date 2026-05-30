@@ -9,6 +9,7 @@
 #include <map>
 #include "SFML/Graphics/Texture.hpp"
 #include "core/object/object.h"
+#include "editor/editor_paths.h"
 
 // Owns sf::Texture* objects keyed by asset GUID.
 // Thumbnails are persisted to CACHE_DIR so they survive editor restarts
@@ -34,7 +35,7 @@ class MThumbnailCache : public MObject
     DEFINE_OBJECT_SUBCLASS(MThumbnailCache)
 public:
     // All cache PNGs live under this directory (created automatically).
-    static constexpr const char* CACHE_DIR = ".engine_data/thumbnail_cache";
+    static constexpr const char* CACHE_DIR = SEditorPaths::DIR_THUMBNAILS_CACHE;
 
     ~MThumbnailCache();
 

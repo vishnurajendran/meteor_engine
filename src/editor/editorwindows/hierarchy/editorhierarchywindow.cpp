@@ -12,11 +12,14 @@
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
+#include "core/engine/physics/entities/box_collision_body_entity.h"
+#include "core/engine/physics/entities/sphere_collision_body_entity.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
 #include "core/engine/skybox/skybox.h"
 #include "editor/app/editorapplication.h"
+#include "editor/window/menubar/menubartree.h"
 
-// ─── Palette ──────────────────────────────────────────────────────────────────
+// --- Palette ------------------------------------------------------------------
 static constexpr ImVec4 COL_SELECTED     = {0.172f, 0.365f, 0.808f, 0.70f};
 static constexpr ImVec4 COL_SEL_HOVER    = {0.216f, 0.431f, 0.902f, 0.80f};
 static constexpr ImVec4 COL_SEL_ACTIVE   = {0.216f, 0.431f, 0.902f, 0.90f};
@@ -55,6 +58,10 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
 
     // camera
     typeToIcon[MCameraEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_CAMERA);
+
+    // collision
+    typeToIcon[MBoxCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_BOX);
+    typeToIcon[MSphereCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_SPHERE);
 
     // default
     const std::filesystem::path sceneTexPath(SEditorAssetPaths::LOWRES_TEX_SCENE);
@@ -102,6 +109,24 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
         MEditorApplication::SelectedObject = nullptr;
     }
 
+    // Right-click on empty space -> open the add/create context menu
+    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) &&
+        ImGui::IsMouseClicked(ImGuiMouseButton_Right) &&
+        !ImGui::IsAnyItemHovered())
+    {
+        rightClickedEntity = nullptr;
+        ImGui::OpenPopup("##hierarchy_bg_ctx");
+    }
+
+    if (ImGui::BeginPopup("##hierarchy_bg_ctx"))
+    {
+        ImGui::TextDisabled("Create");
+        ImGui::Separator();
+        if (auto* addNode = MMenubarTreeNode::getNodeAtPath("Add"))
+            addNode->renderAsContextMenu();
+        ImGui::EndPopup();
+    }
+
     ImGui::EndChild();
     ImGui::PopStyleVar(3); // IndentSpacing, FramePadding, ItemSpacing
 
@@ -138,11 +163,8 @@ void MEditorHierarchyWindow::drawToolbar()
     {
         ImGui::TextDisabled("Create");
         ImGui::Separator();
-        if (ImGui::MenuItem("Empty Entity"))
-        {
-            auto* s = MSceneManager::getSceneManagerInstance()->getActiveScene();
-            if (s) MSpatialEntity::createInstance("New Entity");
-        }
+        if (auto* addNode = MMenubarTreeNode::getNodeAtPath("Add"))
+            addNode->renderAsContextMenu();
         ImGui::EndPopup();
     }
 
@@ -460,6 +482,18 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
         // TODO: Add duplication logic here later
     }
 
+    // ---- Add submenu -------------------------------------------------------
+    ImGui::Separator();
+    if (auto* addNode = MMenubarTreeNode::getNodeAtPath("Add"))
+    {
+        if (ImGui::BeginMenu("Add"))
+        {
+            addNode->renderAsContextMenu();
+            ImGui::EndMenu();
+        }
+    }
+
+    // ---- Hierarchy actions -------------------------------------------------
     ImGui::Separator();
     if (ImGui::MenuItem("Create Empty Child"))
     {

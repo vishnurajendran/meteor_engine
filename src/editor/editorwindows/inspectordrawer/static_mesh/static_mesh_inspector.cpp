@@ -71,6 +71,13 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             bool cs = sme->getCastsShadow();
             if (ImGui::Checkbox("##cs", &cs)) sme->setCastsShadow(cs);
 
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Show Mesh Bounds:");
+            ImGui::TableSetColumnIndex(1);
+            bool gizmosEnabled = sme->getDrawGizmo();
+            if (ImGui::Checkbox("##dmb", &gizmosEnabled)) sme->setDrawGizmo(gizmosEnabled);
+
             ImGui::EndTable();
         }
     }

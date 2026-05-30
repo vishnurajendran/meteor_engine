@@ -93,22 +93,12 @@ void MSkyboxDrawCall::draw()
         MERROR("MSkyboxDrawCall::draw: Missing shader, cubemap texture, or VAO");
         return;
     }
-    auto& cameras = MViewManagement::getCameras();
-    if (cameras.empty())
+    auto* renderCamera = MViewManagement::getFirstActiveCamera();
+    if (!renderCamera)
     {
         MWARN("MSkyboxDrawCall::draw: No cameras specified");
         glDepthMask(GL_TRUE);
         return;
-    }
-
-    MCameraEntity* renderCamera = nullptr;
-    for (const auto& c : cameras)
-    {
-        if (c != nullptr && c->getEnabled())
-        {
-            renderCamera = c;
-            break;
-        }
     }
 
     if (!renderCamera)

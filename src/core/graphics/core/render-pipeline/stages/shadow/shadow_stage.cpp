@@ -159,9 +159,7 @@ void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
 {
     const glm::vec3 towardLight = glm::normalize(dirLight->getForwardVector());
 
-    MCameraEntity* camera = nullptr;
-    for (auto* c : MViewManagement::getCameras())
-        if (c && c->getEnabled()) { camera = c; break; }
+    MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
 
     const glm::vec3 anchor   = camera ? glm::vec3(camera->getWorldPosition()) : glm::vec3(0.f);
     // Fixed shadow distance. At 1 unit = 1 metre this gives 50m coverage —

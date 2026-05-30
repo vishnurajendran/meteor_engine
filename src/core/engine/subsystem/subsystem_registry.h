@@ -5,6 +5,7 @@
 #include <typeindex>
 
 #include "core/object/object.h"
+#include "core/utils/logger.h"
 #include "subsystem_interface.h"
 
 class MEngineSubsystemRegistry : public MObject
@@ -23,16 +24,22 @@ public:
         static_assert(std::is_base_of_v<TInterface, TConcrete>,
             "Concrete class must derive from Interface");
 
+        MLOG(SString::format("Registering subsystem instance for {0}", typeid(TInterface).name()));
         const std::type_index type = typeid(TInterface);
 
-        auto it = subSystems.find(type);
-        if (it != subSystems.end())
+        if (const auto it = subSystems.find(type); it != subSystems.end())
         {
+            MLOG(SString::format("Found a previous instance {0}", typeid(TInterface).name()));
             return dynamic_cast<TInterface*>(it->second);
         }
 
+        MLOG(SString::format("Creating instance for {0}", typeid(TInterface).name()));
         // Constructs the concrete class but stores it under the interface's type key
         TConcrete* inst = new TConcrete(std::forward<Args>(args)...);
+        if (!inst)
+        {
+            MERROR("Failed to create subsystem instance");
+        }
 
         if (autoInit)
             inst->init();

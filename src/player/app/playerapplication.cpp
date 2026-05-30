@@ -8,7 +8,7 @@
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 
-MPlayerApplication::MPlayerApplication() : MApplication(){
+MPlayerApplication::MPlayerApplication() : MApplication() {
     name = STR("MeteorPlayer");
 }
 
@@ -30,9 +30,11 @@ void MPlayerApplication::cleanup() {
 }
 
 void MPlayerApplication::initialise() {
+    MApplication::initialise();
 
     // init engine settings.
     MEngineStatics::loadEngineSettings<MEngineSettings>(getEngineSettingsPath());
+    MEngineSubsystemRegistry::init();
 
     //appRunning = true;
     MVERBOSE(STR("Initialising Player"));
@@ -48,8 +50,8 @@ void MPlayerApplication::initialise() {
         MERROR(STR("Failed to open window"));
 
     MSceneManager::registerSceneManager(new MSceneManager());
-    MAssetManager::registerAssetManagerInstance(new MAssetManager());
-    MAssetManager::getInstance()->refresh();
+    auto* assetManager = MEngineSubsystemRegistry::registerSubsystem<IAssetManagerSubsystem, MAssetManager>();
+    assetManager->refresh();
 
     pipelineManager.init();
     pipelineManager.setRenderTarget(window.get()->getRenderBuffer());

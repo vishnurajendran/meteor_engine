@@ -5,9 +5,11 @@
 #include "editorapplication.h"
 
 #include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include "core/default_settings_paths.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorrenderstages/gizmos/gizmo_stage.h"
@@ -17,11 +19,10 @@
 #include "editor/settings/editor_settings.h"
 #include "editor/window/imgui/imguiwindow.h"
 #include "editor/window/menubar/menubartree.h"
+#include "simulation_manager.h"
 
 
 MObject* MEditorApplication::SelectedObject = nullptr;
-MEditorApplication* MEditorApplication::editorInst = nullptr;
-
 
 MEditorApplication::MEditorApplication() : MApplication(){
     name = STR("MeteoriteEditor");
@@ -35,9 +36,29 @@ void MEditorApplication::run() {
     startFrame();
     window->clear();
 
-    if (sceneManagerRef)
-        sceneManagerRef->update(deltaTime);
+    const auto fixedStep = getPhysicsStep();
+    const bool canTickPhysics = physicsEngineRef && physicsEngineRef->canTick();
+    const bool canSimulate = simulationState == EEditorSimulationState::Simulating;
 
+    // tick physics.
+    if (canSimulate)
+    {
+       if (simulationState)
+           tickPhysics(deltaTime);
+    }
+
+    // tick scene manager
+    if (sceneManagerRef)
+    {
+        sceneManagerRef->update(deltaTime);
+        if (internal_tickSpatialFixedUpdateFlag)
+        {
+            internal_tickSpatialFixedUpdateFlag = false;
+            sceneManagerRef->fixedUpdate(fixedStep);
+        }
+    }
+
+    // tick asset manager
     if (assetManagerRef)
         assetManagerRef->tickHotReload();
 
@@ -58,24 +79,68 @@ void MEditorApplication::cleanup() {
     MVERBOSE(STR("Editor Application Cleanup Complete"));
 }
 
-void MEditorApplication::addSubsystems()
+void MEditorApplication::registerSubsystems()
 {
     // Asset Manager
-    assetManagerRef = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::registerSubsystem<IAssetManagerSubsystem, MEditorAssetManager>());
+    assetManagerRef = dynamic_cast<MEditorAssetManager*>(
+        MEngineSubsystemRegistry::registerSubsystem<IAssetManagerSubsystem, MEditorAssetManager>());
+
     // Render pipeline, does not autoInit - we need to delay this.
-    pipelineManager = MEngineSubsystemRegistry::registerSubsystem<IRenderPipelineManagerSubsystem, MRenderPipelineManager>(false);
+    pipelineManager =
+        MEngineSubsystemRegistry::registerSubsystem<IRenderPipelineManagerSubsystem, MRenderPipelineManager>(false);
+
     // Audio System
-    MEngineSubsystemRegistry::registerSubsystem<IAudioEngineSubsystem, MMiniAudioEngineSubsystem>();
+    audioEngineRef = MEngineSubsystemRegistry::registerSubsystem<IAudioEngineSubsystem, MMiniAudioEngineSubsystem>();
+
+    // Init Physics engine
+    physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
+
+    // Editor Simulation Manager, we will register as the concrete class for now. in the future, if
+    // we need to explose APIs for this system, then wire that through an interface.
+    simulationManagerSubsystem = MEngineSubsystemRegistry::registerSubsystem<MEditorSimulationManagerSubsystem, MEditorSimulationManagerSubsystem>(false);
+}
+
+void MEditorApplication::notifySimulationStateChange()
+{
+    for (auto [id, callback] : simulationStateChangedCallbacks)
+    {
+        if (callback)
+            callback(simulationState);
+    }
+}
+
+void MEditorApplication::tickPhysics(float deltaTime)
+{
+    const auto fixedStep = getPhysicsStep();
+    physicsAccumulator += deltaTime;
+    // Cap accumulation to avoid a spiral-of-death after a hitch.
+    constexpr float maxAccumulation = 0.2f;
+    if (physicsAccumulator > maxAccumulation)
+        physicsAccumulator = maxAccumulation;
+
+    while (physicsAccumulator >= fixedStep)
+    {
+        physicsEngineRef->tick(fixedStep);
+        physicsAccumulator -= fixedStep;
+        internal_tickSpatialFixedUpdateFlag = true;
+    }
 }
 
 void MEditorApplication::initialise() {
 
+    MApplication::initialise();
+
     // init engine settings.
-    addSubsystems();
-    MEngineStatics::loadEngineSettings<MEditorSettings>(getEngineSettingsPath());
+    MEngineStatics::loadSettings<MEditorSettings>(SSettingsPaths
+    {
+        .engineSettingsPath = getEngineSettingsPath(),
+        .physicsLayerSettingsPath = DEFAULT_PHYSICS_SETTINGS_PATH
+    });
+
+    registerSubsystems();
 
     std::thread splashThread(&MEditorApplication::showSplashScreen, this);
-    editorInst = this;
+
     //appRunning = true;
     MVERBOSE(STR("Initialising Editor"));
     window = new MImGuiWindow();
@@ -149,6 +214,13 @@ bool MEditorApplication::isRunning() const
     return window->isOpen();
 }
 
+float MEditorApplication::getPhysicsStep() const
+{
+    const auto* settings = MEngineStatics::getEngineSettings();
+    const float tickRate  = settings ? settings->physicsTickRate.get() : 60.0f;
+    return 1.0f / tickRate;
+}
+
 void MEditorApplication::showSplashScreen()
 {
     sf::RenderWindow splashWindow(sf::VideoMode(sf::Vector2u(960, 540)), "Meteorite-Splash", sf::Style::None);
@@ -198,37 +270,76 @@ void MEditorApplication::showSplashScreen()
     splashWindow.close();
 }
 
-
-
 void MEditorApplication::loadPrerequisites()
 {
     assetManagerRef->refresh();
     pipelineManager->init(); // manual init
     pipelineManager->getPipeline()->addStage<MGizmoStage>();
 
-    //setup scene manager
+    // setup scene manager
     sceneManagerRef = new MEditorSceneManager();
     MSceneManager::registerSceneManager(sceneManagerRef);
-    sceneManagerRef->registerOnLoadCallback([this](MScene* scene)
-    {
-        SelectedObject = nullptr;
-    });
+    sceneManagerRef->registerOnLoadCallback([this](MScene* scene) { SelectedObject = nullptr; });
+
+    if (simulationManagerSubsystem)
+        simulationManagerSubsystem->init();
 }
 
+void MEditorApplication::startSimulation()
+{
+    if (isPlaying())
+        return;
+
+    simulationState = EEditorSimulationState::Simulating;
+    notifySimulationStateChange();
+}
+
+void MEditorApplication::stopSimulation()
+{
+    if (simulationState == EEditorSimulationState::Stopped)
+        return;
+    simulationState = EEditorSimulationState::Stopped;
+    notifySimulationStateChange();
+}
+
+void MEditorApplication::pauseSimulation()
+{
+    if (isPaused())
+        return;
+    simulationState = EEditorSimulationState::SimulationPaused;
+    notifySimulationStateChange();
+}
+
+SString MEditorApplication::registerToSimulationStateChangedCallback(std::function<void(const EEditorSimulationState&)> callback)
+{
+    const auto& id = SGuid::newGUID();
+    simulationStateChangedCallbacks[id] = callback;
+    return id;
+}
+
+void MEditorApplication::unregisterFromSimulationStateChangedCallback(const SString& callbackId)
+{
+    if (simulationStateChangedCallbacks.contains(callbackId))
+    {
+        simulationStateChangedCallbacks.erase(callbackId);
+    }
+}
 
 void MEditorApplication::exit()
 {
     MEngineStatics::saveAll();
-    if (editorInst != nullptr)
-        editorInst->window->close();
+    auto editorApp = dynamic_cast<MEditorApplication*>(appInst);
+    if (editorApp != nullptr)
+        editorApp->window->close();
 }
 
 MCameraEntity* MEditorApplication::getSceneCamera()
 {
-    if (editorInst == nullptr)
+    auto editorApp = dynamic_cast<MEditorApplication*>(appInst);
+    if (editorApp == nullptr)
         return nullptr;
 
-    return editorInst->sceneManagerRef->getEditorSceneCamera();
+    return editorApp->sceneManagerRef->getEditorSceneCamera();
 }
 
 

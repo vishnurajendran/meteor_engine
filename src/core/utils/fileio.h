@@ -57,6 +57,7 @@ public:
     static bool copyFile(const SString& src, const SString& dst);
 
     // Creates the directory and any missing parents -- like mkdir -p.
+    static bool directoryExists(const SString& path);
     static bool createDirectory(const SString& path);
 };
 

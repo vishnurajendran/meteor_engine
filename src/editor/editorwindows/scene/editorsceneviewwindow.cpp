@@ -30,8 +30,6 @@ static constexpr float  OVL_PAD         = 6.0f;
 // texture load can't collapse the panel height to zero and hide all buttons.
 static constexpr float  ICON_SIZE       = 16.0f;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 static bool overlayImageButton(const char* id,
                                 const sf::Texture& tex,
                                 bool active)
@@ -108,8 +106,6 @@ static void endOverlayPanel()
     ImGui::PopStyleColor(2);
 }
 
-// ─── Constructor ──────────────────────────────────────────────────────────────
-
 MEditorSceneViewWindow::MEditorSceneViewWindow() : MEditorSceneViewWindow(700, 300) {}
 
 MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x, y)
@@ -128,7 +124,10 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     gizmoOnIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_ENABLED);
     gizmoOffIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_DISABLED);
 
-    auto* cam = MEditorApplication::getSceneCamera();
+    editorAppInst = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+    if (!editorAppInst) return;
+
+    auto* cam = editorAppInst->getSceneCamera();
     if (cam)
     {
         SVector3 euler = glm::degrees(glm::eulerAngles(cam->getWorldRotation()));
@@ -137,27 +136,49 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     }
 }
 
-// ─── onGui ────────────────────────────────────────────────────────────────────
-
 void MEditorSceneViewWindow::onGui(float deltaTime)
 {
+    if (!editorAppInst)
+        return;
+
     ImVec2 region = ImGui::GetContentRegionAvail();
     if (region.x <= 0 || region.y <= 0) return;
 
+    drawScene(region);
+    tickDeltaTimeInfo(deltaTime);
+    tickViewportInteraction();
+    drawFpsOverlay();
 
-    // ---- FPS accumulation (0.5 s smoothing window) -------------------------
+    if (!editorAppInst->isPlaying() || editorAppInst->isPaused())
+    {
+        drawEditorSceneView(deltaTime, region);
+    }
+}
+
+void MEditorSceneViewWindow::tickDeltaTimeInfo(const float& deltaTime)
+{
     const float dt = deltaTime;
     if (dt > 0.0f)
     {
-        fpsAccum  += dt;
+        fpsAccum += dt;
         fpsFrames += 1;
         if (fpsAccum >= 0.5f)
         {
             displayFps = static_cast<float>(fpsFrames) / fpsAccum;
-            fpsAccum   = 0.0f;
-            fpsFrames  = 0;
+            fpsAccum = 0.0f;
+            fpsFrames = 0;
         }
     }
+}
+
+void MEditorSceneViewWindow::tickViewportInteraction()
+{
+    viewportHovered = ImGui::IsMouseHoveringRect(
+        viewportMin,{ viewportMin.x + viewportSize.x, viewportMin.y + viewportSize.y }, false);
+}
+
+void MEditorSceneViewWindow::drawScene(ImVec2 region)
+{
     if (renderTexture.getSize().x != (unsigned)region.x ||
         renderTexture.getSize().y != (unsigned)region.y)
     {
@@ -169,13 +190,10 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     ImGui::Image(renderTexture, region);
     viewportMin  = ImGui::GetItemRectMin();
     viewportSize = ImGui::GetItemRectSize();
+}
 
-    viewportHovered = ImGui::IsMouseHoveringRect(
-        viewportMin,
-        { viewportMin.x + viewportSize.x, viewportMin.y + viewportSize.y },
-        /*clip=*/false);
-
-    // ── Drag-drop: drop a static mesh asset into the viewport ─────────────
+void MEditorSceneViewWindow::handleDragDropBehaviour()
+{
     if (ImGui::BeginDragDropTarget())
     {
         // Highlight viewport edge
@@ -193,12 +211,11 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
             if (asset)
             {
                 // Raycast from the mouse position into the scene.
-                auto& cameras = MViewManagement::getCameras();
+                auto* camera = MViewManagement::getFirstActiveCamera();
                 auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
 
-                if (!cameras.empty() && scene)
+                if (camera && scene)
                 {
-                    auto* camera = cameras[0];
                     SVector3 rayOrigin, rayDir;
 
                     if (screenPointToRay(camera, ImGui::GetMousePos(), rayOrigin, rayDir))
@@ -217,26 +234,32 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
         }
         ImGui::EndDragDropTarget();
     }
+}
 
+
+void MEditorSceneViewWindow::drawEditorSceneView(const float& deltaTime, const ImVec2& region)
+{
+    handleDragDropBehaviour();
     drawTransformHandles();
     drawOverlayToolbar();
     drawCameraSpeedOverlay();
-    drawViewportInfoOverlay();
+    drawSceneInfoOverlay();
     drawAxisLegend();
 }
 
-// ─── handleInput ──────────────────────────────────────────────────────────────
-
 void MEditorSceneViewWindow::handleInput(float dt)
 {
+    if (!editorAppInst)
+        return;
+
+    if (editorAppInst->isPlaying() || editorAppInst->isPaused())
+        return;
+
     const bool rmbOrMmbHeld = ImGui::IsMouseDown(ImGuiMouseButton_Right) ||
                               ImGui::IsMouseDown(ImGuiMouseButton_Middle);
 
     if (!viewportHovered && !rmbOrMmbHeld) return;
-
-    auto& cameras = MViewManagement::getCameras();
-    if (cameras.empty()) return;
-    auto* camera = cameras[0];
+    auto* camera = MViewManagement::getFirstActiveCamera();
 
     ImGui::GetIO().WantCaptureKeyboard = false;
 
@@ -261,8 +284,6 @@ void MEditorSceneViewWindow::handleInput(float dt)
         cameraMoveSpeed = std::clamp(cameraMoveSpeed + scroll * 1.0f, 0.5f, 200.0f);
 }
 
-// ─── Camera — mouse ───────────────────────────────────────────────────────────
-
 bool MEditorSceneViewWindow::handleCameraMouseInputs(MCameraEntity* camera, float dt)
 {
     const bool   rmbHeld = ImGui::IsMouseDown(ImGuiMouseButton_Right);
@@ -283,11 +304,6 @@ bool MEditorSceneViewWindow::handleCameraMouseInputs(MCameraEntity* camera, floa
             glm::radians(-cameraYaw),
             0.0f));
         camera->setWorldRotation(rot);
-
-        if (auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
-        {
-            settings->lastEdCameraRot.set(camera->getWorldRotation());
-        }
     }
 
     if (mmbHeld)
@@ -296,17 +312,10 @@ bool MEditorSceneViewWindow::handleCameraMouseInputs(MCameraEntity* camera, floa
             camera->getRightVector() * (-delta.x * cameraMoveSpeed * 0.005f * dt * 60.0f) +
             camera->getUpVector()    * ( delta.y * cameraMoveSpeed * 0.005f * dt * 60.0f);
         camera->setWorldPosition(camera->getWorldPosition() + movement);
-
-        if (auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
-        {
-            settings->lastEdCameraPos.set(camera->getWorldPosition());
-        }
     }
 
     return rmbHeld;
 }
-
-// ─── Camera — keyboard ────────────────────────────────────────────────────────
 
 void MEditorSceneViewWindow::handleCameraKeyboardInputs(MCameraEntity* camera, float dt)
 {
@@ -323,14 +332,7 @@ void MEditorSceneViewWindow::handleCameraKeyboardInputs(MCameraEntity* camera, f
     if (ImGui::IsKeyDown(ImGuiKey_Q)) pos += camera->getUpVector()      * -speed;
 
     camera->setWorldPosition(pos);
-
-    if (auto* settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
-    {
-        settings->lastEdCameraPos.set(camera->getWorldPosition());
-    }
 }
-
-// ─── Camera — focus ───────────────────────────────────────────────────────────
 
 void MEditorSceneViewWindow::focusOnSelected(MCameraEntity* camera)
 {
@@ -344,8 +346,6 @@ void MEditorSceneViewWindow::focusOnSelected(MCameraEntity* camera)
     SVector3 backward = -camera->getForwardVector();
     camera->setWorldPosition(target + backward * 5.0f);
 }
-
-// ─── Click-to-select ──────────────────────────────────────────────────────────
 
 void MEditorSceneViewWindow::trySelectEntity(MCameraEntity* camera)
 {
@@ -449,17 +449,12 @@ MSpatialEntity* MEditorSceneViewWindow::pickEntity(MCameraEntity*  camera,
     return bestEntity;
 }
 
-// ─── Gizmo handles ────────────────────────────────────────────────────────────
-
 void MEditorSceneViewWindow::drawTransformHandles()
 {
     if (!gizmosEnabled)                  return;
     if (!MEditorApplication::SelectedObject)   return;
 
-    auto cameras = MViewManagement::getCameras();
-    if (cameras.empty()) return;
-
-    auto* primaryCamera = cameras[0];
+    auto* primaryCamera = MViewManagement::getFirstActiveCamera();
     if (!primaryCamera) return;
 
     auto* selected = MEditorApplication::SelectedObject;
@@ -590,7 +585,6 @@ void MEditorSceneViewWindow::drawOverlayToolbar()
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip(gizmosEnabled ? "Click to hide gizmos" : "Click to show gizmos");
 
-        // ── Section 4: buffer debug view dropdown ─────────────────────────
         ImGui::SameLine(0, OVL_PAD);
         ImGui::SetCursorPosY(btnY);
         overlayDivider(iconH);
@@ -641,16 +635,46 @@ void MEditorSceneViewWindow::drawCameraSpeedOverlay()
     endOverlayPanel();
 }
 
-void MEditorSceneViewWindow::drawViewportInfoOverlay()
+void MEditorSceneViewWindow::drawFpsOverlay()
+{
+    const float margin = 10.0f;
+    const float fpsW   = 90.0f;
+    const float fpsH   = ImGui::GetTextLineHeightWithSpacing() * 2.0f + OVL_PAD * 2.0f;
+    const float fpsX   = viewportMin.x + viewportSize.x - fpsW - margin;
+    const float fpsY   = viewportMin.y + viewportSize.y - fpsH - margin;
+
+    beginOverlayPanel("##fps_ovl", { fpsX, fpsY }, { fpsW, fpsH });
+    {
+        ImVec4 fpsColor;
+        if      (displayFps >= 60.0f) fpsColor = ImVec4(0.35f, 0.90f, 0.35f, 1.0f);
+        else if (displayFps >= 30.0f) fpsColor = ImVec4(0.95f, 0.80f, 0.20f, 1.0f);
+        else                          fpsColor = ImVec4(0.95f, 0.30f, 0.25f, 1.0f);
+
+        char fpsBuf[32];
+        std::snprintf(fpsBuf, sizeof(fpsBuf), "%.0f FPS", displayFps);
+        ImGui::PushStyleColor(ImGuiCol_Text, fpsColor);
+        ImGui::TextUnformatted(fpsBuf);
+        ImGui::PopStyleColor();
+
+        char msBuf[32];
+        const float ms = displayFps > 0.0f ? 1000.0f / displayFps : 0.0f;
+        std::snprintf(msBuf, sizeof(msBuf), "%.1f ms", ms);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::TextUnformatted(msBuf);
+        ImGui::PopStyleColor();
+    }
+    endOverlayPanel();
+}
+
+void MEditorSceneViewWindow::drawSceneInfoOverlay()
 {
     const float margin = 10.0f;
 
     auto* camera = MEditorApplication::getSceneCamera();
     auto* sel    = MEditorApplication::SelectedObject;
 
-    // Build content strings up front so the panel can be auto-sized.
-    SString selLine  = sel ? sel->getName() : SString("Nothing selected");
-    SString camLine  = "---";
+    SString selLine = sel ? sel->getName() : SString("Nothing selected");
+    SString camLine = "---";
     if (camera)
     {
         auto p  = camera->getWorldPosition();
@@ -658,24 +682,22 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
     }
     const char* hintLine = "F \xc2\xb7 Focus   RMB \xc2\xb7 Orbit";
 
-    float textW = std::max({ ImGui::CalcTextSize(selLine.c_str()).x,
-                             ImGui::CalcTextSize(camLine.c_str()).x,
-                             ImGui::CalcTextSize(hintLine).x });
-    float panelW = textW + OVL_PAD * 2.0f + 20.0f;
-    float panelH = ImGui::GetTextLineHeightWithSpacing() * 3.0f + OVL_PAD * 2.0f;
-    float posY   = viewportMin.y + viewportSize.y - panelH - margin;
+    const float textW  = std::max({ ImGui::CalcTextSize(selLine.c_str()).x,
+                                    ImGui::CalcTextSize(camLine.c_str()).x,
+                                    ImGui::CalcTextSize(hintLine).x });
+    const float panelW = textW + OVL_PAD * 2.0f + 20.0f;
+    const float panelH = ImGui::GetTextLineHeightWithSpacing() * 3.0f + OVL_PAD * 2.0f;
+    const float posY   = viewportMin.y + viewportSize.y - panelH - margin;
 
-    beginOverlayPanel("##vp_info",
-                      { viewportMin.x + margin, posY },
-                      { panelW, panelH });
+    beginOverlayPanel("##vp_info", { viewportMin.x + margin, posY }, { panelW, panelH });
     {
+        // Row 1: selected object
         if (sel)
         {
             ImVec2 dotPos = ImGui::GetCursorScreenPos();
             dotPos.x += 2.0f;
             dotPos.y += ImGui::GetTextLineHeight() * 0.5f;
-            ImGui::GetWindowDrawList()->AddCircleFilled(
-                dotPos, 3.5f, IM_COL32(100, 160, 255, 220));
+            ImGui::GetWindowDrawList()->AddCircleFilled(dotPos, 3.5f, IM_COL32(100, 160, 255, 220));
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
             ImGui::TextUnformatted(selLine.c_str());
@@ -688,60 +710,24 @@ void MEditorSceneViewWindow::drawViewportInfoOverlay()
             ImGui::PopStyleColor();
         }
 
-        // ── Row 2: camera position ───────────────────────────────────────
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        // Row 2: camera position
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
         ImGui::TextUnformatted(camLine.c_str());
         ImGui::PopStyleColor();
 
-        // ── Row 3: keyboard shortcut hints ───────────────────────────────
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
+        // Row 3: shortcut hints
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.35f, 0.35f, 0.35f, 1.0f));
         ImGui::TextUnformatted(hintLine);
         ImGui::PopStyleColor();
     }
     endOverlayPanel();
-
-    {
-        const float fpsW = 90.0f;
-        const float fpsH = ImGui::GetTextLineHeightWithSpacing() * 2.0f + OVL_PAD * 2.0f;
-        float       fpsX = viewportMin.x + viewportSize.x - fpsW - margin;
-        float       fpsY = viewportMin.y + viewportSize.y - fpsH - margin;
-
-        beginOverlayPanel("##fps_ovl", { fpsX, fpsY }, { fpsW, fpsH });
-        {
-            // Colour codes: green >= 60, yellow >= 30, red below 30.
-            ImVec4 fpsColor;
-            if      (displayFps >= 60.0f) fpsColor = ImVec4(0.35f, 0.90f, 0.35f, 1.0f);
-            else if (displayFps >= 30.0f) fpsColor = ImVec4(0.95f, 0.80f, 0.20f, 1.0f);
-            else                          fpsColor = ImVec4(0.95f, 0.30f, 0.25f, 1.0f);
-
-            // Row 1: "XX FPS"
-            char fpsBuf[32];
-            std::snprintf(fpsBuf, sizeof(fpsBuf), "%.0f FPS", displayFps);
-            ImGui::PushStyleColor(ImGuiCol_Text, fpsColor);
-            ImGui::TextUnformatted(fpsBuf);
-            ImGui::PopStyleColor();
-
-            // Row 2: frame time in ms (dimmed)
-            char msBuf[32];
-            const float ms = displayFps > 0.0f ? 1000.0f / displayFps : 0.0f;
-            std::snprintf(msBuf, sizeof(msBuf), "%.1f ms", ms);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
-            ImGui::TextUnformatted(msBuf);
-            ImGui::PopStyleColor();
-        }
-        endOverlayPanel();
-    }
 }
-
-// ─── Axis legend ─────────────────────────────────────────────────────────────
 
 void MEditorSceneViewWindow::drawAxisLegend()
 {
-    auto& cameras = MViewManagement::getCameras();
-    if (cameras.empty()) return;
-    auto* camera = cameras[0];
+    auto* camera = MViewManagement::getFirstActiveCamera();
     if (!camera) return;
 
     const float axisLen = 28.0f;

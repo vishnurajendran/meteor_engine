@@ -29,9 +29,10 @@ void MScene::update(float deltaTime)
 {
     destroyMarked();
 
-    for (const auto [obj, ptr]: allAliveEntities)
+    for (const auto [obj, ptr] : allAliveEntities)
     {
-        if (ptr == nullptr) continue;
+        if (ptr == nullptr)
+            continue;
 
         // call start if the entity was not started.
         if (!ptr->hasStarted())
@@ -39,6 +40,18 @@ void MScene::update(float deltaTime)
 
         if (ptr->getCanTick())
             ptr->onUpdate(deltaTime);
+    }
+}
+
+void MScene::fixedUpdate(float fixedDeltaTime)
+{
+    for (const auto [obj, ptr] : allAliveEntities)
+    {
+        if (ptr == nullptr)
+            continue;
+
+        if (ptr->getCanTick())
+            ptr->onFixedUpdate(fixedDeltaTime);
     }
 }
 

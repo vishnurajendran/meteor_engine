@@ -37,8 +37,13 @@ bool MEditorSceneManager::loadScene(const SString& path)
 
     if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
     {
-        MVERBOSE(SString::format("[MEditorApplication]::Setting last opened scene {0}", currentScenePath));
-        settings->lastOpenedScene.set(currentScenePath);
+        // only do this when app is not simulating
+        const auto* appInstRef = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+        if (appInstRef && !appInstRef->isPlaying() && !appInstRef->isPaused())
+        {
+            MVERBOSE(SString::format("[MEditorApplication]::Setting last opened scene {0}", currentScenePath));
+            settings->lastOpenedScene.set(currentScenePath);
+        }
     }
 
     return true;
@@ -80,9 +85,29 @@ bool MEditorSceneManager::closeActiveScene()
 }
 
 
-MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const
+void MEditorSceneManager::update(float deltaTime)
 {
-    return editorSceneCamera;
+    MSceneManager::update(deltaTime);
+    if (editorSceneCamera && editorSceneCamera->getCanTick())
+    {
+        editorSceneCamera->onUpdate(deltaTime);
+    }
+}
+
+MCameraEntity* MEditorSceneManager::getEditorSceneCamera() const { return editorSceneCamera; }
+
+void MEditorSceneManager::internal_OverrideCurrentScenePath(const SString& path)
+{
+    currentScenePath = path;
+    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+    {
+        const auto* appInstRef = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+        if (appInstRef)
+        {
+            MVERBOSE(SString::format("[MEditorApplication]::Setting last opened scene {0}", currentScenePath));
+            settings->lastOpenedScene.set(currentScenePath);
+        }
+    }
 }
 
 void MEditorSceneManager::createEditorSceneCamera()
@@ -95,8 +120,6 @@ void MEditorSceneManager::createEditorSceneCamera()
     }
 
     auto* cam = MSpatialEntity::createInstance<MEditorSceneCameraEntity>(EDITOR_CAMERA_NAME);
-    cam->setWorldPosition(SVector3(0, 0, 20));
-
     // Hide from serializer so it is never written to the scene file.
     cam->setEntityFlags(EEntityFlags::HideInEditor);
 

@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include "ImGuiFileDialog.h"
+#include "core/application/application.h"
 #include "editor/window/menubar/menubartree.h"
 #include "imgui.h"
 
@@ -32,6 +33,12 @@ SString MOpenSceneMenubarItem::getPath() const
 
 void MOpenSceneMenubarItem::onSelect()
 {
+    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    {
+        MWARN("Open Scene operation blocked during play-mode");
+        return;
+    }
+
     // Do NOT call OpenDialog here — this runs inside BeginMainMenuBar(),
     // which would attach OpenPopup to the wrong window context.
     // Just set the flag; drawPopup() will open the dialog next frame.

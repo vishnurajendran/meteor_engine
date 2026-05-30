@@ -181,6 +181,26 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(miniaudio)
 
+#----------------------------------------------------------------------------
+# Jolt Physics
+#----------------------------------------------------------------------------
+
+set(TARGET_UNIT_TESTS       OFF CACHE BOOL "" FORCE)
+set(TARGET_HELLO_WORLD      OFF CACHE BOOL "" FORCE)
+set(TARGET_PERFORMANCE_TEST OFF CACHE BOOL "" FORCE)
+set(TARGET_SAMPLES          OFF CACHE BOOL "" FORCE)
+set(TARGET_VIEWER           OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+        JoltPhysics
+        GIT_REPOSITORY https://github.com/jrouwe/JoltPhysics.git
+        GIT_TAG v5.5.0
+        GIT_SHALLOW TRUE
+        SOURCE_SUBDIR Build
+)
+
+FetchContent_MakeAvailable(JoltPhysics)
+
 # ---------------------------------------------------------------------------
 # CORE SOURCES (UNCHANGED)
 # ---------------------------------------------------------------------------
@@ -434,6 +454,64 @@ set(CORE_SOURCES
         src/core/engine/audio/interfaces/audioclip_interface.h
         src/core/engine/audio/impl_miniaudio/audio_clip.cpp
         src/core/engine/audio/impl_miniaudio/audio_clip.h
+        src/core/engine/physics/interface/physics_engine_interface.h
+        src/core/engine/physics/interface/bodies/box/box_collision_body.h
+        src/core/engine/physics/data/box_body_settings.h
+        src/core/engine/physics/data/default_body_settings.h
+        src/core/engine/physics/interface/bodies/sphere/sphere_collision_body.h
+        src/core/engine/physics/data/sphere_body_settings.h
+        src/core/engine/physics/interface/bodies/collision_body_interface.h
+        src/core/engine/physics/impl/engine/jolt_physics_engine.h
+        src/core/engine/physics/impl/contact_listener.h
+        src/core/engine/physics/impl/body_activation_listener.h
+        src/core/engine/physics/impl/engine/jolt_physics_engine.cpp
+        src/core/engine/physics/impl/bodies/jolt_box_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_box_collision.h
+        src/core/engine/physics/impl/bodies/jolt_sphere_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_sphere_collision.h
+        src/core/engine/physics/impl/jolt_layers_filters.h
+        src/core/engine/physics/entities/box_collision_body_entity.cpp
+        src/core/engine/physics/entities/box_collision_body_entity.h
+        src/core/engine/physics/entities/sphere_collision_body_entity.cpp
+        src/core/engine/physics/entities/sphere_collision_body_entity.h
+        src/core/engine/physics/data/collision_data.h
+        src/core/engine/physics/callback/physics_callback_reciever.h
+        src/core/engine/physics/callback/contact_listener.h
+        src/core/engine/physics/impl/bodies/macros/jolt_base_collision_body_macros.h
+        src/core/engine/physics/impl/jolt_body_interface.h
+        src/core/engine/physics/data/shape_axis.h
+        src/core/engine/physics/interface/bodies/cylinder/cylinder_collision_body.h
+        src/core/engine/physics/interface/bodies/capsule/capsule_collision_body.h
+        src/core/engine/physics/interface/bodies/mesh/mesh_collision_body.h
+        src/core/engine/physics/interface/bodies/convexhull/convexhull_collsion_body.h
+        src/core/engine/physics/data/cylinder_body_settings.h
+        src/core/engine/physics/data/capsule_body_settings.h
+        src/core/engine/physics/data/mesh_body_settings.h
+        src/core/engine/physics/data/convexhull_body_settings.h
+        src/core/engine/physics/impl/bodies/jolt_cylinder_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_cylinder_collision.h
+        src/core/engine/physics/impl/bodies/jolt_capsule_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_capsule_collision.h
+        src/core/engine/physics/impl/bodies/jolt_mesh_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_mesh_collision.h
+        src/core/engine/physics/impl/bodies/jolt_convexhull_collision.cpp
+        src/core/engine/physics/impl/bodies/jolt_convexhull_collision.h
+        src/core/engine/physics/entities/cylinder_collision_body_entity.cpp
+        src/core/engine/physics/entities/cylinder_collision_body_entity.h
+        src/core/engine/physics/entities/capsule_collision_body_entity.cpp
+        src/core/engine/physics/entities/capsule_collision_body_entity.h
+        src/core/engine/physics/entities/mesh_collision_body_entity.cpp
+        src/core/engine/physics/entities/mesh_collision_body_entity.h
+        src/core/engine/physics/entities/convexhull_collision_body_entity.cpp
+        src/core/engine/physics/entities/convexhull_collision_body_entity.h
+        src/core/engine/settings/physics_layers_settings.cpp
+        src/core/engine/settings/physics_layers_settings.h
+        src/core/engine/physics/data/layer_filter.cpp
+        src/core/engine/physics/data/layer_filter.h
+        src/core/engine/physics/data/raycast_data.h
+        src/core/engine/physics/entities/collision_body_entity.cpp
+        src/core/engine/physics/entities/collision_body_entity.h
+        src/core/default_settings_paths.h
 )
 
 set(EDITOR_SOURCES
@@ -540,6 +618,24 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/audio/audio_source_inspectordrawer.h
         src/editor/audio_helpers/audio_waveform.cpp
         src/editor/audio_helpers/audio_waveform.h
+        src/editor/window/menubar/default/add_entity/menu_additem_macros.h
+        src/editor/app/simulation_manager.cpp
+        src/editor/app/simulation_manager.h
+        src/editor/editor_paths.h
+        src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/cylinder_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/cylinder_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/capsule_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/capsule_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/mesh_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/mesh_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.h
+        src/editor/editorwindows/inspectordrawer/physics/collision_body_inspectordrawer.cpp
+        src/editor/editorwindows/inspectordrawer/physics/collision_body_inspectordrawer.h
 )
 
 set(PLAYER_SOURCES
@@ -580,6 +676,7 @@ if (BUILD_EDITOR)
             serialized_class
             ImGuiFileDialog
             miniaudio
+            Jolt
     )
 endif()
 
@@ -614,6 +711,7 @@ if (BUILD_PLAYER)
             pugixml
             serialized_class
             miniaudio
+            Jolt
     )
 endif()
 
