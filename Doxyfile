@@ -1,0 +1,36 @@
+# Doxyfile for Meteor Engine
+
+# -- Project metadata --
+PROJECT_NAME           = "Meteor Engine"
+PROJECT_BRIEF          = "A C++ game engine built with OpenGL"
+OUTPUT_DIRECTORY       = docs_output
+
+# -- Input sources --
+# Which directories Doxygen should scan for documented code.
+# Adjust if your layout differs on the documentation branch.
+INPUT                  = src/
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.hpp *.cpp
+
+# -- What gets extracted --
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+
+# -- Output format --
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HTML_OUTPUT            = html
+
+# -- Source browsing (inline code in docs) --
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+
+# -- Diagrams --
+# Graphviz class/call graphs. Set to NO if you want faster builds
+# and don't need relationship diagrams.
+HAVE_DOT               = YES
+DOT_IMAGE_FORMAT       = svg
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+CLASS_DIAGRAMS         = YES
