@@ -5,6 +5,7 @@
 #pragma once
 #ifndef METEOR_ENGINE_APPLICATION_H
 #define METEOR_ENGINE_APPLICATION_H
+#include "core/default_settings_paths.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
 #include "core/meteor_core_minimal.h"
@@ -20,7 +21,7 @@ public:
     virtual void pause(const bool& pause) = 0;
 
     [[nodiscard]] virtual bool isRunning() const = 0;
-    [[nodiscard]] virtual SString getEngineSettingsPath() const = 0;
+    [[nodiscard]] virtual SString getEngineSettingsPath() const { return SString::format("{0}{1}", DEFAULT_SETTINGS_PATH, "EngineSettings.xml"); }
     [[nodiscard]] virtual bool isPaused() const  = 0;
     [[nodiscard]] virtual bool isPlaying() const = 0;
 

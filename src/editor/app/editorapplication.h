@@ -1,4 +1,5 @@
 #pragma once
+#include "core/default_settings_paths.h"
 #include "editor/meteorite.h"
 #include "editor/window/imgui/imguiwindow.h"
 
@@ -33,7 +34,7 @@ public:
     [[nodiscard]] bool isPlaying() const override  { return simulationState == Simulating;       };
     float getPhysicsStep() const;
 
-    SString getEngineSettingsPath() const override { return "EditorSettings.xml"; }
+    SString getEngineSettingsPath() const override { return SString::format("{0}{1}", DEFAULT_SETTINGS_PATH, "EditorSettings.xml"); }
 
     void showSplashScreen();
     void loadPrerequisites();

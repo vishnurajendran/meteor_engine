@@ -172,6 +172,7 @@ void MJoltPhysicsEngine::registerCallbackReceiver(ICollisionBody* body,
     const bool isStatic = bodyInterface->GetMotionType(bodyId) == EMotionType::Static;
     const ObjectLayer newLayer = static_cast<ObjectLayer>((physicsLayer & 31u) + (isStatic ? 0u : 32u));
     bodyInterface->SetObjectLayer(bodyId, newLayer);
+    bodyInterface->InvalidateContactCache(bodyId);
 }
 
 void MJoltPhysicsEngine::unregisterCallbackReceiver(ICollisionBody* body)
