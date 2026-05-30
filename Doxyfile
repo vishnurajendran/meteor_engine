@@ -3,7 +3,7 @@
 # -- Project metadata --
 PROJECT_NAME           = "Meteor Engine"
 PROJECT_BRIEF          = "A C++ game engine built with OpenGL"
-OUTPUT_DIRECTORY       = docs_output
+OUTPUT_DIRECTORY       = docs
 
 # -- Input sources --
 # Which directories Doxygen should scan for documented code.
