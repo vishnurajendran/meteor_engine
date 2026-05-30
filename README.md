@@ -9,7 +9,17 @@ It’s currently in active development, focused on exploring rendering architect
 
 ## Current State (What Exists Right Now)
 
-![meteorite_editor](https://i.ibb.co/KpMznLYG/engine-editor-ss.png)
+![meteorite_editor](https://i.ibb.co/xtBhw9R2/meteor-physics.gif)
+
+### Core
+- Scene system with spatial entities
+- Basic engine loop (Editor + Player separation)
+- Audio engine powered by MiniAudio, supports 2D and spatial audio
+- Physics engine powered by Jolt Physics
+  - supports Box, Sphere, Cylinder, Capsule, Mesh and Convex Hull collision shapes.
+  - Raycasts.
+  - Named Physics layers.
+> **NOTE:** Currently compound collision shapes are **NOT** supported
 
 ### Rendering
 - Custom **scalable render pipeline (WIP refactor ongoing)**
@@ -27,14 +37,7 @@ It’s currently in active development, focused on exploring rendering architect
 - Scene hierarchy (basic)
 - Inspector (early)
 - Scene viewport
-- Debug tooling (in progress)
-
-### Core
-- Scene system with spatial entities
-- Basic engine loop (Editor + Player separation)
-- Plugin system (early design phase)
-- Audio engine powered by MiniAudio, supports 2D and spatial audio
-
+- Custom inspectors
 ---
 
 ## In Progress / Actively Being Worked On
@@ -46,10 +49,8 @@ It’s currently in active development, focused on exploring rendering architect
 
 ---
 
-## Missing Systems (Not Implemented Yet)
+## Missing/Pending Systems (Not Implemented Yet)
 
-- ~~Audio System~~
-- Physics system
 - Scripting layer (planned DSL / runtime scripting)
 - Animation system
 - Build pipeline / packaging
@@ -59,15 +60,16 @@ It’s currently in active development, focused on exploring rendering architect
 ---
 ## Tech Stack
 
-| Category          | Technology                                                                                                |
-|-------------------|-----------------------------------------------------------------------------------------------------------|
-| **Language**      | [C++20](https://en.cppreference.com/cpp/20)                                                               |
-| **Rendering**     | [OpenGL](https://www.opengl.org/)                                                                         |
-| **Windowing**     | [SFML](https://www.sfml-dev.org/), [SFML-ImGui](https://github.com/SFML/imgui-sfml)                       |
-| **Audio**         | [MiniAudio](https://miniaud.io/index.html)                                                                |
-| **GUI**           | [ImGui](https://github.com/ocornut/imgui)                                                                 |
-| **Model Loading** | [Assimp](https://www.assimp.org/)                                                                         |
-| **Serlization**   | [PugiXML](https://pugixml.org/), [Serialized Class](https://github.com/vishnurajendran/serialized_class)  |
+| Category          | Technology                                                                                               |
+|-------------------|----------------------------------------------------------------------------------------------------------|
+| **Language**      | [C++20](https://en.cppreference.com/cpp/20)                                                              |
+| **Rendering**     | [OpenGL v4.6](https://www.opengl.org/)                                                                   |
+| **Windowing**     | [SFML](https://www.sfml-dev.org/), [SFML-ImGui](https://github.com/SFML/imgui-sfml)                      |
+| **Audio**         | [MiniAudio](https://miniaud.io/index.html)                                                               |
+| **Physics**       | [Jolt Physics](https://github.com/jrouwe/joltphysics)                                                    |
+| **GUI**           | [ImGui](https://github.com/ocornut/imgui)                                                                |
+| **Model Loading** | [Assimp](https://www.assimp.org/)                                                                        |
+| **Serlization**   | [PugiXML](https://pugixml.org/), [Serialized Class](https://github.com/vishnurajendran/serialized_class) |
 
 ---
 
@@ -95,6 +97,7 @@ Meteor is primarily a **learning + experimentation project**, with focus on:
 - pugixml
 - Serialized Class
 - Mini Audio
+- Jolt Physics
 
 *\*(Manual setup required depending on platform)*
 
