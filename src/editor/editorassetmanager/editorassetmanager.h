@@ -13,6 +13,14 @@
 #include "hotreloadwatcher.h"
 #include "thumbnail_renderer.h"
 
+enum class EShaderTemplate
+{
+    Lit,
+    Unlit,
+    UnlitColor,
+    Toon,
+};
+
 class MEditorAssetManager : public MAssetManager
 {
     DEFINE_OBJECT_SUBCLASS(MEditorAssetManager)
@@ -20,9 +28,6 @@ public:
     void refresh() override;
     void openAsset(MAsset* asset);
     virtual int saveDirtyAssets();
-    // Called by MEditorApplication::run() every frame.
-    // Handles both hot-reload (1s poll) and delta scan (5s poll).
-    // Also ticks the thumbnail renderer — one thumbnail generated per frame.
     int tickHotReload();
 
     int getTotalHotReloadCount() const { return totalHotReloadCount; }
@@ -30,18 +35,25 @@ public:
     [[nodiscard]] SAssetDirectoryNode* getAssetRootNode() const { return assetsTreeRoot; }
 
     // -- Asset ping — "focus in browser" --------------------------------------
-    // Called by MAssetReferenceControl when the user clicks a reference slot.
-    // The asset window consumes this once per frame in tickAndSync() and
-    // navigates to the asset's folder, selecting it.
     void    pingAsset(const SString& assetId) { pendingPingAssetId = assetId; }
     SString consumePendingPing()              { SString id = pendingPingAssetId; pendingPingAssetId.clear(); return id; }
 
     // -- Thumbnail API ---------------------------------------------------------
-    // Call from the asset window's drawAssetTile(). Returns immediately —
-    // if the thumbnail isn't ready yet, nullptr is returned and generation
-    // is queued for the next available frame.
     sf::Texture*   getThumbnail(MAsset* asset);
     void           requestThumbnail(MAsset* asset);
+
+    // -- Asset creation --------------------------------------------------------
+    // Creates a .mesl shader file from a template in DIR_TEMPLATES.
+    // Returns true on success.  Forces an immediate delta scan.
+    bool createShaderAsset(const SString& directory, const SString& name,
+                           EShaderTemplate shaderTemplate);
+
+    // Creates a .cubemap skybox definition file from a template.
+    bool createSkyboxAsset(const SString& directory, const SString& name);
+
+    // -- Asset deletion --------------------------------------------------------
+    bool deleteAsset(MAsset* asset);
+    bool deleteAssetByPath(const SString& path);
 
 private:
     void buildAssetTree();
@@ -50,6 +62,17 @@ private:
     void registerAssetsWithWatcher();
     void deltaRefresh();
 
+    static bool writeNewAssetFile(const SString& filePath, const SString& content);
+
+    // Reads a template from DIR_TEMPLATES, replaces __ASSET_NAME__ with
+    // `assetName`, returns the result.  Empty string on failure.
+    static SString loadTemplate(const SString& templateFileName, const SString& assetName);
+
+    static const char* getShaderTemplateFileName(EShaderTemplate tmpl);
+
+    static constexpr const char* DIR_TEMPLATES        = SEditorPaths::DIR_TEMPLATES_PATH;
+    static constexpr const char* TEMPLATE_NAME_TOKEN  = "__ASSET_NAME__";
+
 private:
     SAssetDirectoryNode* assetsTreeRoot      = nullptr;
     MHotReloadWatcher    hotReloadWatcher;
@@ -57,13 +80,10 @@ private:
     MThumbnailRenderer   thumbnailRenderer;
     int                  totalHotReloadCount = 0;
 
-    static constexpr double               DELTA_SCAN_INTERVAL_SECONDS = 5.0;
+    static constexpr double               DELTA_SCAN_INTERVAL_SECONDS = 1.0;
     std::chrono::steady_clock::time_point lastDeltaScanTime =
         std::chrono::steady_clock::now();
 
-    // Paths that failed to import during a delta scan are recorded here and
-    // permanently skipped on future scans.  A full refresh() clears the set
-    // so manual fixes to broken files are picked up after a re-scan.
     std::set<SString> failedAssetPaths;
     SString           pendingPingAssetId;
 };

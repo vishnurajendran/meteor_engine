@@ -621,7 +621,7 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/add_entity/menu_additem_macros.h
         src/editor/app/simulation_manager.cpp
         src/editor/app/simulation_manager.h
-        src/editor/editor_paths.h
+        src/editor/editor_constants.h
         src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.cpp
         src/editor/editorwindows/inspectordrawer/physics/box_collision_body_inspectordrawer.h
         src/editor/editorwindows/inspectordrawer/physics/sphere_collision_body_inspectordrawer.cpp
@@ -652,9 +652,12 @@ if (BUILD_EDITOR)
             METEOR_EDITOR=1
     )
 
-    add_executable(${EDITOR_NAME}
+    add_executable( ${EDITOR_NAME}
+
             ${CORE_SOURCES}
             ${EDITOR_SOURCES}
+
+            resource.rc
     )
 
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
@@ -689,9 +692,11 @@ if (BUILD_PLAYER)
             METEOR_PLAYER=1
     )
 
-    add_executable(${PLAYER_NAME}
+    add_executable( ${PLAYER_NAME}
             ${CORE_SOURCES}
             ${PLAYER_SOURCES}
+
+            resource.rc
     )
 
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
@@ -740,20 +745,28 @@ endif()
 # Copy system
 # ---------------------------------------------------------------------------
 
-function(add_copy_post_build target_name)
+set(DEST_COPY_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+function(add_copy_post_build target_name source_dir)
     add_custom_command(TARGET ${target_name} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E echo "Copying assets for ${target_name}..."
 
             COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${SOURCE_COPY_DIR}"
+            "${source_dir}"
             "${DEST_COPY_DIR}"
 
             VERBATIM
     )
 endfunction()
 
-set(SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin")
-set(DEST_COPY_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+set(COMMON_SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin/common")
+set(EDITOR_SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin/editor")
 
-add_copy_post_build(${EDITOR_NAME})
-add_copy_post_build(${PLAYER_NAME})
+
+if (BUILD_EDITOR)
+    add_copy_post_build(${EDITOR_NAME} ${COMMON_SOURCE_COPY_DIR})
+    add_copy_post_build(${EDITOR_NAME} ${EDITOR_SOURCE_COPY_DIR})
+endif()
+
+if (BUILD_PLAYER)
+    add_copy_post_build(${PLAYER_NAME} ${COMMON_SOURCE_COPY_DIR})
+endif()

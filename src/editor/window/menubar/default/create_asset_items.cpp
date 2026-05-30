@@ -15,6 +15,10 @@
 #include "editor/window/menubar/menubartree.h"
 #include "imgui.h"
 
+// -------------------------------------------------------------------------------
+//  Material
+// -------------------------------------------------------------------------------
+
 bool MCreateMaterialItem::registered = []() {
     MMenubarTreeNode::registerItem(new MCreateMaterialItem());
     return true;
@@ -181,6 +185,206 @@ void MCreateMaterialItem::drawPopup()
     }
 
     ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        showDialog = false;
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+    
+}
+
+// -------------------------------------------------------------------------------
+//  Shader
+// -------------------------------------------------------------------------------
+
+bool MCreateShaderItem::registered = []() {
+    MMenubarTreeNode::registerItem(new MCreateShaderItem());
+    return true;
+}();
+
+// Labels and enum values shown in the template combo.
+static constexpr const char* k_templateLabels[] = {
+    "Lit (Standard)",
+    "Unlit",
+    "Unlit Color",
+    "Toon",
+};
+static constexpr EShaderTemplate k_templateValues[] = {
+    EShaderTemplate::Lit,
+    EShaderTemplate::Unlit,
+    EShaderTemplate::UnlitColor,
+    EShaderTemplate::Toon,
+};
+static constexpr int k_templateCount = sizeof(k_templateValues) / sizeof(k_templateValues[0]);
+
+void MCreateShaderItem::onSelect()
+{
+    std::strncpy(shaderName, "NewShader", sizeof(shaderName));
+    selectedTemplate = 0;
+    showDialog = true;
+}
+
+void MCreateShaderItem::drawPopup()
+{
+    if (!showDialog) return;
+
+    ImGui::OpenPopup("##create_shader_dlg");
+
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(480, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("##create_shader_dlg", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.5f, 0.15f, 1.f));
+    ImGui::TextUnformatted("Create New Shader");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    constexpr float LW = 90.f;
+
+    ImGui::Text("Name");
+    ImGui::SameLine(LW);
+    ImGui::SetNextItemWidth(-1.f);
+    ImGui::InputText("##cs_name", shaderName, sizeof(shaderName));
+
+    ImGui::Text("Directory");
+    ImGui::SameLine(LW);
+    ImGui::SetNextItemWidth(-1.f);
+    ImGui::InputText("##cs_dir", directory, sizeof(directory));
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Relative to the project root, e.g. assets/shaders/");
+
+    ImGui::Text("Template");
+    ImGui::SameLine(LW);
+    ImGui::SetNextItemWidth(-1.f);
+    ImGui::Combo("##cs_tmpl", &selectedTemplate, k_templateLabels, k_templateCount);
+
+    ImGui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    ImGui::Text("Output: %s%s.mesl", directory, shaderName);
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const bool canCreate = shaderName[0] != '\0' && directory[0] != '\0';
+
+    ImGui::BeginDisabled(!canCreate);
+    if (ImGui::Button("Create", ImVec2(120, 0)))
+    {
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+            MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+        if (editorAM)
+        {
+            EShaderTemplate tmpl = k_templateValues[selectedTemplate];
+            if (editorAM->createShaderAsset(SString(directory), SString(shaderName), tmpl))
+                MLOG(SString::format("Created Shader {0}", shaderName));
+        }
+        showDialog = false;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndDisabled();
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        showDialog = false;
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+}
+
+// -------------------------------------------------------------------------------
+//  Skybox
+// -------------------------------------------------------------------------------
+
+bool MCreateSkyboxItem::registered = []() {
+    MMenubarTreeNode::registerItem(new MCreateSkyboxItem());
+    return true;
+}();
+
+void MCreateSkyboxItem::onSelect()
+{
+    std::strncpy(skyboxName, "NewSkybox", sizeof(skyboxName));
+    showDialog = true;
+}
+
+void MCreateSkyboxItem::drawPopup()
+{
+    if (!showDialog) return;
+
+    ImGui::OpenPopup("##create_skybox_dlg");
+
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(480, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("##create_skybox_dlg", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.7f, 0.9f, 1.f));
+    ImGui::TextUnformatted("Create New Skybox");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    constexpr float LW = 90.f;
+
+    ImGui::Text("Name");
+    ImGui::SameLine(LW);
+    ImGui::SetNextItemWidth(-1.f);
+    ImGui::InputText("##cb_name", skyboxName, sizeof(skyboxName));
+
+    ImGui::Text("Directory");
+    ImGui::SameLine(LW);
+    ImGui::SetNextItemWidth(-1.f);
+    ImGui::InputText("##cb_dir", directory, sizeof(directory));
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Relative to the project root, e.g. assets/skybox/");
+
+    ImGui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    ImGui::Text("Output: %s%s%s", directory, skyboxName, SEditorPaths::EXTENSION_SKYBOX);
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    ImGui::TextWrapped("Creates a skybox asset with six empty face slots. ");
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const bool canCreate = skyboxName[0] != '\0' && directory[0] != '\0';
+
+    ImGui::BeginDisabled(!canCreate);
+    if (ImGui::Button("Create", ImVec2(120, 0)))
+    {
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+            MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+        if (editorAM)
+        {
+            if (editorAM->createSkyboxAsset(SString(directory), SString(skyboxName)))
+                MLOG(SString::format("Created Skybox {0}", skyboxName));
+        }
+        showDialog = false;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndDisabled();
+
     ImGui::SameLine();
     if (ImGui::Button("Cancel", ImVec2(120, 0)))
     {

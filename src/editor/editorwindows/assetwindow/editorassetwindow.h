@@ -52,33 +52,22 @@ class MEditorAssetWindow : public MImGuiSubWindow
     bool matchesSearch(SAssetDirectoryNode* node) const;
 
     void onFileDoubleClicked(SAssetDirectoryNode* node);
-    // Single-click on an asset tile — sets MEditorApplication::Selected so
-    // the inspector immediately shows the asset's properties.
     void selectAssetForInspector(SAssetDirectoryNode* node);
 
-    // Called at the top of onGui() each frame.
-    // - Detects if a full refresh() was called externally by comparing rootNode
-    //   to the manager's current tree root. If stale, calls syncWithAssetManager().
-    // - Detects new hot-reloads by comparing against getTotalHotReloadCount(),
-    //   and arms the flash timer when new reloads are found.
     void tickAndSync(float deltaTime);
-
-    // Re-binds rootNode and tries to navigate back to the same folder path
-    // after a full refresh() has deleted and recreated the tree.
     void syncWithAssetManager();
 
-    // BFS search for the node whose nodePath matches `path`.
     static SAssetDirectoryNode* findNodeByPath(SAssetDirectoryNode* root,
                                                const SString& path);
 
-    // Consumes a pending ping from MEditorAssetManager, navigates to the
-    // asset's parent folder, and selects the asset node.
     void processPendingPing();
 
-    // BFS: find the asset node matching assetId and optionally its parent.
     static SAssetDirectoryNode* findNodeByAssetId(SAssetDirectoryNode* root,
                                                   const SString& assetId,
                                                   SAssetDirectoryNode** outParent = nullptr);
+
+    // Draws the delete-confirmation modal each frame.
+    void drawDeleteConfirmModal();
 
 public:
     MEditorAssetWindow();
@@ -96,6 +85,13 @@ private:
     std::vector<SAssetDirectoryNode*> historyBack;
     std::vector<SAssetDirectoryNode*> historyForward;
 
+    // Cached paths — kept in sync during normal navigation so that
+    // syncWithAssetManager() never needs to dereference stale pointers.
+    SString              cachedCurrentPath;
+    SString              cachedSelectedPath;
+    std::vector<SString> cachedHistoryBackPaths;
+    std::vector<SString> cachedHistoryForwardPaths;
+
     EAssetViewMode viewMode     = EAssetViewMode::Grid;
     EAssetSortMode sortMode     = EAssetSortMode::Name;
     float          zoomLevel    = 1.0f;
@@ -109,12 +105,13 @@ private:
     SString draggedAssetId;
     bool pendingContextMenu = false;
 
-    // Last value of getTotalHotReloadCount() we saw — used to detect new reloads.
     int   lastSeenReloadCount = 0;
-    // Counts down from RELOAD_FLASH_DURATION after a hot-reload is detected.
-    // While > 0, a flash indicator is shown in the toolbar.
     float reloadFlashTimer    = 0.0f;
     static constexpr float RELOAD_FLASH_DURATION = 2.5f;
+
+    // -- Delete confirmation state ---------------------------------------------
+    bool                 pendingDeleteConfirm = false;
+    SAssetDirectoryNode* pendingDeleteNode    = nullptr;
 };
 
 #endif // EDITORASSETWINDOW_H

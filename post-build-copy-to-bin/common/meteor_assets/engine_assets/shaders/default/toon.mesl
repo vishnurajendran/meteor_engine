@@ -1,11 +1,11 @@
 <shader name="toon" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
     <properties>
-        <property key="_albedo"             type="tex2d" default=""/>
-        <property key="_color"              type="col"   default="(1,1,1,1)"/>
+        <property key="_albedo"             type="tex2d"   default=""/>
+        <property key="_color"              type="color"   default="(1,1,1,1)"/>
 
-        <property key="_outlineColor"       type="col"   default="(0,0,0,1)"/>
-        <property key="_outlineThickness"   type="f"     default="0.8"/>
-        <property key="_useOutline"         type="i"     default="1"/>
+        <property key="_outlineColor"       type="color"   default="(0,0,0,1)"/>
+        <property key="_outlineThickness"   type="float"   default="0.8"/>
+        <property key="_useOutline"         type="bool"    default="True"/>
     </properties>
 
     #VERTEX_PASS

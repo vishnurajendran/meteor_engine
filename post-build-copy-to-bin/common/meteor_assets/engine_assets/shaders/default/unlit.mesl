@@ -1,26 +1,26 @@
 <shader name="unlit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
     <properties>
-        <property key="_albedo"             type="tex2d" default=""/>
-        <property key="_color"              type="col"   default="(1,1,1,1)"/>
+        <property key="_albedo"             type="tex2d"     default=""/>
+        <property key="_color"              type="color"     default="(1,1,1,1)"/>
 
-        <property key="_detailTex"          type="tex2d" default=""/>
-        <property key="_useDetail"          type="i"     default="0"/>
-        <property key="_detailTiling"       type="f"     default="4.0"/>
-        <property key="_detailStrength"     type="f"     default="0.5"/>
+        <property key="_detailTex"          type="tex2d"     default=""/>
+        <property key="_useDetail"          type="bool"      default="0"/>
+        <property key="_detailTiling"       type="float"     default="4.0"/>
+        <property key="_detailStrength"     type="float"     default="0.5"/>
 
-        <property key="_emissionTex"        type="tex2d" default=""/>
-        <property key="_useEmission"        type="i"     default="0"/>
-        <property key="_emissionColor"      type="col"   default="(1,1,1,1)"/>
-        <property key="_emissionIntensity"  type="f"     default="1.0"/>
+        <property key="_emissionTex"        type="tex2d"     default=""/>
+        <property key="_useEmission"        type="bool"      default="0"/>
+        <property key="_emissionColor"      type="color"     default="(1,1,1,1)"/>
+        <property key="_emissionIntensity"  type="float"     default="1.0"/>
 
-        <property key="_useCutout"          type="i"     default="0"/>
-        <property key="_cutoutThreshold"    type="f"     default="0.5"/>
+        <property key="_useCutout"          type="int"       default="0"/>
+        <property key="_cutoutThreshold"    type="float"     default="0.5"/>
 
-        <property key="_rimColor"           type="col"   default="(0.5,0.8,1.0,1)"/>
-        <property key="_rimPower"           type="f"     default="3.0"/>
-        <property key="_rimIntensity"       type="f"     default="0.0"/>
+        <property key="_rimColor"           type="color"     default="(0.5,0.8,1.0,1)"/>
+        <property key="_rimPower"           type="float"     default="3.0"/>
+        <property key="_rimIntensity"       type="float"     default="0.0"/>
 
-        <property key="_opacity"            type="f"     default="1.0"/>
+        <property key="_opacity"            type="float"     default="1.0"/>
     </properties>
 
     #VERTEX_PASS

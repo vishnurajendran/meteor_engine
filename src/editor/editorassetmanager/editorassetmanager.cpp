@@ -5,7 +5,9 @@
 #include "editorassetmanager.h"
 
 #include <filesystem>
+#include <fstream>
 #include <queue>
+#include <sstream>
 
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/asset/defferedloadableasset.h"
@@ -48,8 +50,6 @@ sf::Texture* MEditorAssetManager::getThumbnail(MAsset* asset)
 {
     if (!asset) return nullptr;
 
-    // Dirty asset → evict stale thumbnail so it gets re-rendered
-    // on the next requestThumbnail() call.
     if (asset->isDirty() && thumbnailCache.has(asset->getAssetId()))
     {
         thumbnailCache.evict(asset->getAssetId());
@@ -74,7 +74,7 @@ void MEditorAssetManager::deltaRefresh()
 
     lastDeltaScanTime = now;
     bool changed = false;
-
+    SString lastLoadedAsset = "";
     // Pass 1: new files
     for (const auto& searchPath : ASSET_SEARCH_PATHS)
     {
@@ -103,6 +103,8 @@ void MEditorAssetManager::deltaRefresh()
                 for (size_t i = deferredBefore; i < defferedLoadableAssetList.size(); ++i)
                     if (defferedLoadableAssetList[i])
                         defferedLoadableAssetList[i]->deferredAssetLoad(false);
+
+                lastLoadedAsset = path;
             }
             else
             {
@@ -136,6 +138,7 @@ void MEditorAssetManager::deltaRefresh()
     if (changed)
     {
         buildAssetTree();
+        pingAsset(lastLoadedAsset);
         MLOG(STR("EditorAssetManager:: Delta refresh complete"));
     }
 }
@@ -212,7 +215,6 @@ void MEditorAssetManager::openAsset(MAsset* asset)
     }
 }
 
-
 int MEditorAssetManager::saveDirtyAssets()
 {
     int savedCount = 0;
@@ -227,4 +229,188 @@ int MEditorAssetManager::saveDirtyAssets()
         }
     }
     return savedCount;
+}
+
+// --- Asset deletion ----------------------------------------------------------
+
+bool MEditorAssetManager::deleteAsset(MAsset* asset)
+{
+    if (!asset) return false;
+
+    SString targetPath;
+    for (const auto& [path, a] : assetMap)
+    {
+        if (a == asset)
+        {
+            targetPath = path;
+            break;
+        }
+    }
+
+    if (targetPath.empty())
+    {
+        MWARN("EditorAssetManager:: deleteAsset — asset not found in map");
+        return false;
+    }
+
+    return deleteAssetByPath(targetPath);
+}
+
+bool MEditorAssetManager::deleteAssetByPath(const SString& path)
+{
+    if (path.empty()) return false;
+
+    MLOG(STR("EditorAssetManager:: Deleting asset: ") + path);
+
+    hotReloadWatcher.unwatchAsset(path);
+
+    auto it = assetMap.find(path);
+    if (it != assetMap.end())
+    {
+        MAsset* asset = it->second;
+        if (asset)
+        {
+            thumbnailCache.evict(asset->getAssetId());
+            const SString id = asset->getAssetId();
+            if (!id.empty())
+                assetMapByAssetId.erase(id);
+            delete asset;
+        }
+        assetMap.erase(it);
+    }
+
+    std::error_code ec;
+    std::filesystem::remove(std::filesystem::path(path.str()), ec);
+    if (ec)
+    {
+        MWARN(SString::format("EditorAssetManager:: Failed to delete file: {0} ({1})",
+                              path, SString(ec.message().c_str())));
+    }
+
+    // Also delete the .meta sidecar if it exists.
+    SString metaPath = path + ".meta";
+    std::filesystem::remove(std::filesystem::path(metaPath.str()), ec);
+
+    buildAssetTree();
+
+    MLOG(STR("EditorAssetManager:: Asset deleted successfully"));
+    return true;
+}
+
+// --- Template loading --------------------------------------------------------
+
+SString MEditorAssetManager::loadTemplate(const SString& templateFileName,
+                                           const SString& assetName)
+{
+    std::filesystem::path templatePath =
+        std::filesystem::path(DIR_TEMPLATES) / templateFileName.str();
+
+    std::ifstream ifs(templatePath);
+    if (!ifs.is_open())
+    {
+        MERROR(SString::format("EditorAssetManager:: Template not found: {0}",
+                               SString(templatePath.string().c_str())));
+        return SString();
+    }
+
+    std::ostringstream ss;
+    ss << ifs.rdbuf();
+    ifs.close();
+
+    SString content = STR(ss.str().c_str());
+    content.replace(TEMPLATE_NAME_TOKEN, assetName);
+    return content;
+}
+
+const char* MEditorAssetManager::getShaderTemplateFileName(EShaderTemplate tmpl)
+{
+    switch (tmpl)
+    {
+    case EShaderTemplate::Lit:            return SEditorPaths::TEMPLATE_SHADER_LIT_FILE;
+    case EShaderTemplate::Unlit:          return SEditorPaths::TEMPLATE_SHADER_UNLIT_FILE;
+    case EShaderTemplate::UnlitColor:     return SEditorPaths::TEMPLATE_SHADER_UNLIT_COLOR_FILE;
+    case EShaderTemplate::Toon:           return SEditorPaths::TEMPLATE_SHADER_TOONLIT_FILE;
+    }
+    return nullptr;
+}
+
+// --- File writing ------------------------------------------------------------
+
+bool MEditorAssetManager::writeNewAssetFile(const SString& filePath,
+                                             const SString& content)
+{
+    std::filesystem::path p(filePath.str());
+    std::error_code ec;
+    std::filesystem::create_directories(p.parent_path(), ec);
+
+    std::ofstream ofs(p, std::ios::out | std::ios::trunc);
+    if (!ofs.is_open())
+    {
+        MERROR(SString::format("EditorAssetManager:: Failed to create file: {0}", filePath));
+        return false;
+    }
+    ofs << content.str();
+    ofs.close();
+    return true;
+}
+
+static SString makeUniquePath(const SString& directory, const SString& baseName,
+                               const SString& extension)
+{
+    SString filePath = directory + "/" + baseName + extension;
+    int suffix = 1;
+    while (std::filesystem::exists(std::filesystem::path(filePath.str())))
+    {
+        filePath = directory + "/" + baseName + "_" + SString::fromInt(suffix) + extension;
+        ++suffix;
+    }
+    return filePath;
+}
+
+// --- Create Shader -----------------------------------------------------------
+
+bool MEditorAssetManager::createShaderAsset(const SString& directory,
+                                             const SString& name,
+                                             EShaderTemplate shaderTemplate)
+{
+    const char* tmplFile = getShaderTemplateFileName(shaderTemplate);
+    if (!tmplFile)
+    {
+        MERROR("EditorAssetManager:: Unknown shader template");
+        return false;
+    }
+
+    SString fileName = name.empty() ? SString("New_Shader") : name;
+    SString filePath = makeUniquePath(directory, fileName, STR(SEditorPaths::EXTENSION_SHADER));
+
+    SString content = loadTemplate(STR(tmplFile), fileName);
+    if (content.empty())
+        return false;
+
+    if (!writeNewAssetFile(filePath, content))
+        return false;
+
+    MLOG(SString::format("EditorAssetManager:: Created shader: {0}", filePath));
+    lastDeltaScanTime = std::chrono::steady_clock::time_point{};
+    return true;
+}
+
+// --- Create Skybox -----------------------------------------------------------
+
+bool MEditorAssetManager::createSkyboxAsset(const SString& directory,
+                                             const SString& name)
+{
+    SString fileName = name.empty() ? SString("New_Skybox") : name;
+    SString filePath = makeUniquePath(directory, fileName, STR(".skybox"));
+
+    SString content = loadTemplate(STR(SEditorPaths::TEMPLATE_SKYBOX_FILE), fileName);
+    if (content.empty())
+        return false;
+
+    if (!writeNewAssetFile(filePath, content))
+        return false;
+
+    MLOG(SString::format("EditorAssetManager:: Created skybox: {0}", filePath));
+    lastDeltaScanTime = std::chrono::steady_clock::time_point{};
+    return true;
 }

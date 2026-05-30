@@ -9,7 +9,7 @@
 #include <map>
 #include "SFML/Graphics/Texture.hpp"
 #include "core/object/object.h"
-#include "editor/editor_paths.h"
+#include "editor/editor_constants.h"
 
 // Owns sf::Texture* objects keyed by asset GUID.
 // Thumbnails are persisted to CACHE_DIR so they survive editor restarts
