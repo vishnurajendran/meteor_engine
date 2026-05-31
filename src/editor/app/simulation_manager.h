@@ -5,7 +5,7 @@
 #ifndef SIMULATION_MANAGER_H
 #define SIMULATION_MANAGER_H
 #include "core/engine/subsystem/subsystem_interface.h"
-#include "editor/editor_paths.h"
+#include "editor/editor_constants.h"
 #include "editorapplication.h"
 
 

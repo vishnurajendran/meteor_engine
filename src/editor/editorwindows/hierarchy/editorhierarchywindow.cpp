@@ -13,6 +13,10 @@
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
+#include "core/engine/physics/entities/capsule_collision_body_entity.h"
+#include "core/engine/physics/entities/convexhull_collision_body_entity.h"
+#include "core/engine/physics/entities/cylinder_collision_body_entity.h"
+#include "core/engine/physics/entities/mesh_collision_body_entity.h"
 #include "core/engine/physics/entities/sphere_collision_body_entity.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
 #include "core/engine/skybox/skybox.h"
@@ -62,6 +66,11 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
     // collision
     typeToIcon[MBoxCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_BOX);
     typeToIcon[MSphereCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_SPHERE);
+    typeToIcon[MCylinderCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_CYLINDER);
+    typeToIcon[MCapsuleCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_CAPSULE);
+    typeToIcon[MMeshCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_MESH);
+    typeToIcon[MConvexHullCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_CONVEXHULL);
+
 
     // default
     const std::filesystem::path sceneTexPath(SEditorAssetPaths::LOWRES_TEX_SCENE);
@@ -70,9 +79,8 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
     sceneTex.loadFromFile( sceneTexPath);
     entityTex.loadFromFile(entityTexPath);
 
-    float dpi    = DPIHelper::GetDPIScaleFactor();
-    sceneTexSize  = sf::Vector2f(sceneTex.getSize().x  * dpi, sceneTex.getSize().y  * dpi);
-    entityTexSize = sf::Vector2f(entityTex.getSize().x * dpi, entityTex.getSize().y * dpi);
+    sceneTexSize  = sf::Vector2f(sceneTex.getSize().x, sceneTex.getSize().y);
+    entityTexSize = sf::Vector2f(entityTex.getSize().x, entityTex.getSize().y);
 }
 
 
@@ -380,6 +388,14 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
     ImGui::SameLine(0, 4);
 
+    // Dim icon and text for disabled entities
+    const bool activeInHierarchy = entity->isEnabledInHierarchy();
+    if (!activeInHierarchy)
+    {
+        const float dimAlpha = entity->getEnabled() ? 0.45f : 0.35f;
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, dimAlpha);
+    }
+
     if (typeToIcon.contains(entity->typeInfo()))
     {
         ImGui::Image(typeToIcon[entity->typeInfo()], entityTexSize);
@@ -393,6 +409,8 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
     if (isRenaming)
     {
+        if (!activeInHierarchy) ImGui::PopStyleVar(); // restore alpha for input field
+
         if (pendingFocusRename)
         {
             ImGui::SetKeyboardFocusHere();
@@ -425,10 +443,12 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         ImGui::PushStyleColor(ImGuiCol_Text, COL_TEXT_MATCH);
         ImGui::TextUnformatted(entity->getName().c_str());
         ImGui::PopStyleColor();
+        if (!activeInHierarchy) ImGui::PopStyleVar();
     }
     else
     {
         ImGui::TextUnformatted(entity->getName().c_str());
+        if (!activeInHierarchy) ImGui::PopStyleVar();
     }
 
     // Children - ImGui's indent stack handles depth automatically
@@ -469,6 +489,13 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
     auto* target = rightClickedEntity ? rightClickedEntity : entity;
     ImGui::TextDisabled("%s", target ? target->getName().c_str() : "Entity");
     ImGui::Separator();
+
+    if (target)
+    {
+        bool isEnabled = target->getEnabled();
+        if (ImGui::MenuItem(isEnabled ? "Disable" : "Enable"))
+            target->setEnabled(!isEnabled);
+    }
 
     if (ImGui::MenuItem("Rename"))
     {

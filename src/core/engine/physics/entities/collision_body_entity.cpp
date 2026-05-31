@@ -31,6 +31,17 @@ void MCollisionBodyEntity::onStart()
     MSpatialEntity::onStart();
     if (!initialized) return;
 
+    // Always wire common field callbacks so they are ready whenever a body
+    // eventually appears (including after deferred creation or re-enable).
+    setupCommonCallbacks();
+
+    // Let the subclass wire its shape-specific callbacks and, if needed,
+    // replace the default bodyType onChange set by setupCommonCallbacks.
+    setupShapeCallbacks();
+
+    // Skip body creation if starting disabled — onEnable will handle it.
+    if (!isEnabledInHierarchy()) return;
+
     // Let the subclass create its body. This may not produce a body immediately
     // (mesh/convex hull waiting for an asset) - that is expected.
     createCollisionBody();
@@ -38,14 +49,6 @@ void MCollisionBodyEntity::onStart()
     // Register + sync common fields only if a body was created.
     if (getBasePhysicsBody())
         onBodyCreated();
-
-    // Always wire common field callbacks so they are ready whenever a body
-    // eventually appears (including after deferred creation).
-    setupCommonCallbacks();
-
-    // Let the subclass wire its shape-specific callbacks and, if needed,
-    // replace the default bodyType onChange set by setupCommonCallbacks.
-    setupShapeCallbacks();
 }
 
 void MCollisionBodyEntity::onUpdate(float deltaTime)
@@ -83,6 +86,32 @@ void MCollisionBodyEntity::onExit()
 
     physicsEngine = nullptr;
     initialized   = false;
+}
+
+void MCollisionBodyEntity::onEnable()
+{
+    MSpatialEntity::onEnable();
+    if (!initialized) return;
+
+    if (!getBasePhysicsBody())
+    {
+        createCollisionBody();
+        if (getBasePhysicsBody())
+            onBodyCreated();
+    }
+}
+
+void MCollisionBodyEntity::onDisable()
+{
+    MSpatialEntity::onDisable();
+    if (!initialized) return;
+
+    auto* body = getBasePhysicsBody();
+    if (body)
+    {
+        physicsEngine->unregisterCallbackReceiver(body);
+        releaseBody();
+    }
 }
 
 // ---------------------------------------------------------------------------

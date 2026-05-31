@@ -3,7 +3,6 @@
 //
 
 #include "editorcontrolsbuttons.h"
-#include "core/utils/dpihelper.h"
 #include "default_engine_icon_paths.h"
 #include "editor/app/editorapplication.h"
 #include "imgui-SFML.h"

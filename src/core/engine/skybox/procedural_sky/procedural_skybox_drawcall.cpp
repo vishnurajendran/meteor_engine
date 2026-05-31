@@ -1,9 +1,10 @@
 //
 // MProceduralSkyboxDrawCall
 //
-#include <GL/glew.h>
 #include "procedural_skybox_drawcall.h"
+#include <GL/glew.h>
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/skybox/skybox.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/utils/logger.h"
 
@@ -79,6 +80,9 @@ void MProceduralSkyboxDrawCall::uploadUniforms(const SMatrix4& proj,
 
 void MProceduralSkyboxDrawCall::draw()
 {
+    if (!canDraw)
+        return;
+
     if (!shader)
     {
         MERROR("MProceduralSkyboxDrawCall::draw — no shader");

@@ -14,8 +14,7 @@ MEditorInspectorWindow::MEditorInspectorWindow(int x, int y)
     : MImGuiSubWindow(x, y)
 {
     title = "Inspector";
-    auto dpi = DPIHelper::GetDPIScaleFactor();
-    minSize  = { 820 * dpi, FLT_MAX };
+    minSize  = { 820, FLT_MAX };
     MInspectorDrawer::initialise();
 }
 

@@ -6,7 +6,6 @@
 #define GIZMOS_H
 
 #include <vector>
-
 #include "core/object/object.h"
 #include "core/utils/color.h"
 #include "core/utils/glmhelper.h"
@@ -15,6 +14,7 @@
 class MSpatialEntity;
 class MCameraEntity;
 class MTexture;
+class MApplication;
 
 class MGizmos : public MObject {
     DEFINE_OBJECT_SUBCLASS(MGizmos)
@@ -114,6 +114,8 @@ private:
 
     static unsigned int createQuadVAO();
     static void         createLineVAO();
+
+    static MApplication* appInst;
 };
 
 #endif // GIZMOS_H

@@ -18,6 +18,9 @@
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
 
+#include "core/profiling/profiler.h"
+#include "editor/profiling/editor_profile_keys.h"
+
 bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)
 {
     if (!MWindow::initialiseWindow(inTitle, inSize, inFps))
@@ -38,7 +41,7 @@ bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int
     }
 
     ImGuiIO& io = ImGui::GetIO();
-    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18*DPIHelper::GetDPIScaleFactor());
+    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18);
 
     io.FontGlobalScale = 1;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
@@ -75,10 +78,15 @@ void MImGuiWindow::update(float deltaTime) {
         return;
 
     //Call the graphics systems to draw.
+    START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_RENDER)
     if (graphicsFunction)
         graphicsFunction();
+    STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_RENDER)
 
+    START_PROFILING_SAMPLE(EditorProfileKeys::EDITOR_IMGUI_DRAW)
     drawGUI(deltaTime);
+    STOP_PROFILING_SAMPLE(EditorProfileKeys::EDITOR_IMGUI_DRAW)
+
     coreWindow.display();
 
     // sync with target FPS

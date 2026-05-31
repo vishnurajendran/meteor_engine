@@ -2,10 +2,11 @@
 // Created by ssj5v on 22-04-2025.
 //
 
+#include "GL/glew.h"
 #include "gizmos.h"
 #include <cmath>
-#include "GL/glew.h"
 #include "GL/gl.h"
+#include "core/application/application.h"
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/viewmanagement.h"
@@ -22,11 +23,12 @@
 // Static member definitions
 // ---------------------------------------------------------------------------
 
-unsigned int MGizmos::uiQuadVAO    = 0;
-unsigned int MGizmos::uiLineVAO    = 0;
-unsigned int MGizmos::uiLineVBO    = 0;
-bool         MGizmos::gizmosEnabled = false;
-bool         MGizmos::batchingActive = false;
+unsigned int   MGizmos::uiQuadVAO      = 0;
+unsigned int   MGizmos::uiLineVAO      = 0;
+unsigned int   MGizmos::uiLineVBO      = 0;
+bool           MGizmos::gizmosEnabled  = false;
+bool           MGizmos::batchingActive = false;
+MApplication*  MGizmos::appInst        = nullptr;
 
 std::vector<MGizmos::SGizmoBatchEntry> MGizmos::pendingBatches;
 
@@ -542,10 +544,12 @@ void MGizmos::recursiveGizmoDraws(MSpatialEntity* entity)
 #if METEOR_EDITOR
     if (!entity) return;
 
-    if (entity->getEnabled())
+    if (entity->getEnabled() && entity->isEnabledInHierarchy())
+    {
         entity->onDrawGizmo(getResolution());
+        for (auto child : entity->getChildren())
+            recursiveGizmoDraws(child);
+    }
 
-    for (auto child : entity->getChildren())
-        recursiveGizmoDraws(child);
 #endif
 }
