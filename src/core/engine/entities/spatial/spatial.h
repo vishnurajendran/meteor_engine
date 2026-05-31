@@ -51,8 +51,9 @@ public:
     [[nodiscard]] EEntityFlags getEntityFlags() const { return flags; }
     void setEntityFlags(EEntityFlags flag)             { flags = flag; }
 
-    void setEnabled(bool enable)          { enabled = enable; }
+    void setEnabled(bool enable);
     [[nodiscard]] bool getEnabled() const { return enabled; }
+    [[nodiscard]] bool isEnabledInHierarchy() const;
 
     // Transform getters
     [[nodiscard]] SVector3    getRelativePosition() const { return relativePosition; }
@@ -111,6 +112,8 @@ public:
     virtual void onFixedUpdate(float fixedDeltaTime) {}; // no impl here.
     virtual void onExit();
     virtual void onDrawGizmo(SVector2 renderResolution);
+    virtual void onEnable()  {} // no impl here
+    virtual void onDisable() {} // no impl here
 
     [[nodiscard]] bool hasStarted() const { return entityStarted; }
     [[nodiscard]] bool getCanTick() const { return canTick; }
@@ -139,6 +142,7 @@ protected:
 private:
     [[nodiscard]] SMatrix4 computeLocalMatrix() const;
     static SString generateName(const SString& base);
+    void propagateActiveState(bool active);
 
     bool canTick       = false;
     bool entityStarted = false;

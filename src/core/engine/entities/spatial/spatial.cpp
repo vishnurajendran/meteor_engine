@@ -266,3 +266,38 @@ void MSpatialEntity::onStart()   { entityStarted = true; }
 void MSpatialEntity::onUpdate(float) {}
 void MSpatialEntity::onExit()    {}
 void MSpatialEntity::onDrawGizmo(SVector2) {}
+
+void MSpatialEntity::setEnabled(bool enable)
+{
+    if (enabled == enable) return;
+
+    bool wasActive = isEnabledInHierarchy();
+    enabled = enable;
+    bool nowActive = isEnabledInHierarchy();
+
+    if (wasActive != nowActive)
+        propagateActiveState(nowActive);
+}
+
+bool MSpatialEntity::isEnabledInHierarchy() const
+{
+    if (!enabled) return false;
+    if (parent)   return parent->isEnabledInHierarchy();
+    return true;
+}
+
+void MSpatialEntity::propagateActiveState(bool active)
+{
+    if (active)
+        onEnable();
+    else
+        onDisable();
+
+    for (auto* child : children)
+    {
+        // Only propagate to children whose own flag is true —
+        // individually disabled children stay disabled regardless.
+        if (child && child->enabled)
+            child->propagateActiveState(active);
+    }
+}

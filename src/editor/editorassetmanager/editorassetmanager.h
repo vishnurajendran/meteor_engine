@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] SAssetDirectoryNode* getAssetRootNode() const { return assetsTreeRoot; }
 
-    // -- Asset ping -- "focus in browser" --------------------------------------
+    // -- Asset ping — "focus in browser" --------------------------------------
     void    pingAsset(const SString& assetId) { pendingPingAssetId = assetId; }
     SString consumePendingPing()              { SString id = pendingPingAssetId; pendingPingAssetId.clear(); return id; }
 
@@ -46,6 +46,17 @@ public:
     bool createShaderAsset(const SString& directory, const SString& name,
                            EShaderTemplate shaderTemplate);
     bool createSkyboxAsset(const SString& directory, const SString& name);
+
+    // -- Directory management --------------------------------------------------
+    // Creates a new subdirectory under parentPath with the given name.
+    // Also creates a sibling .meta file and rebuilds the asset tree.
+    // Returns true on success, false if the directory already exists or on error.
+    bool createDirectory(const SString& parentPath, const SString& dirName);
+
+    // Recursively deletes a directory — removes all contained assets from
+    // the asset map, deletes the directory and its sibling .meta from disk,
+    // and rebuilds the asset tree.
+    bool deleteDirectory(const SString& dirPath);
 
     // -- Asset deletion --------------------------------------------------------
     bool deleteAsset(MAsset* asset);

@@ -8,6 +8,7 @@
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/graphics/core/render-pipeline/interfaces/drawable_interface.h"
 #include "core/utils/glmhelper.h"
+#include "procedural_skybox_drawcall.h"
 
 class MProceduralSkyboxDrawCall;
 class MDirectionalLight;
@@ -34,11 +35,14 @@ public:
 
     // ── IMeteorDrawable ───────────────────────────────────────────────────────
     void submitRenderItem(IRenderItemCollector* collector) override;
-    bool canDraw() override { return getEnabled(); }
+    bool canDraw() override { return getEnabled() && isEnabledInHierarchy(); }
 
     void onExit()                  override;
     void onUpdate(float deltaTime) override;
     void onDrawGizmo(SVector2 res) override;
+
+    void onDisable() override { if (drawCall) drawCall->setCanDraw(false); }
+    void onEnable()  override { if (drawCall) drawCall->setCanDraw(true);  }
 
     // ── Sun direction ─────────────────────────────────────────────────────────
     void setSunAngles(float elevationDeg, float azimuthDeg);

@@ -8,20 +8,24 @@
 struct SEditorAssetPaths
 {
     // Editor Icons
-    static constexpr const char* LOWRES_TEX_STATICMESH        = "meteor_assets/engine_assets/icons/lowres/static_mesh.png";
-    static constexpr const char* LOWRES_TEX_DIRECTIONAL_LIGHT = "meteor_assets/engine_assets/icons/lowres/sun.png";
-    static constexpr const char* LOWRES_TEX_SPOT_LIGHT        = "meteor_assets/engine_assets/icons/lowres/spot-light.png";
-    static constexpr const char* LOWRES_TEX_POINT_LIGHT       = "meteor_assets/engine_assets/icons/lowres/point-light.png";
-    static constexpr const char* LOWRES_TEX_AMBIENT_LIGHT     = "meteor_assets/engine_assets/icons/lowres/ambient-light.png";
-    static constexpr const char* LOWRES_TEX_AUDIO_LISTENER    = "meteor_assets/engine_assets/icons/lowres/audio_listener.png";
-    static constexpr const char* LOWRES_TEX_AUDIO_SOURCE      = "meteor_assets/engine_assets/icons/lowres/audio_source.png";
-    static constexpr const char* LOWRES_TEX_SKY               = "meteor_assets/engine_assets/icons/lowres/sky.png";
-    static constexpr const char* LOWRES_TEX_PROC_SKY          = "meteor_assets/engine_assets/icons/lowres/sky.png";
-    static constexpr const char* LOWRES_TEX_CAMERA            = "meteor_assets/engine_assets/icons/lowres/camera.png";
-    static constexpr const char* LOWRES_TEX_SCENE             = "meteor_assets/engine_assets/icons/lowres/scene.png";
-    static constexpr const char* LOWRES_TEX_SPATIAL           = "meteor_assets/engine_assets/icons/lowres/spatial.png";
-    static constexpr const char* LOWRES_TEX_COLLISION_BOX     = "meteor_assets/engine_assets/icons/lowres/collision_cube.png";
-    static constexpr const char* LOWRES_TEX_COLLISION_SPHERE  = "meteor_assets/engine_assets/icons/lowres/collision_sphere.png";
+    static constexpr const char* LOWRES_TEX_STATICMESH           = "meteor_assets/engine_assets/icons/lowres/static_mesh.png";
+    static constexpr const char* LOWRES_TEX_DIRECTIONAL_LIGHT    = "meteor_assets/engine_assets/icons/lowres/sun.png";
+    static constexpr const char* LOWRES_TEX_SPOT_LIGHT           = "meteor_assets/engine_assets/icons/lowres/spot-light.png";
+    static constexpr const char* LOWRES_TEX_POINT_LIGHT          = "meteor_assets/engine_assets/icons/lowres/point-light.png";
+    static constexpr const char* LOWRES_TEX_AMBIENT_LIGHT        = "meteor_assets/engine_assets/icons/lowres/ambient-light.png";
+    static constexpr const char* LOWRES_TEX_AUDIO_LISTENER       = "meteor_assets/engine_assets/icons/lowres/audio_listener.png";
+    static constexpr const char* LOWRES_TEX_AUDIO_SOURCE         = "meteor_assets/engine_assets/icons/lowres/audio_source.png";
+    static constexpr const char* LOWRES_TEX_SKY                  = "meteor_assets/engine_assets/icons/lowres/sky.png";
+    static constexpr const char* LOWRES_TEX_PROC_SKY             = "meteor_assets/engine_assets/icons/lowres/sky.png";
+    static constexpr const char* LOWRES_TEX_CAMERA               = "meteor_assets/engine_assets/icons/lowres/camera.png";
+    static constexpr const char* LOWRES_TEX_SCENE                = "meteor_assets/engine_assets/icons/lowres/scene.png";
+    static constexpr const char* LOWRES_TEX_SPATIAL              = "meteor_assets/engine_assets/icons/lowres/spatial.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_BOX        = "meteor_assets/engine_assets/icons/lowres/collision_cube.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_SPHERE     = "meteor_assets/engine_assets/icons/lowres/collision_sphere.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_CYLINDER   = "meteor_assets/engine_assets/icons/lowres/collision_cylinder.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_CAPSULE    = "meteor_assets/engine_assets/icons/lowres/collision_capsule.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_MESH       = "meteor_assets/engine_assets/icons/lowres/collision_mesh.png";
+    static constexpr const char* LOWRES_TEX_COLLISION_CONVEXHULL = "meteor_assets/engine_assets/icons/lowres/collision_convexhull.png";
 
 
     // Editor Button Icons

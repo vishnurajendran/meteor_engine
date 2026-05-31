@@ -180,8 +180,8 @@ void MEditorAssetManager::registerAssetsWithWatcher()
         hotReloadWatcher.watchAsset(asset);
 }
 
-// Walk ASSET_SEARCH_PATHS and collect every directory. Create a sibling
-// .meta file for any directory that lacks one, giving it a stable GUID.
+// ── Directory scanning ──────────────────────────────────────────────────────
+
 void MEditorAssetManager::scanDirectories()
 {
     directoryPaths.clear();
@@ -207,9 +207,6 @@ void MEditorAssetManager::scanDirectories()
     }
 }
 
-// Walk path segments and create directory nodes that do not already exist.
-// Nodes created by the asset pass are reused; only missing intermediaries and
-// leaf directories are added.
 void MEditorAssetManager::ensureDirectoryNodeExists(const SString& dirPath)
 {
     auto segments = dirPath.split("/");
@@ -234,6 +231,8 @@ void MEditorAssetManager::ensureDirectoryNodeExists(const SString& dirPath)
         current = child;
     }
 }
+
+// ── Tree building ───────────────────────────────────────────────────────────
 
 void MEditorAssetManager::buildAssetTree()
 {
@@ -296,6 +295,108 @@ void MEditorAssetManager::recursiveBuildAssetTree(std::queue<SString>& pathQueue
     recursiveBuildAssetTree(pathQueue, node, asset, parsedPath);
 }
 
+// ── Directory creation ──────────────────────────────────────────────────────
+
+bool MEditorAssetManager::createDirectory(const SString& parentPath,
+                                           const SString& dirName)
+{
+    if (parentPath.empty() || dirName.empty()) return false;
+
+    SString dirPath = parentPath + "/" + dirName;
+
+    // Fail if a directory with that name already exists on disk
+    if (std::filesystem::exists(std::filesystem::path(dirPath.str())))
+    {
+        MWARN(SString::format("EditorAssetManager:: Directory already exists: {0}", dirPath));
+        return false;
+    }
+
+    std::error_code ec;
+    std::filesystem::create_directories(std::filesystem::path(dirPath.str()), ec);
+    if (ec)
+    {
+        MERROR(SString::format("EditorAssetManager:: Failed to create directory: {0} ({1})",
+                               dirPath, SString(ec.message().c_str())));
+        return false;
+    }
+
+    // Create a sibling .meta file for the new directory
+    if (!hasMetaData(dirPath))
+        createMetaFile(dirPath);
+
+    directoryPaths.insert(dirPath);
+    buildAssetTree();
+
+    MLOG(SString::format("EditorAssetManager:: Created directory: {0}", dirPath));
+    return true;
+}
+
+// ── Directory deletion ──────────────────────────────────────────────────────
+
+bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
+{
+    if (dirPath.empty()) return false;
+
+    MLOG(STR("EditorAssetManager:: Deleting directory: ") + dirPath);
+
+    // Prefix used to match assets and subdirectories inside this directory
+    const std::string prefix = dirPath.str() + "/";
+
+    // Unload all assets whose paths live under this directory
+    std::vector<SString> assetsToRemove;
+    for (const auto& [path, asset] : assetMap)
+    {
+        const std::string& ps = path.str();
+        if (ps.compare(0, prefix.size(), prefix) == 0)
+            assetsToRemove.push_back(path);
+    }
+
+    for (const auto& path : assetsToRemove)
+    {
+        hotReloadWatcher.unwatchAsset(path);
+        MAsset* asset = assetMap[path];
+        if (asset)
+        {
+            thumbnailCache.evict(asset->getAssetId());
+            const SString id = asset->getAssetId();
+            if (!id.empty()) assetMapByAssetId.erase(id);
+            delete asset;
+        }
+        assetMap.erase(path);
+    }
+
+    // Remove this directory and all subdirectories from the tracked set
+    std::vector<SString> dirsToRemove;
+    for (const auto& dp : directoryPaths)
+    {
+        const std::string& ds = dp.str();
+        if (dp == dirPath || ds.compare(0, prefix.size(), prefix) == 0)
+            dirsToRemove.push_back(dp);
+    }
+    for (const auto& dp : dirsToRemove)
+        directoryPaths.erase(dp);
+
+    // Delete the directory tree from disk
+    std::error_code ec;
+    std::filesystem::remove_all(std::filesystem::path(dirPath.str()), ec);
+    if (ec)
+    {
+        MWARN(SString::format("EditorAssetManager:: Failed to delete directory: {0} ({1})",
+                              dirPath, SString(ec.message().c_str())));
+    }
+
+    // Delete the sibling .meta file (lives outside the directory)
+    SString metaPath = dirPath + ".meta";
+    std::filesystem::remove(std::filesystem::path(metaPath.str()), ec);
+
+    buildAssetTree();
+
+    MLOG(STR("EditorAssetManager:: Directory deleted successfully"));
+    return true;
+}
+
+// ── Open asset ──────────────────────────────────────────────────────────────
+
 void MEditorAssetManager::openAsset(MAsset* asset)
 {
     if (asset == nullptr)
@@ -342,7 +443,7 @@ bool MEditorAssetManager::deleteAsset(MAsset* asset)
 
     if (targetPath.empty())
     {
-        MWARN("EditorAssetManager:: deleteAsset -- asset not found in map");
+        MWARN("EditorAssetManager:: deleteAsset — asset not found in map");
         return false;
     }
 

@@ -16,6 +16,7 @@
 
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "default_engine_icon_paths.h"
+#include "editor/editor_utils/editor_utility.h"
 
 // --- Colour palette ------------------------------------------------------------
 static constexpr ImU32 COL_PANEL_BG          = IM_COL32(30,  30,  30,  255);
@@ -289,8 +290,9 @@ void MEditorAssetWindow::onGui(float deltaTime)
     drawContentArea();
     ImGui::EndChild();
 
-    // Delete confirmation modal (drawn at window scope so it isn't clipped).
+    // Modal popups - drawn at window scope so they aren't clipped.
     drawDeleteConfirmModal();
+    drawNewFolderPopup();
 
     // -- Status bar ------------------------------------------------------------
     ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -542,8 +544,10 @@ void MEditorAssetWindow::drawContentArea()
         drawAssetList(currentDirectoryNode);
 
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) &&
-        ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !pendingContextMenu)
+        ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !ImGui::IsAnyItemHovered())
     {
+        selectedNode = nullptr;
+        cachedSelectedPath.clear();
         ImGui::OpenPopup("##ctx_empty");
     }
     if (ImGui::BeginPopup("##ctx_empty"))
@@ -551,7 +555,7 @@ void MEditorAssetWindow::drawContentArea()
         ImGui::TextDisabled("This Folder");
         ImGui::Separator();
 
-        // Create submenu — populated automatically by registered MMenubarItems
+        // Create submenu - populated automatically by registered MMenubarItems
         // (Material, Shader, Skybox, etc. under Assets/Create/Rendering/...).
         auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
         if (createNode)
@@ -564,11 +568,13 @@ void MEditorAssetWindow::drawContentArea()
             ImGui::Separator();
         }
 
+        ImGui::Separator();
+
         if (ImGui::MenuItem("Show in File Explorer"))
         {
-            auto cmd = STR("\"") + currentDirectoryNode->getPath() + STR("\"");
-            system(cmd.c_str());
+            MEditorUtility::openInFilExplorer(currentDirectoryNode->getPath());
         }
+
         ImGui::EndPopup();
     }
 }
@@ -748,8 +754,9 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
     if (dblClick) { if (node->isDirectory) navigateTo(node); else onFileDoubleClicked(node); }
     if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
+        selectedNode       = node;
+        cachedSelectedPath = node->getPath();
         rightClickedNode   = node;
-        pendingContextMenu = true;
         ImGui::OpenPopup("##assetctx");
     }
     openContextMenu(node);
@@ -812,7 +819,7 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
         const float  textY     = nameTL.y + (NAME_AREA_H - lineH) * 0.5f;
 
         const std::string fullName = node->getName();
-        const char*       nameC    = fullName.c_str();
+        const char* nameC    = fullName.c_str();
         std::string       truncated;
 
         if (ImGui::CalcTextSize(nameC).x > maxNameW)
@@ -980,8 +987,9 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
 
     if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
+        selectedNode       = node;
+        cachedSelectedPath = node->getPath();
         rightClickedNode   = node;
-        pendingContextMenu = true;
         ImGui::OpenPopup("##assetctx");
     }
     openContextMenu(node);
@@ -1008,7 +1016,6 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
 {
     if (!ImGui::BeginPopup("##assetctx")) return;
 
-    pendingContextMenu = false;
     auto* target = rightClickedNode ? rightClickedNode : node;
 
     ImGui::TextDisabled("%s", target ? target->getName().c_str() : "Asset");
@@ -1019,13 +1026,24 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
         if (ImGui::MenuItem("Open Folder")) navigateTo(target);
         ImGui::Separator();
     }
+
     if (target && !target->isDirectory)
     {
         if (ImGui::MenuItem("Open")) onFileDoubleClicked(target);
         ImGui::Separator();
     }
 
-    // Create submenu — populated by registered MMenubarItems.
+    // -- Create New Directory -------------------------------------------------
+    if (ImGui::MenuItem("New Folder"))
+    {
+        std::strncpy(newFolderNameBuffer, "New Folder", sizeof(newFolderNameBuffer) - 1);
+        newFolderNameBuffer[sizeof(newFolderNameBuffer) - 1] = '\0';
+        pendingNewFolderPopup = true;
+    }
+
+    ImGui::Separator();
+
+    // Create submenu - populated by registered MMenubarItems ------------------
     auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
     if (createNode)
     {
@@ -1037,8 +1055,26 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
         ImGui::Separator();
     }
 
-    // -- Delete ----------------------------------------------------------------
-    if (target && !target->isDirectory && target->assetReference)
+    // -- Show in explorer ----------------------------------------------------
+    if (ImGui::MenuItem("Show in File Explorer"))
+    {
+        auto path = target ? target->getPath() : currentDirectoryNode->getPath();
+        auto cmd  = STR("\"") + path + STR("\"");
+        system(cmd.c_str());
+    }
+
+    ImGui::Separator();
+
+    // -- Copy Asset path -----------------------------------------------------
+    if (ImGui::MenuItem("Copy Path"))
+    {
+        auto path = target ? target->getPath() : currentDirectoryNode->getPath();
+        ImGui::SetClipboardText(path.c_str());
+    }
+
+    ImGui::Separator();
+    // -- Delete - works on both file assets and directories (not on root) ----
+    if (target && target != rootNode)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.35f, 0.35f, 1.0f));
         if (ImGui::MenuItem("Delete"))
@@ -1047,19 +1083,6 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
             pendingDeleteConfirm = true;
         }
         ImGui::PopStyleColor();
-        ImGui::Separator();
-    }
-
-    if (ImGui::MenuItem("Show in File Explorer"))
-    {
-        auto path = target ? target->getPath() : currentDirectoryNode->getPath();
-        auto cmd  = STR("\"") + path + STR("\"");
-        system(cmd.c_str());
-    }
-    if (ImGui::MenuItem("Copy Path"))
-    {
-        auto path = target ? target->getPath() : currentDirectoryNode->getPath();
-        ImGui::SetClipboardText(path.c_str());
     }
 
     ImGui::EndPopup();
@@ -1071,43 +1094,165 @@ void MEditorAssetWindow::drawDeleteConfirmModal()
 {
     if (pendingDeleteConfirm)
     {
-        ImGui::OpenPopup("Delete Asset?");
+        ImGui::OpenPopup("Delete?");
         pendingDeleteConfirm = false;
     }
 
-    if (ImGui::BeginPopupModal("Delete Asset?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(420, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("Delete?", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.f));
+    ImGui::TextUnformatted("Delete");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const char* name = pendingDeleteNode ? pendingDeleteNode->getName().c_str() : "?";
+    const bool  isDir = pendingDeleteNode && pendingDeleteNode->isDirectory;
+
+    if (isDir)
     {
-        const char* name = pendingDeleteNode ? pendingDeleteNode->getName().c_str() : "?";
-        ImGui::Text("Are you sure you want to delete \"%s\"?", name);
-        ImGui::Text("This cannot be undone.");
-        ImGui::Spacing();
-
-        if (ImGui::Button("Delete", ImVec2(120, 0)))
-        {
-            if (pendingDeleteNode && pendingDeleteNode->assetReference)
-            {
-                auto* editorAM = dynamic_cast<MEditorAssetManager*>(
-                    MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
-                if (editorAM)
-                    editorAM->deleteAsset(pendingDeleteNode->assetReference);
-            }
-
-            if (selectedNode == pendingDeleteNode)
-            {
-                selectedNode = nullptr;
-                cachedSelectedPath.clear();
-            }
-            pendingDeleteNode = nullptr;
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0)))
-        {
-            pendingDeleteNode = nullptr;
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
+        ImGui::Text("Delete folder \"%s\" and all its contents?", name);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.f));
+        ImGui::TextUnformatted("This will remove all files inside the folder.");
+        ImGui::PopStyleColor();
     }
+    else
+    {
+        ImGui::Text("Delete \"%s\"?", name);
+    }
+
+    ImGui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    ImGui::TextUnformatted("This action cannot be undone.");
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Red-tinted delete button to signal destructive action
+    ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.6f, 0.15f, 0.15f, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,  ImVec4(0.8f, 0.2f, 0.2f, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,   ImVec4(0.9f, 0.1f, 0.1f, 1.f));
+    if (ImGui::Button("Delete", ImVec2(120, 0)))
+    {
+        if (pendingDeleteNode)
+        {
+            // Capture path and type before the tree is rebuilt - the pointer
+            // becomes dangling once the manager deletes and rebuilds.
+            const SString path  = pendingDeleteNode->getPath();
+            const bool    dirOp = pendingDeleteNode->isDirectory;
+
+            auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+                MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+            if (editorAM)
+            {
+                if (dirOp)
+                    editorAM->deleteDirectory(path);
+                else
+                    editorAM->deleteAssetByPath(path);
+            }
+        }
+
+        // Clear stale pointers - the tree has been rebuilt
+        selectedNode     = nullptr;
+        cachedSelectedPath.clear();
+        rightClickedNode = nullptr;
+        pendingDeleteNode = nullptr;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::PopStyleColor(3);
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        pendingDeleteNode = nullptr;
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+}
+
+// --- New Folder popup --------------------------------------------------------
+
+void MEditorAssetWindow::drawNewFolderPopup()
+{
+    if (pendingNewFolderPopup)
+    {
+        ImGui::OpenPopup("##new_folder_dlg");
+        pendingNewFolderPopup = false;
+    }
+
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(400, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("##new_folder_dlg", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.75f, 0.3f, 1.f));
+    ImGui::TextUnformatted("New Folder");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Name");
+    ImGui::SameLine(60);
+    ImGui::SetNextItemWidth(-1.f);
+
+    // Auto-focus the text input when the popup first appears
+    if (ImGui::IsWindowAppearing())
+        ImGui::SetKeyboardFocusHere();
+
+    bool enterPressed = ImGui::InputText("##nf_name", newFolderNameBuffer,
+                                          sizeof(newFolderNameBuffer),
+                                          ImGuiInputTextFlags_EnterReturnsTrue);
+
+    ImGui::Spacing();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    if (currentDirectoryNode)
+        ImGui::Text("Location: %s/", currentDirectoryNode->getPath().c_str());
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const bool canCreate = newFolderNameBuffer[0] != '\0';
+
+    ImGui::BeginDisabled(!canCreate);
+    if (ImGui::Button("Create", ImVec2(120, 0)) || (enterPressed && canCreate))
+    {
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+            MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+        if (editorAM && currentDirectoryNode)
+        {
+            editorAM->createDirectory(currentDirectoryNode->getPath(),
+                                       SString(newFolderNameBuffer));
+        }
+        newFolderNameBuffer[0] = '\0';
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndDisabled();
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        newFolderNameBuffer[0] = '\0';
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
 }
 
 

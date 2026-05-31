@@ -17,7 +17,7 @@
 #include "imgui.h"
 #include "scene_raycast.h"
 
-// ─── Style constants ──────────────────────────────────────────────────────────
+// --- Style constants ----------------------------------------------------------
 static constexpr ImU32  OVL_BG          = IM_COL32(22,  22,  22,  210);
 static constexpr ImU32  OVL_BORDER      = IM_COL32(70,  70,  70,  200);
 static constexpr ImU32  OVL_BTN_ACTIVE  = IM_COL32(44,  93,  206, 230);
@@ -141,6 +141,11 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     if (!editorAppInst)
         return;
 
+    bool playing = editorAppInst->isPlaying() && !editorAppInst->isPaused();
+
+    // Toolbar bar above the scene — always visible
+    drawToolbar(playing);
+
     ImVec2 region = ImGui::GetContentRegionAvail();
     if (region.x <= 0 || region.y <= 0) return;
 
@@ -149,7 +154,10 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     tickViewportInteraction();
     drawFpsOverlay();
 
-    if (!editorAppInst->isPlaying() || editorAppInst->isPaused())
+    if (profilerVisible)
+        profilerDisplayer.draw(viewportMin, viewportSize);
+
+    if (!playing)
     {
         drawEditorSceneView(deltaTime, region);
     }
@@ -241,8 +249,6 @@ void MEditorSceneViewWindow::drawEditorSceneView(const float& deltaTime, const I
 {
     handleDragDropBehaviour();
     drawTransformHandles();
-    drawOverlayToolbar();
-    drawCameraSpeedOverlay();
     drawSceneInfoOverlay();
     drawAxisLegend();
 }
@@ -451,37 +457,38 @@ MSpatialEntity* MEditorSceneViewWindow::pickEntity(MCameraEntity*  camera,
 
 void MEditorSceneViewWindow::drawTransformHandles()
 {
-    if (!gizmosEnabled)                  return;
-    if (!MEditorApplication::SelectedObject)   return;
+    if (!gizmosEnabled)
+        return;
+    if (!MEditorApplication::SelectedObject)
+        return;
 
     auto* primaryCamera = MViewManagement::getFirstActiveCamera();
-    if (!primaryCamera) return;
+    if (!primaryCamera)
+        return;
 
     auto* selected = MEditorApplication::SelectedObject;
     auto* spatial = dynamic_cast<MSpatialEntity*>(selected);
-    if (spatial == nullptr) return;
+    if (spatial == nullptr)
+        return;
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(viewportMin.x, viewportMin.y, viewportSize.x, viewportSize.y);
 
-    SMatrix4 view      = primaryCamera->getViewMatrix();
-    SMatrix4 proj      = primaryCamera->getProjectionMatrix(
-                             SVector2(viewportSize.x, viewportSize.y));
+    SMatrix4 view = primaryCamera->getViewMatrix();
+    SMatrix4 proj = primaryCamera->getProjectionMatrix(SVector2(viewportSize.x, viewportSize.y));
     SMatrix4 transform = spatial->getTransformMatrix();
 
     ImGui::SetNextItemAllowOverlap();
-    ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(proj),
-                         transformOperation, transformMode,
+    ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(proj), transformOperation, transformMode,
                          glm::value_ptr(transform));
 
-    if (!ImGuizmo::IsUsing()) return;
+    if (!ImGuizmo::IsUsing())
+        return;
 
     SVector3 newWorldPos, newWorldScale, newWorldRotEuler;
-    ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform),
-                                          glm::value_ptr(newWorldPos),
-                                          glm::value_ptr(newWorldRotEuler),
-                                          glm::value_ptr(newWorldScale));
+    ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transform), glm::value_ptr(newWorldPos),
+                                          glm::value_ptr(newWorldRotEuler), glm::value_ptr(newWorldScale));
 
     spatial->setWorldRotation(eulerToQuaternion(newWorldRotEuler));
     spatial->setWorldPosition(newWorldPos);
@@ -491,92 +498,65 @@ void MEditorSceneViewWindow::drawTransformHandles()
     while (parent)
     {
         parentScale *= parent->getRelativeScale();
-        parent       = parent->getParent();
+        parent = parent->getParent();
     }
-    spatial->setRelativeScale(spatial->getParent()
-                               ? newWorldScale / parentScale
-                               : newWorldScale);
+    spatial->setRelativeScale(spatial->getParent() ? newWorldScale / parentScale : newWorldScale);
 }
 
-void MEditorSceneViewWindow::drawOverlayToolbar()
+
+void MEditorSceneViewWindow::drawToolbar(bool playMode)
 {
-    const float margin = 10.0f;
+    const float iconH = ICON_SIZE;
+    const float barH  = iconH + 14.0f;   // tight: 16px icon + padding
 
-    // Use ICON_SIZE — never tex.getSize() — so a missing texture can't collapse
-    // the panel height and hide all buttons.
-    const float iconH  = ICON_SIZE;
-    const float iconW  = ICON_SIZE;
-    const float panelH = iconH + OVL_PAD * 2.0f + 4.0f;  // +4 for ImageButton frame
-
-    auto gizmoText   = getCurrentTransformGizmoText();
-    auto modeText    = getCurrentTransformModeText();
-    const char* eyeLabel = gizmosEnabled ? "Gizmos On" : "Gizmos Off";
-
-    float gizmoTextW = ImGui::CalcTextSize(gizmoText.c_str()).x;
-    float modeTextW  = ImGui::CalcTextSize(modeText.c_str()).x;
-    float eyeLabelW  = ImGui::CalcTextSize(eyeLabel).x + 12.0f; // +padding
-
-    // Panel width = two text labels + 5 icon buttons + eye text button
-    //             + debug view combo + 4 dividers + item gaps + breathing room
-    float comboW = 100.0f + OVL_PAD * 2.0f;
-    float panelW = gizmoTextW + modeTextW
-                 + (iconW + 8.0f) * 5.0f   // 5 ImageButtons (icon + frame padding)
-                 + eyeLabelW
-                 + comboW
-                 + OVL_PAD * 9.0f
-                 + 4.0f * (1.0f + OVL_PAD * 2.0f)  // 4 dividers
-                 + 24.0f;
-
-    beginOverlayPanel("##toolbar",
-                      { viewportMin.x + margin, viewportMin.y + margin },
-                      { panelW, panelH });
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(OVL_BG));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(OVL_PAD, 4.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(4.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,  ImVec2(3.0f, 2.0f));
+    ImGui::BeginChild("##scene_toolbar", ImVec2(0, barH), ImGuiChildFlags_None);
     {
-        const float textY = (panelH - ImGui::GetTextLineHeight()) * 0.5f - 1.0f;
-        const float btnY  = (panelH - iconH - 4.0f) * 0.5f;   // vertically centre buttons
+        // -- Edit-mode only: transform operations + space mode ----------
+        if (!playMode)
+        {
+            auto gizmoText = getCurrentTransformGizmoText();
+            auto modeText  = getCurrentTransformModeText();
 
-        // ── Section 1: operation label + T / R / S buttons ────────────────
-        ImGui::SetCursorPosY(textY);
-        ImGui::TextUnformatted(gizmoText.c_str());
-        ImGui::SameLine(0, OVL_PAD);
+            // Transform operation label + T / R / S buttons
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(gizmoText.c_str());
+            ImGui::SameLine(0, OVL_PAD);
 
-        ImGui::SetCursorPosY(btnY);
-        overlayDivider(iconH);
+            overlayDivider(iconH);
 
-        ImGui::SetCursorPosY(btnY);
-        if (overlayImageButton("##t", translateIcon, transformOperation == ImGuizmo::TRANSLATE))
-            transformOperation = ImGuizmo::TRANSLATE;
-        ImGui::SameLine(0, 2);
-        ImGui::SetCursorPosY(btnY);
-        if (overlayImageButton("##r", rotateIcon, transformOperation == ImGuizmo::ROTATE))
-            transformOperation = ImGuizmo::ROTATE;
-        ImGui::SameLine(0, 2);
-        ImGui::SetCursorPosY(btnY);
-        if (overlayImageButton("##s", scaleIcon, transformOperation == ImGuizmo::SCALE))
-            transformOperation = ImGuizmo::SCALE;
+            if (overlayImageButton("##t", translateIcon, transformOperation == ImGuizmo::TRANSLATE))
+                transformOperation = ImGuizmo::TRANSLATE;
+            ImGui::SameLine(0, 2);
+            if (overlayImageButton("##r", rotateIcon, transformOperation == ImGuizmo::ROTATE))
+                transformOperation = ImGuizmo::ROTATE;
+            ImGui::SameLine(0, 2);
+            if (overlayImageButton("##s", scaleIcon, transformOperation == ImGuizmo::SCALE))
+                transformOperation = ImGuizmo::SCALE;
 
-        // ── Section 2: space label + L / W buttons ────────────────────────
-        ImGui::SameLine(0, OVL_PAD);
-        ImGui::SetCursorPosY(btnY);
-        overlayDivider(iconH);
+            // Space mode label + L / W buttons
+            ImGui::SameLine(0, OVL_PAD);
+            overlayDivider(iconH);
 
-        ImGui::SetCursorPosY(textY);
-        ImGui::TextUnformatted(modeText.c_str());
-        ImGui::SameLine(0, OVL_PAD);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted(modeText.c_str());
+            ImGui::SameLine(0, OVL_PAD);
 
-        ImGui::SetCursorPosY(btnY);
-        if (overlayImageButton("##ml", localSpaceIcon, transformMode == ImGuizmo::LOCAL))
-            transformMode = ImGuizmo::LOCAL;
-        ImGui::SameLine(0, 2);
-        ImGui::SetCursorPosY(btnY);
-        if (overlayImageButton("##mw", worldSpaceIcon, transformMode == ImGuizmo::WORLD))
-            transformMode = ImGuizmo::WORLD;
+            if (overlayImageButton("##ml", localSpaceIcon, transformMode == ImGuizmo::LOCAL))
+                transformMode = ImGuizmo::LOCAL;
+            ImGui::SameLine(0, 2);
+            if (overlayImageButton("##mw", worldSpaceIcon, transformMode == ImGuizmo::WORLD))
+                transformMode = ImGuizmo::WORLD;
 
-        // ── Section 3: gizmo visibility toggle (text button — no icon asset needed)
-        ImGui::SameLine(0, OVL_PAD);
-        ImGui::SetCursorPosY(btnY);
-        overlayDivider(iconH);
+            ImGui::SameLine(0, OVL_PAD);
+            overlayDivider(iconH);
+        }
 
-        ImGui::SetCursorPosY(textY);
+        // -- Always visible: gizmos toggle ------------------------------
+        const char* eyeLabel = gizmosEnabled ? "Gizmos On" : "Gizmos Off";
         if (overlayTextButton(eyeLabel, eyeLabel, gizmosEnabled))
         {
             gizmosEnabled = !gizmosEnabled;
@@ -585,11 +565,11 @@ void MEditorSceneViewWindow::drawOverlayToolbar()
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip(gizmosEnabled ? "Click to hide gizmos" : "Click to show gizmos");
 
+        // -- Always visible: render mode dropdown -----------------------
         ImGui::SameLine(0, OVL_PAD);
-        ImGui::SetCursorPosY(btnY);
         overlayDivider(iconH);
 
-        ImGui::SetCursorPosY(textY);
+        ImGui::AlignTextToFramePadding();
         {
             static const char* viewNames[] = {
                 "Final", "Opaque", "Lighting", "Depth", "Light Mask"
@@ -604,36 +584,45 @@ void MEditorSceneViewWindow::drawOverlayToolbar()
                 MCompositeStage::debugView = static_cast<EBufferDebugView>(cur);
             ImGui::PopStyleColor(3);
         }
+
+        // -- Always visible: profiler toggle ----------------------------
+        ImGui::SameLine(0, OVL_PAD);
+        overlayDivider(iconH);
+
+        const char* profLabel = profilerVisible ? "Stats On" : "Stats Off";
+        if (overlayTextButton(profLabel, profLabel, profilerVisible))
+            profilerVisible = !profilerVisible;
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip(profilerVisible ? "Click to hide stats" : "Click to show stats");
+
+        // -- Edit-mode only: camera speed (right-aligned) ---------------
+        if (!playMode)
+        {
+            const float sliderW = 80.0f;
+            const float labelW  = ImGui::CalcTextSize("Speed").x;
+            const float totalW  = labelW + 6.0f + sliderW + OVL_PAD;
+            float rightX = ImGui::GetWindowWidth() - totalW;
+
+            ImGui::SameLine(rightX);
+            ImGui::AlignTextToFramePadding();
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+            ImGui::TextUnformatted("Speed");
+            ImGui::PopStyleColor();
+
+            ImGui::SameLine(0, 6);
+            ImGui::SetNextItemWidth(sliderW);
+            ImGui::PushStyleColor(ImGuiCol_FrameBg,          ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_SliderGrab,       ImVec4(0.4f,  0.6f,  1.0f,  1.0f));
+            ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.5f,  0.7f,  1.0f,  1.0f));
+            ImGui::SliderFloat("##spd", &cameraMoveSpeed, 0.5f, 200.0f, "%.0f");
+            ImGui::PopStyleColor(3);
+        }
     }
-    endOverlayPanel();
+    ImGui::EndChild();
+    ImGui::PopStyleVar(3);
+    ImGui::PopStyleColor(1);
 }
 
-void MEditorSceneViewWindow::drawCameraSpeedOverlay()
-{
-    const float panelW = 160.0f;
-    const float panelH = 38.0f;
-    const float margin = 10.0f;
-
-    float posX = viewportMin.x + viewportSize.x - panelW - margin;
-    float posY = viewportMin.y + margin;
-
-    beginOverlayPanel("##cam_speed", { posX, posY }, { panelW, panelH });
-    {
-        ImGui::SetCursorPosY(4.0f);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
-        ImGui::TextUnformatted("Speed");
-        ImGui::PopStyleColor();
-
-        ImGui::SameLine(0, 6);
-        ImGui::SetNextItemWidth(panelW - 60.0f);
-        ImGui::PushStyleColor(ImGuiCol_FrameBg,          ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_SliderGrab,        ImVec4(0.4f,  0.6f,  1.0f,  1.0f));
-        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive,  ImVec4(0.5f,  0.7f,  1.0f,  1.0f));
-        ImGui::SliderFloat("##spd", &cameraMoveSpeed, 0.5f, 200.0f, "%.0f");
-        ImGui::PopStyleColor(3);
-    }
-    endOverlayPanel();
-}
 
 void MEditorSceneViewWindow::drawFpsOverlay()
 {

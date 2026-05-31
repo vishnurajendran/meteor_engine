@@ -132,10 +132,10 @@ void MAudioSource::onExit()
 void MAudioSource::onDrawGizmo(SVector2 res)
 {
     const auto* assetPath = useSpatial.get() ? SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_3D
-                                                       : SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_2D;
+                                             : SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_2D;
 
-    const auto tex = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(assetPath);
+    const auto tex =
+        MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(assetPath);
     if (tex)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), tex->getTexture());
 
@@ -146,6 +146,24 @@ void MAudioSource::onDrawGizmo(SVector2 res)
         MGizmos::drawWireSphere(pos, minDist.get(), SColor(0.2f, 0.8f, 0.2f, 1.0f), 1.0f);
         MGizmos::drawWireSphere(pos, maxDist.get(), SColor(0.8f, 0.2f, 0.2f, 1.0f), 1.0f);
     }
+}
+void MAudioSource::onEnable()
+{
+    MSpatialEntity::onEnable();
+    syncAudioEngineState();
+    if (isPlaying())
+    {
+        source->play();
+    }
+
+}
+void MAudioSource::onDisable()
+{
+    MSpatialEntity::onDisable();
+
+    // stop internal player
+    if (isPlaying())
+        source->stop();
 }
 
 

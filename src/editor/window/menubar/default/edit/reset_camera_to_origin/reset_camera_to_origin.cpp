@@ -14,11 +14,6 @@ bool MResetCameraToOriginMenubarItem::registered = []()
     return true;
 }();
 
-int MResetCameraToOriginMenubarItem::getPriority() const
-{
-    return MMenubarItem::PRIORITY_REGULAR;
-}
-
 SString MResetCameraToOriginMenubarItem::getPath() const
 {
     return "Edit/Reset camera";

@@ -121,10 +121,13 @@ void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
     }
 
     const auto& lights = lightScene.queryLights(bounds, MAX_DYN_LIGHTS);
-    dynLightsData.lightCount = lights.size();
+
+    // FIX 2: Track active lights to compact the array without gaps
+    int activeLightCount = 0;
+
     for (int i = 0; i < (int)lights.size(); i++)
     {
-        if (!lights[i]->getEnabled())
+        if (!lights[i]->isEnabledInHierarchy() || !lights[i]->getEnabled())
             continue;
 
         lights[i]->prepareLightRender();
@@ -134,8 +137,14 @@ void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
         // so the shader knows which shadow map slot to sample.
         data.shadowIndex  = lights[i]->getShadowIndex();
         data.smoothShadow = lights[i]->getSmoothShadow() ? 1 : 0;
-        dynLightsData.data[i] = data;
+
+        // Pack data sequentially
+        dynLightsData.data[activeLightCount] = data;
+        activeLightCount++;
     }
+
+    // Set the buffer count to ONLY the active, packed lights
+    dynLightsData.lightCount = activeLightCount;
 
     if (!dynLightsBuffer)
     {

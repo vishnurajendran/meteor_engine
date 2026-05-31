@@ -15,7 +15,7 @@ class MSaveSceneMenubarItem : public MMenubarItem
 {
     DEFINE_OBJECT_SUBCLASS(MSaveSceneMenubarItem)
 public:
-    [[nodiscard]] int     getPriority() const override;
+    [[nodiscard]] int     getPriority() const override { return MMenubarItem::MENU_PRIORITY_BASE_FILE + 2; }
     [[nodiscard]] SString getPath()     const override;
     void onSelect()  override;
     void drawPopup() override;   // Save As dialog, only shown when path is unknown

@@ -9,7 +9,7 @@ class MOpenSceneMenubarItem : public MMenubarItem
 {
     DEFINE_OBJECT_SUBCLASS(MOpenSceneMenubarItem)
 public:
-    [[nodiscard]] int     getPriority() const override;
+    [[nodiscard]] int     getPriority() const override { return MMenubarItem::MENU_PRIORITY_BASE_FILE + 1; };
     [[nodiscard]] SString getPath()     const override;
 
     [[nodiscard]] MShortcutBinding getShortcut() const override

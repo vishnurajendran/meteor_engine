@@ -11,7 +11,7 @@
 class MCreateEmptySceneMenubarItem : public MMenubarItem {
     DEFINE_OBJECT_SUBCLASS(MCreateEmptySceneMenubarItem)
 public:
-    [[nodiscard]] int getPriority() const override;
+    [[nodiscard]] int getPriority() const override { return MMenubarItem::MENU_PRIORITY_BASE_FILE + 0; }
     [[nodiscard]] SString getPath() const override;
 
     [[nodiscard]] MShortcutBinding getShortcut() const override

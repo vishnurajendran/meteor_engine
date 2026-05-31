@@ -21,11 +21,6 @@ bool MOpenSceneMenubarItem::registered = []()
     return true;
 }();
 
-int MOpenSceneMenubarItem::getPriority() const
-{
-    return MMenubarItem::PRIORITY_HIGHEST + 1;
-}
-
 SString MOpenSceneMenubarItem::getPath() const
 {
     return "File/Open Scene";

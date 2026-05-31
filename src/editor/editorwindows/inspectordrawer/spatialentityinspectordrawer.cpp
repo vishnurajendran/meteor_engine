@@ -182,11 +182,9 @@ void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
     if (!ImGui::CollapsingHeader(headerName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         return;
 
-    const float dpi = DPIHelper::GetDPIScaleFactor();
-
     // Label column width -- wide enough for most two-word formatted names.
     // Very long names will clip, which is acceptable.
-    const float labelWidth = 110.0f * dpi;
+    const float labelWidth = 110.0f;
 
     for (auto* f : fields)
     {
@@ -246,8 +244,6 @@ void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
 
 bool MSpatialEntityInspectorDrawer::drawLightIntensityAndColor(float& intensity, SColor& color) {
     bool changed = false;
-    const float dpi = DPIHelper::GetDPIScaleFactor();
-
     // Two-column table: left col = label, right col = widget.
     // This keeps Intensity and Color labels pixel-aligned regardless of text length.
     constexpr float LABEL_COL_WIDTH = 80.0f;
@@ -257,7 +253,7 @@ bool MSpatialEntityInspectorDrawer::drawLightIntensityAndColor(float& intensity,
         return false;
 
     ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed,
-                            LABEL_COL_WIDTH * dpi);
+                            LABEL_COL_WIDTH);
     ImGui::TableSetupColumn("widget", ImGuiTableColumnFlags_WidthStretch);
 
     // --- Intensity row ---
@@ -281,7 +277,7 @@ bool MSpatialEntityInspectorDrawer::drawLightIntensityAndColor(float& intensity,
     // Show a compact swatch. Clicking it opens a popup with the full picker --
     // this keeps the panel compact when the user doesn't need to edit color.
     float cols[4] = { color.r, color.g, color.b, color.a };
-    const ImVec2 swatchSize = { ImGui::GetContentRegionAvail().x, 20.0f * dpi };
+    const ImVec2 swatchSize = { ImGui::GetContentRegionAvail().x, 20.0f };
     if (ImGui::ColorButton("##ColorSwatch",
                            ImVec4(cols[0], cols[1], cols[2], cols[3]),
                            ImGuiColorEditFlags_Float | ImGuiColorEditFlags_AlphaPreview,
@@ -333,17 +329,16 @@ void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char* label,
 }
 
 bool MSpatialEntityInspectorDrawer::drawTextField(const SString& label, SString& text) {
-    const float dpi = DPIHelper::GetDPIScaleFactor();
     ImGui::PushID(&label);
     auto size = ImGui::GetContentRegionAvail();
 
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f * dpi);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
     ImGui::Text("%s", label.c_str());
     ImGui::SameLine();
 
     std::string name = text;
-    ImGui::SetNextItemWidth(size.x - 20.0f * dpi);
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f * dpi);
+    ImGui::SetNextItemWidth(size.x - 20.0f);
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
     const bool res = ImGui::InputText("##EntityNameField", &name,
                                       ImGuiInputTextFlags_EnterReturnsTrue);
     if (res)
@@ -414,10 +409,9 @@ void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity* target)
 }
 
 bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVector3& value) {
-    const float dpi      = DPIHelper::GetDPIScaleFactor();
     const float badgeW   = ImGui::GetFrameHeight();
 
-    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f * dpi, 5.0f * dpi));
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f, 5.0f));
 
     const ImGuiTableFlags flags = ImGuiTableFlags_None;
     if (!ImGui::BeginTable(STR("##xyz_" + label.str()).c_str(), 4, flags)) {
@@ -425,7 +419,7 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
         return false;
     }
 
-    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f * dpi);
+    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f);
     ImGui::TableSetupColumn("x",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableSetupColumn("y",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableSetupColumn("z",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
@@ -439,7 +433,7 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
                         float& component, const char* id) -> bool {
         ImGui::TableSetColumnIndex(col);
         drawColoredBoxOverLabel(badge, badgeColor, badgeW);
-        ImGui::SameLine(0.0f, 2.0f * dpi);
+        ImGui::SameLine(0.0f, 2.0f);
         ImGui::SetNextItemWidth(-FLT_MIN);
         return ImGui::DragFloat(id, &component, 0.1f, 0.0f, 0.0f, "%.2f");
     };
@@ -457,17 +451,16 @@ bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVect
 }
 
 bool MSpatialEntityInspectorDrawer::drawXYComponent(const SString& label, SVector2& value) {
-    const float dpi    = DPIHelper::GetDPIScaleFactor();
     const float badgeW = ImGui::GetFrameHeight();
 
-    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f * dpi, 5.0f * dpi));
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f, 5.0f));
 
     if (!ImGui::BeginTable(STR("##xy_" + label.str()).c_str(), 3, ImGuiTableFlags_None)) {
         ImGui::PopStyleVar();
         return false;
     }
 
-    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f * dpi);
+    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f);
     ImGui::TableSetupColumn("x",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableSetupColumn("y",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
     ImGui::TableNextRow();
@@ -480,7 +473,7 @@ bool MSpatialEntityInspectorDrawer::drawXYComponent(const SString& label, SVecto
                         float& component, const char* id) -> bool {
         ImGui::TableSetColumnIndex(col);
         drawColoredBoxOverLabel(badge, badgeColor, badgeW);
-        ImGui::SameLine(0.0f, 2.0f * dpi);
+        ImGui::SameLine(0.0f, 2.0f);
         ImGui::SetNextItemWidth(-FLT_MIN);
         return ImGui::DragFloat(id, &component, 0.1f, 0.0f, 0.0f, "%.2f");
     };

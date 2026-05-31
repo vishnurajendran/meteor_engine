@@ -13,11 +13,6 @@ bool MAlignObjectToViewMenubarItem::registered = []()
     return true;
 }();
 
-int MAlignObjectToViewMenubarItem::getPriority() const
-{
-    return MMenubarItem::PRIORITY_REGULAR + 1;
-}
-
 SString MAlignObjectToViewMenubarItem::getPath() const
 {
     return "Edit/Align object to view";

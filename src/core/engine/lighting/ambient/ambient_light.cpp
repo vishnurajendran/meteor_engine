@@ -29,7 +29,7 @@ MAmbientLightEntity::MAmbientLightEntity()
     MLightSystemManager::getInstance()->registerLight(this);
 }
 
-// ── Color / intensity — fields are source of truth ───────────────────────────
+// -- Color / intensity — fields are source of truth ---------------------------
 
 void MAmbientLightEntity::setColor(const SColor& c)
 {
@@ -45,14 +45,14 @@ SColor MAmbientLightEntity::getColor() const
 void  MAmbientLightEntity::setIntensity(const float& i) { intensity = i; }
 float MAmbientLightEntity::getIntensity() const          { return intensity.get(); }
 
-// ── GPU upload ────────────────────────────────────────────────────────────────
+// -- GPU upload ----------------------------------------------------------------
 
 void MAmbientLightEntity::prepareLightRender()
 {
     // Sync field values → GPU struct before upload
     ambientLightData.color     = color.get();
     ambientLightData.intensity = intensity.get();
-    ambientLightData.enabled   = getEnabled();
+    ambientLightData.enabled   = getEnabled() && isEnabledInHierarchy();
 
     if (!ambientLightDataBufferId)
     {
@@ -69,7 +69,7 @@ void MAmbientLightEntity::prepareLightRender()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-// ── Lifecycle ─────────────────────────────────────────────────────────────────
+// -- Lifecycle -----------------------------------------------------------------
 
 void MAmbientLightEntity::onExit()
 {

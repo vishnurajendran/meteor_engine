@@ -26,7 +26,7 @@ public:
     [[nodiscard]] MAsset* getAsset() const {return assetReference;}
     [[nodiscard]] std::vector<SAssetDirectoryNode*> getChildrenNodes() const {return childrenNodes;}
 
-    // A leaf directory with no children at all (no files, no subdirectories).
+    // A leaf directory with no children at all — no files, no subdirectories.
     // Used by the asset window to pick the folder_empty icon.
     [[nodiscard]] bool isEmptyLeafDirectory() const;
 };

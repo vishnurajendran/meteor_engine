@@ -224,7 +224,6 @@ set(CORE_SOURCES
         src/core/application/application.h
         src/core/utils/color.cpp
         src/core/utils/color.h
-        src/core/utils/dpihelper.h
         src/core/graphics/core/render-pipeline/draw_calls/drawcall.cpp
         src/core/graphics/core/render-pipeline/draw_calls/drawcall.h
         src/core/graphics/core/render-pipeline/draw_calls/opengldrawcall.cpp
@@ -512,6 +511,10 @@ set(CORE_SOURCES
         src/core/engine/physics/entities/collision_body_entity.cpp
         src/core/engine/physics/entities/collision_body_entity.h
         src/core/default_settings_paths.h
+        src/core/profiling/simple_profiler/simple_profiler.h
+        src/core/profiling/simple_profiler/simple_profiler.cpp
+        src/core/profiling/default_profile_keys.h
+        src/core/profiling/profiler.h
 )
 
 set(EDITOR_SOURCES
@@ -547,20 +550,20 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/menubaritem.cpp
         src/editor/window/menubar/menubartree.h
         src/editor/window/menubar/menubartree.cpp
-        src/editor/window/menubar/default/create_empty_scene/create_empty_scene.cpp
-        src/editor/window/menubar/default/create_empty_scene/create_empty_scene.h
-        src/editor/window/menubar/default/quit_editor/quite_ditor.cpp
-        src/editor/window/menubar/default/quit_editor/quit_editor.h
-        src/editor/window/menubar/default/save_scene/save_scene.cpp
-        src/editor/window/menubar/default/save_scene/save_scene.h
-        src/editor/window/menubar/default/open_scene/open_scene.cpp
-        src/editor/window/menubar/default/open_scene/open_scene.h
-        src/editor/window/menubar/default/align_selected_to_view/align_selected_to_view.cpp
-        src/editor/window/menubar/default/align_selected_to_view/align_selected_to_view.h
-        src/editor/window/menubar/default/align_view_to_selected/align_view_to_selected.cpp
-        src/editor/window/menubar/default/align_view_to_selected/align_view_to_selected.h
-        src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.cpp
-        src/editor/window/menubar/default/reset_camera_to_origin/reset_camera_to_origin.h
+        src/editor/window/menubar/default/file/create_empty_scene/create_empty_scene.cpp
+        src/editor/window/menubar/default/file/create_empty_scene/create_empty_scene.h
+        src/editor/window/menubar/default/file/quit_editor/quite_ditor.cpp
+        src/editor/window/menubar/default/file/quit_editor/quit_editor.h
+        src/editor/window/menubar/default/file/save_scene/save_scene.cpp
+        src/editor/window/menubar/default/file/save_scene/save_scene.h
+        src/editor/window/menubar/default/file/open_scene/open_scene.cpp
+        src/editor/window/menubar/default/file/open_scene/open_scene.h
+        src/editor/window/menubar/default/edit/align_selected_to_view/align_selected_to_view.cpp
+        src/editor/window/menubar/default/edit/align_selected_to_view/align_selected_to_view.h
+        src/editor/window/menubar/default/edit/align_view_to_selected/align_view_to_selected.cpp
+        src/editor/window/menubar/default/edit/align_view_to_selected/align_view_to_selected.h
+        src/editor/window/menubar/default/edit/reset_camera_to_origin/reset_camera_to_origin.cpp
+        src/editor/window/menubar/default/edit/reset_camera_to_origin/reset_camera_to_origin.h
         src/editor/editorscenemanager/editorscenecamera.cpp
         src/editor/editorscenemanager/editorscenecamera.h
         src/editor/editorwindows/inspectordrawer/lights/directional_light/directionalight_inspector_drawer.cpp
@@ -636,6 +639,13 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/physics/convexhull_collision_body_inspectordrawer.h
         src/editor/editorwindows/inspectordrawer/physics/collision_body_inspectordrawer.cpp
         src/editor/editorwindows/inspectordrawer/physics/collision_body_inspectordrawer.h
+        src/editor/editor_utils/editor_utility.h
+        src/editor/editor_utils/editor_utility.cpp
+        src/editor/profiling/editor_profile_keys.h
+        src/editor/profiling/profiler_stats_displayer.cpp
+        src/editor/profiling/profiler_stats_displayer.h
+        src/editor/window/menubar/default/help/open_documentation/open_documentation.cpp
+        src/editor/window/menubar/default/help/open_documentation/open_documentation.h
 )
 
 set(PLAYER_SOURCES

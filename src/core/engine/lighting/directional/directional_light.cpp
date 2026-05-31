@@ -30,7 +30,7 @@ MDirectionalLight::MDirectionalLight()
     MLightSystemManager::getInstance()->registerLight(this);
 }
 
-// ── Color / intensity ─────────────────────────────────────────────────────────
+// -- Color / intensity ---------------------------------------------------------
 
 void   MDirectionalLight::setColor(const SColor& c)     { color = SVector3(c.r, c.g, c.b); }
 SColor MDirectionalLight::getColor() const
@@ -41,14 +41,14 @@ SColor MDirectionalLight::getColor() const
 void  MDirectionalLight::setIntensity(const float& i) { intensity = i; }
 float MDirectionalLight::getIntensity() const          { return intensity.get(); }
 
-// ── GPU upload ────────────────────────────────────────────────────────────────
+// -- GPU upload ----------------------------------------------------------------
 
 void MDirectionalLight::prepareLightRender()
 {
     lightData.lightColor     = color.get();
     lightData.lightIntensity = intensity.get();
     lightData.lightDirection = getForwardVector();
-    lightData.enabled        = getEnabled();
+    lightData.enabled        = getEnabled() && isEnabledInHierarchy();
 
     if (!bufferId)
     {
@@ -66,7 +66,7 @@ void MDirectionalLight::prepareLightRender()
     glFinish();
 }
 
-// ── Lifecycle ─────────────────────────────────────────────────────────────────
+// -- Lifecycle -----------------------------------------------------------------
 
 void MDirectionalLight::onExit()
 {

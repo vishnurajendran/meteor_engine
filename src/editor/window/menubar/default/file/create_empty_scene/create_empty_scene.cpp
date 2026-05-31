@@ -15,11 +15,6 @@ bool MCreateEmptySceneMenubarItem::registered = []()
     return true;
 }();
 
-int MCreateEmptySceneMenubarItem::getPriority() const
-{
-    return MMenubarItem::PRIORITY_HIGHEST;
-}
-
 SString MCreateEmptySceneMenubarItem::getPath() const
 {
     return "File/New Scene";

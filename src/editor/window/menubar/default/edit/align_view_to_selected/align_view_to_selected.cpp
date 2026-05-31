@@ -14,11 +14,6 @@ bool MAlignViewToSelectedMenubarItem::registered = []()
     return true;
 }();
 
-int MAlignViewToSelectedMenubarItem::getPriority() const
-{
-    return MMenubarItem::PRIORITY_REGULAR + 2;
-}
-
 SString MAlignViewToSelectedMenubarItem::getPath() const
 {
     return "Edit/Align view to selected";
