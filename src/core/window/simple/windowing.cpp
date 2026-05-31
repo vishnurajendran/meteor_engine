@@ -3,7 +3,9 @@
 //
 
 #include "windowing.h"
+#include <windows.h>
 #include <GL/glew.h>
+#include <winuser.h>
 
 #include "core/engine/subsystem/subsystem_registry.h"
 
@@ -40,12 +42,10 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
     settings.majorVersion = 4;
     settings.minorVersion = 6;
     settings.depthBits = 24;
-    settings.antiAliasingLevel = 2;
     this->settings = settings;
 
     const auto& size = sf::Vector2u(inSize.x, inSize.y);
     auto videoMode = sf::VideoMode(size, 32);
-    DPIHelper::InitDPIAwareness();
     coreWindow.create(videoMode, this->title.str(),  sf::State::Windowed, this->settings);
     coreWindow.setFramerateLimit(this->targetFPS);
 

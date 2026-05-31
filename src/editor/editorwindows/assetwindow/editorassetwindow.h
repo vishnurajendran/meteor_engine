@@ -27,8 +27,7 @@ enum class EAssetSortMode
 
 class MEditorAssetWindow : public MImGuiSubWindow
 {
-    DEFINE_OBJECT_SUBCLASS(MEditorAssetWindow)
-
+    // -- Left panel ------------------------------------------------------------
     void drawSourcesPanel();
     void drawDirectoryTree(SAssetDirectoryNode* node, int depth = 0);
 
@@ -80,6 +79,10 @@ class MEditorAssetWindow : public MImGuiSubWindow
                                                   const SString& assetId,
                                                   SAssetDirectoryNode** outParent = nullptr);
 
+    // -- Popup drawing — called every frame from onGui() -----------------------
+    void drawDeleteConfirmModal();
+    void drawNewFolderPopup();
+
 public:
     MEditorAssetWindow();
     explicit MEditorAssetWindow(int x, int y);
@@ -96,6 +99,13 @@ private:
     std::vector<SAssetDirectoryNode*> historyBack;
     std::vector<SAssetDirectoryNode*> historyForward;
 
+    // Path-string mirrors of the node pointers above — survive tree rebuilds
+    // so syncWithAssetManager() can remap after refresh().
+    SString cachedCurrentPath;
+    SString cachedSelectedPath;
+    std::vector<SString> cachedHistoryBackPaths;
+    std::vector<SString> cachedHistoryForwardPaths;
+
     EAssetViewMode viewMode     = EAssetViewMode::Grid;
     EAssetSortMode sortMode     = EAssetSortMode::Name;
     float          zoomLevel    = 1.0f;
@@ -107,7 +117,6 @@ private:
     bool filterFiles       = true;
 
     SString draggedAssetId;
-    bool pendingContextMenu = false;
 
     // Last value of getTotalHotReloadCount() we saw — used to detect new reloads.
     int   lastSeenReloadCount = 0;
@@ -115,6 +124,14 @@ private:
     // While > 0, a flash indicator is shown in the toolbar.
     float reloadFlashTimer    = 0.0f;
     static constexpr float RELOAD_FLASH_DURATION = 2.5f;
+
+    // -- Delete confirmation popup state ---------------------------------------
+    SAssetDirectoryNode* pendingDeleteNode = nullptr;
+    bool pendingDeleteConfirm              = false;
+
+    // -- New Folder popup state ------------------------------------------------
+    bool pendingNewFolderPopup = false;        // arms ImGui::OpenPopup on next frame
+    char newFolderNameBuffer[256] = {};        // text input buffer
 };
 
 #endif // EDITORASSETWINDOW_H

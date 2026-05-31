@@ -4,13 +4,15 @@
 
 #include "editorapplication.h"
 
-#include "../../core/graphics/core/render-pipeline/render_queue.h"
+#include <windows.h>
+
 #include "core/default_settings_paths.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_queue.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorrenderstages/gizmos/gizmo_stage.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
@@ -21,6 +23,7 @@
 #include "editor/window/menubar/menubartree.h"
 #include "simulation_manager.h"
 
+#include "core/profiling/profiler.h"
 
 MObject* MEditorApplication::SelectedObject = nullptr;
 
@@ -33,6 +36,8 @@ void MEditorApplication::run() {
     if(window == nullptr)
         return;
 
+    START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_RUN)
+
     startFrame();
     window->clear();
 
@@ -43,18 +48,25 @@ void MEditorApplication::run() {
     // tick physics.
     if (canSimulate)
     {
-       if (simulationState)
+        START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
+        if (simulationState)
            tickPhysics(deltaTime);
+        STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
     }
 
     // tick scene manager
     if (sceneManagerRef)
     {
+        START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
         sceneManagerRef->update(deltaTime);
+        STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
+
         if (internal_tickSpatialFixedUpdateFlag)
         {
             internal_tickSpatialFixedUpdateFlag = false;
+            START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_FIXED_UPDATE)
             sceneManagerRef->fixedUpdate(fixedStep);
+            STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_FIXED_UPDATE)
         }
     }
 
@@ -63,7 +75,10 @@ void MEditorApplication::run() {
         assetManagerRef->tickHotReload();
 
     window->update(deltaTime);
+
     endFrame();
+
+    STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_RUN)
 }
 
 void MEditorApplication::cleanup() {

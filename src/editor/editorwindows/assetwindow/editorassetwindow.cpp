@@ -16,54 +16,47 @@
 
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "default_engine_icon_paths.h"
+#include "editor/editor_utils/editor_utility.h"
 
-// ─── Colour palette ────────────────────────────────────────────────────────────
+// --- Colour palette ------------------------------------------------------------
 static constexpr ImU32 COL_PANEL_BG          = IM_COL32(30,  30,  30,  255);
 static constexpr ImU32 COL_TOOLBAR_BG        = IM_COL32(38,  38,  38,  255);
 
-// Tile card
-static constexpr ImU32 COL_TILE_BG           = IM_COL32(36,  36,  36,  255); // base card fill
-static constexpr ImU32 COL_TILE_BG_HOVER     = IM_COL32(52,  52,  52,  255); // brightened on hover
-static constexpr ImU32 COL_TILE_BORDER       = IM_COL32(60,  60,  60,  255); // idle border
-static constexpr ImU32 COL_TILE_BORDER_HOVER = IM_COL32(110, 110, 110, 255); // hover border
-static constexpr ImU32 COL_TILE_SELECTED     = IM_COL32(26,  95,  180, 255); // UE blue fill
-static constexpr ImU32 COL_TILE_BORDER_SEL   = IM_COL32(70,  150, 255, 255); // UE blue rim
-static constexpr ImU32 COL_TILE_SHADOW       = IM_COL32(0,   0,   0,   80);  // drop shadow
+static constexpr ImU32 COL_TILE_BG           = IM_COL32(36,  36,  36,  255);
+static constexpr ImU32 COL_TILE_BG_HOVER     = IM_COL32(52,  52,  52,  255);
+static constexpr ImU32 COL_TILE_BORDER       = IM_COL32(60,  60,  60,  255);
+static constexpr ImU32 COL_TILE_BORDER_HOVER = IM_COL32(110, 110, 110, 255);
+static constexpr ImU32 COL_TILE_SELECTED     = IM_COL32(26,  95,  180, 255);
+static constexpr ImU32 COL_TILE_BORDER_SEL   = IM_COL32(70,  150, 255, 255);
+static constexpr ImU32 COL_TILE_SHADOW       = IM_COL32(0,   0,   0,   80);
 
-// Type bar (bottom strip colour per asset category)
-static constexpr ImU32 COL_TYPE_MESH         = IM_COL32(0,  140, 200, 255); // cyan-blue
-static constexpr ImU32 COL_TYPE_MATERIAL     = IM_COL32(30, 160,  90, 255); // green
-static constexpr ImU32 COL_TYPE_TEXTURE      = IM_COL32(180, 80, 180, 255); // purple
-static constexpr ImU32 COL_TYPE_SHADER       = IM_COL32(220,130,  30, 255); // amber
-static constexpr ImU32 COL_TYPE_SCENE        = IM_COL32(200, 60,  60, 255); // red
-static constexpr ImU32 COL_TYPE_AUDIO        = IM_COL32(60, 180, 180, 255); // teal
-static constexpr ImU32 COL_TYPE_FOLDER       = IM_COL32(210,155,  40, 255); // gold
-static constexpr ImU32 COL_TYPE_DEFAULT      = IM_COL32(90,  90,  90, 255); // grey
+static constexpr ImU32 COL_TYPE_MESH         = IM_COL32(0,  140, 200, 255);
+static constexpr ImU32 COL_TYPE_MATERIAL     = IM_COL32(30, 160,  90, 255);
+static constexpr ImU32 COL_TYPE_TEXTURE      = IM_COL32(180, 80, 180, 255);
+static constexpr ImU32 COL_TYPE_SHADER       = IM_COL32(220,130,  30, 255);
+static constexpr ImU32 COL_TYPE_SCENE        = IM_COL32(200, 60,  60, 255);
+static constexpr ImU32 COL_TYPE_AUDIO        = IM_COL32(60, 180, 180, 255);
+static constexpr ImU32 COL_TYPE_FOLDER       = IM_COL32(210,155,  40, 255);
+static constexpr ImU32 COL_TYPE_DEFAULT      = IM_COL32(90,  90,  90, 255);
 
-// List rows
 static constexpr ImU32 COL_ROW_EVEN          = IM_COL32(36,  36,  36,  255);
 static constexpr ImU32 COL_ROW_ODD           = IM_COL32(42,  42,  42,  255);
 static constexpr ImU32 COL_ROW_HOVER         = IM_COL32(255, 255, 255, 18);
 static constexpr ImU32 COL_ROW_SELECTED      = IM_COL32(26,  95,  180, 200);
 
-// Misc
 static constexpr ImU32 COL_TEXT_DIM          = IM_COL32(140, 140, 140, 255);
 static constexpr ImU32 COL_SEPARATOR         = IM_COL32(55,  55,  55,  255);
 static constexpr ImU32 COL_TREE_SELECTED     = IM_COL32(26,  95,  180, 200);
 static constexpr ImU32 COL_RELOAD_FLASH      = IM_COL32(80,  200, 120, 255);
 
-// Tile geometry
-// Card is a portrait rectangle: square thumbnail + name area + coloured type bar.
-//   cardW = iconSize + 2*THUMB_PAD + 2*CARD_HPAD
-//   cardH = cardW    + NAME_AREA_H + TYPE_BAR_H
-static constexpr float TILE_ROUNDING  = 6.0f;   // card corner radius
-static constexpr float TYPE_BAR_H     = 16.0f;  // coloured bottom strip
-static constexpr float NAME_AREA_H    = 30.0f;  // name text zone between thumb and type bar
-static constexpr float THUMB_PAD      = 3.0f;   // thumbnail inset inside card
-static constexpr float CARD_HPAD      = 5.0f;   // left/right card padding
-static constexpr float SHADOW_OFFSET  = 3.0f;   // drop shadow displacement
+static constexpr float TILE_ROUNDING  = 6.0f;
+static constexpr float TYPE_BAR_H     = 16.0f;
+static constexpr float NAME_AREA_H    = 30.0f;
+static constexpr float THUMB_PAD      = 3.0f;
+static constexpr float CARD_HPAD      = 5.0f;
+static constexpr float SHADOW_OFFSET  = 3.0f;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 static bool caseInsensitiveContains(const std::string& haystack,
                                     const std::string& needle)
@@ -75,7 +68,7 @@ static bool caseInsensitiveContains(const std::string& haystack,
     return it != haystack.end();
 }
 
-// ─── Constructor / Destructor ────────────────────────────────────────────────
+// --- Constructor / Destructor ------------------------------------------------
 
 MEditorAssetWindow::MEditorAssetWindow() : MEditorAssetWindow(700, 300) {}
 
@@ -86,13 +79,11 @@ MEditorAssetWindow::MEditorAssetWindow(int x, int y) : MImGuiSubWindow(x, y)
     auto* editorAssetManager = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     rootNode = editorAssetManager ? editorAssetManager->getAssetRootNode() : nullptr;
 
-    // Seed the reload counter so we don't flash on startup.
     if (editorAssetManager)
         lastSeenReloadCount = editorAssetManager->getTotalHotReloadCount();
 
     if (!rootNode) return;
 
-    // Start inside the "assets" folder if it exists, otherwise at root.
     for (const auto& child : rootNode->getChildrenNodes())
     {
         auto name = child->getName();
@@ -108,23 +99,16 @@ MEditorAssetWindow::MEditorAssetWindow(int x, int y) : MImGuiSubWindow(x, y)
 
 MEditorAssetWindow::~MEditorAssetWindow() {}
 
-// ─── Hot reload sync ──────────────────────────────────────────────────────────
+// --- Hot reload sync ----------------------------------------------------------
 
 void MEditorAssetWindow::tickAndSync(float deltaTime)
 {
     auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (!editorAM) return;
 
-    // ── Tree staleness check ──────────────────────────────────────────────────
-    // refresh() deletes the entire tree and rebuilds it. Our cached node
-    // pointers become dangling the moment that happens. Detect it by comparing
-    // the root pointer — the manager always returns its current live root.
     if (rootNode != editorAM->getAssetRootNode())
         syncWithAssetManager();
 
-    // ── Hot-reload flash ──────────────────────────────────────────────────────
-    // tickHotReload() runs in MEditorApplication::run(), before onGui() is
-    // called, so by the time we get here the counter is already updated.
     const int currentCount = editorAM->getTotalHotReloadCount();
     if (currentCount != lastSeenReloadCount)
     {
@@ -142,57 +126,60 @@ void MEditorAssetWindow::syncWithAssetManager()
     auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     if (!editorAM) return;
 
-    // Snapshot everything as path strings BEFORE touching any pointers.
-    const SString savedCurrentPath  = currentDirectoryNode
-                                        ? currentDirectoryNode->getPath() : SString();
-    const SString savedSelectedPath = selectedNode
-                                        ? selectedNode->getPath() : SString();
+    const SString savedCurrentPath  = cachedCurrentPath;
+    const SString savedSelectedPath = cachedSelectedPath;
+    std::vector<SString> savedHistoryBack    = cachedHistoryBackPaths;
+    std::vector<SString> savedHistoryForward = cachedHistoryForwardPaths;
 
-    std::vector<SString> savedHistoryBack, savedHistoryForward;
-    for (auto* n : historyBack)    savedHistoryBack.push_back(n ? n->getPath() : SString());
-    for (auto* n : historyForward) savedHistoryForward.push_back(n ? n->getPath() : SString());
-
-    // Drop all stale pointers.
     rootNode             = nullptr;
     currentDirectoryNode = nullptr;
     selectedNode         = nullptr;
     rightClickedNode     = nullptr;
+    pendingDeleteNode    = nullptr;
     historyBack.clear();
     historyForward.clear();
+    cachedCurrentPath.clear();
+    cachedSelectedPath.clear();
+    cachedHistoryBackPaths.clear();
+    cachedHistoryForwardPaths.clear();
 
     rootNode = editorAM->getAssetRootNode();
     if (!rootNode) return;
 
-    // Re-map current directory directly — do NOT call navigateTo() since that
-    // would push to the history stack and clear the forward stack.
-    // Fall back to root only if the folder itself was deleted.
     currentDirectoryNode = findNodeByPath(rootNode, savedCurrentPath);
     if (!currentDirectoryNode)
         currentDirectoryNode = rootNode;
+    cachedCurrentPath = currentDirectoryNode->getPath();
 
-    // Re-map both history stacks entry by entry, dropping any entry that no
-    // longer exists or isn't a directory (files should never be in history).
     for (const auto& path : savedHistoryBack)
     {
         if (path.empty()) continue;
         if (auto* node = findNodeByPath(rootNode, path))
             if (node->isDirectory)
+            {
                 historyBack.push_back(node);
+                cachedHistoryBackPaths.push_back(path);
+            }
     }
     for (const auto& path : savedHistoryForward)
     {
         if (path.empty()) continue;
         if (auto* node = findNodeByPath(rootNode, path))
             if (node->isDirectory)
+            {
                 historyForward.push_back(node);
+                cachedHistoryForwardPaths.push_back(path);
+            }
     }
 
-    // Re-map selection — cleared only if the asset was deleted.
     if (!savedSelectedPath.empty())
+    {
         selectedNode = findNodeByPath(rootNode, savedSelectedPath);
+        cachedSelectedPath = selectedNode ? savedSelectedPath : SString();
+    }
 }
 
-// ─── processPendingPing ──────────────────────────────────────────────────────
+// --- processPendingPing ------------------------------------------------------
 
 void MEditorAssetWindow::processPendingPing()
 {
@@ -206,17 +193,14 @@ void MEditorAssetWindow::processPendingPing()
     SAssetDirectoryNode* target = findNodeByAssetId(rootNode, assetId, &parent);
     if (!target) return;
 
-    // Navigate to the parent folder so the asset is visible.
     if (parent && parent != currentDirectoryNode)
         navigateTo(parent);
 
-    // Highlight in browser and route to inspector via handle.
     selectedNode = target;
+    cachedSelectedPath = target->getPath();
     selectAssetForInspector(target);
 }
 
-// BFS: find the asset node whose assetReference has the given assetId.
-// outParent is set to the immediate parent directory node if provided.
 SAssetDirectoryNode* MEditorAssetWindow::findNodeByAssetId(SAssetDirectoryNode* root,
                                                             const SString& assetId,
                                                             SAssetDirectoryNode** outParent)
@@ -245,9 +229,8 @@ SAssetDirectoryNode* MEditorAssetWindow::findNodeByAssetId(SAssetDirectoryNode* 
     return nullptr;
 }
 
-// ─── findNodeByPath ───────────────────────────────────────────────────────────
+// --- findNodeByPath -----------------------------------------------------------
 
-// BFS over the tree — paths are unique so we stop at the first match.
 SAssetDirectoryNode* MEditorAssetWindow::findNodeByPath(SAssetDirectoryNode* root,
                                                          const SString& path)
 {
@@ -265,11 +248,10 @@ SAssetDirectoryNode* MEditorAssetWindow::findNodeByPath(SAssetDirectoryNode* roo
     return nullptr;
 }
 
-// ─── Top-level render ────────────────────────────────────────────────────────
+// --- Top-level render --------------------------------------------------------
 
 void MEditorAssetWindow::onGui(float deltaTime)
 {
-    // Must be first — keeps node pointers valid and arms the flash timer.
     tickAndSync(deltaTime);
 
     if (!currentDirectoryNode) return;
@@ -308,7 +290,11 @@ void MEditorAssetWindow::onGui(float deltaTime)
     drawContentArea();
     ImGui::EndChild();
 
-    // ── Status bar ────────────────────────────────────────────────────────────
+    // Modal popups - drawn at window scope so they aren't clipped.
+    drawDeleteConfirmModal();
+    drawNewFolderPopup();
+
+    // -- Status bar ------------------------------------------------------------
     ImDrawList* dl = ImGui::GetWindowDrawList();
     ImVec2 statusPos = ImGui::GetWindowPos();
     ImVec2 winSize   = ImGui::GetWindowSize();
@@ -330,7 +316,6 @@ void MEditorAssetWindow::onGui(float deltaTime)
     else
         ImGui::Text("%d items", totalItems);
 
-    // Hot-reload indicator — fades out over RELOAD_FLASH_DURATION seconds.
     if (reloadFlashTimer > 0.0f)
     {
         const float alpha = reloadFlashTimer / RELOAD_FLASH_DURATION;
@@ -341,10 +326,9 @@ void MEditorAssetWindow::onGui(float deltaTime)
         ImGui::Text("  Hot Reloaded  %d", lastSeenReloadCount);
         ImGui::PopStyleColor();
     }
-
 }
 
-// ─── Toolbar ─────────────────────────────────────────────────────────────────
+// --- Toolbar -----------------------------------------------------------------
 
 void MEditorAssetWindow::drawToolbar()
 {
@@ -353,33 +337,35 @@ void MEditorAssetWindow::drawToolbar()
 
     ImGui::SetCursorPosY(6.0f);
 
-    // Back
     ImGui::BeginDisabled(historyBack.size() <= 1);
     if (ImGui::Button(" < ")) navigateBack();
     ImGui::EndDisabled();
 
     ImGui::SameLine();
 
-    // Forward
     ImGui::BeginDisabled(historyForward.empty());
     if (ImGui::Button(" > "))
     {
         auto* next = historyForward.back();
+        SString nextPath = cachedHistoryForwardPaths.back();
         historyForward.pop_back();
+        cachedHistoryForwardPaths.pop_back();
+
         historyBack.push_back(currentDirectoryNode);
+        cachedHistoryBackPaths.push_back(cachedCurrentPath);
+
         currentDirectoryNode = next;
+        cachedCurrentPath    = nextPath;
     }
     ImGui::EndDisabled();
 
     ImGui::SameLine(0, 12);
 
-    // Search
     ImGui::SetNextItemWidth(220);
     ImGui::InputTextWithHint("##search", "  Search assets...", searchBuffer, sizeof(searchBuffer));
 
     ImGui::SameLine(0, 12);
 
-    // Sort
     ImGui::SetNextItemWidth(110);
     const char* sortLabels[] = { "Name", "Type", "Date" };
     int sortIdx = (int)sortMode;
@@ -388,7 +374,6 @@ void MEditorAssetWindow::drawToolbar()
 
     ImGui::SameLine(0, 12);
 
-    // View mode toggle
     if (ImGui::Button(viewMode == EAssetViewMode::Grid ? "[#]" : "[=]"))
         viewMode = (viewMode == EAssetViewMode::Grid) ? EAssetViewMode::List
                                                        : EAssetViewMode::Grid;
@@ -397,7 +382,6 @@ void MEditorAssetWindow::drawToolbar()
 
     ImGui::SameLine(0, 6);
 
-    // Sources panel toggle
     if (ImGui::Button(showSources ? "[ | ]" : "[ ]"))
         showSources = !showSources;
     if (ImGui::IsItemHovered())
@@ -405,12 +389,9 @@ void MEditorAssetWindow::drawToolbar()
 
     ImGui::SameLine(0, 12);
 
-    // Zoom
     ImGui::SetNextItemWidth(100);
     ImGui::SliderFloat("##zoom", &zoomLevel, 0.5f, 2.0f, "Zoom %.1f");
 
-    // ── Reload flash dot ──────────────────────────────────────────────────────
-    // A small coloured indicator in the right margin that fades after a reload.
     if (reloadFlashTimer > 0.0f)
     {
         const float alpha = reloadFlashTimer / RELOAD_FLASH_DURATION;
@@ -430,7 +411,7 @@ void MEditorAssetWindow::drawToolbar()
     ImGui::PopStyleColor();
 }
 
-// ─── Left panel – folder tree ────────────────────────────────────────────────
+// --- Left panel – folder tree ------------------------------------------------
 
 void MEditorAssetWindow::drawSourcesPanel()
 {
@@ -484,10 +465,7 @@ void MEditorAssetWindow::drawDirectoryTree(SAssetDirectoryNode* node, int depth)
     }
 }
 
-// ─── Breadcrumbs ─────────────────────────────────────────────────────────────
-// Derived each frame from currentDirectoryNode->getPath(), NOT from historyBack.
-// historyBack is navigation history (for the < > buttons); using it for display
-// causes file names, duplicates, and stale entries to appear in the bar.
+// --- Breadcrumbs -------------------------------------------------------------
 
 void MEditorAssetWindow::drawBreadcrumbs()
 {
@@ -502,7 +480,6 @@ void MEditorAssetWindow::drawBreadcrumbs()
         return;
     }
 
-    // ── Root crumb ────────────────────────────────────────────────────────────
     const bool atRoot = (currentDirectoryNode == rootNode);
     if (atRoot)
     {
@@ -514,17 +491,9 @@ void MEditorAssetWindow::drawBreadcrumbs()
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(COL_TEXT_DIM));
         if (ImGui::SmallButton(rootNode->getName().c_str()))
-        {
-            historyBack.push_back(currentDirectoryNode);
-            historyForward.clear();
-            currentDirectoryNode = rootNode;
-            selectedNode = nullptr;
-        }
+            navigateTo(rootNode);
         ImGui::PopStyleColor();
 
-        // ── Segment crumbs ────────────────────────────────────────────────────
-        // Split "assets/textures/hdr" into ["assets", "textures", "hdr"] and
-        // walk the tree, making each intermediate segment a clickable button.
         auto segments = currentDirectoryNode->getPath().split("/");
         SAssetDirectoryNode* walker = rootNode;
 
@@ -554,12 +523,7 @@ void MEditorAssetWindow::drawBreadcrumbs()
             {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(COL_TEXT_DIM));
                 if (ImGui::SmallButton(segments[i].c_str()))
-                {
-                    historyBack.push_back(currentDirectoryNode);
-                    historyForward.clear();
-                    currentDirectoryNode = walker;
-                    selectedNode = nullptr;
-                }
+                    navigateTo(walker);
                 ImGui::PopStyleColor();
             }
             ImGui::PopID();
@@ -570,7 +534,7 @@ void MEditorAssetWindow::drawBreadcrumbs()
     ImGui::PopStyleColor();
 }
 
-// ─── Content area dispatcher ─────────────────────────────────────────────────
+// --- Content area dispatcher -------------------------------------------------
 
 void MEditorAssetWindow::drawContentArea()
 {
@@ -580,38 +544,42 @@ void MEditorAssetWindow::drawContentArea()
         drawAssetList(currentDirectoryNode);
 
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) &&
-        ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !pendingContextMenu)
+        ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !ImGui::IsAnyItemHovered())
     {
+        selectedNode = nullptr;
+        cachedSelectedPath.clear();
         ImGui::OpenPopup("##ctx_empty");
     }
     if (ImGui::BeginPopup("##ctx_empty"))
     {
         ImGui::TextDisabled("This Folder");
         ImGui::Separator();
-        // ── Create submenu — mirrors "Assets/Create" menubar entries ─────────────
-    // getNodeAtPath walks the registered tree, so any new MMenubarItem under
-    // "Assets/Create" automatically appears here without further changes.
-    auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
-    if (createNode)
-    {
-        if (ImGui::BeginMenu("Create"))
-        {
-            createNode->renderAsContextMenu();
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
-    }
 
-    if (ImGui::MenuItem("Show in File Explorer"))
+        // Create submenu - populated automatically by registered MMenubarItems
+        // (Material, Shader, Skybox, etc. under Assets/Create/Rendering/...).
+        auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
+        if (createNode)
         {
-            auto cmd = STR("\"") + currentDirectoryNode->getPath() + STR("\"");
-            system(cmd.c_str());
+            if (ImGui::BeginMenu("Create"))
+            {
+                createNode->renderAsContextMenu();
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
         }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Show in File Explorer"))
+        {
+            MEditorUtility::openInFilExplorer(currentDirectoryNode->getPath());
+        }
+
         ImGui::EndPopup();
     }
 }
 
-// ─── Helpers: get sorted + filtered children ─────────────────────────────────
+// --- Helpers: get sorted + filtered children ---------------------------------
 
 static std::vector<SAssetDirectoryNode*> getSortedChildren(
     SAssetDirectoryNode* dir,
@@ -644,9 +612,6 @@ static std::vector<SAssetDirectoryNode*> getSortedChildren(
     return result;
 }
 
-// ── Per-asset-type colour strip ───────────────────────────────────────────────
-// Returns the accent colour for the bottom type bar based on file extension or
-// asset category, mirroring Unreal's content browser colour coding.
 static ImU32 getTileTypeColor(SAssetDirectoryNode* node)
 {
     if (!node) return COL_TYPE_DEFAULT;
@@ -656,39 +621,25 @@ static ImU32 getTileTypeColor(SAssetDirectoryNode* node)
     auto ext = path.substr(path.find_last_of('.') + 1);
     for (auto& c : ext) c = (char)std::tolower(c);
 
-    // Mesh formats
     if (ext == "obj" || ext == "fbx" || ext == "gltf" || ext == "glb" ||
         ext == "dae" || ext == "3ds" || ext == "stl")
         return COL_TYPE_MESH;
-
-    // Material
     if (ext == "mat" || ext == "material")
         return COL_TYPE_MATERIAL;
-
-    // Texture / image
     if (ext == "png" || ext == "jpg" || ext == "jpeg" || ext == "bmp" ||
         ext == "tga" || ext == "hdr" || ext == "exr" || ext == "dds")
         return COL_TYPE_TEXTURE;
-
-    // Shader / cubemap
     if (ext == "mesl" || ext == "glsl" || ext == "vert" || ext == "frag" ||
         ext == "cubemap")
         return COL_TYPE_SHADER;
-
-    // Scene
     if (ext == "mscene" || ext == "scene")
         return COL_TYPE_SCENE;
-
-    // Audio
     if (ext == "wav" || ext == "ogg" || ext == "mp3" || ext == "flac")
         return COL_TYPE_AUDIO;
 
     return COL_TYPE_DEFAULT;
 }
 
-// ── Short type label ──────────────────────────────────────────────────────────
-// Returns std::string (not const char*) to avoid returning a pointer into a
-// local that has gone out of scope — previously caused garbage like "P?".
 static std::string getTileTypeLabel(SAssetDirectoryNode* node)
 {
     if (!node || node->isDirectory) return "Folder";
@@ -708,7 +659,7 @@ static std::string getTileTypeLabel(SAssetDirectoryNode* node)
         ext == "exr" || ext == "dds")                   return "Texture";
     if (ext == "mesl")                                  return "Shader";
     if (ext == "glsl" || ext == "vert" || ext == "frag")return "GLSL";
-    if (ext == "cubemap")                               return "Cubemap";
+    if (ext == "cubemap")                               return "Skybox";
     if (ext == "mscene" || ext == "scene")              return "Scene";
     if (ext == "wav" || ext == "ogg" || ext == "mp3")   return "Audio";
     if (ext == "txt" || ext == "json" || ext == "xml" ||
@@ -723,7 +674,7 @@ bool MEditorAssetWindow::matchesSearch(SAssetDirectoryNode* node) const
     return caseInsensitiveContains(node->getName(), searchBuffer);
 }
 
-// ─── Grid view ───────────────────────────────────────────────────────────────
+// --- Grid view ---------------------------------------------------------------
 
 void MEditorAssetWindow::drawAssetGrid(SAssetDirectoryNode* root)
 {
@@ -731,7 +682,6 @@ void MEditorAssetWindow::drawAssetGrid(SAssetDirectoryNode* root)
 
     auto* am  = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
     float iconSize     = 64.0f * zoomLevel;
-    // Card width = iconSize + 2*CARD_HPAD, plus a small column gap.
     float cellSize     = iconSize + CARD_HPAD * 2.0f + 6.0f;
 
     float panelWidth = ImGui::GetContentRegionAvail().x;
@@ -753,7 +703,10 @@ void MEditorAssetWindow::drawAssetGrid(SAssetDirectoryNode* root)
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) &&
         !ImGui::IsAnyItemHovered())
+    {
         selectedNode = nullptr;
+        cachedSelectedPath.clear();
+    }
 }
 
 void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
@@ -762,19 +715,17 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
 {
     const bool isSelected = (node == selectedNode);
 
-    // ── Card geometry ─────────────────────────────────────────────────────────
-    // Portrait rectangle:  [thumbnail — square] / [name label] / [type bar]
-    const float thumbSz = iconSize;                          // thumbnail is square
-    const float cardW   = thumbSz + CARD_HPAD * 2.0f;       // card width
+    const float thumbSz = iconSize;
+    const float cardW   = thumbSz + CARD_HPAD * 2.0f;
     const float cardH   = thumbSz + NAME_AREA_H + TYPE_BAR_H + THUMB_PAD * 2.0f;
 
-    // ── Resolve icon / thumbnail ──────────────────────────────────────────────
     sf::Texture* icon        = nullptr;
     bool         isThumbnail = false;
 
     if (node->isDirectory)
     {
-        icon = am->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER)
+        const char* folderIcon = node->isEmptyLeafDirectory() ? SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER;
+        icon = am->getAsset<MTextureAsset>(folderIcon)
                   ->getTexture()->getCoreTexture();
     }
     else if (node->assetReference)
@@ -792,7 +743,6 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
     ImGui::BeginGroup();
     ImVec2 p = ImGui::GetCursorScreenPos();
 
-    // ── Hit-test (drag source attached here) ─────────────────────────────────
     bool clicked  = ImGui::InvisibleButton("##tile", ImVec2(cardW, cardH));
     bool hovered  = ImGui::IsItemHovered();
     bool dblClick = hovered && ImGui::IsMouseDoubleClicked(0);
@@ -800,17 +750,17 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
     if (!node->isDirectory && icon)
         doAssetDragSource(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str(), *icon, node);
 
-    if (clicked)  { selectedNode = node; selectAssetForInspector(node); }
+    if (clicked)  { selectedNode = node; cachedSelectedPath = node->getPath(); selectAssetForInspector(node); }
     if (dblClick) { if (node->isDirectory) navigateTo(node); else onFileDoubleClicked(node); }
     if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
+        selectedNode       = node;
+        cachedSelectedPath = node->getPath();
         rightClickedNode   = node;
-        pendingContextMenu = true;
         ImGui::OpenPopup("##assetctx");
     }
     openContextMenu(node);
 
-    // ── Draw ──────────────────────────────────────────────────────────────────
     ImDrawList* dl = ImGui::GetWindowDrawList();
 
     const ImVec2 br       (p.x + cardW,         p.y + cardH);
@@ -821,26 +771,22 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
     const ImVec2 typeBarTL(p.x,                 nameBR.y);
     const ImU32  typeCol  = getTileTypeColor(node);
 
-    // Drop shadow
     dl->AddRectFilled(
         ImVec2(p.x + SHADOW_OFFSET, p.y + SHADOW_OFFSET),
         ImVec2(br.x + SHADOW_OFFSET, br.y + SHADOW_OFFSET),
         COL_TILE_SHADOW, TILE_ROUNDING);
 
-    // Card background
     const ImU32 bgCol = isSelected ? COL_TILE_SELECTED
                       : hovered    ? COL_TILE_BG_HOVER
                                    : COL_TILE_BG;
     dl->AddRectFilled(p, br, bgCol, TILE_ROUNDING);
 
-    // ── Thumbnail / icon area ─────────────────────────────────────────────────
     if (icon)
     {
         dl->PushClipRect(thumbTL, thumbBR, true);
 
         if (isThumbnail)
         {
-            // Thumbnail fills its square zone completely.
             dl->AddImage(
                 (ImTextureID)(intptr_t)icon->getNativeHandle(),
                 thumbTL, thumbBR,
@@ -849,7 +795,6 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
         }
         else
         {
-            // Generic icon: dark inset bg, icon centred at 60% size.
             dl->AddRectFilled(thumbTL, thumbBR, IM_COL32(28, 28, 28, 220));
             const float sz = thumbSz * 0.60f;
             const ImVec2 ic(thumbTL.x + (thumbSz - sz) * 0.5f,
@@ -868,22 +813,17 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
         dl->AddRectFilled(thumbTL, thumbBR, IM_COL32(28, 28, 28, 220));
     }
 
-    // ── Name label area ───────────────────────────────────────────────────────
-    // Background matches the card so it blends in; text is centred vertically.
-    // Name is truncated with "…" if it overflows the card width.
     {
         const float  maxNameW  = cardW - CARD_HPAD * 2.0f;
         const float  lineH     = ImGui::GetTextLineHeight();
         const float  textY     = nameTL.y + (NAME_AREA_H - lineH) * 0.5f;
 
-        // Truncate name with ellipsis if needed.
         const std::string fullName = node->getName();
-        const char*       nameC    = fullName.c_str();
+        const char* nameC    = fullName.c_str();
         std::string       truncated;
 
         if (ImGui::CalcTextSize(nameC).x > maxNameW)
         {
-            // Binary-search the longest prefix that fits with "…" appended.
             int lo = 0, hi = (int)fullName.size();
             while (lo < hi)
             {
@@ -896,7 +836,6 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
             nameC     = truncated.c_str();
         }
 
-        // Centre the text horizontally.
         const float textW = ImGui::CalcTextSize(nameC).x;
         const float textX = p.x + CARD_HPAD + (maxNameW - textW) * 0.5f;
 
@@ -906,14 +845,11 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
                     nameC);
     }
 
-    // ── Type bar ─────────────────────────────────────────────────────────────
-    // Rounded only on the bottom corners so it merges with the card edge.
     dl->AddRectFilled(typeBarTL, br, typeCol,
                       TILE_ROUNDING, ImDrawFlags_RoundCornersBottom);
 
-    // Type label — truncate the same way if needed.
     {
-        std::string  labelStr  = getTileTypeLabel(node);  // owns the string
+        std::string  labelStr  = getTileTypeLabel(node);
         const float  maxLabelW = cardW - CARD_HPAD * 2.0f;
 
         if (ImGui::CalcTextSize(labelStr.c_str()).x > maxLabelW)
@@ -935,14 +871,12 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
         dl->AddText(ImVec2(lx, ly), IM_COL32(255, 255, 255, 230), labelStr.c_str());
     }
 
-    // ── Border ────────────────────────────────────────────────────────────────
     const ImU32  borderCol = isSelected ? COL_TILE_BORDER_SEL
                            : hovered    ? COL_TILE_BORDER_HOVER
                                         : COL_TILE_BORDER;
     const float  borderW   = isSelected ? 2.0f : 1.0f;
     dl->AddRect(p, br, borderCol, TILE_ROUNDING, 0, borderW);
 
-    // ── Tooltip ───────────────────────────────────────────────────────────────
     if (hovered)
     {
         ImGui::BeginTooltip();
@@ -958,7 +892,7 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
 }
 
 
-// ─── List view ───────────────────────────────────────────────────────────────
+// --- List view ---------------------------------------------------------------
 
 void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
 {
@@ -994,7 +928,10 @@ void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) &&
         !ImGui::IsAnyItemHovered())
+    {
         selectedNode = nullptr;
+        cachedSelectedPath.clear();
+    }
 }
 
 void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
@@ -1012,11 +949,11 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
              : (rowIndex % 2 == 0) ? COL_ROW_EVEN : COL_ROW_ODD;
     dl->AddRectFilled(p, ImVec2(p.x + rowW, p.y + rowH), bg);
 
-    // ── Resolve icon BEFORE InvisibleButton so the drag source can use it. ────
     sf::Texture* icon = nullptr;
     if (node->isDirectory)
     {
-        icon = am->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER)
+        const char* folderIcon = node->isEmptyLeafDirectory() ? SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER;
+        icon = am->getAsset<MTextureAsset>(folderIcon)
                   ->getTexture()->getCoreTexture();
     }
     else if (node->assetReference)
@@ -1035,14 +972,13 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
     bool hovered  = ImGui::IsItemHovered();
     bool dblClick = hovered && ImGui::IsMouseDoubleClicked(0);
 
-    // Drag source attached directly to the InvisibleButton.
     if (!node->isDirectory && icon)
         doAssetDragSource(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str(), *icon, node);
 
     if (hovered && !isSelected)
         dl->AddRectFilled(p, ImVec2(p.x + rowW, p.y + rowH), COL_ROW_HOVER);
 
-    if (clicked)  { selectedNode = node; selectAssetForInspector(node); }
+    if (clicked)  { selectedNode = node; cachedSelectedPath = node->getPath(); selectAssetForInspector(node); }
     if (dblClick)
     {
         if (node->isDirectory) navigateTo(node);
@@ -1051,8 +987,9 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
 
     if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
+        selectedNode       = node;
+        cachedSelectedPath = node->getPath();
         rightClickedNode   = node;
-        pendingContextMenu = true;
         ImGui::OpenPopup("##assetctx");
     }
     openContextMenu(node);
@@ -1073,13 +1010,12 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
     ImGui::SetCursorScreenPos(ImVec2(p.x, p.y + rowH + 1));
 }
 
-// ─── Context menu ─────────────────────────────────────────────────────────────
+// --- Context menu -------------------------------------------------------------
 
 void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
 {
     if (!ImGui::BeginPopup("##assetctx")) return;
 
-    pendingContextMenu = false;
     auto* target = rightClickedNode ? rightClickedNode : node;
 
     ImGui::TextDisabled("%s", target ? target->getName().c_str() : "Asset");
@@ -1090,42 +1026,255 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
         if (ImGui::MenuItem("Open Folder")) navigateTo(target);
         ImGui::Separator();
     }
+
     if (target && !target->isDirectory)
     {
         if (ImGui::MenuItem("Open")) onFileDoubleClicked(target);
         ImGui::Separator();
     }
 
+    // -- Create New Directory -------------------------------------------------
+    if (ImGui::MenuItem("New Folder"))
+    {
+        std::strncpy(newFolderNameBuffer, "New Folder", sizeof(newFolderNameBuffer) - 1);
+        newFolderNameBuffer[sizeof(newFolderNameBuffer) - 1] = '\0';
+        pendingNewFolderPopup = true;
+    }
+
     ImGui::Separator();
 
+    // Create submenu - populated by registered MMenubarItems ------------------
+    auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
+    if (createNode)
+    {
+        if (ImGui::BeginMenu("Create"))
+        {
+            createNode->renderAsContextMenu();
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+    }
+
+    // -- Show in explorer ----------------------------------------------------
     if (ImGui::MenuItem("Show in File Explorer"))
     {
         auto path = target ? target->getPath() : currentDirectoryNode->getPath();
         auto cmd  = STR("\"") + path + STR("\"");
         system(cmd.c_str());
     }
+
+    ImGui::Separator();
+
+    // -- Copy Asset path -----------------------------------------------------
     if (ImGui::MenuItem("Copy Path"))
     {
         auto path = target ? target->getPath() : currentDirectoryNode->getPath();
         ImGui::SetClipboardText(path.c_str());
     }
 
+    ImGui::Separator();
+    // -- Delete - works on both file assets and directories (not on root) ----
+    if (target && target != rootNode)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.35f, 0.35f, 1.0f));
+        if (ImGui::MenuItem("Delete"))
+        {
+            pendingDeleteNode    = target;
+            pendingDeleteConfirm = true;
+        }
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::EndPopup();
+}
+
+// --- Delete confirmation modal -----------------------------------------------
+
+void MEditorAssetWindow::drawDeleteConfirmModal()
+{
+    if (pendingDeleteConfirm)
+    {
+        ImGui::OpenPopup("Delete?");
+        pendingDeleteConfirm = false;
+    }
+
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(420, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("Delete?", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.f));
+    ImGui::TextUnformatted("Delete");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const char* name = pendingDeleteNode ? pendingDeleteNode->getName().c_str() : "?";
+    const bool  isDir = pendingDeleteNode && pendingDeleteNode->isDirectory;
+
+    if (isDir)
+    {
+        ImGui::Text("Delete folder \"%s\" and all its contents?", name);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.f));
+        ImGui::TextUnformatted("This will remove all files inside the folder.");
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        ImGui::Text("Delete \"%s\"?", name);
+    }
+
+    ImGui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    ImGui::TextUnformatted("This action cannot be undone.");
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Red-tinted delete button to signal destructive action
+    ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.6f, 0.15f, 0.15f, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,  ImVec4(0.8f, 0.2f, 0.2f, 1.f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive,   ImVec4(0.9f, 0.1f, 0.1f, 1.f));
+    if (ImGui::Button("Delete", ImVec2(120, 0)))
+    {
+        if (pendingDeleteNode)
+        {
+            // Capture path and type before the tree is rebuilt - the pointer
+            // becomes dangling once the manager deletes and rebuilds.
+            const SString path  = pendingDeleteNode->getPath();
+            const bool    dirOp = pendingDeleteNode->isDirectory;
+
+            auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+                MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+            if (editorAM)
+            {
+                if (dirOp)
+                    editorAM->deleteDirectory(path);
+                else
+                    editorAM->deleteAssetByPath(path);
+            }
+        }
+
+        // Clear stale pointers - the tree has been rebuilt
+        selectedNode     = nullptr;
+        cachedSelectedPath.clear();
+        rightClickedNode = nullptr;
+        pendingDeleteNode = nullptr;
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::PopStyleColor(3);
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        pendingDeleteNode = nullptr;
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+}
+
+// --- New Folder popup --------------------------------------------------------
+
+void MEditorAssetWindow::drawNewFolderPopup()
+{
+    if (pendingNewFolderPopup)
+    {
+        ImGui::OpenPopup("##new_folder_dlg");
+        pendingNewFolderPopup = false;
+    }
+
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(400, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("##new_folder_dlg", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.75f, 0.3f, 1.f));
+    ImGui::TextUnformatted("New Folder");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Name");
+    ImGui::SameLine(60);
+    ImGui::SetNextItemWidth(-1.f);
+
+    // Auto-focus the text input when the popup first appears
+    if (ImGui::IsWindowAppearing())
+        ImGui::SetKeyboardFocusHere();
+
+    bool enterPressed = ImGui::InputText("##nf_name", newFolderNameBuffer,
+                                          sizeof(newFolderNameBuffer),
+                                          ImGuiInputTextFlags_EnterReturnsTrue);
+
+    ImGui::Spacing();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    if (currentDirectoryNode)
+        ImGui::Text("Location: %s/", currentDirectoryNode->getPath().c_str());
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const bool canCreate = newFolderNameBuffer[0] != '\0';
+
+    ImGui::BeginDisabled(!canCreate);
+    if (ImGui::Button("Create", ImVec2(120, 0)) || (enterPressed && canCreate))
+    {
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+            MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+        if (editorAM && currentDirectoryNode)
+        {
+            editorAM->createDirectory(currentDirectoryNode->getPath(),
+                                       SString(newFolderNameBuffer));
+        }
+        newFolderNameBuffer[0] = '\0';
+        ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndDisabled();
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        newFolderNameBuffer[0] = '\0';
+        ImGui::CloseCurrentPopup();
+    }
+
     ImGui::EndPopup();
 }
 
 
-// ─── Navigation ──────────────────────────────────────────────────────────────
+// --- Navigation --------------------------------------------------------------
 
 void MEditorAssetWindow::navigateTo(SAssetDirectoryNode* node)
 {
     if (!node || node == currentDirectoryNode) return;
 
     historyForward.clear();
+    cachedHistoryForwardPaths.clear();
+
     if (currentDirectoryNode)
+    {
         historyBack.push_back(currentDirectoryNode);
+        cachedHistoryBackPaths.push_back(cachedCurrentPath);
+    }
 
     currentDirectoryNode = node;
+    cachedCurrentPath    = node->getPath();
     selectedNode         = nullptr;
+    cachedSelectedPath.clear();
 }
 
 void MEditorAssetWindow::navigateBack()
@@ -1133,12 +1282,18 @@ void MEditorAssetWindow::navigateBack()
     if (historyBack.size() <= 1) return;
 
     historyForward.push_back(currentDirectoryNode);
+    cachedHistoryForwardPaths.push_back(cachedCurrentPath);
+
     currentDirectoryNode = historyBack.back();
+    cachedCurrentPath    = cachedHistoryBackPaths.back();
     historyBack.pop_back();
+    cachedHistoryBackPaths.pop_back();
+
     selectedNode = nullptr;
+    cachedSelectedPath.clear();
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// --- Helpers -----------------------------------------------------------------
 
 void MEditorAssetWindow::drawTruncatedLabel(const std::string& text, float maxWidth)
 {

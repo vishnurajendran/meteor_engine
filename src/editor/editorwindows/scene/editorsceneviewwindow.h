@@ -4,6 +4,7 @@
 
 #include "editor/meteorite_minimal.h"
 #include "ImGuizmo.h"
+#include "editor/profiling/profiler_stats_displayer.h"
 
 class MEditorApplication;
 class MCameraEntity;
@@ -21,15 +22,16 @@ public:
 private:
     void tickDeltaTimeInfo(const float& deltaTime);
     void tickViewportInteraction();
+
     void drawScene(ImVec2 region);
     void drawEditorSceneView(const float& deltaTime, const ImVec2& region);
     void handleDragDropBehaviour();
-    void drawOverlayToolbar();
-    void drawCameraSpeedOverlay();
+    void drawToolbar(bool playMode);
     void drawFpsOverlay();
     void drawSceneInfoOverlay();
     void drawAxisLegend();
     void drawTransformHandles();
+
     void trySelectEntity(MCameraEntity* camera);
     bool screenPointToRay(MCameraEntity* camera, const ImVec2& screenPx, SVector3& outOrigin, SVector3& outDir) const;
     MSpatialEntity* pickEntity(MCameraEntity* camera, const SVector3& rayOrigin, const SVector3& rayDir,
@@ -55,6 +57,7 @@ private:
     ImGuizmo::OPERATION transformOperation = ImGuizmo::TRANSLATE;
     ImGuizmo::MODE transformMode = ImGuizmo::LOCAL;
     bool gizmosEnabled = true; // toggled by the eye button
+    bool profilerVisible = false; // toggled by the profiler toolbar button
 
     float cameraYaw = 0.0f;
     float cameraPitch = 0.0f;
@@ -74,6 +77,9 @@ private:
     sf::Texture worldSpaceIcon;
     sf::Texture gizmoOnIcon; // eye-open  icon
     sf::Texture gizmoOffIcon; // eye-closed icon
+
+    // -- Profiler overlay ------------------------------------------------------
+    MProfilerStatsDisplayer profilerDisplayer;
 
     MEditorApplication* editorAppInst;
 };

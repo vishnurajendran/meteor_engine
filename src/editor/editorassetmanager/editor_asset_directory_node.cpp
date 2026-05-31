@@ -21,3 +21,9 @@ SAssetDirectoryNode::~SAssetDirectoryNode()
             delete children;
     }
 }
+
+bool SAssetDirectoryNode::isEmptyLeafDirectory() const
+{
+    if (!isDirectory) return false;
+    return childrenNodes.empty();
+}

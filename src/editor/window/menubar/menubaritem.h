@@ -27,6 +27,10 @@ public:
     static constexpr int PRIORITY_HIGHEST = -999;
     static constexpr int PRIORITY_REGULAR = 0;
     static constexpr int PRIORITY_LOWEST  = 999;
+
+    static constexpr int MENU_PRIORITY_BASE_FILE = -5000;
+    static constexpr int MENU_PRIORITY_BASE_EDIT = -3000;
+    static constexpr int MENU_PRIORITY_BASE_HELP = 5000;
 };
 
 #endif // MENUBARITEM_H

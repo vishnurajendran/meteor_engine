@@ -139,6 +139,9 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
 
 void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 {
+    if (!isEnabledInHierarchy())
+        return;
+
     // Resolve the mesh once per frame. Avoids repeated map lookups inside
     // the per-sub-mesh loop.
     auto* meshPtr = meshAsset.get().resolve();

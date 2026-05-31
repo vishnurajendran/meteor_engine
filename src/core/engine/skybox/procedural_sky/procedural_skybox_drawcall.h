@@ -8,9 +8,12 @@
 #ifndef PROCEDURAL_SKYBOX_DRAW_CALL_H
 #define PROCEDURAL_SKYBOX_DRAW_CALL_H
 
+#include <functional>
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
 
+
+class MSkyboxEntity;
 class MShader;
 
 class MProceduralSkyboxDrawCall : public MObject
@@ -22,6 +25,7 @@ public:
 
     // Called by MProceduralSkyboxStage — mirrors MSkyboxDrawCall interface.
     void setTargetResolution(const SVector2& res) { resolution = res; }
+    void setCanDraw(const bool& inCanDraw) { canDraw = inCanDraw; }
     void draw();
 
     // ---- Sky parameters ----------------------------------------------------
@@ -56,7 +60,9 @@ private:
     float    atmosphereThickness = 1.0f;
     SVector3 skyTint             = SVector3(0.5f, 0.5f, 0.5f);
     SVector3 groundColor         = SVector3(0.22f, 0.20f, 0.18f);
-    float    exposure            = 1.3f;
+    float exposure = 1.3f;
+
+    bool canDraw = true;
 };
 
 #endif // PROCEDURAL_SKYBOX_DRAW_CALL_H

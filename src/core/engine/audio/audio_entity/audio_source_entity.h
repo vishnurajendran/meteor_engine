@@ -41,6 +41,9 @@ public:
     void onExit() override;
     void onDrawGizmo(SVector2 renderResolution) override;
 
+    void onEnable() override;
+    void onDisable() override;
+
 // Public API
 public:
     /// Set clip to play -- accepts a handle; TAssetRef converts implicitly

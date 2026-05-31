@@ -104,7 +104,7 @@ void MMenubarTreeNode::buildTree()
 {
     std::sort(registeredMenuItems.begin(), registeredMenuItems.end(),
         [](MMenubarItem* a, MMenubarItem* b) {
-            return a->getPriority() <= b->getPriority();
+            return a->getPriority() < b->getPriority();
         });
 
     for (const auto itemInstance : registeredMenuItems)

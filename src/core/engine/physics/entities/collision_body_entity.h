@@ -59,6 +59,8 @@ public:
     void onStart()                 override;
     void onUpdate(float deltaTime) override;
     void onExit()                  override;
+    void onEnable()                override;
+    void onDisable()               override;
 
     // ---- IPhysicsCallbackReceiver ------------------------------------------
 

@@ -34,6 +34,9 @@ void MScene::update(float deltaTime)
         if (ptr == nullptr)
             continue;
 
+        if (!ptr->isEnabledInHierarchy())
+            continue;
+
         // call start if the entity was not started.
         if (!ptr->hasStarted())
             ptr->onStart();
@@ -48,6 +51,9 @@ void MScene::fixedUpdate(float fixedDeltaTime)
     for (const auto [obj, ptr] : allAliveEntities)
     {
         if (ptr == nullptr)
+            continue;
+
+        if (!ptr->isEnabledInHierarchy())
             continue;
 
         if (ptr->getCanTick())
