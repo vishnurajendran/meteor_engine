@@ -45,7 +45,7 @@ void SShaderPropertyValue::print() {
     }
 }
 
-MShader::MShader(const SString& vertProg, const SString& fragProg, const std::map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse) {
+MShader::MShader(const SString& vertProg, const SString& fragProg, const std::unordered_map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse) {
     this->vertexShaderSource = std::move(vertProg);
     this->fragmentShaderSource = std::move(fragProg);
     this->properties = std::move(properties);
@@ -60,7 +60,7 @@ MShader::~MShader() {
     }
 }
 
-std::map<SString, SShaderPropertyValue> MShader::getProperties() const {
+std::unordered_map<SString, SShaderPropertyValue> MShader::getProperties() const {
     return properties;
 }
 

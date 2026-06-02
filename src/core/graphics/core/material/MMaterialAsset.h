@@ -5,6 +5,7 @@
 #ifndef MMATERIALASSET_H
 #define MMATERIALASSET_H
 #include <map>
+#include <vector>
 
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/asset/defferedloadableasset.h"
@@ -29,9 +30,7 @@ public:
     explicit MMaterialAsset(const SString& path);
     ~MMaterialAsset() override;
 
-    // Returns the shared material directly — no cloning.
     MMaterial* getMaterial();
-    // Write current material properties back to the source .material file.
     bool save();
 
     void buildMaterialAsset();
@@ -39,8 +38,6 @@ public:
     MMaterial::ShadingMode getShadingMode() const { return shadingMode; }
     SString                getShaderPath()  const { return SString(shaderPathField.get().c_str()); }
 
-    // Returns true on success. The asset manager's delta refresh will pick it
-    // up automatically within 5 seconds, or call refresh() to load immediately.
     static bool createNewMaterial(const SString& directory,
                                   const SString& materialName,
                                   const SString& shaderPath,
@@ -49,10 +46,11 @@ public:
 private:
     MMaterial* original   = nullptr;
     std::map<SString, SShaderPropertyValue> properties;
+    std::vector<SString> loadOrder;  // property key order from the XML file
     MMaterial::ShadingMode shadingMode = MMaterial::ShadingMode::Lit;
 
     bool loadFromFile(const SString& path);
-    void syncFromFields();  // field strings -> enum + cached SString
+    void syncFromFields();
 };
 
 #endif // MMATERIALASSET_H

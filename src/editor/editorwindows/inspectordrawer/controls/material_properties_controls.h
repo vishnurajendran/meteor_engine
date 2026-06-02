@@ -30,7 +30,7 @@ public:
     void setLastPropertyCount(int n)  { lastPropertyCount = n; }
 
 private:
-    std::map<SString, MAssetReferenceControl*> textureReferences;
+    std::unordered_map<SString, MAssetReferenceControl*> textureReferences;
     int lastPropertyCount = -1;
     void drawProperty(const SString& label, SShaderPropertyValue& propertyValue, MMaterial* target);
     static void drawFloatParameter(SString label, SShaderPropertyValue& value, MMaterial* target);

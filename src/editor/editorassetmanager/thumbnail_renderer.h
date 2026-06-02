@@ -1,18 +1,18 @@
 // thumbnailrenderer.h
 //
-// Renders asset previews into offscreen buffers, reads the pixels back with
-// glReadPixels, and stores the result as an sf::Texture in MThumbnailCache.
-// One request is processed per tick() call so the editor frame time stays
-// predictable.
+// Renders asset previews through a dedicated MRenderPipeline (opaque +
+// lighting stages), composites the result, and stores it as an sf::Texture
+// in MThumbnailCache.  One request is processed per tick() call so the
+// editor frame time stays predictable.
 //
 // -- Mesh thumbnails --
 // Rendered directly into a private 128x128 SFrameBuffer using the built-in
 // 3-point Lambert shader.  No pipeline involvement.
 //
 // -- Material thumbnails --
-// Rendered through a dedicated MRenderPipeline configured with only the
-// opaque stage.  The material's own shader runs on a unit sphere via
-// bindMaterial(), producing a thumbnail that matches the viewport output.
+// Rendered through a dedicated MRenderPipeline with opaque + lighting
+// stages, then composited (BUFFER_OPAQUE x BUFFER_LIGHTS) into the
+// thumbnail FBO for readback.
 
 #pragma once
 #ifndef THUMBNAIL_RENDERER_H
@@ -56,11 +56,15 @@ public:
 private:
     void buildThumbnailShader();
     void buildSphereGeometry();
+    void buildCompositeResources();
     void initThumbnailPipeline();
     void destroyGL();
 
     sf::Texture* renderMeshThumbnail    (MStaticMeshAsset* asset);
     sf::Texture* renderMaterialThumbnail(MMaterialAsset*   asset);
+
+    // Composites BUFFER_OPAQUE x BUFFER_LIGHTS into the thumbnail FBO.
+    void compositeThumbnail();
 
     static void         saveToDisk   (const SString& assetId, sf::Texture* tex);
     static sf::Texture* loadFromDisk (const SString& assetId);
@@ -92,13 +96,21 @@ private:
     unsigned int sphereEBO = 0;
     int          sphereIndexCount = 0;
 
-    // Uniform locations cached after shader link
+    // Uniform locations for the Lambert shader
     int uModel        = -1;
     int uView         = -1;
     int uProj         = -1;
     int uBaseColor    = -1;
     int uAlbedoTex    = -1;
     int uUseAlbedoTex = -1;
+
+    // -- Composite resources (opaque x lights multiply) --
+    unsigned int compositeShader = 0;
+    unsigned int compositeQuadVAO = 0;
+    unsigned int compositeQuadVBO = 0;
+    unsigned int compositeQuadEBO = 0;
+    int          ucAlbedoTex = -1;
+    int          ucLightsTex = -1;
 
     // -- Pipeline resources (material thumbnails) --
     MRenderPipeline        thumbnailPipeline;

@@ -15,10 +15,11 @@
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/lighting_stage.h"
 #include "core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h"
 #include "core/utils/logger.h"
 
-// -- Built-in Lambert shader ---------------------------------------------------
+// -- Built-in Lambert shader (mesh thumbnails only) ----------------------------
 
 static const char* k_thumbVert = R"GLSL(
 #version 460 core
@@ -55,7 +56,6 @@ void main()
 {
     vec3 N = normalize(vNormal);
 
-    // Spherical UV from normal -- no vertex UV attribute needed.
     vec3 color = baseColor;
     if (useAlbedoTex == 1)
     {
@@ -66,20 +66,53 @@ void main()
         color *= texture(albedoTex, uv).rgb;
     }
 
-    // Key light -- warm, upper-left
     vec3 key  = normalize(vec3(-1.0, 2.0, 2.0));
     float kd  = max(dot(N, key), 0.0) * 0.75;
 
-    // Fill light -- cool, right
     vec3 fill = normalize(vec3(2.0, 0.5, 1.0));
     float fd  = max(dot(N, fill), 0.0) * 0.25;
 
-    // Rim light -- back edge highlight
     vec3 rim  = normalize(vec3(0.0, -1.0, -2.0));
     float rd  = pow(max(dot(N, rim), 0.0), 4.0) * 0.3;
 
     vec3 col  = color * (0.18 + kd + fd) + vec3(0.3) * rd;
     FragColor = vec4(col, 1.0);
+}
+)GLSL";
+
+// -- Composite shader (BUFFER_OPAQUE x BUFFER_LIGHTS) --------------------------
+
+static const char* k_compositeVert = R"GLSL(
+#version 460 core
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec2 aUV;
+
+out vec2 vUV;
+
+void main()
+{
+    vUV         = aUV;
+    gl_Position = vec4(aPos, 1.0);
+}
+)GLSL";
+
+static const char* k_compositeFrag = R"GLSL(
+#version 460 core
+in  vec2 vUV;
+out vec4 FragColor;
+
+uniform sampler2D albedoTex;
+uniform sampler2D lightsTex;
+
+void main()
+{
+    vec4 opaque = texture(albedoTex, vUV);
+    vec4 lights = texture(lightsTex, vUV);
+
+    // alpha > 0 means the pixel was rendered by the lighting stage (lit).
+    // alpha == 0 means unlit -- pass through the opaque value as-is.
+    vec3 result = mix(opaque.rgb, opaque.rgb * lights.rgb, lights.a);
+    FragColor   = vec4(result, 1.0);
 }
 )GLSL";
 
@@ -103,6 +136,7 @@ void MThumbnailRenderer::init()
 
     buildThumbnailShader();
     buildSphereGeometry();
+    buildCompositeResources();
     initThumbnailPipeline();
 
     initialised = thumbnailShader != 0;
@@ -114,16 +148,27 @@ void MThumbnailRenderer::init()
 
 void MThumbnailRenderer::initThumbnailPipeline()
 {
-    // Set up a lightweight pipeline with only the opaque stage.
-    // Manual item mode prevents it from collecting drawables from the
-    // main scene via MRenderQueue.
     thumbnailPipeline.initManual();
     thumbnailPipeline.setManualItemMode(true);
-    thumbnailPipeline.addStage<MOpaqueStage>();
 
-    // The headless render buffer provides resolution without an SFML window.
+    // Opaque stage renders albedo into BUFFER_OPAQUE.
+    // Lighting stage renders light contribution into BUFFER_LIGHTS.
+    // We skip depth/shadow/skybox/composite -- composite is done manually.
+    thumbnailPipeline.addStage<MOpaqueStage>();
+    thumbnailPipeline.addStage<MLightingStage>();
+
     headlessRenderBuffer = new SHeadlessRenderBuffer(THUMBNAIL_SIZE, THUMBNAIL_SIZE);
     thumbnailPipeline.setRenderBuffer(headlessRenderBuffer);
+
+    // Fixed light rig -- warm key from upper-left, soft white ambient.
+    // lightDirection is the direction the light TRAVELS (entity forward vector).
+    // The lighting shader negates it: dot(N, -lightDirection).
+    // Source at upper-left means light travels toward lower-right.
+    thumbnailPipeline.setLightOverride(
+        glm::vec3(1.0f, 1.0f, 1.0f), 0.5f,                              // ambient
+        glm::normalize(glm::vec3(0.5f, -1.5f, -1.0f)),                   // directional: travels from upper-left toward sphere
+        glm::vec3(1.0f, 0.98f, 0.95f), 1.2f                              // directional colour + intensity
+    );
 }
 
 // -- Request queue -------------------------------------------------------------
@@ -171,7 +216,6 @@ bool MThumbnailRenderer::tick(MThumbnailCache& cache)
     requestQueue.pop();
 
     if (!req.asset) return false;
-
     if (cache.has(req.assetId)) return false;
 
     sf::Texture* thumb = nullptr;
@@ -291,18 +335,18 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
 
     // -- Build a render item for the unit sphere with this material -----------
     SRenderItem item;
-    item.vao        = sphereVAO;
-    item.ebo        = sphereEBO;
-    item.indexCount  = sphereIndexCount;
-    item.material   = mat;
-    item.transform  = glm::mat4(1.f);
+    item.vao         = sphereVAO;
+    item.ebo         = sphereEBO;
+    item.indexCount   = sphereIndexCount;
+    item.material    = mat;
+    item.transform   = glm::mat4(1.f);
     item.castsShadow = false;
 
-    // -- Set the thumbnail camera on the pipeline -----------------------------
+    // -- Set the thumbnail camera ---------------------------------------------
     SThumbnailCamera cam = computeThumbnailCamera(glm::vec3(0.f), 1.0f);
     thumbnailPipeline.setCameraOverride(cam.view, cam.proj);
 
-    // -- Manually clear the opaque buffer since we do not use MClearStage -----
+    // -- Clear BUFFER_OPAQUE manually (no MClearStage in thumbnail pipeline) --
     auto* opaqueBuffer = thumbnailPipeline.getBufferRegistry()
                                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0)
@@ -317,19 +361,68 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     opaqueBuffer->unbind();
 
-    // -- Submit the sphere and drive the pipeline for one frame ---------------
+    // -- Submit and drive the pipeline ----------------------------------------
     thumbnailPipeline.clearRenderItems();
     thumbnailPipeline.submitRenderItem(item);
     thumbnailPipeline.preRender();
     thumbnailPipeline.render();
     thumbnailPipeline.postRender();
 
-    // -- Read back the result from BUFFER_OPAQUE ------------------------------
-    opaqueBuffer->bindAsActive();
+    // -- Composite BUFFER_OPAQUE x BUFFER_LIGHTS into the thumbnail FBO -------
+    compositeThumbnail();
+
+    // -- Read back from the composited thumbnail FBO --------------------------
+    fbo.bindAsActive();
     auto* tex = readbackToTexture();
-    opaqueBuffer->unbind();
+    fbo.unbind();
 
     return tex;
+}
+
+// -- Composite helper ----------------------------------------------------------
+
+void MThumbnailRenderer::compositeThumbnail()
+{
+    if (compositeShader == 0 || compositeQuadVAO == 0) return;
+
+    auto* opaqueBuffer = thumbnailPipeline.getBufferRegistry()
+                                           .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
+    auto* lightsBuffer = thumbnailPipeline.getBufferRegistry()
+                                           .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
+
+    if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
+
+    // Render into the thumbnail's own FBO (not BUFFER_OPAQUE).
+    fbo.bindAsActive();
+    glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glClearColor(0.12f, 0.12f, 0.12f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(compositeShader);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, opaqueBuffer->getColorTextureHandle());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,
+                  (lightsBuffer && lightsBuffer->getFBOHandle() != 0)
+                      ? lightsBuffer->getColorTextureHandle()
+                      : opaqueBuffer->getColorTextureHandle());
+
+    if (ucAlbedoTex >= 0) glUniform1i(ucAlbedoTex, 0);
+    if (ucLightsTex >= 0) glUniform1i(ucLightsTex, 1);
+
+    glBindVertexArray(compositeQuadVAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+
+    glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
+
+    glEnable(GL_DEPTH_TEST);
+    fbo.unbind();
 }
 
 // -- Shared draw helper --------------------------------------------------------
@@ -348,7 +441,6 @@ void MThumbnailRenderer::drawMeshes(const std::vector<SMeshDraw>& meshes,
     glUniformMatrix4fv(uProj,  1, GL_FALSE, glm::value_ptr(cam.proj));
     glUniform3fv(uBaseColor, 1, glm::value_ptr(baseColor));
 
-    // Ensure texture sampling is off for mesh thumbnails.
     if (uUseAlbedoTex >= 0) glUniform1i(uUseAlbedoTex, 0);
 
     for (const auto& d : meshes)
@@ -373,7 +465,6 @@ sf::Texture* MThumbnailRenderer::readbackToTexture()
     glReadPixels(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE,
                  GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
-    // OpenGL stores rows bottom-up; SFML expects top-down -- flip vertically.
     std::vector<uint8_t> flipped(pixels.size());
     const int rowBytes = THUMBNAIL_SIZE * 4;
     for (int y = 0; y < THUMBNAIL_SIZE; ++y)
@@ -458,6 +549,77 @@ void MThumbnailRenderer::buildThumbnailShader()
     uUseAlbedoTex = glGetUniformLocation(thumbnailShader, "useAlbedoTex");
 }
 
+void MThumbnailRenderer::buildCompositeResources()
+{
+    // -- Compile the composite multiply shader --------------------------------
+    auto compile = [](GLenum type, const char* src) -> GLuint {
+        GLuint s = glCreateShader(type);
+        glShaderSource(s, 1, &src, nullptr);
+        glCompileShader(s);
+        GLint ok; glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
+        if (!ok) {
+            char log[512]; glGetShaderInfoLog(s, 512, nullptr, log);
+            MERROR(SString("MThumbnailRenderer: composite shader compile error: ") + log);
+            glDeleteShader(s); return 0;
+        }
+        return s;
+    };
+
+    GLuint vs = compile(GL_VERTEX_SHADER,   k_compositeVert);
+    GLuint fs = compile(GL_FRAGMENT_SHADER, k_compositeFrag);
+    if (!vs || !fs) { glDeleteShader(vs); glDeleteShader(fs); return; }
+
+    compositeShader = glCreateProgram();
+    glAttachShader(compositeShader, vs);
+    glAttachShader(compositeShader, fs);
+    glLinkProgram(compositeShader);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    GLint ok; glGetProgramiv(compositeShader, GL_LINK_STATUS, &ok);
+    if (!ok) {
+        char log[512]; glGetProgramInfoLog(compositeShader, 512, nullptr, log);
+        MERROR(SString("MThumbnailRenderer: composite shader link error: ") + log);
+        glDeleteProgram(compositeShader);
+        compositeShader = 0;
+        return;
+    }
+
+    ucAlbedoTex = glGetUniformLocation(compositeShader, "albedoTex");
+    ucLightsTex = glGetUniformLocation(compositeShader, "lightsTex");
+
+    // -- Build fullscreen quad (pos vec3 + uv vec2, stride 5 floats) ----------
+    static const float quadVerts[] = {
+        // pos              // uv
+        -1.f, -1.f, 0.f,   0.f, 0.f,
+         1.f, -1.f, 0.f,   1.f, 0.f,
+         1.f,  1.f, 0.f,   1.f, 1.f,
+        -1.f,  1.f, 0.f,   0.f, 1.f,
+    };
+    static const unsigned int quadIdx[] = { 0, 1, 2,  0, 2, 3 };
+
+    glGenVertexArrays(1, &compositeQuadVAO);
+    glGenBuffers(1, &compositeQuadVBO);
+    glGenBuffers(1, &compositeQuadEBO);
+
+    glBindVertexArray(compositeQuadVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, compositeQuadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, compositeQuadEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIdx), quadIdx, GL_STATIC_DRAW);
+
+    // location 0: position (vec3)
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    // location 1: uv (vec2)
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    glBindVertexArray(0);
+}
+
 void MThumbnailRenderer::buildSphereGeometry()
 {
     const int stacks = 24, slices = 24;
@@ -466,15 +628,21 @@ void MThumbnailRenderer::buildSphereGeometry()
 
     for (int i = 0; i <= stacks; ++i)
     {
-        float phi   = (float)i / stacks * glm::pi<float>();
+        float phi = (float)i / stacks * glm::pi<float>();
+        float v   = (float)i / stacks;
         for (int j = 0; j <= slices; ++j)
         {
             float theta = (float)j / slices * 2.f * glm::pi<float>();
+            float u     = (float)j / slices;
             float x = std::sin(phi) * std::cos(theta);
             float y = std::cos(phi);
             float z = std::sin(phi) * std::sin(theta);
+            // position
             verts.push_back(x); verts.push_back(y); verts.push_back(z);
+            // normal (== position for unit sphere)
             verts.push_back(x); verts.push_back(y); verts.push_back(z);
+            // uv
+            verts.push_back(u); verts.push_back(v);
         }
     }
 
@@ -500,11 +668,17 @@ void MThumbnailRenderer::buildSphereGeometry()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    const int stride = 6 * sizeof(float);
+    // position + normal + uv = 3 + 3 + 2 = 8 floats per vertex
+    const int stride = 8 * sizeof(float);
+    // location 0: position (vec3)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    // location 1: normal (vec3)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
+    // location 2: uv (vec2)
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
 
     glBindVertexArray(0);
 }
@@ -515,6 +689,11 @@ void MThumbnailRenderer::destroyGL()
     if (sphereVAO)       { glDeleteVertexArrays(1, &sphereVAO); sphereVAO = 0; }
     if (sphereVBO)       { glDeleteBuffers(1, &sphereVBO);      sphereVBO = 0; }
     if (sphereEBO)       { glDeleteBuffers(1, &sphereEBO);      sphereEBO = 0; }
+
+    if (compositeShader)  { glDeleteProgram(compositeShader);           compositeShader  = 0; }
+    if (compositeQuadVAO) { glDeleteVertexArrays(1, &compositeQuadVAO); compositeQuadVAO = 0; }
+    if (compositeQuadVBO) { glDeleteBuffers(1, &compositeQuadVBO);      compositeQuadVBO = 0; }
+    if (compositeQuadEBO) { glDeleteBuffers(1, &compositeQuadEBO);      compositeQuadEBO = 0; }
 
     thumbnailPipeline.cleanup();
     delete headlessRenderBuffer;

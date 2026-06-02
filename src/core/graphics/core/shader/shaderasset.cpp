@@ -155,8 +155,8 @@ bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const
 }
 
 
-std::map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(pugi::xml_node node) {
-    std::map<SString, SShaderPropertyValue> properties;
+std::unordered_map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(pugi::xml_node node) {
+    std::unordered_map<SString, SShaderPropertyValue> properties;
     if (!node.child(SHDR_PROPERTY_PARENT_NODE.c_str())) {
         MERROR("MShaderAsset::loadShader(): shader file structure incorrect - missing fragment program tree");
         return properties;

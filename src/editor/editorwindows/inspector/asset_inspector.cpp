@@ -21,6 +21,7 @@
 #include <cstdio>
 
 #include "editor/audio_helpers/audio_waveform.h"
+#include "editor/editorassetmanager/editorassetmanager.h"
 
 std::map<SString, MMaterialPropertyControl*> MAssetInspector::propControlCache;
 std::map<SString, MAssetInspector::SCubemapFaceControls> MAssetInspector::cubemapFaceCache;
@@ -386,6 +387,38 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     ImGui::Spacing();
 
+    // -- Thumbnail preview -- shows the pipeline-rendered sphere at full size
+    {
+        auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+        if (editorAM)
+        {
+            sf::Texture* thumb = editorAM->getThumbnail(asset);
+            if (!thumb)
+                editorAM->requestThumbnail(asset);
+
+            if (thumb)
+            {
+                auto sfSize      = thumb->getSize();
+                float avail      = ImGui::GetContentRegionAvail().x;
+                float previewSize = std::min(avail, static_cast<float>(sfSize.x));
+
+                float indent = (avail - previewSize) * 0.5f;
+                if (indent > 0.f)
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
+
+                ImVec2 tl = ImGui::GetCursorScreenPos();
+                ImGui::GetWindowDrawList()->AddRectFilled(
+                    ImVec2(tl.x - 1, tl.y - 1),
+                    ImVec2(tl.x + previewSize + 1, tl.y + previewSize + 1),
+                    IM_COL32(60, 60, 60, 255));
+
+                ImGui::Image(*thumb, ImVec2(previewSize, previewSize));
+            }
+        }
+    }
+
+    ImGui::Spacing();
+
     if (!asset->getMaterial())
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
@@ -415,8 +448,18 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     if (ImGui::Button("Save##mat_save", ImVec2(-FLT_MIN, 0)))
     {
-        if (!asset->save())
+        if (asset->save())
+        {
+            // Evict the stale thumbnail and re-queue so the asset browser
+            // reflects the updated material properties.
+            auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+            if (editorAM)
+                editorAM->invalidateThumbnail(asset);
+        }
+        else
+        {
             ImGui::OpenPopup("##save_err");
+        }
     }
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Write current properties back to %s", asset->getPath().c_str());
