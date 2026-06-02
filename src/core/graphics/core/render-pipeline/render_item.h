@@ -22,7 +22,7 @@ class MMaterial;
 //   ebo == 0  → glDrawArrays   using vertexCount
 //
 // vao/ebo are GL object handles (GLuint = unsigned int).  This header
-// intentionally does not include any GL headers — include glew.h in
+// intentionally does not include any GL headers - include glew.h in
 // the .cpp files that actually issue draw calls.
 struct SRenderItem
 {
@@ -32,11 +32,11 @@ struct SRenderItem
     int          vertexCount  = 0;
     int          indexCount   = 0;
 
-    // Transform — world-space model matrix.
+    // Transform - world-space model matrix.
     // Stages set this as the "u_model" uniform after binding their shader.
     glm::mat4 transform    = glm::mat4(1.f);
 
-    // Material — may be nullptr.
+    // Material - may be nullptr.
     // Depth stage ignores it; opaque stage calls material->bindMaterial().
     MMaterial* material    = nullptr;
 
@@ -44,11 +44,11 @@ struct SRenderItem
     // Set per-entity via MStaticMeshEntity::setCastsShadow().
     bool      castsShadow  = true;
 
-    // World-space bounds — used by MLightSystemManager::prepareDynamicLights()
+    // World-space bounds - used by MLightSystemManager::prepareDynamicLights()
     // to query which spot/point lights affect this object.
     AABB      bounds;
 
-    // Sorting hint — stages may sort items before drawing.
+    // Sorting hint - stages may sort items before drawing.
     int       sortOrder    = 0;
 
     [[nodiscard]] MMaterial::ShadingMode getShadingMode() const { return material == nullptr ?

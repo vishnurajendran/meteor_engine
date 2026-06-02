@@ -9,7 +9,7 @@
 class MSpatialEntity;
 
 // Populated for collision start and stay events. For end events only otherEntity
-// is valid — Jolt does not provide manifold data in OnContactRemoved.
+// is valid - Jolt does not provide manifold data in OnContactRemoved.
 struct SCollisionData
 {
     MSpatialEntity* otherEntity   = nullptr; // null if the other body has no registered entity

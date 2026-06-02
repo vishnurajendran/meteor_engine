@@ -16,11 +16,11 @@
 void MSkyboxStage::init(IRenderPipeline* const pipeline)
 {
     // BUFFER_OPAQUE is created by MOpaqueStage which runs earlier in init().
-    // We just grab a reference — we don't own this buffer.
+    // We just grab a reference - we don't own this buffer.
     opaqueBuffer = pipeline->getBufferRegistry()
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer)
-        MERROR("MSkyboxStage::init — BUFFER_OPAQUE not found; ensure MOpaqueStage is added first");
+        MERROR("MSkyboxStage::init - BUFFER_OPAQUE not found; ensure MOpaqueStage is added first");
 }
 
 void MSkyboxStage::cleanup(IRenderPipeline* const pipeline)
@@ -58,7 +58,7 @@ void MSkyboxStage::render(IRenderPipeline* const pipeline)
 
     // Unbind any cubemap left by the draw call so it doesn't pollute
     // subsequent stages' sampler state. The cubemap skybox binds its
-    // texture at unit 0 and never cleans up — stale cubemap bindings
+    // texture at unit 0 and never cleans up - stale cubemap bindings
     // cause undefined behaviour for sampler2D/samplerCube uniforms in
     // material and lighting shaders that default to unit 0.
     glActiveTexture(GL_TEXTURE0);

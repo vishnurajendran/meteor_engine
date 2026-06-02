@@ -110,7 +110,7 @@ protected:
 
     // Used by getAssetFromReference() when loading saved data.
     // "rawp::" references are converted to GUID handles on load and
-    // re-saved as "guid::" — the path form is a load-time convenience only.
+    // re-saved as "guid::" - the path form is a load-time convenience only.
     static constexpr const char* REF_GUID_PREFIX = "guid::";
     static constexpr const char* REF_PATH_PREFIX = "rawp::";
     static constexpr size_t      REF_PREFIX_LEN  = 6;

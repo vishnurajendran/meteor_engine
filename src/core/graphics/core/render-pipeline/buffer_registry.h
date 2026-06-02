@@ -78,7 +78,7 @@ public:
     void resizeAll(int width, int height);
 
     // -----------------------------------------------------------------------
-    // Render target — set externally by the application, not owned here.
+    // Render target - set externally by the application, not owned here.
     // -----------------------------------------------------------------------
     void           setRenderBuffer(SRenderBuffer* renderBuffer);
     SRenderBuffer* getRenderBuffer() const { return renderBufferHandle; }

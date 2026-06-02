@@ -14,7 +14,7 @@ public:
     ICapsuleCollisionBody()  = default;
     ~ICapsuleCollisionBody() override = default;
 
-    // Half the height of the cylindrical segment — not the hemisphere caps.
+    // Half the height of the cylindrical segment - not the hemisphere caps.
     // Total capsule height along the axis = 2 * (halfHeight + radius).
     virtual void setHalfHeight(float halfHeight) = 0;
     virtual void setRadius(float radius)         = 0;

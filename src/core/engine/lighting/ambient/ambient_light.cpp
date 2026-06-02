@@ -29,7 +29,7 @@ MAmbientLightEntity::MAmbientLightEntity()
     MLightSystemManager::getInstance()->registerLight(this);
 }
 
-// -- Color / intensity — fields are source of truth ---------------------------
+// -- Color / intensity - fields are source of truth ---------------------------
 
 void MAmbientLightEntity::setColor(const SColor& c)
 {

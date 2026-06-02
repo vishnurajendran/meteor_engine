@@ -1,19 +1,19 @@
 // asset_handle.h
 //
 // A stable, typed reference to an asset. Stores the asset's GUID and a
-// resolve callback. The handle always resolves by GUID — it does not know
+// resolve callback. The handle always resolves by GUID - it does not know
 // about file paths or the asset manager.
 //
 // ── Usage ─────────────────────────────────────────────────────────────────────
 //   TAssetHandle<MTextureAsset> tex = manager->getAsset<MTextureAsset>(path);
-//   tex->getTexture()        — operator-> resolves via callback + dynamic_cast
-//   tex.get()                — explicit resolve, may return nullptr
-//   if (tex) { ... }         — bool cast, false when asset not found
+//   tex->getTexture()        - operator-> resolves via callback + dynamic_cast
+//   tex.get()                - explicit resolve, may return nullptr
+//   if (tex) { ... }         - bool cast, false when asset not found
 //
 // ── Converting between types ──────────────────────────────────────────────────
 //   TAssetHandle<MAsset>            base = manager->getAsset<MAsset>(path);
-//   TAssetHandle<MStaticMeshAsset>  mesh = base;   // downcast — safe at runtime
-//   TAssetHandle<MAsset>            back = mesh;    // upcast  — always valid
+//   TAssetHandle<MStaticMeshAsset>  mesh = base;   // downcast - safe at runtime
+//   TAssetHandle<MAsset>            back = mesh;    // upcast  - always valid
 //
 //   Downcasts that don't match return nullptr from get().
 //
@@ -34,7 +34,7 @@
 
 #include <type_traits>
 #include "core/engine/assetmanagement/asset/asset.h"
-// NOTE: No include of assetmanager.h — the handle is manager-agnostic.
+// NOTE: No include of assetmanager.h - the handle is manager-agnostic.
 
 template<typename T>
 class TAssetHandle
@@ -58,7 +58,7 @@ private:
 public:
     TAssetHandle() = default;
 
-    // Primary constructor — called by the asset manager when handing out handles.
+    // Primary constructor - called by the asset manager when handing out handles.
     TAssetHandle(const SString& id, ResolveFunc resolver)
         : assetId(id), resolveFunc(resolver) {}
 
@@ -70,7 +70,7 @@ public:
     // Downcast (Base -> Derived):  compiles, but get() returns nullptr if the
     //                              underlying asset isn't actually a T.
     //
-    // The resolver is copied as-is because it returns MAsset* — the
+    // The resolver is copied as-is because it returns MAsset* - the
     // dynamic_cast<T*> in get() handles type narrowing.
     template<typename U>
     TAssetHandle(const TAssetHandle<U>& other)  // NOLINT(google-explicit-constructor)

@@ -27,7 +27,7 @@ static constexpr ImU32  OVL_DIVIDER     = IM_COL32(80,  80,  80,  200);
 static constexpr float  OVL_ROUNDING    = 5.0f;
 static constexpr float  OVL_PAD         = 6.0f;
 
-// Fixed icon render size — never derived from tex.getSize() so a failed
+// Fixed icon render size - never derived from tex.getSize() so a failed
 // texture load can't collapse the panel height to zero and hide all buttons.
 static constexpr float  ICON_SIZE       = 16.0f;
 
@@ -47,7 +47,7 @@ static bool overlayImageButton(const char* id,
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::ColorConvertU32ToFloat4(OVL_BTN_HOVER));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImGui::ColorConvertU32ToFloat4(OVL_BTN_HOVER));
     }
-    // Always use ICON_SIZE — if the texture failed to load its size is {0,0},
+    // Always use ICON_SIZE - if the texture failed to load its size is {0,0},
     // which would make an invisible button.
     const bool clicked = ImGui::ImageButton(id, tex, { ICON_SIZE, ICON_SIZE });
     ImGui::PopStyleColor(3);
@@ -144,7 +144,7 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
 
     bool playing = editorAppInst->isPlaying() && !editorAppInst->isPaused();
 
-    // Toolbar bar above the scene — always visible
+    // Toolbar bar above the scene - always visible
     drawToolbar(playing);
 
     ImVec2 region = ImGui::GetContentRegionAvail();
@@ -407,7 +407,7 @@ MSpatialEntity* MEditorSceneViewWindow::pickEntity(MCameraEntity*  camera,
     // proj[1][1] = (1 / tan(fovY/2)).  At depth d from the camera,
     // one pixel spans:  d / (proj[1][1] * viewportHeight * 0.5)  world units.
     // We use this to convert the constant screen-space tolerance into a
-    // world-space tolerance that scales with distance — so an object 100 units
+    // world-space tolerance that scales with distance - so an object 100 units
     // away is just as easy to click as one 2 units away.
     const SMatrix4 proj      = camera->getProjectionMatrix(SVector2(viewportSize.x, viewportSize.y));
     const SMatrix4 view      = camera->getViewMatrix();

@@ -10,7 +10,7 @@
 
 class SFrameBuffer;
 
-// Skybox stage — RS_Skybox (750).
+// Skybox stage - RS_Skybox (750).
 //
 // Renders into BUFFER_OPAQUE after MClearStage clears the buffer but before
 // opaque geometry. The skybox fills the background; geometry overwrites it

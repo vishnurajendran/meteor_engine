@@ -123,7 +123,7 @@ void MScene::insertRootEntityAt(MSpatialEntity* entity, int index)
         auto& siblings = entity->getParent()->getChildren();
         auto it = std::find(siblings.begin(), siblings.end(), entity);
         if (it != siblings.end()) siblings.erase(it);
-        // Clear parent pointer — can't call setParent(nullptr) as that
+        // Clear parent pointer - can't call setParent(nullptr) as that
         // would call addToSceneRoot which appends to the end.
     }
 

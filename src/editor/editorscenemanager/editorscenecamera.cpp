@@ -21,7 +21,7 @@ void MEditorSceneCameraEntity::onCreate()
     // and some implementations skip registration for hidden entities.
     MViewManagement::addCamera(this);
 
-    // Remove from scene root list — editor camera is not a scene entity.
+    // Remove from scene root list - editor camera is not a scene entity.
     auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
     if (!scene)
         return;

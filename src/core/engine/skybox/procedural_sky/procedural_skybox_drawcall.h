@@ -1,6 +1,6 @@
 //
 // MProceduralSkyboxDrawCall
-// Self-contained draw call — fetches camera matrices internally inside draw(),
+// Self-contained draw call - fetches camera matrices internally inside draw(),
 // mirroring how MSkyboxDrawCall works.
 //
 
@@ -23,7 +23,7 @@ public:
     explicit MProceduralSkyboxDrawCall(MShader* shader);
     ~MProceduralSkyboxDrawCall();
 
-    // Called by MProceduralSkyboxStage — mirrors MSkyboxDrawCall interface.
+    // Called by MProceduralSkyboxStage - mirrors MSkyboxDrawCall interface.
     void setTargetResolution(const SVector2& res) { resolution = res; }
     void setCanDraw(const bool& inCanDraw) { canDraw = inCanDraw; }
     void draw();

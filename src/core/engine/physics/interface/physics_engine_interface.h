@@ -48,7 +48,7 @@ public:
     virtual ICapsuleCollisionBody* createCapsuleCollisionBody(const SCapsuleBodySettings& settings) = 0;
     virtual void                   releaseCapsuleCollisionBody(ICapsuleCollisionBody* body)          = 0;
 
-    // MeshShape is Static/Kinematic only — the factory emits a MWARN and forces
+    // MeshShape is Static/Kinematic only - the factory emits a MWARN and forces
     // Static if DynamicBody is requested via settings.bodyType.
     virtual IMeshCollisionBody* createMeshCollisionBody(const SMeshBodySettings& settings) = 0;
     virtual void                releaseMeshCollisionBody(IMeshCollisionBody* body)         = 0;

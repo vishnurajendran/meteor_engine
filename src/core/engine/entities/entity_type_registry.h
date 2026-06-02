@@ -2,7 +2,7 @@
 // entity_type_registry.h
 //
 // Maps MTypeInfo (hash) -> factory lambda.
-// Hash-keyed lookup — type dispatch during scene load is a single integer compare.
+// Hash-keyed lookup - type dispatch during scene load is a single integer compare.
 // Also keeps a name->hash index so XML string type names resolve without string scanning.
 //
 
@@ -31,7 +31,7 @@ public:
     }
 
     //  Registration
-    // Called automatically by IMPLEMENT_CLASS — never call manually.
+    // Called automatically by IMPLEMENT_CLASS - never call manually.
     //
     void registerType(const MTypeInfo& info, FactoryFn factory)
     {
@@ -44,14 +44,14 @@ public:
         nameToHash[info.name] = info.hash;  // for XML string -> hash lookup
     }
 
-    //  Create by MTypeInfo (runtime, hash key — O(1))
+    //  Create by MTypeInfo (runtime, hash key - O(1))
     MSpatialEntity* create(const MTypeInfo& info) const
     {
         return createByHash(info.hash);
     }
 
     // Create by class name string (used when reading XML)
-    // Converts name -> hash once, then does a hash lookup — still O(1).
+    // Converts name -> hash once, then does a hash lookup - still O(1).
     //
     MSpatialEntity* create(const std::string& typeName) const
     {

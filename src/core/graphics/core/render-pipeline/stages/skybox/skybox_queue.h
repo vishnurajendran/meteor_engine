@@ -13,7 +13,7 @@ class MSkyboxDrawCall;
 
 // Minimal static registry consumed by MSkyboxStage.
 // Skybox entities register their draw call here instead of MRenderQueue
-// because the skybox doesn't produce a standard SRenderItem — it has its own
+// because the skybox doesn't produce a standard SRenderItem - it has its own
 // shader, cubemap binding, and depth state that MSkyboxStage owns entirely.
 class MSkyboxQueue : public MObject
 {

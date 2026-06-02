@@ -10,7 +10,7 @@
 #include "core/engine/physics/entities/collision_body_entity.h"
 #include "core/engine/physics/interface/bodies/convexhull/convexhull_collsion_body.h"
 
-// ConvexHullShape supports all body types including Dynamic — unlike MeshShape.
+// ConvexHullShape supports all body types including Dynamic - unlike MeshShape.
 class MConvexHullCollisionBody : public MCollisionBodyEntity
 {
     DEFINE_SPATIAL_CLASS(MConvexHullCollisionBody)

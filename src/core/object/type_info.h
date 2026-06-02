@@ -36,11 +36,11 @@ struct MTypeInfo
     const char* name;   // human-readable class name (string literal lifetime)
     uint64_t    hash;   // compile-time FNV-1a hash of name
 
-    // Construct from a string literal — both fields set at compile time.
+    // Construct from a string literal - both fields set at compile time.
     constexpr MTypeInfo(const char* n, uint64_t h) noexcept
         : name(n), hash(h) {}
 
-    //  Comparisons (hash only — single integer op) 
+    //  Comparisons (hash only - single integer op)
     constexpr bool operator==(const MTypeInfo& o) const noexcept { return hash == o.hash; }
     constexpr bool operator!=(const MTypeInfo& o) const noexcept { return hash != o.hash; }
 
@@ -60,7 +60,7 @@ struct MTypeInfo
 
 // Helper macro (used inside DEFINE_MOBJECT_CLASS / DEFINE_CLASS)
 // Builds an MTypeInfo from a bare class name token.
-// The hash is evaluated at compile time — zero runtime cost.
+// The hash is evaluated at compile time - zero runtime cost.
 #define MAKE_TYPE_INFO(ClassName) \
     MTypeInfo { #ClassName, MTypeDetail::fnv1a(#ClassName) }
 

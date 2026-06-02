@@ -10,7 +10,7 @@
 #include "core/utils/glmhelper.h"
 
 // Points are in the body's local space (world scale applied by the entity).
-// Jolt computes the convex hull from this point cloud — supply a simplified
+// Jolt computes the convex hull from this point cloud - supply a simplified
 // cloud rather than full high-poly vertex data to keep hull computation fast.
 struct SConvexHullBodySettings
 {

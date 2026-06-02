@@ -1,7 +1,7 @@
 //
 // staticmesh.cpp
 //
-// No IMPLEMENT_CLASS here — DEFINE_MOBJECT_CLASS only injects typeInfo() into
+// No IMPLEMENT_CLASS here - DEFINE_MOBJECT_CLASS only injects typeInfo() into
 // the class body; it does not produce a _classRegistered static, so there is
 // nothing to define in the .cpp.
 //
@@ -32,17 +32,17 @@ void MStaticMesh::prepareMesh()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
                  indices.data(), GL_STATIC_DRAW);
 
-    // layout(location = 0) — position
+    // layout(location = 0) - position
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex),
                           reinterpret_cast<void*>(offsetof(SVertex, Position)));
 
-    // layout(location = 1) — normal
+    // layout(location = 1) - normal
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(SVertex),
                           reinterpret_cast<void*>(offsetof(SVertex, Normal)));
 
-    // layout(location = 2) — texcoords
+    // layout(location = 2) - texcoords
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(SVertex),
                           reinterpret_cast<void*>(offsetof(SVertex, TexCoords)));

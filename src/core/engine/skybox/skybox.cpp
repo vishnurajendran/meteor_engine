@@ -20,7 +20,7 @@ MSkyboxEntity::MSkyboxEntity()
         ->getAsset<MShaderAsset>("meteor_assets/engine_assets/shaders/internal/skybox.mesl");
     if (!shaderAsset)
     {
-        MERROR("MSkyboxEntity — failed to load skybox shader asset");
+        MERROR("MSkyboxEntity - failed to load skybox shader asset");
         return;
     }
 

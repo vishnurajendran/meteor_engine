@@ -19,12 +19,12 @@ class MMaterialAsset;
 class MMaterialPropertyControl : public MObject {
     DEFINE_OBJECT_SUBCLASS(MMaterialPropertyControl)
 public:
-    // Takes MMaterialAsset* and resolves getMaterial() fresh each call —
+    // Takes MMaterialAsset* and resolves getMaterial() fresh each call -
     // never caches the raw MMaterial* which can become dangling.
     void draw(MMaterialAsset* asset);
     static bool canAcceptTextureAsset(MAsset* asset);
 
-    // Flush stale texture reference controls — called by MAssetInspector on hot reload.
+    // Flush stale texture reference controls - called by MAssetInspector on hot reload.
     void clearTextureReferences();
     int  getLastPropertyCount() const { return lastPropertyCount; }
     void setLastPropertyCount(int n)  { lastPropertyCount = n; }

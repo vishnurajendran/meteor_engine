@@ -11,7 +11,7 @@
 void MSceneEntityTypeDeserializer::parseSpatialData(pugi::xml_node node,
                                                      MSpatialEntity* entity)
 {
-    // Name — XML attribute on the entity node: <static_mesh name="Cube">
+    // Name - XML attribute on the entity node: <static_mesh name="Cube">
     if (const char* n = node.attribute("name").value())
         if (n[0] != '\0') entity->setName(n);
 
@@ -23,7 +23,7 @@ void MSceneEntityTypeDeserializer::parseSpatialData(pugi::xml_node node,
 
     SVector3 pos   = {};
     SVector3 scale = { 1, 1, 1 };
-    SVector4 rot   = { 0, 0, 0, 1 }; // x,y,z,w — identity
+    SVector4 rot   = { 0, 0, 0, 1 }; // x,y,z,w - identity
 
     if (const auto n = transform.child("localPosition"))
         parseVector3(n.attribute(ATTRIB_VALUE_KEY.c_str()).value(), pos);

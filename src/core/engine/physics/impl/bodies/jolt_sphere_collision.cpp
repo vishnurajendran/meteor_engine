@@ -22,7 +22,7 @@ float MJoltSphereCollision::setRadius(const float& radius)
 {
     if (!isValidBody())
     {
-        MERROR("MJoltSphereCollision::setRadius — called on an invalid body");
+        MERROR("MJoltSphereCollision::setRadius - called on an invalid body");
         return radius;
     }
 

@@ -41,7 +41,7 @@ private:
     }
 
     // Loads (or reloads) the physics layers asset from `path`. Creates a fresh
-    // asset with default names if the file does not exist yet — the asset is
+    // asset with default names if the file does not exist yet - the asset is
     // still available immediately so the rest of the engine can proceed.
     static void loadPhysicsLayers(const SString& path)
     {
@@ -55,7 +55,7 @@ private:
             physicsLayersAsset->deserialiseFromFile(path);
         else
             MWARN(SString::format(
-                "MEngineStatics:: Physics layers file not found at '{0}' — using defaults. "
+                "MEngineStatics:: Physics layers file not found at '{0}' - using defaults. "
                 "The file will be created on next save.", path));
     }
 

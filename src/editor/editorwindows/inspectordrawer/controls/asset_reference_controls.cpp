@@ -37,7 +37,7 @@ void MAssetReferenceControl::setAssetReference(TAssetHandle<MAsset> asset)
 
 sf::Texture* MAssetReferenceControl::getFileIcon(IAssetManagerSubsystem* am, TAssetHandle<MAsset> asset) const
 {
-    // Guard every asset + texture lookup — any of these can be null if the
+    // Guard every asset + texture lookup - any of these can be null if the
     // asset hasn't loaded yet or the icon file is missing.
     sf::Texture* defaultIcon = nullptr;
     if (const auto iconAsset = am->getAsset<MTextureAsset>("meteor_assets/engine_assets/icons/file-default.png"))
@@ -56,7 +56,7 @@ sf::Texture* MAssetReferenceControl::getFileIcon(IAssetManagerSubsystem* am, TAs
     {
         sf::Texture* thumb = editorAM->getThumbnail(asset.get());
         if (thumb) return thumb;
-        // Not ready yet — queue a render. Next frame it will be cached.
+        // Not ready yet - queue a render. Next frame it will be cached.
         editorAM->requestThumbnail(asset.get());
     }
 

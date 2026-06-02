@@ -1,5 +1,5 @@
 //
-// Redesigned MEditorAssetWindow — Unity/Unreal-style asset browser
+// Redesigned MEditorAssetWindow - Unity/Unreal-style asset browser
 //
 
 #ifndef EDITORASSETWINDOW_H
@@ -51,7 +51,7 @@ class MEditorAssetWindow : public MImGuiSubWindow
     bool matchesSearch(SAssetDirectoryNode* node) const;
 
     void onFileDoubleClicked(SAssetDirectoryNode* node);
-    // Single-click on an asset tile — sets MEditorApplication::Selected so
+    // Single-click on an asset tile - sets MEditorApplication::Selected so
     // the inspector immediately shows the asset's properties.
     void selectAssetForInspector(SAssetDirectoryNode* node);
 
@@ -79,7 +79,7 @@ class MEditorAssetWindow : public MImGuiSubWindow
                                                   const SString& assetId,
                                                   SAssetDirectoryNode** outParent = nullptr);
 
-    // -- Popup drawing — called every frame from onGui() -----------------------
+    // -- Popup drawing - called every frame from onGui() -----------------------
     void drawDeleteConfirmModal();
     void drawNewFolderPopup();
 
@@ -99,7 +99,7 @@ private:
     std::vector<SAssetDirectoryNode*> historyBack;
     std::vector<SAssetDirectoryNode*> historyForward;
 
-    // Path-string mirrors of the node pointers above — survive tree rebuilds
+    // Path-string mirrors of the node pointers above - survive tree rebuilds
     // so syncWithAssetManager() can remap after refresh().
     SString cachedCurrentPath;
     SString cachedSelectedPath;
@@ -118,7 +118,7 @@ private:
 
     SString draggedAssetId;
 
-    // Last value of getTotalHotReloadCount() we saw — used to detect new reloads.
+    // Last value of getTotalHotReloadCount() we saw - used to detect new reloads.
     int   lastSeenReloadCount = 0;
     // Counts down from RELOAD_FLASH_DURATION after a hot-reload is detected.
     // While > 0, a flash indicator is shown in the toolbar.

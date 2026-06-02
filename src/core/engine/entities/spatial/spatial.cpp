@@ -295,7 +295,7 @@ void MSpatialEntity::propagateActiveState(bool active)
 
     for (auto* child : children)
     {
-        // Only propagate to children whose own flag is true —
+        // Only propagate to children whose own flag is true -
         // individually disabled children stay disabled regardless.
         if (child && child->enabled)
             child->propagateActiveState(active);

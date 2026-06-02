@@ -56,7 +56,7 @@ void MBoxCollisionBody::createCollisionBody()
 
     physicsBody = physicsEngine->createBoxCollider(settings);
     if (!physicsBody)
-        MERROR("MBoxCollisionBody::createCollisionBody — failed to create box collider");
+        MERROR("MBoxCollisionBody::createCollisionBody - failed to create box collider");
 }
 
 void MBoxCollisionBody::releaseBody()

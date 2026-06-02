@@ -3,13 +3,13 @@
 //
 // Menubar items under "Assets/Create/Rendering/...".
 // Each item follows the same pattern as add_entity.h:
-//   onSelect()  — arms a flag to open the dialog
-//   drawPopup() — draws the modal every frame (called by drawAllPopups())
+//   onSelect()  - arms a flag to open the dialog
+//   drawPopup() - draws the modal every frame (called by drawAllPopups())
 //
 // To add a new creatable asset type:
 //   1. Declare a class with DECLARE_CREATE_ASSET_ITEM (or manually).
 //   2. Implement onSelect(), drawPopup(), and the static registered bool.
-//   3. That's it — the menubar tree picks it up automatically.
+//   3. That's it - the menubar tree picks it up automatically.
 
 #pragma once
 #ifndef CREATE_ASSET_ITEMS_H

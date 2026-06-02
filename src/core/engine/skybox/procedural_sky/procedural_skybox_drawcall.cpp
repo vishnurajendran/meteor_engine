@@ -85,7 +85,7 @@ void MProceduralSkyboxDrawCall::draw()
 
     if (!shader)
     {
-        MERROR("MProceduralSkyboxDrawCall::draw — no shader");
+        MERROR("MProceduralSkyboxDrawCall::draw - no shader");
         return;
     }
 

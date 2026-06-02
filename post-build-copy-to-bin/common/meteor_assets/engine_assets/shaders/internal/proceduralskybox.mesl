@@ -41,7 +41,7 @@
 
     // All distances in Mm (megametres = 1000 km).
     // This keeps values in the 0-50 range so exp() never collapses to 0.
-    // NOTE: zero bare less-than signs in this file — the MESL parser sends
+    // NOTE: zero bare less-than signs in this file - the MESL parser sends
     // GLSL verbatim to the driver without unescaping XML entities, so we
     // replace every (a [lt] b) with max/min/step equivalents.
     const vec3  BETA_R  = vec3(5.8, 13.5, 33.1);
@@ -160,7 +160,7 @@
 
         vec3 sky = scatter(skyDir, sunDir, dens);
 
-        // Below-horizon blend — compute once, mix using step (no branching).
+        // Below-horizon blend - compute once, mix using step (no branching).
         vec3  hDir    = normalize(vec3(dir.x, 0.001, dir.z));
         vec3  hSky    = scatter(hDir, sunDir, dens);
         float gt      = smoothstep(0.0, -0.15, dir.y);
@@ -171,7 +171,7 @@
         // Tint (neutral = 0.5 maps to x1.0 multiplier).
         sky *= u_SkyTint * 2.0;
 
-        // Sun disc — added after tint so it is not tinted.
+        // Sun disc - added after tint so it is not tinted.
         float cosT   = dot(dir, sunDir);
         float disc   = sunDisc(cosT, u_SunSize, u_SunSizeConvergence);
         float horizT = clamp(1.0 - sunDir.y, 0.0, 1.0);

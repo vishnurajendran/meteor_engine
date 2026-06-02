@@ -6,7 +6,7 @@
 
     void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
     {
-        // No modifications — standard projection in applyProjection() handles transform.
+        // No modifications - standard projection in applyProjection() handles transform.
     }
 
     #END_VERTEX_PASS

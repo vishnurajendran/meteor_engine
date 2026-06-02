@@ -31,7 +31,7 @@ bool SFrameBuffer::resize(int width, int height)
 {
     if (width <= 0 || height <= 0)
     {
-        MERROR("SFrameBuffer::resize — invalid dimensions");
+        MERROR("SFrameBuffer::resize - invalid dimensions");
         return false;
     }
 
@@ -72,7 +72,7 @@ bool SFrameBuffer::resize(int width, int height)
 
     if (status != GL_FRAMEBUFFER_COMPLETE)
     {
-        MERROR("SFrameBuffer::resize — FBO incomplete for '" + name
+        MERROR("SFrameBuffer::resize - FBO incomplete for '" + name
                + "' (status 0x" + std::to_string(status) + ")");
         destroyGL();
         return false;

@@ -27,11 +27,11 @@ static constexpr const char* DEPTH_SHADER_PATH =
 
 void MDepthRenderStage::init(IRenderPipeline* const pipeline)
 {
-    // Load depth shader from asset — no GLSL in engine source.
+    // Load depth shader from asset - no GLSL in engine source.
     const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(DEPTH_SHADER_PATH);
     if (!shaderAsset)
     {
-        MERROR("MDepthRenderStage::init — could not load depth shader: " + SString(DEPTH_SHADER_PATH));
+        MERROR("MDepthRenderStage::init - could not load depth shader: " + SString(DEPTH_SHADER_PATH));
         return;
     }
     depthShader = shaderAsset->getShader();
@@ -40,7 +40,7 @@ void MDepthRenderStage::init(IRenderPipeline* const pipeline)
     depthBuffer = pipeline->getBufferRegistry()
                            .createBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH);
     if (!depthBuffer)
-        MERROR("MDepthRenderStage::init — failed to create depth buffer slot");
+        MERROR("MDepthRenderStage::init - failed to create depth buffer slot");
 }
 
 void MDepthRenderStage::cleanup(IRenderPipeline* const pipeline)
@@ -56,7 +56,7 @@ void MDepthRenderStage::cleanup(IRenderPipeline* const pipeline)
 
 void MDepthRenderStage::preRender(IRenderPipeline* const pipeline)
 {
-    // All GL state is set and restored inside render() — nothing leaks out.
+    // All GL state is set and restored inside render() - nothing leaks out.
 }
 
 void MDepthRenderStage::render(IRenderPipeline* const pipeline)
@@ -89,7 +89,7 @@ void MDepthRenderStage::render(IRenderPipeline* const pipeline)
         depthShader->setPropertyValue("projection", projVal);
     }
 
-    // ---- Draw each item — set model matrix, bind VAO, draw -----------------
+    // ---- Draw each item - set model matrix, bind VAO, draw -----------------
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;

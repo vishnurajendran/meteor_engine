@@ -129,7 +129,7 @@ float getPointFarPlane(int idx)
     return pointFarPlane3;
 }
 
-// ---- Shadow compute — usePCF is per-instance from the SSBO -----------------
+// ---- Shadow compute - usePCF is per-instance from the SSBO -----------------
 
 float computeSpotShadow(int idx, vec3 worldPos, int usePCF)
 {
@@ -149,7 +149,7 @@ float computeSpotShadow(int idx, vec3 worldPos, int usePCF)
     // Slope-scaled bias: when the light hits a surface at a grazing angle
     // (dot product near 0) the shadow map texels stretch enormously and a
     // flat bias causes stripes. tan(acos(cosTheta)) grows toward infinity at
-    // 90° — clamped to prevent full shadow detachment on near-perpendicular faces.
+    // 90° - clamped to prevent full shadow detachment on near-perpendicular faces.
     vec3  toLightDir = normalize(getSpotLightPos(idx) - worldPos);
     float cosTheta   = clamp(dot(getVertexNormalWorld(), toLightDir), 0.001, 1.0);
     float bias       = clamp(0.05 * tan(acos(cosTheta)), 0.02, 0.8);

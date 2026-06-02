@@ -36,7 +36,7 @@
 
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
-        // Albedo only — lighting handled by the lighting mask.
+        // Albedo only - lighting handled by the lighting mask.
         // Toon banding, specular, and rim previously computed here are now
         // handled by the lighting stage. To restore toon-specific banding,
         // a toon lighting pass shader can be created later.

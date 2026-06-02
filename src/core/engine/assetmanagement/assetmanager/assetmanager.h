@@ -30,7 +30,7 @@ public:
 
 protected:
     std::vector<SString> ASSET_SEARCH_PATHS = {"assets/", "meteor_assets/engine_assets/"};
-    std::vector<MAsset*> defferedLoadableAssetList;  // MAsset* — no cast needed, deferredAssetLoad is virtual on MAsset
+    std::vector<MAsset*> defferedLoadableAssetList;  // MAsset* - no cast needed, deferredAssetLoad is virtual on MAsset
 
     static MAssetManager* managerInstance;
     virtual void loadAssetRecursive(SString path);

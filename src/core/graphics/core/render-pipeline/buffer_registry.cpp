@@ -13,7 +13,7 @@ MBufferRegistery::~MBufferRegistery()
         delete buf;
     }
     mBuffers.clear();
-    // renderBufferHandle is owned externally — do not delete.
+    // renderBufferHandle is owned externally - do not delete.
 }
 
 void MBufferRegistery::resizeAll(int width, int height)
@@ -22,7 +22,7 @@ void MBufferRegistery::resizeAll(int width, int height)
     {
         if (!buf->isResizeable()) continue;
         if (!buf->resize(width, height))
-            MWARN("MBufferRegistery::resizeAll — buffer '" + name + "' resize failed");
+            MWARN("MBufferRegistery::resizeAll - buffer '" + name + "' resize failed");
     }
 }
 

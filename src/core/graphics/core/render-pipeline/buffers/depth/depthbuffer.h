@@ -20,7 +20,7 @@ public:
     bool makeBuffer(const SString& bufferName) override;
 
     // (Re)allocates the FBO and depth texture at the given dimensions.
-    // Safe to call multiple times — destroys previous GL objects first.
+    // Safe to call multiple times - destroys previous GL objects first.
     bool resize(int width, int height) override;
 
     [[nodiscard]] GLuint    getFBOHandle()          const { return fboHandle; }

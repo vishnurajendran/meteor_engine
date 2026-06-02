@@ -125,7 +125,7 @@ void MCollisionBodyEntityInspectorDrawer::drawPhysicsLayerRow(MCollisionBodyEnti
 
     if (layers)
     {
-        // c_str() pointers are valid for the frame — the asset lives for the
+        // c_str() pointers are valid for the frame - the asset lives for the
         // engine lifetime and the SString storage is stable between frames.
         const char* layerNames[32];
         for (int i = 0; i < 32; ++i)
@@ -136,10 +136,10 @@ void MCollisionBodyEntityInspectorDrawer::drawPhysicsLayerRow(MCollisionBodyEnti
     }
     else
     {
-        // Asset not loaded — raw int fallback so the field is still editable.
+        // Asset not loaded - raw int fallback so the field is still editable.
         if (ImGui::DragInt("##physicslayer", &layerIdx, 0.25f, 0, 31))
             body->physicsLayer.set(glm::clamp(layerIdx, 0, 31));
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Physics layers asset not loaded — showing raw index");
+            ImGui::SetTooltip("Physics layers asset not loaded - showing raw index");
     }
 }

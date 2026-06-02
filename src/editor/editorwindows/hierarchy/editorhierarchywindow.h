@@ -1,5 +1,5 @@
 //
-// Redesigned MEditorHierarchyWindow — Unity Hierarchy / Unreal World Outliner style
+// Redesigned MEditorHierarchyWindow - Unity Hierarchy / Unreal World Outliner style
 //
 
 #pragma once

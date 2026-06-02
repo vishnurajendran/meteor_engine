@@ -23,11 +23,11 @@ private:
     // format specifier string (the part after ':' in {N:spec}).
     //
     // Supported specifiers:
-    //   fN   — fixed-point float with N decimal places   e.g. {0:f2}
-    //   x    — lowercase hexadecimal integer             e.g. {0:x}
-    //   X    — uppercase hexadecimal integer             e.g. {0:X}
-    //   eN   — scientific notation with N decimal places e.g. {0:e3}
-    //   0N   — zero-padded integer to width N            e.g. {0:04}
+    //   fN   - fixed-point float with N decimal places   e.g. {0:f2}
+    //   x    - lowercase hexadecimal integer             e.g. {0:x}
+    //   X    - uppercase hexadecimal integer             e.g. {0:X}
+    //   eN   - scientific notation with N decimal places e.g. {0:e3}
+    //   0N   - zero-padded integer to width N            e.g. {0:04}
     //   +    — show sign for positive numbers            e.g. {0:+}
     //   (empty) — default std::to_string / SString::str()
 
