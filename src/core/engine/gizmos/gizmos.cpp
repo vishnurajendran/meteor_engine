@@ -95,7 +95,7 @@ void MGizmos::flushBatches()
     auto lineShader = shaderAsset->getShader();
     lineShader->bind();
 
-    // Upload the view-projection matrix once — it is shared by every batch.
+    // Upload the view-projection matrix once - it is shared by every batch.
     auto camera  = getActiveCamera();
     auto viewProj = camera->getProjectionMatrix(getResolution()) * camera->getViewMatrix();
 

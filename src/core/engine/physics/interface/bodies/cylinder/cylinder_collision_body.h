@@ -18,7 +18,7 @@ public:
     virtual void setHalfHeight(float halfHeight) = 0;
     virtual void setRadius(float radius)         = 0;
 
-    // Changing the axis rebuilds the underlying shape — prefer setting it once
+    // Changing the axis rebuilds the underlying shape - prefer setting it once
     // at creation time rather than changing it at runtime.
     virtual void setAxis(EShapeAxis axis) = 0;
 };

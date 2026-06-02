@@ -261,7 +261,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
     bool nodeOpen = ImGui::TreeNodeEx(("##n_" + entity->getGUID().str()).c_str(), nodeFlags);
 
-    // Pop colours immediately — they must not bleed into sibling widgets
+    // Pop colours immediately - they must not bleed into sibling widgets
     ImGui::PopStyleColor(3);
 
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen())
@@ -314,7 +314,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         if (relY < 0.25f)      zone = EDropZone::Before;
         else if (relY > 0.75f) zone = EDropZone::After;
 
-        // Visual feedback — insertion line or reparent outline
+        // Visual feedback - insertion line or reparent outline
         if (zone == EDropZone::Before)
         {
             ImGui::GetWindowDrawList()->AddLine(

@@ -35,7 +35,7 @@ void MOpenSceneMenubarItem::onSelect()
         return;
     }
 
-    // Do NOT call OpenDialog here — this runs inside BeginMainMenuBar(),
+    // Do NOT call OpenDialog here - this runs inside BeginMainMenuBar(),
     // which would attach OpenPopup to the wrong window context.
     // Just set the flag; drawPopup() will open the dialog next frame.
     s_wantOpen = true;

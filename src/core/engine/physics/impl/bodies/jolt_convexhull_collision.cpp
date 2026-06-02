@@ -20,7 +20,7 @@ bool MJoltConvexHullCollision::setPoints(const std::vector<SVector3>& points)
 {
     if (!isValidBody())
     {
-        MERROR("MJoltConvexHullCollision::setPoints — called on an invalid body");
+        MERROR("MJoltConvexHullCollision::setPoints - called on an invalid body");
         return false;
     }
 

@@ -1,6 +1,6 @@
 //
 // MSkyboxInspectorDrawer
-// Inspector panel for MSkyboxEntity — shows a cubemap asset reference control.
+// Inspector panel for MSkyboxEntity - shows a cubemap asset reference control.
 //
 
 #pragma once

@@ -39,7 +39,7 @@ static void testEntity(MSpatialEntity* entity,
                     // TODO: expose getIndices() on MStaticMesh for precise test.
                 }
 
-                // Triangle soup — every 3 consecutive vertices form a triangle.
+                // Triangle soup - every 3 consecutive vertices form a triangle.
                 // This works for most imported meshes. Index-buffer-based meshes
                 // would need getIndices() for exact results, but vertex soup
                 // gives a reasonable approximation for placement.

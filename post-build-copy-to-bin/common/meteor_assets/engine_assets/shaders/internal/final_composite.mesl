@@ -6,7 +6,7 @@
 
     void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
     {
-        // NDC quad, identity matrices — applyProjection() passes through unchanged.
+        // NDC quad, identity matrices - applyProjection() passes through unchanged.
     }
 
     #END_VERTEX_PASS

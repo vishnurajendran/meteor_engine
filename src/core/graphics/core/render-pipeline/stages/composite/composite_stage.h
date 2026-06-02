@@ -37,7 +37,7 @@ private:
     void compositeDepth           (IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;
 
-    // Debug buffer visualisation — fullscreen quad with inline shader.
+    // Debug buffer visualisation - fullscreen quad with inline shader.
     void renderDebugView(IRenderPipeline* const pipeline,
                          int sfmlFBO, int w, int h) const;
 

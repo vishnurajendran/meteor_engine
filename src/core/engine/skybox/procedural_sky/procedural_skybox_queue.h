@@ -1,7 +1,7 @@
 //
 // MProceduralSkyboxQueue
 // Static registry of procedural sky draw calls, polled once per frame by
-// MProceduralSkyboxStage — identical pattern to MSkyboxQueue.
+// MProceduralSkyboxStage - identical pattern to MSkyboxQueue.
 //
 
 #pragma once

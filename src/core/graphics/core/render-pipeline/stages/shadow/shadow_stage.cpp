@@ -22,7 +22,7 @@ static constexpr const char* SHADOW_SHADER_PATH =
     "meteor_assets/engine_assets/shaders/internal/shadow_pass.mesl";
 
 // ---------------------------------------------------------------------------
-// Point light shadow shader — writes LINEAR distance / far as gl_FragDepth.
+// Point light shadow shader - writes LINEAR distance / far as gl_FragDepth.
 // This avoids the NDC-to-linear conversion problem entirely.
 // Only used for the 6-face cube map pass, not directional/spot.
 // ---------------------------------------------------------------------------
@@ -104,7 +104,7 @@ void MShadowStage::init(IRenderPipeline* const pipeline)
                             .createBuffer<SShadowBuffer>(MBufferNames::BUFFER_SHADOW);
     if (!shadowBuffer)
     {
-        MERROR("MShadowStage::init — failed to create shadow buffer");
+        MERROR("MShadowStage::init - failed to create shadow buffer");
         return;
     }
 
@@ -114,7 +114,7 @@ void MShadowStage::init(IRenderPipeline* const pipeline)
 
     const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(SHADOW_SHADER_PATH);
     if (!asset)
-        MERROR("MShadowStage::init — could not load: " + SString(SHADOW_SHADER_PATH));
+        MERROR("MShadowStage::init - could not load: " + SString(SHADOW_SHADER_PATH));
     else
         shadowShader = asset->getShader();
 
@@ -162,7 +162,7 @@ void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
     MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
 
     const glm::vec3 anchor   = camera ? glm::vec3(camera->getWorldPosition()) : glm::vec3(0.f);
-    // Fixed shadow distance. At 1 unit = 1 metre this gives 50m coverage —
+    // Fixed shadow distance. At 1 unit = 1 metre this gives 50m coverage -
     // a generous range for a typical scene without wasting shadow map resolution.
     constexpr float pullback = 120.0f;
     const glm::vec3 lightPos = anchor + towardLight * pullback;
@@ -209,7 +209,7 @@ void MShadowStage::renderSpotShadows(IRenderPipeline* const pipeline)
     for (auto* l : dynLights)
         if (l && l->getLightType() == ELightType::Spot) spotCount++;
     if (spotCount > 0 && spotCount > SShadowBuffer::MAX_SPOT_SHADOWS)
-        MWARN("MShadowStage: more spot lights than shadow slots — some won't cast shadows");
+        MWARN("MShadowStage: more spot lights than shadow slots - some won't cast shadows");
 
     for (auto* light : dynLights)
     {
@@ -236,7 +236,7 @@ void MShadowStage::renderSpotShadows(IRenderPipeline* const pipeline)
         shadowBuffer->spotFarPlanes[slot]          = farPlane;
 
         // Use the linear depth program (same as point lights) so the stored
-        // depth is distance/far — trivially comparable without NDC conversion.
+        // depth is distance/far - trivially comparable without NDC conversion.
         glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer->spotFBOs[slot]);
         glViewport(0, 0, 1024, 1024);
         glEnable(GL_DEPTH_TEST);
@@ -282,7 +282,7 @@ void MShadowStage::renderSpotShadows(IRenderPipeline* const pipeline)
 }
 
 // ---------------------------------------------------------------------------
-// Point lights — linear depth cube map
+// Point lights - linear depth cube map
 // ---------------------------------------------------------------------------
 
 void MShadowStage::renderPointShadows(IRenderPipeline* const pipeline)
@@ -339,7 +339,7 @@ void MShadowStage::renderPointShadows(IRenderPipeline* const pipeline)
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LESS);
             glDepthMask(GL_TRUE);
-            glDisable(GL_CULL_FACE); // omnidirectional — no culling
+            glDisable(GL_CULL_FACE); // omnidirectional - no culling
             glEnable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(1.1f, 2.0f);
             glClear(GL_DEPTH_BUFFER_BIT);

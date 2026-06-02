@@ -6,10 +6,15 @@
 #define METEOR_ENGINE_EDITORCONSOLEWINDOW_H
 
 #include <array>
-#include "editor/window/imgui/imguisubwindow.h"
 #include "core/utils/logger.h"
+#include "editor/editorwindows/editor_window_ids.h"
+#include "editor/window/imgui/imguisubwindow.h"
 
 class MEditorConsoleWindow : public MImGuiSubWindow {
+public:
+    unsigned int getWindowId() override { return EditorWindowIds::ID_CONSOLE_WINDOW; }
+
+private:
     DEFINE_OBJECT_SUBCLASS(MEditorConsoleWindow)
 public:
     MEditorConsoleWindow();

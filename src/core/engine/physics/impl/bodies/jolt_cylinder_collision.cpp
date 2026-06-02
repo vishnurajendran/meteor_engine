@@ -58,7 +58,7 @@ void MJoltCylinderCollision::rebuildShape()
 {
     if (!isValidBody())
     {
-        MERROR("MJoltCylinderCollision::rebuildShape — called on an invalid body");
+        MERROR("MJoltCylinderCollision::rebuildShape - called on an invalid body");
         return;
     }
 

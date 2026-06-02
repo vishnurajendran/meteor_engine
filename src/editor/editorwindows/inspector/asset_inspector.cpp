@@ -11,6 +11,9 @@
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
+#include "core/graphics/core/shader/shaderasset.h"
+#include "core/engine/3d/staticmesh/staticmesh.h"
+#include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/utils/logger.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/editorwindows/inspectordrawer/controls/material_properties_controls.h"
@@ -52,6 +55,10 @@ void MAssetInspector::draw(MAsset* asset)
         drawTextureAsset(tex);
     else if (auto* txt = dynamic_cast<MTextAsset*>(asset))
         drawTextAsset(txt);
+    else if (auto* shd = dynamic_cast<MShaderAsset*>(asset))
+        drawShaderAsset(shd);
+    else if (auto* mesh = dynamic_cast<MStaticMeshAsset*>(asset))
+        drawStaticMeshAsset(mesh);
     else
         drawGenericAsset(asset);
 }
@@ -509,7 +516,6 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
             std::snprintf(buf, sizeof(buf), "%u x %u", size.x, size.y);
             row("Size:", buf);
         }
-
         ImGui::EndTable();
     }
 
@@ -817,6 +823,151 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
         ImGui::TextUnformatted("Failed to save cubemap. Check logs.");
         if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
+    }
+}
+
+// -- shader -------------------------------------------------------------------
+
+static const char* shaderPropertyTypeName(SShaderPropertyType type)
+{
+    switch (type)
+    {
+        case Bool:        return "Bool";
+        case Int:         return "Int";
+        case Float:       return "Float";
+        case UniformVec2: return "Vec2";
+        case UniformVec3: return "Vec3";
+        case UniformVec4: return "Vec4";
+        case Color:       return "Color";
+        case Texture:     return "Texture";
+        case Matrix4:     return "Matrix4";
+        default:          return "Unknown";
+    }
+}
+
+void MAssetInspector::drawShaderAsset(MShaderAsset* asset)
+{
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.55f, 0.7f, 1.0f, 1.f));
+    ImGui::TextUnformatted("Shader Asset");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+
+    MShader* shader = asset->getShader();
+
+    ImGui::Text("Name:  %s", asset->getName().c_str());
+    ImGui::Text("Path:  %s", asset->getPath().c_str());
+
+    // Valid/invalid badge
+    if (shader)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.3f, 1.f));
+        ImGui::TextUnformatted("\xe2\x97\x8f Compiled");  // filled circle UTF-8
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.3f, 0.3f, 1.f));
+        ImGui::TextUnformatted("\xe2\x97\x8f Compile Error");
+        ImGui::PopStyleColor();
+    }
+
+    if (!shader) return;
+
+    ImGui::Spacing();
+
+    // Read-only property list
+    const auto& props = shader->getProperties();
+    const auto& order = shader->getPropertyOrder();
+
+    if (props.empty())
+    {
+        ImGui::TextDisabled("No properties declared.");
+        return;
+    }
+
+    if (ImGui::CollapsingHeader("Shader Properties", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::BeginTable("##shader_props", 2,
+                               ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg))
+        {
+            ImGui::TableSetupColumn("Property", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Type",     ImGuiTableColumnFlags_WidthFixed, 70.f);
+            ImGui::TableHeadersRow();
+
+            for (const auto& key : order)
+            {
+                auto it = props.find(key);
+                if (it == props.end()) continue;
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::TextUnformatted(key.c_str());
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextDisabled("%s", shaderPropertyTypeName(it->second.getType()));
+            }
+
+            ImGui::EndTable();
+        }
+    }
+}
+
+// -- static mesh --------------------------------------------------------------
+
+static void formatCount(char* buf, size_t bufSize, int64_t n)
+{
+    if      (n >= 1'000'000'000'000LL) std::snprintf(buf, bufSize, "%.1fT", static_cast<double>(n) / 1e12);
+    else if (n >= 1'000'000'000LL)     std::snprintf(buf, bufSize, "%.1fB", static_cast<double>(n) / 1e9);
+    else if (n >= 1'000'000LL)         std::snprintf(buf, bufSize, "%.1fM", static_cast<double>(n) / 1e6);
+    else                               std::snprintf(buf, bufSize, "%lld",  static_cast<long long>(n));
+}
+
+void MAssetInspector::drawStaticMeshAsset(MStaticMeshAsset* asset)
+{
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.75f, 0.4f, 1.f));
+    ImGui::TextUnformatted("Static Mesh Asset");
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+
+    ImGui::Text("Name:  %s", asset->getName().c_str());
+    ImGui::Text("Path:  %s", asset->getPath().c_str());
+
+    auto meshes = asset->getMeshes();
+    int meshCount = static_cast<int>(meshes.size());
+
+    int64_t totalVerts = 0;
+    int64_t totalIndices = 0;
+    for (const auto* m : meshes)
+    {
+        if (!m) continue;
+        totalVerts   += m->getVertexCount();
+        totalIndices += m->getIndexCount();
+    }
+    int64_t totalTris = totalIndices / 3;
+
+    ImGui::Spacing();
+
+    char vertBuf[32], triBuf[32];
+    formatCount(vertBuf, sizeof(vertBuf), totalVerts);
+    formatCount(triBuf,  sizeof(triBuf),  totalTris);
+
+    if (ImGui::BeginTable("##mesh_stats", 2, ImGuiTableFlags_None))
+    {
+        ImGui::TableSetupColumn("label",  ImGuiTableColumnFlags_WidthFixed, 100.f);
+        ImGui::TableSetupColumn("value",  ImGuiTableColumnFlags_WidthStretch);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Submeshes");
+        ImGui::TableSetColumnIndex(1); ImGui::Text("%d", meshCount);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Vertices");
+        ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(vertBuf);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Triangles");
+        ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(triBuf);
+
+        ImGui::EndTable();
     }
 }
 

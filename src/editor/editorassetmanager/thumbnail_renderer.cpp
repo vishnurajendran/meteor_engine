@@ -16,6 +16,7 @@
 #include "core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_stage.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h"
 #include "core/utils/logger.h"
 
@@ -361,12 +362,34 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     opaqueBuffer->unbind();
 
+    // -- Save current UBO bindings so the scene lights are restored after ----
+    // applyLightOverride() calls glBindBufferRange() which replaces the
+    // global binding at LIGHT_INDEX_AMBIENT and LIGHT_INDEX_DIRECTIONAL.
+    // Without restoring, the main scene's shaders read the thumbnail's
+    // light values on subsequent frames.
+    GLint prevAmbientBuf = 0, prevAmbientOff = 0, prevAmbientSz = 0;
+    GLint prevDirBuf     = 0, prevDirOff     = 0, prevDirSz     = 0;
+    glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, LIGHT_INDEX_AMBIENT,     &prevAmbientBuf);
+    glGetIntegeri_v(GL_UNIFORM_BUFFER_START,   LIGHT_INDEX_AMBIENT,     &prevAmbientOff);
+    glGetIntegeri_v(GL_UNIFORM_BUFFER_SIZE,    LIGHT_INDEX_AMBIENT,     &prevAmbientSz);
+    glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, LIGHT_INDEX_DIRECTIONAL, &prevDirBuf);
+    glGetIntegeri_v(GL_UNIFORM_BUFFER_START,   LIGHT_INDEX_DIRECTIONAL, &prevDirOff);
+    glGetIntegeri_v(GL_UNIFORM_BUFFER_SIZE,    LIGHT_INDEX_DIRECTIONAL, &prevDirSz);
+
     // -- Submit and drive the pipeline ----------------------------------------
     thumbnailPipeline.clearRenderItems();
     thumbnailPipeline.submitRenderItem(item);
     thumbnailPipeline.preRender();
     thumbnailPipeline.render();
     thumbnailPipeline.postRender();
+
+    // -- Restore the scene's UBO bindings -------------------------------------
+    if (prevAmbientBuf != 0)
+        glBindBufferRange(GL_UNIFORM_BUFFER, LIGHT_INDEX_AMBIENT,
+                          prevAmbientBuf, prevAmbientOff, prevAmbientSz);
+    if (prevDirBuf != 0)
+        glBindBufferRange(GL_UNIFORM_BUFFER, LIGHT_INDEX_DIRECTIONAL,
+                          prevDirBuf, prevDirOff, prevDirSz);
 
     // -- Composite BUFFER_OPAQUE x BUFFER_LIGHTS into the thumbnail FBO -------
     compositeThumbnail();

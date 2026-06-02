@@ -13,7 +13,7 @@
 //   - GL_RGBA8 colour texture  (sample in composite/post-process shaders)
 //   - GL_DEPTH_COMPONENT24 depth renderbuffer (depth test during render)
 //
-// No GL headers here — only in the .cpp.
+// No GL headers here - only in the .cpp.
 class SFrameBuffer : public SBuffer
 {
 public:
@@ -28,7 +28,7 @@ public:
     unsigned int getColorTextureHandle() const { return colorTextureHandle; }
     SVector2     getResolution()         const { return resolution; }
 
-    // Call before setRenderBuffer() — sets the internal colour format used
+    // Call before setRenderBuffer() - sets the internal colour format used
     // during resize().  Default: 0x8058 (GL_RGBA8).
     // Pass 0x881A (GL_RGBA16F) for HDR buffers like BUFFER_LIGHTS.
     void setColorFormat(unsigned int glFormat) { colorFormat = glFormat; }

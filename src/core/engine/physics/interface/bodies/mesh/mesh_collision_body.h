@@ -9,7 +9,7 @@
 #include "core/engine/physics/interface/bodies/collision_body_interface.h"
 #include "core/utils/glmhelper.h"
 
-// IMeshCollisionBody wraps Jolt's MeshShape — a concave triangle mesh intended
+// IMeshCollisionBody wraps Jolt's MeshShape - a concave triangle mesh intended
 // for world geometry (terrain, level walls, stairs).
 //
 // IMPORTANT: MeshShape does not support Dynamic motion. Only Static and

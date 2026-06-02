@@ -9,13 +9,13 @@
 #include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
 
 // Draws the "Physics Body" collapsing section that is common to every collision
-// shape — body type, physics layer, mass, gravity, damping, sensor toggle.
+// shape - body type, physics layer, mass, gravity, damping, sensor toggle.
 // Shape drawers inherit from this and call onDrawInspector() first, then add
 // their own shape-specific collapsing section below.
 class MCollisionBodyEntityInspectorDrawer : public MSpatialEntityInspectorDrawer
 {
 public:
-    // canDraw is intentionally not registered here — this drawer is only
+    // canDraw is intentionally not registered here - this drawer is only
     // used as a base class, never registered directly.
     bool canDraw(MSpatialEntity* entity) override { return false; }
 

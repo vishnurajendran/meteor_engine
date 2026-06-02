@@ -30,7 +30,7 @@ MSpatialEntity* MDirectionalLightEntityDeserialiser::deserialize(pugi::xml_node 
     entity->setIntensity(intensity);
     entity->setColor(SColor(color.x, color.y, color.z, color.w));
 
-    // Shadow settings — stored on the entity, not the manager.
+    // Shadow settings - stored on the entity, not the manager.
     if (const auto n = ln.child("castsShadow"))
         entity->setCastsShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
     if (const auto n = ln.child("smoothShadow"))

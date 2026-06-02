@@ -10,7 +10,7 @@
 //       DECLARE_FIELD(fov, float, 90.0f)
 //   };
 //
-//   // MyEntity.cpp  — ONE call per class, in the .cpp only, never in a header
+//   // MyEntity.cpp  - ONE call per class, in the .cpp only, never in a header
 //   IMPLEMENT_CLASS(MCamera)
 //
 // ── Why the split matters ─────────────────────────────────────────────────
@@ -23,7 +23,7 @@
 //   is a valid implicit conversion and the lambda compiles cleanly.
 //
 //   inline static with a body-level lambda fails because the class is still
-//   *incomplete* when the class body is being parsed — the compiler cannot yet
+//   *incomplete* when the class body is being parsed - the compiler cannot yet
 //   verify the inheritance relationship needed for the pointer conversion.
 //
 //   One IMPLEMENT_CLASS per class per binary → exactly one definition of
@@ -57,7 +57,7 @@ public:                                                                        \
         return MSpatialEntity::createInstance<ClassName>(name);               \
     }                                                                          \
 private:                                                                       \
-    /* Declaration only — definition is in IMPLEMENT_CLASS in the .cpp */     \
+    /* Declaration only - definition is in IMPLEMENT_CLASS in the .cpp */     \
     static const bool _classRegistered;
 
 // ── IMPLEMENT_CLASS ───────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ private:                                                                       \
 // ── DEFINE_ABSTRACT_CLASS ─────────────────────────────────────────────────
 // Use for abstract intermediate classes (MLightEntity, MDynamicLight, etc.)
 // Provides typeInfo() and staticTypeInfo() but no factory and no registry
-// entry — abstract classes cannot be directly instantiated.
+// entry - abstract classes cannot be directly instantiated.
 //
 #define DEFINE_ABSTRACT_SPATIAL_CLASS(ClassName)                                       \
 public:                                                                        \

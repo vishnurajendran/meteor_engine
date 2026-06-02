@@ -7,11 +7,11 @@
 //  What DEFINE_MOBJECT_CLASS generates 
 //
 //   public:
-//     // Compile-time type descriptor — name string + FNV-1a hash
+//     // Compile-time type descriptor - name string + FNV-1a hash
 //     static constexpr MTypeInfo staticTypeInfo()
 //     { return MAKE_TYPE_INFO(ClassName); }
 //
-//     // Runtime virtual — overridden by every subclass
+//     // Runtime virtual - overridden by every subclass
 //     virtual MTypeInfo typeInfo() const
 //     { return staticTypeInfo(); }
 //
@@ -24,17 +24,17 @@
 #include "type_info.h"
 
 // ── DEFINE_OBJECT_CLASS ───────────────────────────────────────────────────
-// ROOT ONLY — used by MObject to *introduce* the virtual typeInfo() slot.
+// ROOT ONLY - used by MObject to *introduce* the virtual typeInfo() slot.
 // No other class should use this macro.
 //
 #define DEFINE_OBJECT_CLASS(ClassName)                                         \
 public:                                                                        \
-    /** Compile-time type descriptor — usable without an instance */           \
+    /** Compile-time type descriptor - usable without an instance */           \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \
         return MAKE_TYPE_INFO(ClassName);                                      \
     }                                                                          \
-    /** Runtime virtual — introduces the vtable slot */                        \
+    /** Runtime virtual - introduces the vtable slot */                        \
     virtual MTypeInfo typeInfo() const                                         \
     {                                                                          \
         return staticTypeInfo();                                               \

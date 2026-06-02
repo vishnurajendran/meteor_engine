@@ -6,6 +6,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 #include <unordered_map>
+#include <vector>
 #include "SFML/OpenGL.hpp"
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
@@ -70,6 +71,7 @@ private:
     bool compiled = false;
     bool compileOnFirstUse;
     std::unordered_map<SString, SShaderPropertyValue> properties;
+    std::vector<SString> propertyOrder;  // .mesl declaration order
 private:
     void compile();
 public:
@@ -78,6 +80,10 @@ public:
     [[nodiscard]] std::unordered_map<SString, SShaderPropertyValue>  getProperties() const;
     void bind();
     void setPropertyValue(const SString& name, const SShaderPropertyValue& value);
+
+    [[nodiscard]] const std::vector<SString>& getPropertyOrder() const { return propertyOrder; }
+    void setPropertyOrder(const std::vector<SString>& order) { propertyOrder = order; }
+
 private:
     void setUniform1i(const SString &name, int value) const;
     void setUniform1f(const SString &name, float value) const;

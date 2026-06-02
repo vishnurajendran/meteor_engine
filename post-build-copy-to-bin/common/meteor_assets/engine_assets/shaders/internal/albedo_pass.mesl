@@ -8,7 +8,7 @@
 
     void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
     {
-        // No vertex modifications — standard projection handles everything.
+        // No vertex modifications - standard projection handles everything.
     }
 
     #END_VERTEX_PASS
@@ -20,7 +20,7 @@
 
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
-        // Pure albedo — no applyLighting() call.
+        // Pure albedo - no applyLighting() call.
         // MLightingStage provides the light contribution separately.
         return texture(_baseTex, v2fTexCoords) * _color;
     }

@@ -3,9 +3,9 @@
         <property key="_albedo"             type="tex2d"   default=""/>
         <property key="_color"              type="color"   default="(1,1,1,1)"/>
 
+        <property key="_useOutline"         type="bool"    default="True"/>
         <property key="_outlineColor"       type="color"   default="(0,0,0,1)"/>
         <property key="_outlineThickness"   type="float"   default="0.8"/>
-        <property key="_useOutline"         type="bool"    default="True"/>
     </properties>
 
     #VERTEX_PASS
@@ -36,7 +36,7 @@
 
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
-        // Albedo only — lighting handled by the lighting mask.
+        // Albedo only - lighting handled by the lighting mask.
         // Toon banding, specular, and rim previously computed here are now
         // handled by the lighting stage. To restore toon-specific banding,
         // a toon lighting pass shader can be created later.

@@ -5,9 +5,9 @@
 #include "ImGuizmo.h"
 #include "SFML/Graphics/RenderTexture.hpp"
 #include "core/utils/glmhelper.h"
+#include "editor/editorwindows/editor_window_ids.h"
 #include "editor/profiling/profiler_stats_displayer.h"
 #include "editor/window/imgui/imguisubwindow.h"
-
 
 class MSpatialEntity;
 class MEditorApplication;
@@ -15,6 +15,10 @@ class MCameraEntity;
 
 class MEditorSceneViewWindow : public MImGuiSubWindow
 {
+public:
+    unsigned int getWindowId() override { return EditorWindowIds::ID_SCENE_WINDOW; }
+
+private:
     DEFINE_OBJECT_SUBCLASS(MEditorSceneViewWindow)
 public:
     MEditorSceneViewWindow();

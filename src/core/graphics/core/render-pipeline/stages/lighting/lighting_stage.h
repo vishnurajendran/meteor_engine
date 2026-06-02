@@ -10,10 +10,10 @@
 
 class SFrameBuffer;
 
-// Lighting stage — RS_Lighting (4000).
+// Lighting stage - RS_Lighting (4000).
 //
-// Renders all scene geometry into BUFFER_LIGHTS using lighting_pass.mesl —
-// outputs applyLighting(vec3(1.0)) — the raw light intensity with no albedo.
+// Renders all scene geometry into BUFFER_LIGHTS using lighting_pass.mesl -
+// outputs applyLighting(vec3(1.0)) - the raw light intensity with no albedo.
 //
 // MCompositeStage multiplies BUFFER_OPAQUE × BUFFER_LIGHTS to produce the
 // final lit image:  albedo × (ambient + directional + spot/point) = result.
@@ -31,7 +31,7 @@ public:
 
 private:
     SFrameBuffer* lightsBuffer   = nullptr;
-    // No cached MShader* — looked up fresh each render() to survive refresh().
+    // No cached MShader* - looked up fresh each render() to survive refresh().
     SString       lightingShaderPath;
 };
 

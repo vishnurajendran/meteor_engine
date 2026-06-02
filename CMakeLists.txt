@@ -219,7 +219,6 @@ set(CORE_SOURCES
         src/core/utils/guid.cpp
         src/core/utils/guid.h
         src/core/object/objectpointer.h
-        src/core/meteor_core.h
         src/core/application/application.cpp
         src/core/application/application.h
         src/core/utils/color.cpp
@@ -533,7 +532,6 @@ set(EDITOR_SOURCES
         src/editor/window/imgui/imguiwindowconstants.h
         src/editor/editorwindows/console/editorconsolewindow.cpp
         src/editor/editorwindows/console/editorconsolewindow.h
-        src/editor/meteorite.h
         src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
         src/editor/editorwindows/hierarchy/editorhierarchywindow.h
         src/editor/editorwindows/inspector/editorinspectorwindow.cpp
@@ -648,6 +646,7 @@ set(EDITOR_SOURCES
         src/editor/profiling/profiler_stats_displayer.h
         src/editor/window/menubar/default/help/open_documentation/open_documentation.cpp
         src/editor/window/menubar/default/help/open_documentation/open_documentation.h
+        src/editor/editorwindows/editor_window_ids.h
 )
 
 set(PLAYER_SOURCES

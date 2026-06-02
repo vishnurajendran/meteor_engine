@@ -13,7 +13,7 @@
 //   0 = "Default"      (all physics entities use this by default)
 //   1 = "Unnamed_Layer_1" ... 31 = "Unnamed_Layer_31"
 //
-// SLayerFilter has no default constructor — always create via a factory method
+// SLayerFilter has no default constructor - always create via a factory method
 // so the caller is explicit about which layers they want.
 //
 // Usage:

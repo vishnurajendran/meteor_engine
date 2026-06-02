@@ -15,7 +15,7 @@ void MProceduralSkyboxStage::init(IRenderPipeline* const pipeline)
     opaqueBuffer = pipeline->getBufferRegistry()
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer)
-        MERROR("MProceduralSkyboxStage::init — BUFFER_OPAQUE not found; ensure MOpaqueStage is added first");
+        MERROR("MProceduralSkyboxStage::init - BUFFER_OPAQUE not found; ensure MOpaqueStage is added first");
 }
 
 void MProceduralSkyboxStage::cleanup(IRenderPipeline* const pipeline)

@@ -28,7 +28,7 @@ void MThumbnailCache::ensureCacheDir()
 
 MThumbnailCache::~MThumbnailCache()
 {
-    // evictAll() clears memory only — disk files are intentionally kept.
+    // evictAll() clears memory only - disk files are intentionally kept.
     evictAll();
 }
 
@@ -73,7 +73,7 @@ sf::Texture* MThumbnailCache::get(const SString& assetId)
     if (!tex->loadFromFile(p))
     {
         delete tex;
-        // Disk file is corrupt or unreadable — remove it so it gets regenerated.
+        // Disk file is corrupt or unreadable - remove it so it gets regenerated.
         std::error_code ec;
         fs::remove(p, ec);
         return nullptr;
@@ -89,7 +89,7 @@ bool MThumbnailCache::has(const SString& assetId) const
     if (memCache.contains(assetId))
         return true;
 
-    // Check disk without loading — used by requestThumbnail() to avoid
+    // Check disk without loading - used by requestThumbnail() to avoid
     // queueing assets whose PNG already exists.
     return fs::exists(diskPath(assetId));
 }
@@ -104,7 +104,7 @@ void MThumbnailCache::evict(const SString& assetId)
         memCache.erase(it);
     }
 
-    // Disk — asset content changed so the cached PNG is stale.
+    // Disk - asset content changed so the cached PNG is stale.
     std::error_code ec;
     fs::remove(diskPath(assetId), ec);
 }
@@ -118,5 +118,5 @@ void MThumbnailCache::evictAll()
 
     // Disk files are intentionally NOT deleted here.  After a full refresh()
     // the same asset GUIDs are re-discovered, and their on-disk thumbnails
-    // will be loaded by get() on first access — no re-render needed.
+    // will be loaded by get() on first access - no re-render needed.
 }

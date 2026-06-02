@@ -49,9 +49,7 @@ public:
             auto overrides = properties;
             properties     = newShader->getProperties();
 
-            propertyOrder.clear();
-            for (auto& [k, _] : properties)
-                propertyOrder.push_back(k);
+            propertyOrder = newShader->getPropertyOrder();
 
             for (auto& [k, v] : overrides)
             {

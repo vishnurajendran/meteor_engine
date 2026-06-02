@@ -49,7 +49,7 @@ public:
     void setSunDirection(const SVector3& dir);
     [[nodiscard]] SVector3 getSunDirection() const;
 
-    // ── Parameter API — mirror the DECLARE_FIELDs for external code ──────────
+    // ── Parameter API - mirror the DECLARE_FIELDs for external code ──────────
     void  setDayNightCycleSpeed(float cyclesPerSec) { cycleSpeed = cyclesPerSec; }
     float getDayNightCycleSpeed() const             { return cycleSpeed.get(); }
 

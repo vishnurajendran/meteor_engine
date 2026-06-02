@@ -20,7 +20,7 @@ bool MJoltMeshCollision::setMeshData(const std::vector<SVector3>& vertices,
 {
     if (!isValidBody())
     {
-        MERROR("MJoltMeshCollision::setMeshData — called on an invalid body");
+        MERROR("MJoltMeshCollision::setMeshData - called on an invalid body");
         return false;
     }
 

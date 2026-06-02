@@ -13,7 +13,7 @@ class MAmbientLightEntity : public MLightEntity
 {
     DEFINE_SPATIAL_CLASS(MAmbientLightEntity)
 
-    // Serialized — color as RGB, intensity as float.
+    // Serialized - color as RGB, intensity as float.
     // prepareLightRender() pushes these into the GPU struct each frame.
     DECLARE_FIELD(color,     SVector3, SVector3(1.0f, 1.0f, 1.0f))
     DECLARE_FIELD(intensity, float,    1.0f)

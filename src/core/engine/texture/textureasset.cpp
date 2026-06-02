@@ -136,7 +136,7 @@ static bool needsMipmaps(ETextureFilterMin f)
 
 // -- Bilinear resize helper ----------------------------------------------------
 // CPU-side bilinear interpolation.  Runs once at import time.
-// For a 4096→1024 downscale this is ~1 M pixel iterations — sub-millisecond.
+// For a 4096→1024 downscale this is ~1 M pixel iterations - sub-millisecond.
 
 static sf::Image resizeImage(const sf::Image& src, unsigned int newW, unsigned int newH)
 {
@@ -216,7 +216,7 @@ bool MTextureAsset::loadWithSettings()
 
     if (!needsProcessing)
     {
-        // Fast path — load directly via SFML, then apply GL params
+        // Fast path - load directly via SFML, then apply GL params
         if (!texture.loadFromPath(path))
             return false;
 
@@ -224,7 +224,7 @@ bool MTextureAsset::loadWithSettings()
         return true;
     }
 
-    // Slow path — load to CPU (sf::Image) so we can resize / compress
+    // Slow path - load to CPU (sf::Image) so we can resize / compress
     sf::Image img;
     if (!img.loadFromFile(path.c_str()))
     {
@@ -328,7 +328,7 @@ bool MTextureAsset::saveImportSettings()
     auto root = doc.child("asset_id");
     if (!root)
     {
-        MERROR("MTextureAsset::saveImportSettings — meta file missing <asset_id> root: " + metaPath);
+        MERROR("MTextureAsset::saveImportSettings - meta file missing <asset_id> root: " + metaPath);
         return false;
     }
 

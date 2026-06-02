@@ -85,7 +85,7 @@ bool MAssetManager::loadAsset(SString path) {
             continue;
 
         if (asset->hasDeferredLoad())
-            addToDeferredLoadableAssetList(asset);  // MAsset* — virtual dispatch is correct, no cast
+            addToDeferredLoadableAssetList(asset);  // MAsset* - virtual dispatch is correct, no cast
 
         assetMap[path] = asset;
         const auto tag = metaDataDoc.child(ASSET_FILE_TAG.c_str());

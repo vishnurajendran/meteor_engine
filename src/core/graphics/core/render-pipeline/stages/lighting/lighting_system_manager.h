@@ -23,7 +23,7 @@ public:
     void prepareDynamicLights(const AABB& bounds);
     void requestLightSceneRebuild();
 
-    // ── Directional shadow — queries the directional light entity ─────────
+    // ── Directional shadow - queries the directional light entity ─────────
     // These replace the old global booleans. If no directional light exists,
     // they return safe defaults.
     bool isDirectionalShadowEnabled() const

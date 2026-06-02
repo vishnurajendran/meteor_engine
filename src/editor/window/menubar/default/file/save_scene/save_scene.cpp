@@ -110,14 +110,14 @@ void MSaveSceneMenubarItem::onSelect()
     SString path = resolveCurrentScenePath();
     if (!path.empty())
     {
-        // Known path — save immediately, no dialog needed.
+        // Known path - save immediately, no dialog needed.
         auto* mgr = dynamic_cast<MEditorSceneManager*>(
             MSceneManager::getSceneManagerInstance());
         if (mgr) mgr->saveCurrentScene(path);
     }
     else
     {
-        // New unsaved scene — fall through to Save As dialog.
+        // New unsaved scene - fall through to Save As dialog.
         s_saveWantOpen = true;
     }
 }

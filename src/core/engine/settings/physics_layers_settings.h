@@ -30,7 +30,7 @@
 //   </root>
 //
 // Row i in collisionMatrix is "which layers does layer i collide with".
-// The matrix must be symmetric — if layer A collides with layer B then
+// The matrix must be symmetric - if layer A collides with layer B then
 // layer B must also collide with layer A. The pair filter AND-gates both
 // directions as a safety net, so an asymmetric matrix results in the
 // stricter of the two directions being used.

@@ -73,7 +73,7 @@ void MImGuiWindow::update(float deltaTime) {
     }
 
     // The close event handler shuts down ImGui and closes coreWindow.
-    // If the window is no longer open, bail out now — calling graphicsFunction()
+    // If the window is no longer open, bail out now - calling graphicsFunction()
     // or drawGUI() after ImGui::SFML::Shutdown() would crash or silently fail.
     if (!coreWindow.isOpen())
         return;

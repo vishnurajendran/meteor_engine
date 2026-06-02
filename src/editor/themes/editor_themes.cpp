@@ -35,12 +35,12 @@ void MEditorThemes::applyTheme()
     else
     {
         MWARN(SString::format(
-            "MEditorThemes:: Unknown theme \"{0}\" — falling back to me::midnight", id));
+            "MEditorThemes:: Unknown theme \"{0}\" - falling back to me::midnight", id));
         applyMidnightTheme();
     }
 }
 
-// Rounding, padding, spacing — independent of colour so every theme feels
+// Rounding, padding, spacing - independent of colour so every theme feels
 // structurally identical. Called at the end of each theme function.
 
 void MEditorThemes::applyCommonStyle()
@@ -72,7 +72,7 @@ void MEditorThemes::applyCommonStyle()
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MIDNIGHT — the original "deep dark" theme (ported from applyDeepDarkTheme)
+// MIDNIGHT - the original "deep dark" theme (ported from applyDeepDarkTheme)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 void MEditorThemes::applyMidnightTheme()
@@ -139,7 +139,7 @@ void MEditorThemes::applyMidnightTheme()
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DARK — a softer dark theme (VS-Code-ish mid-grey backgrounds)
+// DARK - a softer dark theme (VS-Code-ish mid-grey backgrounds)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 void MEditorThemes::applyDarkTheme()

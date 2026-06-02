@@ -14,7 +14,7 @@
 
     #FRAGMENT_PASS
 
-    // Declared as a raw uniform — not a shader property — so the asset system
+    // Declared as a raw uniform - not a shader property - so the asset system
     // does not pre-bind a default texture and interfere with our explicit bind.
     uniform sampler2D _lightsTex;
 

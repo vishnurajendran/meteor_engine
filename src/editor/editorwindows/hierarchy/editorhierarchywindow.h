@@ -1,11 +1,12 @@
 //
-// Redesigned MEditorHierarchyWindow — Unity Hierarchy / Unreal World Outliner style
+// Redesigned MEditorHierarchyWindow - Unity Hierarchy / Unreal World Outliner style
 //
 
 #pragma once
 #ifndef METEOR_ENGINE_EDITORHIERARCHYWINDOW_H
 #define METEOR_ENGINE_EDITORHIERARCHYWINDOW_H
 #include "SFML/Graphics/Texture.hpp"
+#include "editor/editorwindows/editor_window_ids.h"
 #include "editor/window/imgui/imguisubwindow.h"
 
 
@@ -13,6 +14,10 @@ class MSpatialEntity;
 class MScene;
 class MEditorHierarchyWindow : public MImGuiSubWindow
 {
+public:
+    unsigned int getWindowId() override { return EditorWindowIds::ID_HIERARCHY_WINDOW; }
+
+private:
     DEFINE_OBJECT_SUBCLASS(MEditorHierarchyWindow)
     void drawToolbar();
 

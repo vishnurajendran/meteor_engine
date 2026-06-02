@@ -55,7 +55,7 @@ void MJoltCapsuleCollision::rebuildShape()
 {
     if (!isValidBody())
     {
-        MERROR("MJoltCapsuleCollision::rebuildShape — called on an invalid body");
+        MERROR("MJoltCapsuleCollision::rebuildShape - called on an invalid body");
         return;
     }
 

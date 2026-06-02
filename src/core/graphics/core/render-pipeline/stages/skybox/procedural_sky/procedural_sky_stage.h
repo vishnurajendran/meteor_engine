@@ -1,6 +1,6 @@
 //
 // MProceduralSkyboxStage
-// Mirrors MSkyboxStage exactly — renders into BUFFER_OPAQUE so the sky sits
+// Mirrors MSkyboxStage exactly - renders into BUFFER_OPAQUE so the sky sits
 // in the same colour buffer as opaque geometry.
 // MCompositeStage blits the finished BUFFER_OPAQUE to the render target.
 //
