@@ -230,27 +230,47 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
     root.append_child("shaderPathField").text().set(shaderPath.c_str());
     root.append_child("shadingModeStr").text().set(modeStr);
 
-    MLOG(SString::format("Copying Shader Properties {0}", shaderPath));
+    MLOG(SString::format("Creating material with shader {0}", shaderPath));
     const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(shaderPath);
     if (!shaderAsset)
     {
         MERROR(SString::format("Invalid Shader Asset {0}", shaderPath));
         return false;
     }
-    auto shaderInstance = shaderAsset->getShader();
-    if (shaderInstance == nullptr)
+    if (!shaderAsset->getShader())
     {
         MERROR(SString::format("Invalid Shader {0}", shaderPath));
         return false;
     }
 
+    // Write properties with safe defaults for each type.
+    // The shader's getProperties() returns mutable state contaminated by
+    // whichever material was last bound during rendering -- getValueStr()
+    // on those values can produce strings that parseValue() cannot parse
+    // (e.g. empty strings passed to stoi).  We write the keys and types
+    // from the shader but use known-safe default values.
     auto xmlProps = root.append_child("properties");
-    for (auto property : shaderInstance->getProperties())
+    for (auto& [key, val] : shaderAsset->getShader()->getProperties())
     {
+        const char* defaultValue = "";
+        switch (val.getType())
+        {
+            case SShaderPropertyType::Float:       defaultValue = "0";             break;
+            case SShaderPropertyType::Int:         defaultValue = "0";             break;
+            case SShaderPropertyType::Bool:        defaultValue = "False";         break;
+            case SShaderPropertyType::UniformVec2: defaultValue = "(0,0)";         break;
+            case SShaderPropertyType::UniformVec3: defaultValue = "(0,0,0)";       break;
+            case SShaderPropertyType::UniformVec4: defaultValue = "(0,0,0,1)";     break;
+            case SShaderPropertyType::Color:       defaultValue = "(1,1,1,1)";     break;
+            case SShaderPropertyType::Texture:     defaultValue = "";              break;
+            default:                               defaultValue = "0";             break;
+        }
+        
         auto child = xmlProps.append_child("property");
-        child.append_attribute("key").set_value(property.first.c_str());
-        child.append_attribute("type").set_value(MShaderUtility::getTypeStr(property.second.getType()).c_str());
-        child.append_attribute("value").set_value(MShaderUtility::getValueStr(property.second).c_str());
+        child.append_attribute("key").set_value(key.c_str());
+        child.append_attribute("type").set_value(
+            MShaderUtility::getTypeStr(val.getType()).c_str());
+        child.append_attribute("value").set_value(defaultValue);
     }
 
     std::ostringstream oss;
