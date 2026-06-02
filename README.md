@@ -12,6 +12,7 @@ It’s currently in active development, focused on exploring rendering architect
 
 ## Current State (What Exists Right Now)
 ![meteorite_editor_snapshot](https://i.ibb.co/dw66j6YK/Screenshot-2026-06-01-013540.png)
+
 ![meteorite_editor_gif](https://i.ibb.co/mC2ZqqQs/meteor.gif)
 
 ### Core
