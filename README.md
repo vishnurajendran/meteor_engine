@@ -11,7 +11,7 @@ It’s currently in active development, focused on exploring rendering architect
 ---
 
 ## Current State (What Exists Right Now)
-![meteorite_editor](https://i.ibb.co/mC2ZqqQs/meteor.gif)
+![meteorite_editor](https://i.ibb.co/mC2ZqqQs/meteor.gif?v=1)
 
 ### Core
 - Scene system with spatial entities
