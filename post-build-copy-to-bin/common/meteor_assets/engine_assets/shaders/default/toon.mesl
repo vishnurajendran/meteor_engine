@@ -3,9 +3,9 @@
         <property key="_albedo"             type="tex2d"   default=""/>
         <property key="_color"              type="color"   default="(1,1,1,1)"/>
 
+        <property key="_useOutline"         type="bool"    default="True"/>
         <property key="_outlineColor"       type="color"   default="(0,0,0,1)"/>
         <property key="_outlineThickness"   type="float"   default="0.8"/>
-        <property key="_useOutline"         type="bool"    default="True"/>
     </properties>
 
     #VERTEX_PASS

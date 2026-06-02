@@ -141,8 +141,16 @@ bool MMaterialAsset::loadFromFile(const SString& path)
         if (properties.contains(key)) continue;
 
         auto type = MShaderUtility::parsePropertyType(child.attribute("type").value());
+
+        // Skip non-texture properties with empty values -- parseValue would
+        // pass the empty string to stoi/stof and crash.  This guards against
+        // material files written with missing or cleared values.
+        SString valueStr = child.attribute("value").value();
+        if (valueStr.empty() && type != SShaderPropertyType::Texture)
+            continue;
+
         SShaderPropertyValue val;
-        MShaderUtility::parseValue(child.attribute("value").value(), val, type);
+        MShaderUtility::parseValue(valueStr.c_str(), val, type);
         properties[key] = val;
         loadOrder.push_back(key);
     }
@@ -237,21 +245,25 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
         MERROR(SString::format("Invalid Shader Asset {0}", shaderPath));
         return false;
     }
+
     if (!shaderAsset->getShader())
     {
         MERROR(SString::format("Invalid Shader {0}", shaderPath));
         return false;
     }
 
-    // Write properties with safe defaults for each type.
-    // The shader's getProperties() returns mutable state contaminated by
-    // whichever material was last bound during rendering -- getValueStr()
-    // on those values can produce strings that parseValue() cannot parse
-    // (e.g. empty strings passed to stoi).  We write the keys and types
-    // from the shader but use known-safe default values.
+    auto* shaderInstance = shaderAsset->getShader();
+    // Write properties in the shader's declaration order so the .material
+    // file matches the .mesl file top to bottom.  Use safe defaults for
+    // each type rather than the shader's mutable state.
     auto xmlProps = root.append_child("properties");
-    for (auto& [key, val] : shaderAsset->getShader()->getProperties())
+    const auto& props = shaderInstance->getProperties();
+    for (const auto& key : shaderInstance->getPropertyOrder())
     {
+        auto it = props.find(key);
+        if (it == props.end()) continue;
+        const auto& val = it->second;
+
         const char* defaultValue = "";
         switch (val.getType())
         {
@@ -265,7 +277,7 @@ bool MMaterialAsset::createNewMaterial(const SString& directory,
             case SShaderPropertyType::Texture:     defaultValue = "";              break;
             default:                               defaultValue = "0";             break;
         }
-        
+
         auto child = xmlProps.append_child("property");
         child.append_attribute("key").set_value(key.c_str());
         child.append_attribute("type").set_value(

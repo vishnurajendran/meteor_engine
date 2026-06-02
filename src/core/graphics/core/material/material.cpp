@@ -21,13 +21,9 @@ MMaterial::MMaterial(MShader* shader, ShadingMode mode) : MObject()
 
     properties = shader->getProperties();
 
-    // Capture the default iteration order from the shader.
-    // MMaterialAsset::buildMaterialAsset() will overwrite this with the
-    // XML file order via setPropertyOrder() after applying overrides.
-    propertyOrder.clear();
-    propertyOrder.reserve(properties.size());
-    for (auto& [key, _] : properties)
-        propertyOrder.push_back(key);
+    // Use the shader's declaration order so the inspector displays
+    // properties in the order they appear in the .mesl file.
+    propertyOrder = shader->getPropertyOrder();
 }
 
 void MMaterial::bindMaterial() const

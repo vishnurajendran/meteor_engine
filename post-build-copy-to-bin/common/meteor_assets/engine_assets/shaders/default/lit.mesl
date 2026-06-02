@@ -1,21 +1,21 @@
 <shader name="standard_lit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
     <properties>
-        <property key="_albedo"             type="tex2d"    default=""/>
         <property key="_useAlbedoTex"       type="bool"     default="False"/>
+        <property key="_albedo"             type="tex2d"    default=""/>
         <property key="_color"              type="color"    default="(1,1,1,1)"/>
 
         <property key="_normalMap"          type="tex2d"    default=""/>
         <property key="_useNormalMap"       type="bool"     default="False"/>
-
-        <property key="_emissionTex"        type="tex2d"    default=""/>
-        <property key="_emissionMask"       type="tex2d"    default=""/>
-        <property key="_useEmission"        type="bool"     default="False"/>
-        <property key="_useEmissionMask"    type="bool"     default="False"/>
-        <property key="_emissionColor"      type="color"    default="(1,1,1,1)"/>
-        <property key="_emissionIntensity"  type="float"    default="1.0"/>
-
+        
         <property key="_metallic"           type="float"    default="0.0"/>
         <property key="_smoothness"         type="float"    default="0.5"/>
+
+        <property key="_useEmission"        type="bool"     default="False"/>
+        <property key="_emissionTex"        type="tex2d"    default=""/>
+        <property key="_emissionColor"      type="color"    default="(1,1,1,1)"/>
+        <property key="_emissionIntensity"  type="float"    default="1.0"/>
+        <property key="_useEmissionMask"    type="bool"     default="False"/>
+        <property key="_emissionMask"       type="tex2d"    default=""/>
     </properties>
 
     #VERTEX_PASS
