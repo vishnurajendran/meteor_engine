@@ -219,7 +219,6 @@ set(CORE_SOURCES
         src/core/utils/guid.cpp
         src/core/utils/guid.h
         src/core/object/objectpointer.h
-        src/core/meteor_core.h
         src/core/application/application.cpp
         src/core/application/application.h
         src/core/utils/color.cpp
@@ -515,6 +514,8 @@ set(CORE_SOURCES
         src/core/profiling/simple_profiler/simple_profiler.cpp
         src/core/profiling/default_profile_keys.h
         src/core/profiling/profiler.h
+        src/core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.cpp
+        src/core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.h
 )
 
 set(EDITOR_SOURCES
@@ -531,7 +532,6 @@ set(EDITOR_SOURCES
         src/editor/window/imgui/imguiwindowconstants.h
         src/editor/editorwindows/console/editorconsolewindow.cpp
         src/editor/editorwindows/console/editorconsolewindow.h
-        src/editor/meteorite.h
         src/editor/editorwindows/hierarchy/editorhierarchywindow.cpp
         src/editor/editorwindows/hierarchy/editorhierarchywindow.h
         src/editor/editorwindows/inspector/editorinspectorwindow.cpp
@@ -646,6 +646,7 @@ set(EDITOR_SOURCES
         src/editor/profiling/profiler_stats_displayer.h
         src/editor/window/menubar/default/help/open_documentation/open_documentation.cpp
         src/editor/window/menubar/default/help/open_documentation/open_documentation.h
+        src/editor/editorwindows/editor_window_ids.h
 )
 
 set(PLAYER_SOURCES

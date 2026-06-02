@@ -13,7 +13,7 @@ enum class EThumbnailAssetType
 {
     Unknown,
     StaticMesh,
-    Material,  // material asset — rendered onto a UV sphere
+    Material,  // material asset - rendered onto a UV sphere
 };
 
 struct SAssetThumbnailRequest

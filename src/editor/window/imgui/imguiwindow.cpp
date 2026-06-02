@@ -19,6 +19,7 @@
 #include "imguiwindowconstants.h"
 
 #include "core/profiling/profiler.h"
+#include "core/utils/logger.h"
 #include "editor/profiling/editor_profile_keys.h"
 
 bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)
@@ -72,7 +73,7 @@ void MImGuiWindow::update(float deltaTime) {
     }
 
     // The close event handler shuts down ImGui and closes coreWindow.
-    // If the window is no longer open, bail out now — calling graphicsFunction()
+    // If the window is no longer open, bail out now - calling graphicsFunction()
     // or drawGUI() after ImGui::SFML::Shutdown() would crash or silently fail.
     if (!coreWindow.isOpen())
         return;

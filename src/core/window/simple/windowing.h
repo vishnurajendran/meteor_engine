@@ -5,8 +5,11 @@
 #ifndef METEOR_ENGINE_WINDOWING_H
 #define METEOR_ENGINE_WINDOWING_H
 
-#include "core/meteor_core.h"
+
 #include "SFML/Graphics.hpp"
+#include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
+#include "core/object/object.h"
+#include "core/utils/glmhelper.h"
 
 class MWindow : public MObject {
     DEFINE_OBJECT_SUBCLASS(MWindow)

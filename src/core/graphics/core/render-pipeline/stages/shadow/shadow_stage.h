@@ -30,7 +30,7 @@ private:
     void drawItems(IRenderPipeline* const pipeline, MShader* shader,
                    unsigned int* rawProg, bool shadowCastersOnly);
 
-    // For the inline point shadow program — sets model via raw GL uniform.
+    // For the inline point shadow program - sets model via raw GL uniform.
     void drawItemsRaw(IRenderPipeline* const pipeline,
                       unsigned int prog, bool shadowCastersOnly);
 

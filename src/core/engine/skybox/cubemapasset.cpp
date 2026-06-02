@@ -45,7 +45,7 @@ MCubemapAsset::MCubemapAsset(const SString& path)
         facePaths[i] = root.child(FACE_LABELS[i]).attribute("src").as_string();
 
     // Mark valid so the importer keeps the asset.
-    // The GPU cubemap doesn't exist yet — it's built in deferredAssetLoad().
+    // The GPU cubemap doesn't exist yet - it's built in deferredAssetLoad().
     valid = true;
 }
 

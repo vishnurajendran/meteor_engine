@@ -8,7 +8,7 @@
 
 #include "core/utils/sstring.h"
 
-// Base buffer interface. No GL headers here — concrete buffers include
+// Base buffer interface. No GL headers here - concrete buffers include
 // glew.h only in their .cpp files to avoid gl.h/glew.h ordering conflicts.
 struct SBuffer
 {

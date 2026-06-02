@@ -16,7 +16,7 @@ public:
     virtual void bindAsActive() override;
     virtual void unbind() override;
 
-    SVector2 getResolution() const;
+    virtual SVector2 getResolution() const;
     sf::RenderTarget* getCoreRenderTarget() const { return renderTarget; }
 
     // no need in this buffer
@@ -25,7 +25,9 @@ public:
     // creation helpers
     static bool makeFromRenderTarget(sf::RenderTarget* inTarget, SRenderBuffer*& outBuffer);
 
-private:
+protected:
+    // Protected so headless subclasses can call the default constructor
+    // without requiring an sf::RenderTarget.
     SRenderBuffer() = default;
 
 private:

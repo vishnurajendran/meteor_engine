@@ -24,10 +24,10 @@ bool MTextAsset::save() {
     SString data = text;
     if (!FileIO::writeFile(path, data))
     {
-        MERROR("MTextAsset::save — failed to write " + path);
+        MERROR("MTextAsset::save - failed to write " + path);
         return false;
     }
-    MLOG("MTextAsset::save — saved " + path);
+    MLOG("MTextAsset::save - saved " + path);
     return true;
 }
 

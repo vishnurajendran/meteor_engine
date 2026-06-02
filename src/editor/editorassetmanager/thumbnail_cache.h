@@ -17,15 +17,15 @@
 //
 // ── Lifetime rules ────────────────────────────────────────────────────────────
 //
-//   store()    — saves to memory AND writes a PNG to CACHE_DIR/<assetId>.png
-//   get()      — returns from memory; on first access loads from disk if the
+//   store()    - saves to memory AND writes a PNG to CACHE_DIR/<assetId>.png
+//   get()      - returns from memory; on first access loads from disk if the
 //                PNG exists (lazy load), so no startup scan is needed.
-//   has()      — true when the texture is in memory OR the disk file exists.
+//   has()      - true when the texture is in memory OR the disk file exists.
 //                Used by requestThumbnail() to avoid re-queuing cached work.
-//   evict()    — removes from memory AND deletes the disk file.
+//   evict()    - removes from memory AND deletes the disk file.
 //                Call this on hot-reload so the stale thumbnail is regenerated.
-//   evictAll() — clears memory only.  Disk files are preserved across full
-//                refresh() calls because GUIDs are stable — the same asset
+//   evictAll() - clears memory only.  Disk files are preserved across full
+//                refresh() calls because GUIDs are stable - the same asset
 //                has the same ID even after a rescan.
 //
 // Thread-safety: single-threaded (editor main thread only).
@@ -56,7 +56,7 @@ public:
     // thumbnail is regenerated on next access.
     void evict(const SString& assetId);
 
-    // Clear memory only — disk files are kept so they can be loaded again
+    // Clear memory only - disk files are kept so they can be loaded again
     // after the next full refresh() without re-rendering.
     void evictAll();
 

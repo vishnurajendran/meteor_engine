@@ -118,9 +118,11 @@ bool MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString
         fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
     }
 
-    const auto properties = getShaderProperties(rootNode);
+    std::vector<SString> propOrder;
+    const auto properties = getShaderProperties(rootNode, propOrder);
     shader = new MShader(vertexSource, fragmentSource, properties);
     shader->setName(name);
+    shader->setPropertyOrder(propOrder);
     return true;
 }
 
@@ -148,15 +150,22 @@ bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const
 
     vertexSource += rootNode.child(SHDR_VERTNODE.c_str()).text().get();
     fragmentSource += rootNode.child(SHDR_FRAGNODE.c_str()).text().get();
-    const auto properties = getShaderProperties(rootNode);
+
+    std::vector<SString> propOrder;
+    const auto properties = getShaderProperties(rootNode, propOrder);
     shader = new MShader(vertexSource, fragmentSource, properties);
     shader->setName(name);
+    shader->setPropertyOrder(propOrder);
     return true;
 }
 
 
-std::map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(pugi::xml_node node) {
-    std::map<SString, SShaderPropertyValue> properties;
+std::unordered_map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(
+    pugi::xml_node node, std::vector<SString>& outOrder)
+{
+    std::unordered_map<SString, SShaderPropertyValue> properties;
+    outOrder.clear();
+
     if (!node.child(SHDR_PROPERTY_PARENT_NODE.c_str())) {
         MERROR("MShaderAsset::loadShader(): shader file structure incorrect - missing fragment program tree");
         return properties;
@@ -191,6 +200,7 @@ std::map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(pugi::
             MShaderUtility::parseValue(child.attribute(SHDR_PROPERTY_CHILD_ATTRIB_VALUE.c_str()).value(), value, type);
         }
         properties[key] = value;
+        outOrder.push_back(key);
     }
     return properties;
 }

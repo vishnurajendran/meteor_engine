@@ -11,10 +11,10 @@
 // with standard game-engine conventions.
 enum class EForceMode
 {
-    Force,         // Continuous force in Newtons — accumulated each physics step.
-    Impulse,       // Instantaneous impulse — scaled by mass (J = kg * m/s).
-    Acceleration,  // Continuous acceleration in m/s² — independent of body mass.
-    VelocityChange // Instantaneous velocity delta in m/s — independent of body mass.
+    Force,         // Continuous force in Newtons - accumulated each physics step.
+    Impulse,       // Instantaneous impulse - scaled by mass (J = kg * m/s).
+    Acceleration,  // Continuous acceleration in m/s² - independent of body mass.
+    VelocityChange // Instantaneous velocity delta in m/s - independent of body mass.
 };
 
 class ICollisionBody
@@ -41,7 +41,7 @@ public:
     virtual void setAngularVelocity(const SVector3& velocity)      = 0;
 
     // Directly move the body to a world position and rotation.
-    // For kinematic bodies this is the correct way to drive motion — Jolt computes
+    // For kinematic bodies this is the correct way to drive motion - Jolt computes
     // the implied velocity internally. For dynamic bodies this teleports the body
     // (no velocity is preserved), which should be used sparingly.
     virtual void setPositionAndRotation(const SVector3& position,
@@ -50,10 +50,10 @@ public:
     // ---- Force application -------------------------------------------------
 
     // Apply a force, impulse, acceleration, or velocity change to the body's
-    // centre of mass. Has no effect on Static bodies — a MWARN is emitted.
+    // centre of mass. Has no effect on Static bodies - a MWARN is emitted.
     virtual void applyForce(const SVector3& force, EForceMode mode) = 0;
 
-    // Apply a force at a world-space point — generates both linear and angular
+    // Apply a force at a world-space point - generates both linear and angular
     // response. VelocityChange has no point-of-application variant in Jolt and
     // falls back to Impulse at the given point with a MWARN.
     virtual void applyForceAtPosition(const SVector3& force,
@@ -62,7 +62,7 @@ public:
 
     // Apply a torque (or angular impulse / angular acceleration / angular velocity
     // delta depending on mode). Acceleration mode uses mass as a scalar inertia
-    // approximation — accurate for uniform bodies, approximate otherwise.
+    // approximation - accurate for uniform bodies, approximate otherwise.
     virtual void applyTorque(const SVector3& torque, EForceMode mode) = 0;
 
     // Validity and state queries

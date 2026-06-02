@@ -3,7 +3,7 @@
 //
 
 #include "material.h"
-#include <map>
+#include <unordered_map>
 #include "core/graphics/core/shader/shader.h"
 #include "core/utils/logger.h"
 
@@ -15,11 +15,15 @@ MMaterial::MMaterial(MShader* shader, ShadingMode mode) : MObject()
 
     if (!shader)
     {
-        MERROR("MMaterial: constructed with null shader — properties will be empty");
+        MERROR("MMaterial: constructed with null shader -- properties will be empty");
         return;
     }
 
     properties = shader->getProperties();
+
+    // Use the shader's declaration order so the inspector displays
+    // properties in the order they appear in the .mesl file.
+    propertyOrder = shader->getPropertyOrder();
 }
 
 void MMaterial::bindMaterial() const
@@ -37,10 +41,13 @@ void MMaterial::bindMaterial() const
 
 void MMaterial::setProperty(const SString& name, const SShaderPropertyValue& value)
 {
+    if (!properties.contains(name))
+        propertyOrder.push_back(name);
+
     properties[name] = value;
 }
 
-const std::map<SString, SShaderPropertyValue>& MMaterial::getProperties() const
+const std::unordered_map<SString, SShaderPropertyValue>& MMaterial::getProperties() const
 {
     return properties;
 }
@@ -48,6 +55,7 @@ const std::map<SString, SShaderPropertyValue>& MMaterial::getProperties() const
 MMaterial* MMaterial::clone() const
 {
     auto* inst = new MMaterial(shader, shadingMode);
-    inst->properties = properties;
+    inst->properties    = properties;
+    inst->propertyOrder = propertyOrder;
     return inst;
 }

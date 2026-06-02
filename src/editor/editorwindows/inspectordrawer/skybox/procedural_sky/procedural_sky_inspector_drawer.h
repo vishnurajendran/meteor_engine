@@ -1,6 +1,6 @@
 //
 // MProceduralSkyInspectorDrawer
-// Inspector panel for MProceduralSkyboxEntity — mirrors the layout and
+// Inspector panel for MProceduralSkyboxEntity - mirrors the layout and
 // registration pattern of MStaticMeshInspectorDrawer.
 //
 

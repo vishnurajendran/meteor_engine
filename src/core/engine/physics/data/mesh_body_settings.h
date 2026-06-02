@@ -10,7 +10,7 @@
 #include "core/utils/glmhelper.h"
 
 // Vertices are in the body's local space (world scale applied by the entity
-// before populating this struct). Indices form triangles — every 3 = 1 tri.
+// before populating this struct). Indices form triangles - every 3 = 1 tri.
 //
 // Performance note: this struct owns its vertex/index data via std::vector.
 // Move it into the factory call rather than copying where possible.

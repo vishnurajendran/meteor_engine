@@ -5,7 +5,8 @@
 #pragma once
 #ifndef MATERIAL_H
 #define MATERIAL_H
-#include <map>
+#include <unordered_map>
+#include <vector>
 #include "core/graphics/core/shader/shader.h"
 #include "core/object/object.h"
 
@@ -19,40 +20,48 @@ public:
 private:
     MShader*    shader      = nullptr;
     ShadingMode shadingMode = ShadingMode::Lit;
-    std::map<SString, SShaderPropertyValue> properties;
+    std::unordered_map<SString, SShaderPropertyValue> properties;
+    std::vector<SString> propertyOrder;  // tracks key order for UI display
 
 public:
-    // shader may be nullptr — callers must guard with if (!shader) before passing.
     explicit MMaterial(MShader* shader, ShadingMode mode = ShadingMode::Lit);
     ~MMaterial() override = default;
 
     void bindMaterial() const;
-    [[nodiscard]] const std::map<SString, SShaderPropertyValue>& getProperties() const;
+    [[nodiscard]] const std::unordered_map<SString, SShaderPropertyValue>& getProperties() const;
     void setProperty(const SString& name, const SShaderPropertyValue& value);
     MMaterial* clone() const;
 
+    // Ordered key list for UI display.  Defaults to the order captured from
+    // the shader, but MMaterialAsset overrides it with the XML file order
+    // after buildMaterialAsset() so the inspector matches the authored file.
+    [[nodiscard]] const std::vector<SString>& getPropertyOrder() const { return propertyOrder; }
+    void setPropertyOrder(const std::vector<SString>& order) { propertyOrder = order; }
+
     [[nodiscard]] MShader*    getShader()     const { return shader; }
 
-    // Update shader and mode in place — used by hot reload so existing
-    // pointers to this MMaterial remain valid after a material file changes.
     void updateShader(MShader* newShader, ShadingMode newMode)
     {
         shader      = newShader;
         shadingMode = newMode;
-        // Rebuild properties from the new shader defaults, then re-apply
-        // any overrides that were set on this instance.
         if (newShader)
         {
-            auto overrides = properties; // save current overrides
-            properties     = newShader->getProperties(); // reset to defaults
+            auto overrides = properties;
+            properties     = newShader->getProperties();
+
+            propertyOrder = newShader->getPropertyOrder();
+
             for (auto& [k, v] : overrides)
-                properties[k] = v; // re-apply overrides
+            {
+                if (!properties.contains(k))
+                    propertyOrder.push_back(k);
+                properties[k] = v;
+            }
         }
     }
+
     [[nodiscard]] ShadingMode getShadingMode()const { return shadingMode; }
     [[nodiscard]] bool        isValid()       const { return shader != nullptr; }
-
-    // Used by SRenderItem and the opaque stage to decide the render path.
     [[nodiscard]] bool isUnlit() const { return shadingMode == ShadingMode::Unlit; }
 };
 

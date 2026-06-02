@@ -16,7 +16,7 @@
 #include "interfaces/render_stage_interface.h"
 #include "render_item.h"
 
-// Pure orchestration - owns stages and the buffer registry, drives the frame
+// Pure orchestration -- owns stages and the buffer registry, drives the frame
 // lifecycle, and collects render items from the scene.  Contains zero render
 // logic; all drawing decisions live inside the stages.
 class MRenderPipeline : public MObject,
@@ -32,23 +32,28 @@ public:
     void init() override;
     void cleanup() override;
 
-    // ---- IRenderPipeline — frame lifecycle ----------------------------------
-    void preRender()  override;  // collect items, resize buffers if needed, stage preRenders
-    void render()     override;  // stage renders
-    void postRender() override;  // stage postRenders, then reset GL state
+    // Initialize without default stages.  The caller adds stages manually
+    // via addStage<T>() afterwards.  Use this for secondary pipelines
+    // (thumbnails, reflection probes, etc.) that need a different stage set.
+    void initManual();
 
-    // ---- IRenderPipeline — render target ------------------------------------
+    // ---- IRenderPipeline -- frame lifecycle ---------------------------------
+    void preRender()  override;
+    void render()     override;
+    void postRender() override;
+
+    // ---- IRenderPipeline -- render target ------------------------------------
     SVector2       getRenderResolution() override { return bufferRegistry.getRenderBuffer()->getResolution(); }
     void           setRenderBuffer(SRenderBuffer* renderBuffer) override;
     SRenderBuffer* getRenderBuffer()     override { return bufferRegistry.getRenderBuffer(); }
 
-    // ---- IRenderPipeline — buffer registry ----------------------------------
+    // ---- IRenderPipeline -- buffer registry ----------------------------------
     MBufferRegistery& getBufferRegistry() override { return bufferRegistry; }
 
-    // ---- IRenderPipeline — render items -------------------------------------
+    // ---- IRenderPipeline -- render items -------------------------------------
     const std::vector<SRenderItem>& getRenderItems() const override { return renderItems; }
 
-    // ---- IRenderPipeline — composite flags ----------------------------------
+    // ---- IRenderPipeline -- composite flags ----------------------------------
     uint32_t getCompositeFlags()                  const override { return compositeFlags; }
     void     addCompositeFlag(ECompositeFlags flag)     override { compositeFlags |=  flag; }
     void     removeCompositeFlag(ECompositeFlags flag)  override { compositeFlags &= ~flag; }
@@ -57,6 +62,16 @@ public:
     // ---- IRenderItemCollector -----------------------------------------------
     void submitRenderItem(const SRenderItem& item) override;
 
+    // ---- Manual item mode ---------------------------------------------------
+    // When enabled, preRender() does not collect from MRenderQueue.
+    // The caller populates items via clearRenderItems() + submitRenderItem()
+    // before calling preRender().
+    void setManualItemMode(bool manual) { manualItemMode = manual; }
+
+    // Clear the render item list.  Call before submitRenderItem() when
+    // using manual item mode between frames.
+    void clearRenderItems() { renderItems.clear(); }
+
 private:
     void forceResetGLStates();
 
@@ -64,7 +79,8 @@ private:
     MBufferRegistery           bufferRegistry;
     std::vector<SRenderItem>   renderItems;
     uint32_t                   compositeFlags = ECF_None;
-    bool initialised = false;
+    bool                       initialised    = false;
+    bool                       manualItemMode = false;
 };
 
 #endif // RENDER_PIPELINE_H

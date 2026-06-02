@@ -40,7 +40,7 @@ bool SDepthBuffer::resize(int width, int height)
 {
     if (width <= 0 || height <= 0)
     {
-        MERROR("SDepthBuffer::resize — invalid dimensions (" +
+        MERROR("SDepthBuffer::resize - invalid dimensions (" +
                std::to_string(width) + "x" + std::to_string(height) + ")");
         return false;
     }
@@ -61,13 +61,13 @@ bool SDepthBuffer::resize(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // ---- FBO — depth attachment only ----------------------------------------
+    // ---- FBO - depth attachment only ----------------------------------------
     glGenFramebuffers(1, &fboHandle);
     glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                            GL_TEXTURE_2D, depthTextureHandle, 0);
 
-    // No colour attachment — tell the driver explicitly.
+    // No colour attachment - tell the driver explicitly.
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -76,7 +76,7 @@ bool SDepthBuffer::resize(int width, int height)
 
     if (status != GL_FRAMEBUFFER_COMPLETE)
     {
-        MERROR("SDepthBuffer::resize — FBO incomplete (status 0x" +
+        MERROR("SDepthBuffer::resize - FBO incomplete (status 0x" +
                std::to_string(status) + ")");
         destroyGL();
         return false;

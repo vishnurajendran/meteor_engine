@@ -25,7 +25,7 @@ void MConvexHullCollisionBody::releaseBody()
 
 void MConvexHullCollisionBody::setupShapeCallbacks()
 {
-    // ConvexHull supports all body types — no Dynamic block needed.
+    // ConvexHull supports all body types - no Dynamic block needed.
     // The default bodyType onChange from the base is sufficient.
     meshAsset.setOnChangeCallback([this](auto) { recreateBody(); });
 }
@@ -75,7 +75,7 @@ void MConvexHullCollisionBody::onDrawGizmo(SVector2)
 
 void MConvexHullCollisionBody::tryBuildBody(MStaticMeshAsset* asset)
 {
-    if (!asset) { MERROR("MConvexHullCollisionBody::tryBuildBody — null asset"); return; }
+    if (!asset) { MERROR("MConvexHullCollisionBody::tryBuildBody - null asset"); return; }
 
     std::vector<SVector3> points;
     for (const MStaticMesh* mesh : asset->getMeshes())
@@ -83,7 +83,7 @@ void MConvexHullCollisionBody::tryBuildBody(MStaticMeshAsset* asset)
             points.push_back(v.Position);
 
     if (points.size() < 4)
-    { MERROR("MConvexHullCollisionBody::tryBuildBody — fewer than 4 vertices"); return; }
+    { MERROR("MConvexHullCollisionBody::tryBuildBody - fewer than 4 vertices"); return; }
 
     const SVector3 ws = getWorldScale();
     for (SVector3& p : points) { p.x *= ws.x; p.y *= ws.y; p.z *= ws.z; }
@@ -98,7 +98,7 @@ void MConvexHullCollisionBody::tryBuildBody(MStaticMeshAsset* asset)
 
     physicsBody = physicsEngine->createConvexHullCollisionBody(settings);
     if (!physicsBody)
-        MERROR("MConvexHullCollisionBody::tryBuildBody — failed to create convex hull body");
+        MERROR("MConvexHullCollisionBody::tryBuildBody - failed to create convex hull body");
 }
 
 MStaticMeshEntity* MConvexHullCollisionBody::findMeshEntityChild() const

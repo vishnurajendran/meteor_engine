@@ -54,7 +54,7 @@ void MCapsuleCollisionBody::createCollisionBody()
 
     physicsBody = physicsEngine->createCapsuleCollisionBody(settings);
     if (!physicsBody)
-        MERROR("MCapsuleCollisionBody::createCollisionBody — failed to create capsule collider");
+        MERROR("MCapsuleCollisionBody::createCollisionBody - failed to create capsule collider");
 }
 
 void MCapsuleCollisionBody::releaseBody()

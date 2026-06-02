@@ -27,7 +27,7 @@ void MDirecionalLightInspectorDrawer::drawDLGui(MDirectionalLight* light) {
             light->setColor(color);
         }
 
-        // Shadow settings — per-light, not global.
+        // Shadow settings - per-light, not global.
         bool casts  = light->getCastsShadow();
         bool smooth = light->getSmoothShadow();
 

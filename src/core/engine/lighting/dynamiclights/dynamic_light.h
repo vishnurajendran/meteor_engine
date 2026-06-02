@@ -34,7 +34,7 @@ public:
     bool getCastsShadow() const  { return castsShadow; }
     void setCastsShadow(bool v)  { castsShadow = v; }
 
-    // Written by MShadowStage each frame — the slot index in the shadow map array.
+    // Written by MShadowStage each frame - the slot index in the shadow map array.
     // -1 = no shadow map this frame.
     // Read by MLightSystemManager::prepareDynamicLights() to fill the SSBO.
     int  getShadowIndex() const   { return lightData.shadowIndex; }

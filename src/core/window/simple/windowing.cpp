@@ -8,6 +8,7 @@
 #include <winuser.h>
 
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 
 const int MWindow::DEFAULT_FPS = 60;
 const SVector2 MWindow::DEFAULT_WINDOW_SIZE {800, 600};

@@ -9,7 +9,7 @@
 #include "core/engine/physics/interface/bodies/collision_body_interface.h"
 #include "core/utils/glmhelper.h"
 
-// IConvexHullCollisionBody wraps Jolt's ConvexHullShape — a convex approximation
+// IConvexHullCollisionBody wraps Jolt's ConvexHullShape - a convex approximation
 // of arbitrary geometry that supports all body types including Dynamic.
 //
 // Jolt computes the convex hull from the provided point cloud using Quickhull

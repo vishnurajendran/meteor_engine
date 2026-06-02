@@ -27,7 +27,7 @@ public:
         if (ptr) MGarbageCollector::reference(ptr);
     }
 
-    // Move — ownership transfers; ref-count stays the same.
+    // Move - ownership transfers; ref-count stays the same.
     MObjectPtr(MObjectPtr&& other) noexcept : ptr(other.ptr)
     {
         other.ptr = nullptr;

@@ -28,7 +28,7 @@ public:
     void setAssetReference(TAssetHandle<MAsset> asset);
     bool drawControl(const SString& label);
 
-    // Single-row compact version — fits inside inspector table cells.
+    // Single-row compact version - fits inside inspector table cells.
     // Renders: [32px thumb] [asset name or "(none)"] [× clear]
     bool drawCompactControl(const SString& label);
     std::function<bool(TAssetHandle<MAsset> asset)> canAcceptAssetFuncCallback;

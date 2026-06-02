@@ -1,6 +1,8 @@
 #pragma once
+#include "core/application/application.h"
 #include "core/default_settings_paths.h"
-#include "editor/meteorite.h"
+#include "core/engine/camera/camera_spatial_entity.h"
+#include "editor/window/imgui/imguisubwindow.h"
 #include "editor/window/imgui/imguiwindow.h"
 
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H

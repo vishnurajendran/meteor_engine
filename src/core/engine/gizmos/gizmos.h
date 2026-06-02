@@ -34,13 +34,13 @@ public:
                                 const SColor& color, float thickness, int segments = 32);
 
     // Draws a cylinder centred on `center`. `axisDir` is the world-space direction
-    // of the cylinder's long axis — it is normalised internally.
+    // of the cylinder's long axis - it is normalised internally.
     static void drawWireCylinder(const SVector3& center, float halfHeight, float radius,
                                   const SVector3& axisDir, const SColor& color, float thickness);
 
     // Draws a capsule centred on `center`. `halfHeight` is half the cylindrical
     // segment (not including the hemisphere caps). `axisDir` is the world-space
-    // long axis — normalised internally.
+    // long axis - normalised internally.
     static void drawWireCapsule(const SVector3& center, float halfHeight, float radius,
                                  const SVector3& axisDir, const SColor& color, float thickness);
 

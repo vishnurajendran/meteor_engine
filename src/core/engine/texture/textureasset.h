@@ -38,8 +38,8 @@ enum class ETextureWrap
 enum class ETextureCompression
 {
     None,
-    DXT1,   // BC1 — RGB, no alpha, highest compression (~6:1)
-    DXT5    // BC3 — RGBA with alpha, good compression (~4:1)
+    DXT1,   // BC1 - RGB, no alpha, highest compression (~6:1)
+    DXT5    // BC3 - RGBA with alpha, good compression (~4:1)
 };
 
 // ── MTextureAsset ─────────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ class MTextureAsset : public MAsset {
 private:
     MTexture texture;
 
-    // Import settings — persisted in the .meta file under <textureImport>
+    // Import settings - persisted in the .meta file under <textureImport>
     ETextureFilterMin   filterMin   = ETextureFilterMin::Linear;
     ETextureFilterMag   filterMag   = ETextureFilterMag::Linear;
     ETextureWrap        wrapS       = ETextureWrap::Repeat;

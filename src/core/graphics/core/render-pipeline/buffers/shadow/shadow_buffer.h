@@ -6,7 +6,7 @@
 #include <glm/vec3.hpp>
 #include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
 
-// Central shadow data store — one per pipeline.
+// Central shadow data store - one per pipeline.
 // MShadowStage writes all shadow maps into this each frame.
 // MLightingStage reads them and binds textures to shader units.
 class SShadowBuffer : public SDepthBuffer
@@ -16,7 +16,7 @@ public:
     static constexpr int MAX_SPOT_SHADOWS      = 4;
     static constexpr int MAX_POINT_SHADOWS     = 4;
 
-    // Not resized by resizeAll() — fixed resolution.
+    // Not resized by resizeAll() - fixed resolution.
     bool isResizeable() const override { return false; }
 
     // ---- Directional --------------------------------------------------------
@@ -38,7 +38,7 @@ public:
     int          numPointShadows = 0;
 
     // Allocate / free spot and point shadow GL objects.
-    // Called by MShadowStage::init() — separate from the directional SDepthBuffer.
+    // Called by MShadowStage::init() - separate from the directional SDepthBuffer.
     void initDynamicShadows(int shadowMapRes);
     void destroyDynamicShadows();
 };

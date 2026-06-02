@@ -105,7 +105,7 @@ void MPhysicsLayersSettings::rebuildParsedMasks()
 
         if (i < static_cast<int>(rows.size()))
         {
-            // Parse "1 0 1 1 0 ..." — space-separated 0/1 tokens.
+            // Parse "1 0 1 1 0 ..." - space-separated 0/1 tokens.
             std::istringstream stream(rows[i]);
             int bit = 0;
             int value = 0;
@@ -116,11 +116,11 @@ void MPhysicsLayersSettings::rebuildParsedMasks()
             }
 
             // If the string had fewer than 32 tokens, remaining bits stay 0
-            // (conservative — no collision with unlisted layers).
+            // (conservative - no collision with unlisted layers).
         }
         else
         {
-            // Missing row — default to all-collide.
+            // Missing row - default to all-collide.
             mask = ~0u;
         }
 

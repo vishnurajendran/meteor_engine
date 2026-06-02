@@ -10,14 +10,14 @@
 
 class SFrameBuffer;
 
-// Opaque geometry stage — RS_Opaque (1000).
+// Opaque geometry stage -- RS_Opaque (1000).
 //
 // Renders all SRenderItems into BUFFER_OPAQUE using each item's own material
-// via bindMaterial(). Material shaders output albedo only — no lighting.
+// via bindMaterial().
 //
-// The lighting stage writes a light mask into BUFFER_LIGHTS:
-//   alpha = 0  →  unlit pixel (composite passes through opaque value)
-//   alpha = 1  →  lit pixel   (composite multiplies opaque × light)
+// Supports a pipeline-level light override: when active, writes ambient and
+// directional light data to private UBOs instead of calling prepareLights(),
+// and skips dynamic light preparation per item.
 class MOpaqueStage : public MRenderStage
 {
 public:
@@ -30,7 +30,16 @@ public:
     void postRender(IRenderPipeline* const pipeline) override;
 
 private:
+    // Writes override ambient + directional light data to UBOs at the
+    // standard binding indices, bypassing MLightSystemManager entirely.
+    void applyLightOverride(const IRenderPipeline::SLightOverride& lo);
+    void destroyOverrideUBOs();
+
     SFrameBuffer* opaqueBuffer = nullptr;
+
+    // UBO handles for light override -- created on first use, reused after.
+    unsigned int overrideAmbientUBO     = 0;
+    unsigned int overrideDirectionalUBO = 0;
 };
 
 #endif // OPAQUE_STAGE_H

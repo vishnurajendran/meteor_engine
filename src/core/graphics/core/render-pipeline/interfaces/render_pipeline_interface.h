@@ -14,9 +14,6 @@
 
 class MBufferRegistery;
 
-// Bitmask set by stages to declare what they have rendered into their buffer.
-// MCompositeStage reads these flags to decide what to composite into the
-// final render target.
 enum ECompositeFlags : uint32_t
 {
     ECF_None        = 0,
@@ -27,9 +24,6 @@ enum ECompositeFlags : uint32_t
     ECF_Transparent = 1 << 4,
 };
 
-// Pure orchestration interface.  No render logic lives here — the pipeline
-// creates buffers and stages, drives the frame lifecycle, and exposes state
-// that stages need to communicate with each other.
 class IRenderPipeline
 {
 public:
@@ -38,7 +32,6 @@ public:
     virtual void init()=0;
     virtual void cleanup()=0;
 
-    // stages
     template<typename T>
     bool addStage()
     {
@@ -47,11 +40,8 @@ public:
         IRenderStage* stage = new T();
         stage->init(this);
         renderStages.push_back(stage);
-
-        // sort the render stages after each addition.
         std::sort(renderStages.begin(), renderStages.end(),
             [](IRenderStage* a, IRenderStage* b) { return a->getSortingOrder() < b->getSortingOrder(); });
-
         return true;
     }
 
@@ -65,20 +55,69 @@ public:
     virtual void           setRenderBuffer(SRenderBuffer* buffer) = 0;
     virtual SRenderBuffer* getRenderBuffer()                      = 0;
 
-    // Buffer registry — stages read/write named buffers
+    // Buffer registry
     virtual MBufferRegistery& getBufferRegistry() = 0;
 
-    // Render items — collected once per frame, consumed by every stage
+    // Render items
     virtual const std::vector<SRenderItem>& getRenderItems() const = 0;
 
-    // Composite flags — stages declare what they produced this frame
+    // Composite flags
     virtual uint32_t getCompositeFlags()                  const = 0;
     virtual void     addCompositeFlag(ECompositeFlags flag)     = 0;
     virtual void     removeCompositeFlag(ECompositeFlags flag)  = 0;
     virtual void     clearCompositeFlags()                      = 0;
 
+    // ---- Camera override ----------------------------------------------------
+    struct SCameraOverride
+    {
+        bool      active = false;
+        glm::mat4 view   = glm::mat4(1.f);
+        glm::mat4 proj   = glm::mat4(1.f);
+    };
+
+    void setCameraOverride(const glm::mat4& view, const glm::mat4& proj)
+    {
+        cameraOverride.active = true;
+        cameraOverride.view   = view;
+        cameraOverride.proj   = proj;
+    }
+    void clearCameraOverride() { cameraOverride.active = false; }
+    const SCameraOverride& getCameraOverride() const { return cameraOverride; }
+
+    // ---- Light override -----------------------------------------------------
+    // When active, the opaque stage writes these values to the ambient and
+    // directional UBOs instead of calling MLightSystemManager::prepareLights(),
+    // and skips dynamic light preparation entirely.
+    struct SLightOverride
+    {
+        bool active = false;
+
+        glm::vec3 ambientColor     = glm::vec3(1.0f);
+        float     ambientIntensity = 0.2f;
+
+        glm::vec3 directionalDirection = glm::normalize(glm::vec3(-1.0f, 2.0f, 2.0f));
+        glm::vec3 directionalColor     = glm::vec3(1.0f);
+        float     directionalIntensity = 1.0f;
+    };
+
+    void setLightOverride(const glm::vec3& ambCol,  float ambInt,
+                          const glm::vec3& dirDir,
+                          const glm::vec3& dirCol,   float dirInt)
+    {
+        lightOverride.active                = true;
+        lightOverride.ambientColor          = ambCol;
+        lightOverride.ambientIntensity      = ambInt;
+        lightOverride.directionalDirection  = dirDir;
+        lightOverride.directionalColor      = dirCol;
+        lightOverride.directionalIntensity  = dirInt;
+    }
+    void clearLightOverride() { lightOverride.active = false; }
+    const SLightOverride& getLightOverride() const { return lightOverride; }
+
 protected:
     std::vector<IRenderStage*> renderStages;
+    SCameraOverride            cameraOverride;
+    SLightOverride             lightOverride;
 };
 
 #endif // RENDER_PIPELINE_INTERFACE_H

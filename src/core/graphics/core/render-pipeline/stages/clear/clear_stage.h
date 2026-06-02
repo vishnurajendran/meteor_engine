@@ -1,5 +1,5 @@
 //
-// Clear stage — RS_Clear (500).
+// Clear stage - RS_Clear (500).
 //
 // Clears BUFFER_OPAQUE colour and depth before any rendering.
 // Runs after depth/shadow (which use their own buffers) and before

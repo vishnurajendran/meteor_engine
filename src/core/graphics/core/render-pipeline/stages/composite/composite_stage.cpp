@@ -53,7 +53,7 @@ void main()
 {
     if (uMode == 1)
     {
-        // Depth — apply power curve for contrast (raw depth is mostly 0.99+)
+        // Depth - apply power curve for contrast (raw depth is mostly 0.99+)
         float d = texture(uTex, vUV).r;
         d = pow(d, 128.0);   // exaggerate near-far difference
         FragColor = vec4(vec3(1.0 - d), 1.0);  // invert: near=white, far=black
@@ -82,7 +82,7 @@ void MCompositeStage::init(IRenderPipeline* const pipeline)
     auto handle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                       ->getAsset<MShaderAsset>(FINAL_COMPOSITE_SHADER_PATH);
     if (!handle)
-        MERROR("MCompositeStage::init — could not load: " + SString(FINAL_COMPOSITE_SHADER_PATH));
+        MERROR("MCompositeStage::init - could not load: " + SString(FINAL_COMPOSITE_SHADER_PATH));
 }
 
 void MCompositeStage::cleanup(IRenderPipeline* const pipeline)

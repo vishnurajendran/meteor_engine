@@ -3,7 +3,7 @@
 
 out vec4 FragColor;  // Uniform color
 
-// MVP matrices — declared here so fragment shaders can access view/model/projection.
+// MVP matrices - declared here so fragment shaders can access view/model/projection.
 // These are also declared in meteor_projection_utils.glsl (vertex only), but the
 // fragment stage needs them independently. GLSL allows identical uniform
 // declarations in both stages without conflict.

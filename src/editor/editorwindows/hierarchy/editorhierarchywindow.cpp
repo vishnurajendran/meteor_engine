@@ -1,9 +1,10 @@
 #include "editorhierarchywindow.h"
 #include "imgui.h" // must precede ImGuizmo.h and any header that pulls it in
-
+#include "imgui-SFML.h"
 #include <algorithm>
 #include <filesystem>
 #include "../../../default_engine_icon_paths.h"
+#include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/audio/audio_entity/audio_listener_entity.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"
@@ -260,7 +261,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
     bool nodeOpen = ImGui::TreeNodeEx(("##n_" + entity->getGUID().str()).c_str(), nodeFlags);
 
-    // Pop colours immediately — they must not bleed into sibling widgets
+    // Pop colours immediately - they must not bleed into sibling widgets
     ImGui::PopStyleColor(3);
 
     if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen())
@@ -313,7 +314,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         if (relY < 0.25f)      zone = EDropZone::Before;
         else if (relY > 0.75f) zone = EDropZone::After;
 
-        // Visual feedback — insertion line or reparent outline
+        // Visual feedback - insertion line or reparent outline
         if (zone == EDropZone::Before)
         {
             ImGui::GetWindowDrawList()->AddLine(

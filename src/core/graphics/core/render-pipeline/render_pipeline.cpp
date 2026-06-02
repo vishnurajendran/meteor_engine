@@ -42,6 +42,16 @@ void MRenderPipeline::init()
     MLOG("MRenderPipeline:: Initialised");
 }
 
+void MRenderPipeline::initManual()
+{
+    if (initialised)
+        return;
+
+    // Mark as ready without adding any stages.
+    // The caller adds only the stages it needs via addStage<T>().
+    initialised = true;
+}
+
 void MRenderPipeline::cleanup()
 {
     if (!initialised)
@@ -99,9 +109,15 @@ void MRenderPipeline::preRender()
     if (!initialised)
         return;
 
-    renderItems.clear();
+    // In manual mode the caller has already populated renderItems via
+    // clearRenderItems() + submitRenderItem().  Skip the scene collection.
+    if (!manualItemMode)
+    {
+        renderItems.clear();
+        MRenderQueue::collectAll(this);
+    }
+
     clearCompositeFlags();
-    MRenderQueue::collectAll(this);
 
     if (!bufferRegistry.getRenderBuffer())
         return;

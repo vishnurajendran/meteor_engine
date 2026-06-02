@@ -1,5 +1,5 @@
 //
-// Gizmo stage — RS_Gizmo (8500).
+// Gizmo stage - RS_Gizmo (8500).
 //
 // Runs after MCompositeStage. Blits scene depth from BUFFER_OPAQUE into the
 // render target so icon gizmos can depth-test against geometry, then draws

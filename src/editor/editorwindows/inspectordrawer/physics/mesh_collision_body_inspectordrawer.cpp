@@ -30,7 +30,7 @@ void MMeshCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
     auto* body = dynamic_cast<MMeshCollisionBody*>(target);
 
-    // ---- Physics Body (custom — blocks Dynamic) ----------------------------
+    // ---- Physics Body (custom - blocks Dynamic) ----------------------------
 
     if (ImGui::CollapsingHeader("Physics Body", ImGuiTreeNodeFlags_DefaultOpen))
     {
@@ -40,7 +40,7 @@ void MMeshCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
             ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
 
-            // Body Type — Dynamic selectable but visually disabled with tooltip
+            // Body Type - Dynamic selectable but visually disabled with tooltip
             static constexpr const char* kBodyTypeNames[] = { "Static", "Dynamic", "Kinematic" };
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();

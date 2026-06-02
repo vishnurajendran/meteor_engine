@@ -21,7 +21,7 @@ protected:
 private:
     MStaticMeshInspectorDrawer();
 
-    // One reference control per material slot — no property panel here.
+    // One reference control per material slot - no property panel here.
     // Material properties are edited by selecting the material asset directly.
     struct SSlotControls
     {

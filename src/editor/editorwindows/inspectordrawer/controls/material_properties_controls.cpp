@@ -3,6 +3,8 @@
 //
 
 #include "material_properties_controls.h"
+#include <cctype>
+#include <string>
 #include <vector>
 #include "asset_reference_controls.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
@@ -13,13 +15,48 @@
 #include "core/utils/logger.h"
 #include "imgui.h"
 
+// ── Key prettifier ───────────────────────────────────────────────────────────
+// Strips leading underscores, inserts spaces before camelCase transitions,
+// and capitalizes the first letter.
+//
+//   _emissionColor   ->  Emission Color
+//   _useAlbedoTex    ->  Use Albedo Tex
+//   _metallic        ->  Metallic
+//   _normalMap       ->  Normal Map
+
+static SString prettifyPropertyKey(const SString& key)
+{
+    std::string s = key.str();
+
+    // Strip leading underscores
+    while (!s.empty() && s[0] == '_')
+        s = s.substr(1);
+
+    if (s.empty()) return key;
+
+    // Capitalize first letter
+    s[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(s[0])));
+
+    // Insert a space before each uppercase letter that follows a lowercase
+    std::string result;
+    result += s[0];
+    for (size_t i = 1; i < s.size(); ++i)
+    {
+        if (std::isupper(static_cast<unsigned char>(s[i])) &&
+            std::islower(static_cast<unsigned char>(s[i - 1])))
+            result += ' ';
+        result += s[i];
+    }
+
+    return SString(result.c_str());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 void MMaterialPropertyControl::draw(MMaterialAsset* asset)
 {
     if (!asset) return;
 
-    // Resolve fresh every call — never store the raw MMaterial* which can
-    // become dangling between frames if the asset is hot-reloaded.
     MMaterial* target = asset->getMaterial();
     if (!target) return;
 
@@ -27,25 +64,31 @@ void MMaterialPropertyControl::draw(MMaterialAsset* asset)
         return;
 
     constexpr float LABEL_COL_W = 120.0f;
-    if (!ImGui::BeginTable("##mat_props", 2, ImGuiTableFlags_None))
+    if (!ImGui::BeginTable("##mat_props", 2,
+                           ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV))
         return;
 
     ImGui::TableSetupColumn("label",  ImGuiTableColumnFlags_WidthFixed,   LABEL_COL_W);
     ImGui::TableSetupColumn("widget", ImGuiTableColumnFlags_WidthStretch);
 
-    // Snapshot so setProperty() calls inside draw helpers don't invalidate the iterator.
     const auto& props = target->getProperties();
+    const auto& order = target->getPropertyOrder();
     if (props.empty())
     {
         ImGui::EndTable();
         return;
     }
 
-    std::vector<std::pair<SString, SShaderPropertyValue>> snapshot(
-        props.begin(), props.end());
-
-    for (auto& [key, val] : snapshot)
+    // Iterate in the order the shader declared the properties, not the
+    // arbitrary hash-bucket order of the unordered_map.  Each value is
+    // copied so draw helpers can modify it without invalidating the map.
+    for (const auto& key : order)
+    {
+        auto it = props.find(key);
+        if (it == props.end()) continue;
+        auto val = it->second;
         drawProperty(key, val, target);
+    }
 
     ImGui::EndTable();
 }
@@ -54,35 +97,33 @@ void MMaterialPropertyControl::drawProperty(const SString& label,
                                              SShaderPropertyValue& propertyValue,
                                              MMaterial* target)
 {
-    // Skip entirely for types we don't render - avoids an empty table row.
     const auto type = propertyValue.getType();
     if (type != Int && type != Float &&
         type != UniformVec2 && type != UniformVec3 && type != UniformVec4 &&
         type != Color && type != Texture && type != Bool)
         return;
 
-    // TableNextRow only after we know we have something to draw.
     ImGui::TableNextRow();
 
-    // Label column
+    // Label column -- show the prettified name
     ImGui::TableSetColumnIndex(0);
     ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(label.c_str());
+    ImGui::TextUnformatted(prettifyPropertyKey(label).c_str());
 
-    // Widget column - always fill it so ImGui table state stays consistent.
+    // Widget column
     ImGui::TableSetColumnIndex(1);
     ImGui::SetNextItemWidth(-FLT_MIN);
 
     switch (type)
     {
         case Int:           drawIntParameter(label, propertyValue, target);      break;
-        case Bool:          drawBoolParameter(label, propertyValue, target);        break;
+        case Bool:          drawBoolParameter(label, propertyValue, target);     break;
         case Float:         drawFloatParameter(label, propertyValue, target);    break;
-        case UniformVec2:   drawVec2Parameter(label, propertyValue, target);        break;
-        case UniformVec3:   drawVec3Parameter(label, propertyValue, target);        break;
-        case UniformVec4:   drawVec4Parameter(label, propertyValue, target);        break;
-        case Color:         drawColorParameter(label, propertyValue, target);       break;
-        case Texture:       drawTextureParameter(label, propertyValue, target);     break;
+        case UniformVec2:   drawVec2Parameter(label, propertyValue, target);     break;
+        case UniformVec3:   drawVec3Parameter(label, propertyValue, target);     break;
+        case UniformVec4:   drawVec4Parameter(label, propertyValue, target);     break;
+        case Color:         drawColorParameter(label, propertyValue, target);    break;
+        case Texture:       drawTextureParameter(label, propertyValue, target);  break;
         default:            ImGui::TextDisabled("(unsupported type)");           break;
     }
 }
@@ -91,8 +132,6 @@ bool MMaterialPropertyControl::canAcceptTextureAsset(MAsset* asset)
 {
     return dynamic_cast<MTextureAsset*>(asset) != nullptr;
 }
-
-// drawLabel removed — labels are now rendered by drawProperty via the table layout.
 
 void MMaterialPropertyControl::drawFloatParameter(SString label, SShaderPropertyValue& value, MMaterial* target)
 {
@@ -129,15 +168,16 @@ void MMaterialPropertyControl::drawVec2Parameter(const SString& label, SShaderPr
 
 void MMaterialPropertyControl::drawBoolParameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
 {
-    auto id  = STR("##_F2_") + label + "_" + target->getGUID();
+    // Use ## prefix so the checkbox has no visible text -- the label is
+    // already rendered in the table's label column by drawProperty().
+    auto id  = STR("##_BOOL_") + label + "_" + target->getGUID();
     auto val = value.getBoolValue();
-    if (ImGui::Checkbox(label.c_str(), &val))
+    if (ImGui::Checkbox(id.c_str(), &val))
     {
         value.setBoolValue(val);
         target->setProperty(label, value);
     }
 }
-
 
 void MMaterialPropertyControl::drawVec3Parameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
 {
@@ -163,8 +203,6 @@ void MMaterialPropertyControl::drawVec4Parameter(const SString& label, SShaderPr
 
 void MMaterialPropertyControl::drawColorParameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
 {
-    // Compact swatch — same pattern as the light inspector color picker.
-    // Clicking opens a popup with the full picker; panel stays compact otherwise.
     auto       id   = STR("##_COL_") + label + "_" + target->getGUID();
     auto       popId = STR("##_COLPOP_") + label + "_" + target->getGUID();
     glm::vec4  val  = value.getVec4Val();
@@ -191,31 +229,34 @@ void MMaterialPropertyControl::drawColorParameter(const SString& label, SShaderP
         ImGui::EndPopup();
     }
 }
+
 void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShaderPropertyValue& value, MMaterial* target)
 {
-    // Key by property label only — stable across material rebuilds.
-    // target->getGUID() changes every time MMaterial is reconstructed
-    // (deferred load, hot reload), which would cause the cache to miss
-    // every time and show "(none)" for all texture slots.
     const SString controlRefId = label;
 
     MAssetReferenceControl* texRefControl = nullptr;
     if (textureReferences.contains(controlRefId))
     {
         texRefControl = textureReferences[controlRefId];
-        // Sync the control if the material's property changed externally
-        // (e.g. loaded from disk). Only update if the stored ID differs
-        // from what the property says.
+
+        // Sync the control to match the material's current property value.
         const auto assetPath = value.getTexAssetReference();
         if (!assetPath.empty())
         {
-            const auto current = texRefControl->getAssetReference();
+            auto current = texRefControl->getAssetReference();
             if (!current || current->getPath() != assetPath)
             {
-                const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MAsset>(assetPath);
+                auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                                     ->getAsset<MAsset>(assetPath);
                 if (texAsset)
                     texRefControl->setAssetReference(texAsset);
             }
+        }
+        else
+        {
+            // Property has no texture assigned -- clear any stale reference
+            // left over from a previously inspected material.
+            texRefControl->setAssetReference(TAssetHandle<MAsset>());
         }
     }
     else
@@ -228,22 +269,21 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
         const auto assetPath = value.getTexAssetReference();
         if (!assetPath.empty())
         {
-            const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MAsset>(assetPath);
+            auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                                 ->getAsset<MAsset>(assetPath);
             if (texAsset)
                 texRefControl->setAssetReference(texAsset);
         }
     }
 
-    // Use the compact single-row control so it fits inside the table without
-    // breaking the row height. The full drawControl (85px) was only needed
-    // for the standalone Static Mesh inspector panels.
     if (texRefControl->drawCompactControl(label))
     {
-        const auto asset = texRefControl->getAssetReference();
+        auto asset = texRefControl->getAssetReference();
         value.setTextureReference(asset ? asset->getPath() : SString(""));
         target->setProperty(label, SShaderPropertyValue(value));
     }
 }
+
 void MMaterialPropertyControl::clearTextureReferences()
 {
     for (auto& [id, ctrl] : textureReferences)

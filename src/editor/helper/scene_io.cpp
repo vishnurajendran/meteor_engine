@@ -19,7 +19,7 @@ bool MSceneIO::loadScene(const SString& filePath)
 {
     if (filePath.empty())
     {
-        MERROR("MSceneIO::loadScene — empty path");
+        MERROR("MSceneIO::loadScene - empty path");
         return false;
     }
 
@@ -27,7 +27,7 @@ bool MSceneIO::loadScene(const SString& filePath)
         MSceneManager::getSceneManagerInstance());
     if (!editorSceneManager)
     {
-        MERROR("MSceneIO::loadScene — not running in editor context");
+        MERROR("MSceneIO::loadScene - not running in editor context");
         return false;
     }
 

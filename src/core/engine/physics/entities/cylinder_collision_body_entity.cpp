@@ -54,7 +54,7 @@ void MCylinderCollisionBody::createCollisionBody()
 
     physicsBody = physicsEngine->createCylinderCollisionBody(settings);
     if (!physicsBody)
-        MERROR("MCylinderCollisionBody::createCollisionBody — failed to create cylinder collider");
+        MERROR("MCylinderCollisionBody::createCollisionBody - failed to create cylinder collider");
 }
 
 void MCylinderCollisionBody::releaseBody()
