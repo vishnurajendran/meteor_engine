@@ -515,6 +515,8 @@ set(CORE_SOURCES
         src/core/profiling/simple_profiler/simple_profiler.cpp
         src/core/profiling/default_profile_keys.h
         src/core/profiling/profiler.h
+        src/core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.cpp
+        src/core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.h
 )
 
 set(EDITOR_SOURCES

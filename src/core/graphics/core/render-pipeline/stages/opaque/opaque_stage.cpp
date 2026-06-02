@@ -46,11 +46,24 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
-    // No glClear — MClearStage handles clearing before skybox and geometry.
+    // No glClear -- MClearStage handles clearing before skybox and geometry.
 
-    const MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
-    const glm::mat4 viewMat = camera ? camera->getViewMatrix()          : glm::mat4(1.f);
-    const glm::mat4 projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
+    // Use the pipeline-level camera override if set, otherwise fall back to
+    // MViewManagement.  The override is used by secondary pipelines
+    // (thumbnails, etc.) that supply their own camera matrices.
+    glm::mat4 viewMat(1.f), projMat(1.f);
+    const auto& camOverride = pipeline->getCameraOverride();
+    if (camOverride.active)
+    {
+        viewMat = camOverride.view;
+        projMat = camOverride.proj;
+    }
+    else
+    {
+        const MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
+        viewMat = camera ? camera->getViewMatrix()          : glm::mat4(1.f);
+        projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
+    }
 
     auto setMVP = [&](const glm::mat4& model)
     {

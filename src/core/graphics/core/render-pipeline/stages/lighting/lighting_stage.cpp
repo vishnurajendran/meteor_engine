@@ -106,7 +106,19 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     lightingShader->bind();
 
-    if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
+    // Use the pipeline-level camera override if set, otherwise fall back to
+    // MViewManagement.  The override is used by secondary pipelines
+    // (thumbnails, etc.) that supply their own camera matrices.
+    const auto& camOverride = pipeline->getCameraOverride();
+    if (camOverride.active)
+    {
+        SShaderPropertyValue viewVal, projVal;
+        viewVal.setMat4Val(camOverride.view);
+        projVal.setMat4Val(camOverride.proj);
+        lightingShader->setPropertyValue("view",       viewVal);
+        lightingShader->setPropertyValue("projection", projVal);
+    }
+    else if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
     {
         SShaderPropertyValue viewVal, projVal;
         viewVal.setMat4Val(camera->getViewMatrix());

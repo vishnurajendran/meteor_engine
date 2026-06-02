@@ -6,7 +6,7 @@
 #ifndef METEOR_ENGINE_DRAWCALL_H
 #define METEOR_ENGINE_DRAWCALL_H
 #include "SFML/Graphics.hpp"
-#include "core/meteor_core_minimal.h"
+#include "core/object/object.h"
 
 class MDrawCall : public MObject {
     DEFINE_OBJECT_SUBCLASS(MDrawCall)

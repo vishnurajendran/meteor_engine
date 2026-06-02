@@ -6,6 +6,7 @@
 
 #include "core/application/application.h"
 #include "core/engine/scene/scenemanager.h"
+#include "core/utils/logger.h"
 #include "editor/helper/scene_io.h"
 #include "editor/window/menubar/menubartree.h"
 

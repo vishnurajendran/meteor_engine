@@ -5,9 +5,11 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <core/meteor_core_minimal.h>
 #include <pugixml.hpp>
 #include <unordered_set>
+
+#include "core/object/object.h"
+#include "core/object/objectpointer.h"
 
 
 class MSpatialEntity;

@@ -4,6 +4,7 @@
 
 #include "simulation_manager.h"
 
+#include "core/utils/fileio.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
 
 void MEditorSimulationManagerSubsystem::init()

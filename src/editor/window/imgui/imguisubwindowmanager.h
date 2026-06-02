@@ -5,8 +5,8 @@
 #ifndef METEOR_ENGINE_IMGUISUBWINDOWMANAGER_H
 #define METEOR_ENGINE_IMGUISUBWINDOWMANAGER_H
 
+#include "core/object/object.h"
 #include "vector"
-#include "core/meteor_core_minimal.h"
 
 class MImGuiSubWindow;
 

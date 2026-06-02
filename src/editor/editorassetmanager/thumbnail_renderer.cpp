@@ -1,7 +1,7 @@
 // thumbnailrenderer.cpp
 
-#include "thumbnail_renderer.h"
 #include <GL/glew.h>
+#include "thumbnail_renderer.h"
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -12,9 +12,13 @@
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/graphics/core/material/material.h"
+#include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
+#include "core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.h"
+#include "core/graphics/core/render-pipeline/render_item.h"
+#include "core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h"
 #include "core/utils/logger.h"
 
-// ── Built-in Lambert shader ───────────────────────────────────────────────────
+// -- Built-in Lambert shader ---------------------------------------------------
 
 static const char* k_thumbVert = R"GLSL(
 #version 460 core
@@ -51,7 +55,7 @@ void main()
 {
     vec3 N = normalize(vNormal);
 
-    // Spherical UV from normal — no vertex UV attribute needed.
+    // Spherical UV from normal -- no vertex UV attribute needed.
     vec3 color = baseColor;
     if (useAlbedoTex == 1)
     {
@@ -62,15 +66,15 @@ void main()
         color *= texture(albedoTex, uv).rgb;
     }
 
-    // Key light — warm, upper-left
+    // Key light -- warm, upper-left
     vec3 key  = normalize(vec3(-1.0, 2.0, 2.0));
     float kd  = max(dot(N, key), 0.0) * 0.75;
 
-    // Fill light — cool, right
+    // Fill light -- cool, right
     vec3 fill = normalize(vec3(2.0, 0.5, 1.0));
     float fd  = max(dot(N, fill), 0.0) * 0.25;
 
-    // Rim light — back edge highlight
+    // Rim light -- back edge highlight
     vec3 rim  = normalize(vec3(0.0, -1.0, -2.0));
     float rd  = pow(max(dot(N, rim), 0.0), 4.0) * 0.3;
 
@@ -79,7 +83,7 @@ void main()
 }
 )GLSL";
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 MThumbnailRenderer::~MThumbnailRenderer()
 {
@@ -93,19 +97,36 @@ void MThumbnailRenderer::init()
     fbo.makeBuffer("thumbnail_fbo");
     if (!fbo.resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE))
     {
-        MERROR("MThumbnailRenderer::init — failed to create thumbnail FBO");
+        MERROR("MThumbnailRenderer::init -- failed to create thumbnail FBO");
         return;
     }
 
     buildThumbnailShader();
     buildSphereGeometry();
+    initThumbnailPipeline();
 
     initialised = thumbnailShader != 0;
     if (initialised)
         MLOG("MThumbnailRenderer:: Initialised");
 }
 
-// ── Request queue ─────────────────────────────────────────────────────────────
+// -- Thumbnail pipeline setup --------------------------------------------------
+
+void MThumbnailRenderer::initThumbnailPipeline()
+{
+    // Set up a lightweight pipeline with only the opaque stage.
+    // Manual item mode prevents it from collecting drawables from the
+    // main scene via MRenderQueue.
+    thumbnailPipeline.initManual();
+    thumbnailPipeline.setManualItemMode(true);
+    thumbnailPipeline.addStage<MOpaqueStage>();
+
+    // The headless render buffer provides resolution without an SFML window.
+    headlessRenderBuffer = new SHeadlessRenderBuffer(THUMBNAIL_SIZE, THUMBNAIL_SIZE);
+    thumbnailPipeline.setRenderBuffer(headlessRenderBuffer);
+}
+
+// -- Request queue -------------------------------------------------------------
 
 void MThumbnailRenderer::requestThumbnail(MAsset* asset, MThumbnailCache& cache)
 {
@@ -140,7 +161,7 @@ void MThumbnailRenderer::clearQueue()
         requestQueue.pop();
 }
 
-// ── Tick — one render per frame ───────────────────────────────────────────────
+// -- Tick -- one render per frame ----------------------------------------------
 
 bool MThumbnailRenderer::tick(MThumbnailCache& cache)
 {
@@ -173,7 +194,7 @@ bool MThumbnailRenderer::tick(MThumbnailCache& cache)
     return thumb != nullptr;
 }
 
-// ── Mesh thumbnail ────────────────────────────────────────────────────────────
+// -- Mesh thumbnail ------------------------------------------------------------
 
 sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
 {
@@ -236,100 +257,82 @@ sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
     return tex;
 }
 
-// ── Material thumbnail ──────────────────────────────────────────────────────────
+// -- Material thumbnail (pipeline-driven) -------------------------------------
 
 sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
 {
     if (!asset || sphereVAO == 0) return nullptr;
 
-    // getMaterial() returns the shared 'original' — do NOT delete it.
+    // getMaterial() returns the shared 'original' -- do NOT delete it.
     MMaterial* mat = asset->getMaterial();
-
-    glm::vec3    baseColor(0.85f, 0.85f, 0.85f);
-    unsigned int albedoTexId  = 0;
-    bool         hasAlbedoTex = false;
-
-    if (mat)
+    if (!mat || !mat->isValid())
     {
-        for (auto& [key, val] : mat->getProperties())
-        {
-            // Extract base color from the first Color property.
-            if (val.getType() == SShaderPropertyType::Color)
-            {
-                auto c = val.getColor();
-                baseColor = glm::vec3(c.r, c.g, c.b);
-            }
+        // No usable shader -- fall back to the Lambert with a default colour.
+        SThumbnailCamera cam = computeThumbnailCamera(glm::vec3(0.f), 1.0f);
 
-            // Extract albedo texture — first Texture property found.
-            if (!hasAlbedoTex && val.getType() == SShaderPropertyType::Texture)
-            {
-                const SString& texPath = val.getTexAssetReference();
-                if (!texPath.empty())
-                {
-                    auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-                                        ->getAsset<MTextureAsset>(texPath.c_str());
-                    if (texAsset && texAsset->getTexture() &&
-                        texAsset->getTexture()->getCoreTexture())
-                    {
-                        albedoTexId  = texAsset->getTexture()->getCoreTexture()
-                                               ->getNativeHandle();
-                        hasAlbedoTex = true;
-                    }
-                }
-            }
-        }
+        fbo.bindAsActive();
+        glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
+        glClearColor(0.12f, 0.12f, 0.12f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glm::vec3 fallbackColor(0.85f, 0.45f, 0.15f);
+        SMeshDraw sphere{ sphereVAO, sphereEBO, sphereIndexCount };
+        drawMeshes({ sphere }, cam, fallbackColor);
+
+        auto* tex = readbackToTexture();
+        fbo.unbind();
+        return tex;
     }
 
-    baseColor = glm::clamp(baseColor, glm::vec3(0.05f), glm::vec3(1.0f));
+    // -- Build a render item for the unit sphere with this material -----------
+    SRenderItem item;
+    item.vao        = sphereVAO;
+    item.ebo        = sphereEBO;
+    item.indexCount  = sphereIndexCount;
+    item.material   = mat;
+    item.transform  = glm::mat4(1.f);
+    item.castsShadow = false;
 
+    // -- Set the thumbnail camera on the pipeline -----------------------------
     SThumbnailCamera cam = computeThumbnailCamera(glm::vec3(0.f), 1.0f);
+    thumbnailPipeline.setCameraOverride(cam.view, cam.proj);
 
-    fbo.bindAsActive();
+    // -- Manually clear the opaque buffer since we do not use MClearStage -----
+    auto* opaqueBuffer = thumbnailPipeline.getBufferRegistry()
+                                           .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
+    if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0)
+    {
+        MERROR("MThumbnailRenderer::renderMaterialThumbnail -- opaque buffer not ready");
+        return nullptr;
+    }
+
+    opaqueBuffer->bindAsActive();
     glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glDepthMask(GL_TRUE);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
     glClearColor(0.12f, 0.12f, 0.12f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    opaqueBuffer->unbind();
 
-    glUseProgram(thumbnailShader);
+    // -- Submit the sphere and drive the pipeline for one frame ---------------
+    thumbnailPipeline.clearRenderItems();
+    thumbnailPipeline.submitRenderItem(item);
+    thumbnailPipeline.preRender();
+    thumbnailPipeline.render();
+    thumbnailPipeline.postRender();
 
-    glm::mat4 model(1.0f);
-    if (uModel     >= 0) glUniformMatrix4fv(uModel, 1, GL_FALSE, glm::value_ptr(model));
-    if (uView      >= 0) glUniformMatrix4fv(uView,  1, GL_FALSE, glm::value_ptr(cam.view));
-    if (uProj      >= 0) glUniformMatrix4fv(uProj,  1, GL_FALSE, glm::value_ptr(cam.proj));
-    if (uBaseColor >= 0) glUniform3fv(uBaseColor, 1, glm::value_ptr(baseColor));
-
-    // Bind albedo texture if the material has one.
-    if (hasAlbedoTex && uUseAlbedoTex >= 0)
-    {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, albedoTexId);
-        if (uAlbedoTex >= 0) glUniform1i(uAlbedoTex, 0);
-        glUniform1i(uUseAlbedoTex, 1);
-    }
-    else if (uUseAlbedoTex >= 0)
-    {
-        glUniform1i(uUseAlbedoTex, 0);
-    }
-
-    glBindVertexArray(sphereVAO);
-    glDrawElements(GL_TRIANGLES, sphereIndexCount, GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
-
-    // Clean up texture state.
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glUseProgram(0);
-
+    // -- Read back the result from BUFFER_OPAQUE ------------------------------
+    opaqueBuffer->bindAsActive();
     auto* tex = readbackToTexture();
-    fbo.unbind();
+    opaqueBuffer->unbind();
+
     return tex;
 }
 
-// ── Shared draw helper ────────────────────────────────────────────────────────
+// -- Shared draw helper --------------------------------------------------------
 
 void MThumbnailRenderer::drawMeshes(const std::vector<SMeshDraw>& meshes,
                                      const SThumbnailCamera& cam,
@@ -362,7 +365,7 @@ void MThumbnailRenderer::drawMeshes(const std::vector<SMeshDraw>& meshes,
     glUseProgram(0);
 }
 
-// ── Pixel readback ────────────────────────────────────────────────────────────
+// -- Pixel readback ------------------------------------------------------------
 
 sf::Texture* MThumbnailRenderer::readbackToTexture()
 {
@@ -370,7 +373,7 @@ sf::Texture* MThumbnailRenderer::readbackToTexture()
     glReadPixels(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE,
                  GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
-    // OpenGL stores rows bottom-up; SFML expects top-down — flip vertically.
+    // OpenGL stores rows bottom-up; SFML expects top-down -- flip vertically.
     std::vector<uint8_t> flipped(pixels.size());
     const int rowBytes = THUMBNAIL_SIZE * 4;
     for (int y = 0; y < THUMBNAIL_SIZE; ++y)
@@ -390,7 +393,7 @@ sf::Texture* MThumbnailRenderer::readbackToTexture()
     return tex;
 }
 
-// ── Camera helpers ────────────────────────────────────────────────────────────
+// -- Camera helpers ------------------------------------------------------------
 
 MThumbnailRenderer::SThumbnailCamera
 MThumbnailRenderer::computeThumbnailCamera(const glm::vec3& center, float radius)
@@ -410,7 +413,7 @@ MThumbnailRenderer::computeThumbnailCamera(const glm::vec3& center, float radius
     return cam;
 }
 
-// ── GL resource creation ──────────────────────────────────────────────────────
+// -- GL resource creation ------------------------------------------------------
 
 void MThumbnailRenderer::buildThumbnailShader()
 {
@@ -512,4 +515,8 @@ void MThumbnailRenderer::destroyGL()
     if (sphereVAO)       { glDeleteVertexArrays(1, &sphereVAO); sphereVAO = 0; }
     if (sphereVBO)       { glDeleteBuffers(1, &sphereVBO);      sphereVBO = 0; }
     if (sphereEBO)       { glDeleteBuffers(1, &sphereEBO);      sphereEBO = 0; }
+
+    thumbnailPipeline.cleanup();
+    delete headlessRenderBuffer;
+    headlessRenderBuffer = nullptr;
 }

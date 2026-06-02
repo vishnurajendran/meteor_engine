@@ -5,8 +5,8 @@
 #ifndef SCENEMANAGER_H
 #define SCENEMANAGER_H
 
+#include "core/object/object.h"
 #include "functional"
-#include "core/meteor_core_minimal.h"
 
 class MScene;
 /**

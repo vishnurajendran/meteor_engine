@@ -15,6 +15,7 @@
 #include <queue>
 
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/utils/fileio.h"
 #include "default_engine_icon_paths.h"
 #include "editor/editor_utils/editor_utility.h"
 

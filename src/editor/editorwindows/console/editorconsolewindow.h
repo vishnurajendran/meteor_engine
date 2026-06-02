@@ -6,7 +6,6 @@
 #define METEOR_ENGINE_EDITORCONSOLEWINDOW_H
 
 #include <array>
-#include "editor/meteorite_minimal.h"
 #include "editor/window/imgui/imguisubwindow.h"
 #include "core/utils/logger.h"
 

@@ -6,7 +6,6 @@
 #ifndef SPATIAL_H
 #define SPATIAL_H
 
-#include <core/meteor_core_minimal.h>
 #include <vector>
 #include "core/engine/entities/entity_type_registry.h"
 #include "core/engine/scene/scene.h"

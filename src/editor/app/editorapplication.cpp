@@ -24,6 +24,11 @@
 #include "simulation_manager.h"
 
 #include "core/profiling/profiler.h"
+#include "core/utils/guid.h"
+#include "editor/editorwindows/console/editorconsolewindow.h"
+#include "editor/editorwindows/hierarchy/editorhierarchywindow.h"
+#include "editor/editorwindows/inspector/editorinspectorwindow.h"
+#include "editor/editorwindows/scene/editorsceneviewwindow.h"
 
 MObject* MEditorApplication::SelectedObject = nullptr;
 

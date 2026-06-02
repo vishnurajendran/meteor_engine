@@ -1,5 +1,7 @@
-#include "editorsceneviewwindow.h"
+#include "imgui.h"
+#include "imgui-SFML.h"
 
+#include "editorsceneviewwindow.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
@@ -14,7 +16,6 @@
 #include "editor/app/editorapplication.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/settings/editor_settings.h"
-#include "imgui.h"
 #include "scene_raycast.h"
 
 // --- Style constants ----------------------------------------------------------

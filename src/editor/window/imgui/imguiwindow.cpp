@@ -19,6 +19,7 @@
 #include "imguiwindowconstants.h"
 
 #include "core/profiling/profiler.h"
+#include "core/utils/logger.h"
 #include "editor/profiling/editor_profile_keys.h"
 
 bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)

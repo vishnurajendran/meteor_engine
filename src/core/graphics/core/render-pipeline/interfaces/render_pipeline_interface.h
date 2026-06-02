@@ -27,7 +27,7 @@ enum ECompositeFlags : uint32_t
     ECF_Transparent = 1 << 4,
 };
 
-// Pure orchestration interface.  No render logic lives here — the pipeline
+// Pure orchestration interface.  No render logic lives here -- the pipeline
 // creates buffers and stages, drives the frame lifecycle, and exposes state
 // that stages need to communicate with each other.
 class IRenderPipeline
@@ -65,20 +65,43 @@ public:
     virtual void           setRenderBuffer(SRenderBuffer* buffer) = 0;
     virtual SRenderBuffer* getRenderBuffer()                      = 0;
 
-    // Buffer registry — stages read/write named buffers
+    // Buffer registry -- stages read/write named buffers
     virtual MBufferRegistery& getBufferRegistry() = 0;
 
-    // Render items — collected once per frame, consumed by every stage
+    // Render items -- collected once per frame, consumed by every stage
     virtual const std::vector<SRenderItem>& getRenderItems() const = 0;
 
-    // Composite flags — stages declare what they produced this frame
+    // Composite flags -- stages declare what they produced this frame
     virtual uint32_t getCompositeFlags()                  const = 0;
     virtual void     addCompositeFlag(ECompositeFlags flag)     = 0;
     virtual void     removeCompositeFlag(ECompositeFlags flag)  = 0;
     virtual void     clearCompositeFlags()                      = 0;
 
+    // ---- Camera override ----------------------------------------------------
+    // When active, stages use these matrices instead of querying
+    // MViewManagement.  Used by the thumbnail pipeline and any future
+    // offscreen pipeline that needs its own camera.
+    struct SCameraOverride
+    {
+        bool      active = false;
+        glm::mat4 view   = glm::mat4(1.f);
+        glm::mat4 proj   = glm::mat4(1.f);
+    };
+
+    void setCameraOverride(const glm::mat4& view, const glm::mat4& proj)
+    {
+        cameraOverride.active = true;
+        cameraOverride.view   = view;
+        cameraOverride.proj   = proj;
+    }
+
+    void clearCameraOverride() { cameraOverride.active = false; }
+
+    const SCameraOverride& getCameraOverride() const { return cameraOverride; }
+
 protected:
     std::vector<IRenderStage*> renderStages;
+    SCameraOverride            cameraOverride;
 };
 
 #endif // RENDER_PIPELINE_INTERFACE_H

@@ -7,7 +7,9 @@
 
 #include <array>
 #include <map>
-#include "editor/meteorite_minimal.h"
+
+#include "core/object/object.h"
+#include "imgui.h"
 
 /// Maximum number of historical samples stored per profiler key.
 static constexpr int PROFILER_HISTORY_SIZE = 128;
