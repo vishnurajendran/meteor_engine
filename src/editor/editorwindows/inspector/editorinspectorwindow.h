@@ -5,9 +5,14 @@
 #ifndef METEOR_ENGINE_EDITORINSPECTORWINDOW_H
 #define METEOR_ENGINE_EDITORINSPECTORWINDOW_H
 
+#include "editor/editorwindows/editor_window_ids.h"
 #include "editor/window/imgui/imguisubwindow.h"
 
 class MEditorInspectorWindow : public MImGuiSubWindow {
+public:
+    unsigned int getWindowId() override { return EditorWindowIds::ID_INSPECTOR_WINDOW; }
+
+private:
     DEFINE_OBJECT_SUBCLASS(MEditorInspectorWindow)
 public:
     MEditorInspectorWindow();

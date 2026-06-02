@@ -646,6 +646,7 @@ set(EDITOR_SOURCES
         src/editor/profiling/profiler_stats_displayer.h
         src/editor/window/menubar/default/help/open_documentation/open_documentation.cpp
         src/editor/window/menubar/default/help/open_documentation/open_documentation.h
+        src/editor/editorwindows/editor_window_ids.h
 )
 
 set(PLAYER_SOURCES

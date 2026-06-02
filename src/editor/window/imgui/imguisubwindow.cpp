@@ -8,7 +8,7 @@
 
 MImGuiSubWindow::MImGuiSubWindow(int x, int y) {
     MImGuiSubWindowManager::add(this);
-    ImGui::SetNextWindowSize(ImVec2(x, y));
+    ImGui::SetNextWindowSize(ImVec2(x, y), ImGuiCond_FirstUseEver);
 }
 
 MImGuiSubWindow::MImGuiSubWindow(const SString &title, int x, int y) : MImGuiSubWindow(x, y) {
@@ -27,15 +27,15 @@ void MImGuiSubWindow::setWindowConstraints(float minx, float miny, float maxx, f
 
 void MImGuiSubWindow::draw(float deltaTime)
 {
-    ImGui::Begin(title.c_str());
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minSize);
+    ImGui::Begin(SString::format("{0}###{1}", title.c_str(), getWindowId()).c_str());
 
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
         handleInput(deltaTime);
 
     onGui(deltaTime);
-    ImGui::PopStyleVar();
     ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 void MImGuiSubWindow::handleInput(float deltaTime)

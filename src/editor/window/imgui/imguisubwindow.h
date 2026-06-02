@@ -24,6 +24,7 @@ public:
     void draw(float deltaTime);
     virtual void handleInput(float deltaTime);
     virtual void onGui(float deltaTime)=0;
+    virtual unsigned int getWindowId()=0;
 };
 
 
