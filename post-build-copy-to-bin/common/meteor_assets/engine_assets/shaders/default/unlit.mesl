@@ -4,16 +4,16 @@
         <property key="_color"              type="color"     default="(1,1,1,1)"/>
 
         <property key="_detailTex"          type="tex2d"     default=""/>
-        <property key="_useDetail"          type="bool"      default="0"/>
+        <property key="_useDetail"          type="bool"      default="False"/>
         <property key="_detailTiling"       type="float"     default="4.0"/>
         <property key="_detailStrength"     type="float"     default="0.5"/>
 
         <property key="_emissionTex"        type="tex2d"     default=""/>
-        <property key="_useEmission"        type="bool"      default="0"/>
+        <property key="_useEmission"        type="bool"      default="False"/>
         <property key="_emissionColor"      type="color"     default="(1,1,1,1)"/>
         <property key="_emissionIntensity"  type="float"     default="1.0"/>
 
-        <property key="_useCutout"          type="int"       default="0"/>
+        <property key="_useCutout"          type="bool"       default="False"/>
         <property key="_cutoutThreshold"    type="float"     default="0.5"/>
 
         <property key="_rimColor"           type="color"     default="(0.5,0.8,1.0,1)"/>

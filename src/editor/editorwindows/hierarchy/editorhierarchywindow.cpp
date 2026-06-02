@@ -1,9 +1,10 @@
 #include "editorhierarchywindow.h"
 #include "imgui.h" // must precede ImGuizmo.h and any header that pulls it in
-
+#include "imgui-SFML.h"
 #include <algorithm>
 #include <filesystem>
 #include "../../../default_engine_icon_paths.h"
+#include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/audio/audio_entity/audio_listener_entity.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"

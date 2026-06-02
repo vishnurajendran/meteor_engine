@@ -3,6 +3,7 @@
 #include <filesystem>
 #include "ImGuiFileDialog.h"
 #include "core/application/application.h"
+#include "core/utils/logger.h"
 #include "editor/window/menubar/menubartree.h"
 #include "imgui.h"
 

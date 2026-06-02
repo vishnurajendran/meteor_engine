@@ -10,9 +10,12 @@
 #define ENTITY_TYPE_REGISTRY_H
 
 #include <functional>
+#include <iostream>
 #include <string>
 #include <unordered_map>
-#include <iostream>
+
+#include "core/object/object.h"
+#include "core/utils/logger.h"
 
 class MSpatialEntity;
 class MEntityTypeRegistry : public MObject

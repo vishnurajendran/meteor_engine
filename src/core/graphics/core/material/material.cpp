@@ -3,7 +3,7 @@
 //
 
 #include "material.h"
-#include <map>
+#include <unordered_map>
 #include "core/graphics/core/shader/shader.h"
 #include "core/utils/logger.h"
 
@@ -15,11 +15,19 @@ MMaterial::MMaterial(MShader* shader, ShadingMode mode) : MObject()
 
     if (!shader)
     {
-        MERROR("MMaterial: constructed with null shader — properties will be empty");
+        MERROR("MMaterial: constructed with null shader -- properties will be empty");
         return;
     }
 
     properties = shader->getProperties();
+
+    // Capture the default iteration order from the shader.
+    // MMaterialAsset::buildMaterialAsset() will overwrite this with the
+    // XML file order via setPropertyOrder() after applying overrides.
+    propertyOrder.clear();
+    propertyOrder.reserve(properties.size());
+    for (auto& [key, _] : properties)
+        propertyOrder.push_back(key);
 }
 
 void MMaterial::bindMaterial() const
@@ -37,10 +45,13 @@ void MMaterial::bindMaterial() const
 
 void MMaterial::setProperty(const SString& name, const SShaderPropertyValue& value)
 {
+    if (!properties.contains(name))
+        propertyOrder.push_back(name);
+
     properties[name] = value;
 }
 
-const std::map<SString, SShaderPropertyValue>& MMaterial::getProperties() const
+const std::unordered_map<SString, SShaderPropertyValue>& MMaterial::getProperties() const
 {
     return properties;
 }
@@ -48,6 +59,7 @@ const std::map<SString, SShaderPropertyValue>& MMaterial::getProperties() const
 MMaterial* MMaterial::clone() const
 {
     auto* inst = new MMaterial(shader, shadingMode);
-    inst->properties = properties;
+    inst->properties    = properties;
+    inst->propertyOrder = propertyOrder;
     return inst;
 }

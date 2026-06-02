@@ -5,6 +5,7 @@
 #define LIGHT_ENTITY_H
 #include "../../graphics/core/render-pipeline/stages/lighting/light_type.h"
 #include "core/engine/entities/spatial/spatial.h"
+#include "core/utils/color.h"
 
 class MLightEntity : public MSpatialEntity
 {

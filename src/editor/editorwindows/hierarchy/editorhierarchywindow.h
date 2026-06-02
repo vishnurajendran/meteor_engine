@@ -5,9 +5,12 @@
 #pragma once
 #ifndef METEOR_ENGINE_EDITORHIERARCHYWINDOW_H
 #define METEOR_ENGINE_EDITORHIERARCHYWINDOW_H
+#include "SFML/Graphics/Texture.hpp"
+#include "editor/window/imgui/imguisubwindow.h"
 
-#include "editor/meteorite_minimal.h"
 
+class MSpatialEntity;
+class MScene;
 class MEditorHierarchyWindow : public MImGuiSubWindow
 {
     DEFINE_OBJECT_SUBCLASS(MEditorHierarchyWindow)

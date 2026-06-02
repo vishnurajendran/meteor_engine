@@ -5,8 +5,7 @@
 #pragma once
 #ifndef SHADER_H
 #define SHADER_H
-#include <map>
-
+#include <unordered_map>
 #include "SFML/OpenGL.hpp"
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
@@ -70,13 +69,13 @@ private:
     SString fragmentShaderSource;
     bool compiled = false;
     bool compileOnFirstUse;
-    std::map<SString, SShaderPropertyValue> properties;
+    std::unordered_map<SString, SShaderPropertyValue> properties;
 private:
     void compile();
 public:
-    MShader(const SString& vertProg, const SString& fragProg, const std::map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse=true);
+    MShader(const SString& vertProg, const SString& fragProg, const std::unordered_map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse=true);
     ~MShader() override;
-    [[nodiscard]] std::map<SString, SShaderPropertyValue>  getProperties() const;
+    [[nodiscard]] std::unordered_map<SString, SShaderPropertyValue>  getProperties() const;
     void bind();
     void setPropertyValue(const SString& name, const SShaderPropertyValue& value);
 private:

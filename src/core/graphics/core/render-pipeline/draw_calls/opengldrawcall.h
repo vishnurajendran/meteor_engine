@@ -4,6 +4,7 @@
 
 #ifndef METEOR_ENGINE_OPENGLDRAWCALL_H
 #define METEOR_ENGINE_OPENGLDRAWCALL_H
+#include "core/utils/glmhelper.h"
 #include "drawcall.h"
 
 class MOpenGlDrawCall : public MDrawCall {

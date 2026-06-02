@@ -2,10 +2,14 @@
 #ifndef METEOR_ENGINE_EDITORSCENEVIEWWINDOW_H
 #define METEOR_ENGINE_EDITORSCENEVIEWWINDOW_H
 
-#include "editor/meteorite_minimal.h"
 #include "ImGuizmo.h"
+#include "SFML/Graphics/RenderTexture.hpp"
+#include "core/utils/glmhelper.h"
 #include "editor/profiling/profiler_stats_displayer.h"
+#include "editor/window/imgui/imguisubwindow.h"
 
+
+class MSpatialEntity;
 class MEditorApplication;
 class MCameraEntity;
 

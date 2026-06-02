@@ -23,9 +23,6 @@ static constexpr const char* LIGHTING_SHADER_PATH =
 static constexpr int TEX_UNIT_DIR_SHADOW   = 0;
 static constexpr int TEX_UNIT_SPOT_BASE    = 1;
 static constexpr int TEX_UNIT_POINT_BASE   = 5;
-
-// Material textures start here to avoid collisions with shadow map
-// units (0-8). Most GPUs expose at least 16 fragment texture units.
 static constexpr int TEX_UNIT_MAT_BASE     = 10;
 
 void MLightingStage::init(IRenderPipeline* const pipeline)
@@ -93,20 +90,30 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     glDepthMask(GL_FALSE);
     glEnable(GL_CULL_FACE);
 
+    const bool lightOverrideActive = pipeline->getLightOverride().active;
 
     auto* sb = pipeline->getBufferRegistry()
                          .getBuffer<SShadowBuffer>(MBufferNames::BUFFER_SHADOW);
     const bool hasShadow = sb && sb->getFBOHandle() != 0 &&
                            (pipeline->getCompositeFlags() & ECF_Shadow);
 
-    // Per-light shadow settings via manager accessors (queries the entity).
     auto* mgr = MLightSystemManager::getInstance();
     const bool dirShadowEnabled = mgr->isDirectionalShadowEnabled();
     const bool dirSmoothShadow  = mgr->isDirectionalSmoothShadow();
 
     lightingShader->bind();
 
-    if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
+    // Camera -- use pipeline override if set, otherwise MViewManagement.
+    const auto& camOverride = pipeline->getCameraOverride();
+    if (camOverride.active)
+    {
+        SShaderPropertyValue viewVal, projVal;
+        viewVal.setMat4Val(camOverride.view);
+        projVal.setMat4Val(camOverride.proj);
+        lightingShader->setPropertyValue("view",       viewVal);
+        lightingShader->setPropertyValue("projection", projVal);
+    }
+    else if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
     {
         SShaderPropertyValue viewVal, projVal;
         viewVal.setMat4Val(camera->getViewMatrix());
@@ -204,9 +211,6 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         modelVal.setMat4Val(item.transform);
         lightingShader->setPropertyValue("model", modelVal);
 
-        // -- Reset material-specific uniforms to safe defaults ---------------
-        // Items whose material lacks these properties (e.g. a different
-        // shader) must not inherit values from the previous draw call.
         {
             GLint l;
             l = glGetUniformLocation(prog, "_useNormalMap");
@@ -217,15 +221,6 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
             if (l >= 0) glUniform1f(l, 0.5f);
         }
 
-        // -- Forward material properties to the lighting shader --------------
-        // Non-texture properties go through setPropertyValue (sets the GL
-        // uniform via glGetUniformLocation -- returns -1 and silently skips
-        // for properties that the lighting shader does not declare).
-        //
-        // Texture properties are bound manually to units >= TEX_UNIT_MAT_BASE
-        // so they do not overwrite shadow map units 0-8.  setPropertyValue
-        // for textures would bind to unit 0 (its hardcoded default), which
-        // would clobber the directional shadow map.
         int matTexUnit = TEX_UNIT_MAT_BASE;
 
         if (item.material)
@@ -257,10 +252,15 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
             }
         }
 
-        AABB queryBounds  = item.bounds;
-        queryBounds.min  -= SVector3(5.0f);
-        queryBounds.max  += SVector3(5.0f);
-        mgr->prepareDynamicLights(queryBounds);
+        // When light override is active, skip dynamic lights -- the override
+        // provides ambient + directional only, no point/spot lights.
+        if (!lightOverrideActive)
+        {
+            AABB queryBounds  = item.bounds;
+            queryBounds.min  -= SVector3(5.0f);
+            queryBounds.max  += SVector3(5.0f);
+            mgr->prepareDynamicLights(queryBounds);
+        }
 
         glBindVertexArray(item.vao);
         if (item.ebo != 0)
@@ -280,7 +280,6 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
 
-    // Unbind shadow map units (0-8) and material texture units (10+).
     for (int i = 0; i < 16; ++i)
     {
         glActiveTexture(GL_TEXTURE0 + i);

@@ -6,7 +6,6 @@
 #ifndef SCENEENTITYTYPEMAP_H
 #define SCENEENTITYTYPEMAP_H
 
-#include <core/meteor_core_minimal.h>
 #include "sceneentitytypedeserializer.h"
 
 class MSceneEntityTypeMap : public MObject {

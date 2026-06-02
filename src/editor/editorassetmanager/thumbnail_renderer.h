@@ -1,23 +1,18 @@
 // thumbnailrenderer.h
 //
-// Renders asset previews into a shared 128×128 SFrameBuffer, reads the pixels
-// back with glReadPixels, and stores the result as an sf::Texture in
-// MThumbnailCache.  One request is processed per tick() call so the editor
-// frame time stays predictable.
+// Renders asset previews through a dedicated MRenderPipeline (opaque +
+// lighting stages), composites the result, and stores it as an sf::Texture
+// in MThumbnailCache.  One request is processed per tick() call so the
+// editor frame time stays predictable.
 //
-// ── Material ──────────────────────────────────────────────────────────────────
-// Renders a UV sphere with the material's colour and texture applied via the
-// built-in 3-point Lambert shader. Textures are mapped using spherical UVs
-// derived from the surface normal — no vertex UV attribute needed.
+// -- Mesh thumbnails --
+// Rendered directly into a private 128x128 SFrameBuffer using the built-in
+// 3-point Lambert shader.  No pipeline involvement.
 //
-// ── MStaticMesh requirements ─────────────────────────────────────────────────
-// MThumbnailRenderer calls these methods on MStaticMesh:
-//
-//   unsigned int getVAO()        const;
-//   unsigned int getEBO()        const;
-//   int          getIndexCount() const;
-//   int          getVertexCount()const;
-//   AABB         getBounds()     const;
+// -- Material thumbnails --
+// Rendered through a dedicated MRenderPipeline with opaque + lighting
+// stages, then composited (BUFFER_OPAQUE x BUFFER_LIGHTS) into the
+// thumbnail FBO for readback.
 
 #pragma once
 #ifndef THUMBNAIL_RENDERER_H
@@ -32,10 +27,12 @@
 #include <filesystem>
 #include "asset_thumbnail_request.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
+#include "core/graphics/core/render-pipeline/render_pipeline.h"
 #include "thumbnail_cache.h"
 
 class MStaticMeshAsset;
 class MMaterialAsset;
+class SHeadlessRenderBuffer;
 
 class MThumbnailRenderer
 {
@@ -59,10 +56,15 @@ public:
 private:
     void buildThumbnailShader();
     void buildSphereGeometry();
+    void buildCompositeResources();
+    void initThumbnailPipeline();
     void destroyGL();
 
     sf::Texture* renderMeshThumbnail    (MStaticMeshAsset* asset);
     sf::Texture* renderMaterialThumbnail(MMaterialAsset*   asset);
+
+    // Composites BUFFER_OPAQUE x BUFFER_LIGHTS into the thumbnail FBO.
+    void compositeThumbnail();
 
     static void         saveToDisk   (const SString& assetId, sf::Texture* tex);
     static sf::Texture* loadFromDisk (const SString& assetId);
@@ -83,6 +85,8 @@ private:
 
 private:
     bool              initialised     = false;
+
+    // -- Direct-render resources (mesh thumbnails) --
     SFrameBuffer      fbo;
     unsigned int      thumbnailShader = 0;
 
@@ -92,15 +96,27 @@ private:
     unsigned int sphereEBO = 0;
     int          sphereIndexCount = 0;
 
-    std::queue<SAssetThumbnailRequest> requestQueue;
-
-    // Uniform locations cached after shader link
+    // Uniform locations for the Lambert shader
     int uModel        = -1;
     int uView         = -1;
     int uProj         = -1;
     int uBaseColor    = -1;
     int uAlbedoTex    = -1;
     int uUseAlbedoTex = -1;
+
+    // -- Composite resources (opaque x lights multiply) --
+    unsigned int compositeShader = 0;
+    unsigned int compositeQuadVAO = 0;
+    unsigned int compositeQuadVBO = 0;
+    unsigned int compositeQuadEBO = 0;
+    int          ucAlbedoTex = -1;
+    int          ucLightsTex = -1;
+
+    // -- Pipeline resources (material thumbnails) --
+    MRenderPipeline        thumbnailPipeline;
+    SHeadlessRenderBuffer* headlessRenderBuffer = nullptr;
+
+    std::queue<SAssetThumbnailRequest> requestQueue;
 };
 
 #endif // THUMBNAIL_RENDERER_H

@@ -1,7 +1,7 @@
 <shader name="standard_lit" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
     <properties>
         <property key="_albedo"             type="tex2d"    default=""/>
-        <property key="_useAlbedoTex"       type="bool"     default="True"/>
+        <property key="_useAlbedoTex"       type="bool"     default="False"/>
         <property key="_color"              type="color"    default="(1,1,1,1)"/>
 
         <property key="_normalMap"          type="tex2d"    default=""/>

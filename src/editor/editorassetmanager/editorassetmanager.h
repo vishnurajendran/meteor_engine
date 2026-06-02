@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] SAssetDirectoryNode* getAssetRootNode() const { return assetsTreeRoot; }
 
-    // -- Asset ping — "focus in browser" --------------------------------------
+    // -- Asset ping -- "focus in browser" --------------------------------------
     void    pingAsset(const SString& assetId) { pendingPingAssetId = assetId; }
     SString consumePendingPing()              { SString id = pendingPingAssetId; pendingPingAssetId.clear(); return id; }
 
@@ -42,20 +42,23 @@ public:
     sf::Texture*   getThumbnail(MAsset* asset);
     void           requestThumbnail(MAsset* asset);
 
+    // Evict a stale thumbnail (memory + disk) and re-queue rendering.
+    // Call after a material save or any property change that should
+    // refresh the preview.
+    void invalidateThumbnail(MAsset* asset)
+    {
+        if (!asset) return;
+        thumbnailCache.evict(asset->getAssetId());
+        requestThumbnail(asset);
+    }
+
     // -- Asset creation --------------------------------------------------------
     bool createShaderAsset(const SString& directory, const SString& name,
                            EShaderTemplate shaderTemplate);
     bool createSkyboxAsset(const SString& directory, const SString& name);
 
     // -- Directory management --------------------------------------------------
-    // Creates a new subdirectory under parentPath with the given name.
-    // Also creates a sibling .meta file and rebuilds the asset tree.
-    // Returns true on success, false if the directory already exists or on error.
     bool createDirectory(const SString& parentPath, const SString& dirName);
-
-    // Recursively deletes a directory — removes all contained assets from
-    // the asset map, deletes the directory and its sibling .meta from disk,
-    // and rebuilds the asset tree.
     bool deleteDirectory(const SString& dirPath);
 
     // -- Asset deletion --------------------------------------------------------
@@ -69,12 +72,7 @@ private:
     void registerAssetsWithWatcher();
     void deltaRefresh();
 
-    // Walks ASSET_SEARCH_PATHS and collects every directory into directoryPaths.
-    // Creates a sibling .meta file for each directory that lacks one.
     void scanDirectories();
-
-    // Ensures a directory node chain exists in the tree for the given path.
-    // Reuses existing nodes where they already exist (created by the asset pass).
     void ensureDirectoryNodeExists(const SString& dirPath);
 
     static bool writeNewAssetFile(const SString& filePath, const SString& content);
@@ -98,8 +96,6 @@ private:
     std::set<SString> failedAssetPaths;
     SString           pendingPingAssetId;
 
-    // All directory paths discovered on disk, used by buildAssetTree()
-    // to ensure empty directories appear in the tree.
     std::set<SString> directoryPaths;
 };
 

@@ -8,6 +8,7 @@
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/utils/guid.h"
 #include "functional"
 #include "scene.h"
 #include "sceneasset.h"
