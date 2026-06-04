@@ -110,40 +110,49 @@ void MRenderPipeline::submitRenderItem(const SRenderItem& item)
 
 void MRenderPipeline::preRender()
 {
-
     START_PROFILING_SAMPLE("RenderPipeline.PreRender")
     if (!initialised)
         return;
 
-    renderItems.clear();
-    clearCompositeFlags();
-    MRenderQueue::collectAll(this);
+    // In manual item mode (thumbnail pipeline, reflection probes, etc.),
+    // items are submitted externally via clearRenderItems() + submitRenderItem()
+    // BEFORE preRender() is called. Do not overwrite them.
+    if (!manualItemMode)
+    {
+        renderItems.clear();
+        clearCompositeFlags();
+        MRenderQueue::collectAll(this);
+    }
 
     if (!bufferRegistry.getRenderBuffer())
         return;
 
     // -- Frustum cull against the active camera --------------------------------
-    MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
-    if (camera)
+    // Skip frustum culling in manual item mode -- the caller controls
+    // what items are submitted and may be using a camera that is not
+    // registered with MViewManagement.
+    if (!manualItemMode)
     {
-        const SVector2 res = bufferRegistry.getRenderBuffer()->getResolution();
-        const SMatrix4 vp  = camera->getProjectionMatrix(res) * camera->getViewMatrix();
+        MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
+        if (camera)
+        {
+            const SVector2 res = bufferRegistry.getRenderBuffer()->getResolution();
+            const SMatrix4 vp  = camera->getProjectionMatrix(res) * camera->getViewMatrix();
 
-        SFrustum frustum;
-        frustum.extractFromVP(vp);
+            SFrustum frustum;
+            frustum.extractFromVP(vp);
 
-        renderItems.erase(
-            std::remove_if(renderItems.begin(), renderItems.end(),
-                [&frustum](const SRenderItem& item)
-                {
-                    // Keep items with degenerate bounds (uninitialised or
-                    // non-spatial drawables like gizmos).
-                    if (item.bounds.min == item.bounds.max)
-                        return false;
+            renderItems.erase(
+                std::remove_if(renderItems.begin(), renderItems.end(),
+                    [&frustum](const SRenderItem& item)
+                    {
+                        if (item.bounds.min == item.bounds.max)
+                            return false;
 
-                    return !frustum.testAABB(item.bounds);
-                }),
-            renderItems.end());
+                        return !frustum.testAABB(item.bounds);
+                    }),
+                renderItems.end());
+        }
     }
 
     std::sort(renderItems.begin(), renderItems.end(),
