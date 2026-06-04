@@ -516,6 +516,8 @@ set(CORE_SOURCES
         src/core/profiling/profiler.h
         src/core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.cpp
         src/core/graphics/core/render-pipeline/buffers/headless/headless_render_buffer.h
+        src/core/utils/frustum.h
+        src/core/utils/frustum.cpp
 )
 
 set(EDITOR_SOURCES
@@ -596,8 +598,6 @@ set(EDITOR_SOURCES
         src/editor/editorwindows/inspectordrawer/skybox/procedural_sky/procedural_sky_inspector_drawer.h
         src/editor/helper/scene_io.cpp
         src/editor/helper/scene_io.h
-        src/editor/editorassetmanager/hotreloadwatcher.cpp
-        src/editor/editorassetmanager/hotreloadwatcher.h
         src/editor/editorassetmanager/asset_thumbnail_request.h
         src/editor/editorassetmanager/thumbnail_cache.h
         src/editor/editorassetmanager/thumbnail_cache.cpp
@@ -647,6 +647,8 @@ set(EDITOR_SOURCES
         src/editor/window/menubar/default/help/open_documentation/open_documentation.cpp
         src/editor/window/menubar/default/help/open_documentation/open_documentation.h
         src/editor/editorwindows/editor_window_ids.h
+        src/editor/editorassetmanager/asset_watcher_thread.cpp
+        src/editor/editorassetmanager/asset_watcher_thread.h
 )
 
 set(PLAYER_SOURCES

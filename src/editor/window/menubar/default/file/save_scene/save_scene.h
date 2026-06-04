@@ -7,7 +7,7 @@
 #include "core/engine/input/input.h"
 #include "editor/window/menubar/menubaritem.h"
 
-// ── File / Save Scene ─────────────────────────────────────────────────────────
+// -- File / Save Scene ---------------------------------------------------------
 // Saves to the known path immediately. If no path is known (new unsaved scene),
 // falls through to the Save As dialog automatically.
 
@@ -29,14 +29,14 @@ private:
     static bool registered;
 };
 
-// ── File / Save Scene As ──────────────────────────────────────────────────────
+// -- File / Save Scene As ------------------------------------------------------
 // Always opens the file browser regardless of whether a path is already set.
 
 class MSaveSceneAsMenubarItem : public MMenubarItem
 {
     DEFINE_OBJECT_CLASS(MSaveSceneAsMenubarItem)
 public:
-    [[nodiscard]] int     getPriority() const override;
+    [[nodiscard]] int     getPriority() const override { return MENU_PRIORITY_BASE_FILE + 3;}
     [[nodiscard]] SString getPath()     const override;
     void onSelect()  override;
     void drawPopup() override;

@@ -726,7 +726,7 @@ void MEditorSceneViewWindow::drawAxisLegend()
     // Place the legend in the top-right, below the camera speed overlay
     ImVec2 center = {
         viewportMin.x + viewportSize.x - margin - axisLen,
-        viewportMin.y + margin + 48.0f + axisLen + 10.0f
+        viewportMin.y + margin + axisLen + 10.0f
     };
 
     // Extract rotation part of the view matrix.
