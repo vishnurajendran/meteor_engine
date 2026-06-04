@@ -4,6 +4,10 @@
 #include <GL/glew.h>
 #include "render_pipeline.h"
 #include "buffers/render/renderbuffer.h"
+#include "core/engine/camera/camera_spatial_entity.h"
+#include "core/engine/camera/viewmanagement.h"
+#include "core/profiling/simple_profiler/simple_profiler.h"
+#include "core/utils/frustum.h"
 #include "core/utils/logger.h"
 #include "render_queue.h"
 #include "stages/clear/clear_stage.h"
@@ -106,21 +110,41 @@ void MRenderPipeline::submitRenderItem(const SRenderItem& item)
 
 void MRenderPipeline::preRender()
 {
+
+    START_PROFILING_SAMPLE("RenderPipeline.PreRender")
     if (!initialised)
         return;
 
-    // In manual mode the caller has already populated renderItems via
-    // clearRenderItems() + submitRenderItem().  Skip the scene collection.
-    if (!manualItemMode)
-    {
-        renderItems.clear();
-        MRenderQueue::collectAll(this);
-    }
-
+    renderItems.clear();
     clearCompositeFlags();
+    MRenderQueue::collectAll(this);
 
     if (!bufferRegistry.getRenderBuffer())
         return;
+
+    // -- Frustum cull against the active camera --------------------------------
+    MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
+    if (camera)
+    {
+        const SVector2 res = bufferRegistry.getRenderBuffer()->getResolution();
+        const SMatrix4 vp  = camera->getProjectionMatrix(res) * camera->getViewMatrix();
+
+        SFrustum frustum;
+        frustum.extractFromVP(vp);
+
+        renderItems.erase(
+            std::remove_if(renderItems.begin(), renderItems.end(),
+                [&frustum](const SRenderItem& item)
+                {
+                    // Keep items with degenerate bounds (uninitialised or
+                    // non-spatial drawables like gizmos).
+                    if (item.bounds.min == item.bounds.max)
+                        return false;
+
+                    return !frustum.testAABB(item.bounds);
+                }),
+            renderItems.end());
+    }
 
     std::sort(renderItems.begin(), renderItems.end(),
               [](const SRenderItem& a, const SRenderItem& b)
@@ -128,19 +152,23 @@ void MRenderPipeline::preRender()
 
     for (auto* stage : renderStages)
         stage->preRender(this);
+    STOP_PROFILING_SAMPLE("RenderPipeline.PreRender")
 }
 
 void MRenderPipeline::render()
 {
+    START_PROFILING_SAMPLE("RenderPipeline.Render")
     if (!initialised || !bufferRegistry.getRenderBuffer())
         return;
 
     for (auto* stage : renderStages)
         stage->render(this);
+    STOP_PROFILING_SAMPLE("RenderPipeline.Render")
 }
 
 void MRenderPipeline::postRender()
 {
+    START_PROFILING_SAMPLE("RenderPipeline.PostRender")
     if (!initialised || !bufferRegistry.getRenderBuffer())
         return;
 
@@ -148,6 +176,7 @@ void MRenderPipeline::postRender()
         stage->postRender(this);
 
     forceResetGLStates();
+    STOP_PROFILING_SAMPLE("RenderPipeline.PostRender")
 }
 
 // ---------------------------------------------------------------------------
