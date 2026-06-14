@@ -1,6 +1,8 @@
 //
 // Created by ssj5v on 11-05-2025.
 //
+// Intended location: src/editor/editorassetmanager/editorassetmanager.cpp
+//
 
 #include "editorassetmanager.h"
 
@@ -16,7 +18,13 @@
 
 void MEditorAssetManager::refresh()
 {
-    hotReloadWatcher.unwatchAll();
+    // Stop the background thread during a full refresh so it does not
+    // report stale events while we rebuild everything.
+    watcherThread.stop();
+    watcherThread.unwatchAll();
+    watcherThread.clearKnownPaths();
+    watcherThread.clearKnownDirectories();
+
     thumbnailCache.evictAll();
     thumbnailRenderer.clearQueue();
     failedAssetPaths.clear();
@@ -32,21 +40,148 @@ void MEditorAssetManager::refresh()
         thumbnailRenderer.init();
 
     totalHotReloadCount = 0;
-    lastDeltaScanTime   = std::chrono::steady_clock::now();
+
+    // Start the background thread now that all assets and directories
+    // are registered as known paths.
+    watcherThread.start(ASSET_SEARCH_PATHS);
 }
 
 int MEditorAssetManager::tickHotReload()
 {
-    const int count = hotReloadWatcher.tick();
-    if (count > 0)
+    // Drain events from the background watcher thread and handle them
+    // on the main thread (where GL and asset-map access is safe).
+    handleWatcherEvents();
+
+    // Thumbnail generation -- one per frame.
+    thumbnailRenderer.tick(thumbnailCache);
+    return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Watcher event handling (main thread)
+// ---------------------------------------------------------------------------
+
+void MEditorAssetManager::handleWatcherEvents()
+{
+    auto events = watcherThread.drainEvents();
+    if (events.empty())
+        return;
+
+    bool treeChanged = false;
+    SString lastLoadedAsset;
+
+    for (const auto& evt : events)
     {
-        totalHotReloadCount += count;
+        switch (evt.type)
+        {
+            case EWatchEvent::Modified:
+            {
+                auto it = assetMap.find(evt.path);
+                if (it != assetMap.end() && it->second)
+                {
+                    MLOG(STR("AssetWatcher:: Reloading ") + evt.path);
+                    it->second->requestReload();
+                    ++totalHotReloadCount;
+                }
+                break;
+            }
+
+            case EWatchEvent::NewFile:
+            {
+                // Asset might already be loaded (race between drain and registration).
+                if (assetMap.contains(evt.path))
+                    break;
+
+                if (failedAssetPaths.contains(evt.path))
+                    break;
+
+                if (FileIO::getFileExtension(evt.path) == STR("meta"))
+                    break;
+
+                const size_t deferredBefore = defferedLoadableAssetList.size();
+                if (loadAsset(evt.path))
+                {
+                    MLOG(STR("AssetWatcher:: Delta loaded: ") + evt.path);
+                    watcherThread.watchPath(evt.path);
+                    watcherThread.addKnownPath(evt.path);
+
+                    // Run deferred loads for any newly added assets that need them.
+                    for (size_t i = deferredBefore; i < defferedLoadableAssetList.size(); ++i)
+                        if (defferedLoadableAssetList[i])
+                            defferedLoadableAssetList[i]->deferredAssetLoad(false);
+
+                    lastLoadedAsset = evt.path;
+                    treeChanged = true;
+                }
+                else
+                {
+                    failedAssetPaths.insert(evt.path);
+                }
+                break;
+            }
+
+            case EWatchEvent::Deleted:
+            {
+                auto it = assetMap.find(evt.path);
+                if (it == assetMap.end())
+                    break;
+
+                MLOG(STR("AssetWatcher:: Delta unloading: ") + evt.path);
+                watcherThread.unwatchPath(evt.path);
+                watcherThread.removeKnownPath(evt.path);
+
+                MAsset* asset = it->second;
+                if (asset)
+                {
+                    thumbnailCache.evict(asset->getAssetId());
+                    const SString id = asset->getAssetId();
+                    if (!id.empty()) assetMapByAssetId.erase(id);
+                    delete asset;
+                }
+                assetMap.erase(it);
+                treeChanged = true;
+                break;
+            }
+
+            case EWatchEvent::NewDirectory:
+            {
+                if (directoryPaths.contains(evt.path))
+                    break;
+
+                if (!hasMetaData(evt.path))
+                    createMetaFile(evt.path);
+
+                directoryPaths.insert(evt.path);
+                watcherThread.addKnownDirectory(evt.path);
+                treeChanged = true;
+                break;
+            }
+
+            case EWatchEvent::DeletedDirectory:
+            {
+                if (!directoryPaths.contains(evt.path))
+                    break;
+
+                directoryPaths.erase(evt.path);
+                watcherThread.removeKnownDirectory(evt.path);
+                treeChanged = true;
+                break;
+            }
+        }
     }
 
-    deltaRefresh();
-    thumbnailRenderer.tick(thumbnailCache);
-    return count;
+    if (treeChanged)
+    {
+        buildAssetTree();
+        if (!lastLoadedAsset.empty())
+            pingAsset(lastLoadedAsset);
+        MLOG(STR("AssetWatcher:: Tree rebuilt after delta changes"));
+    }
 }
+
+// ---------------------------------------------------------------------------
+// Thumbnail API
+// ---------------------------------------------------------------------------
 
 sf::Texture* MEditorAssetManager::getThumbnail(MAsset* asset)
 {
@@ -67,114 +202,27 @@ void MEditorAssetManager::requestThumbnail(MAsset* asset)
     thumbnailRenderer.requestThumbnail(asset, thumbnailCache);
 }
 
-void MEditorAssetManager::deltaRefresh()
-{
-    const auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration<double>(now - lastDeltaScanTime).count()
-            < DELTA_SCAN_INTERVAL_SECONDS)
-        return;
-
-    lastDeltaScanTime = now;
-    bool changed = false;
-    SString lastLoadedAsset = "";
-
-    std::set<SString> currentDirs;
-
-    // Pass 1: new files + directory discovery
-    for (const auto& searchPath : ASSET_SEARCH_PATHS)
-    {
-        std::filesystem::path dir(searchPath.str());
-        if (!std::filesystem::exists(dir)) continue;
-
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(dir))
-        {
-            if (entry.is_directory())
-            {
-                SString path = STR(entry.path().string());
-                path.replace("\\", "/");
-                currentDirs.insert(path);
-                continue;
-            }
-
-            if (!entry.is_regular_file()) continue;
-            auto fileName = STR(entry.path().filename().string());
-            if (fileName[0] == '~') continue;
-
-            SString path = STR(entry.path().string());
-            path.replace("\\", "/");
-            if (FileIO::getFileExtension(path) == STR("meta")) continue;
-            if (assetMap.contains(path)) continue;
-
-            if (failedAssetPaths.contains(path)) continue;
-
-            const size_t deferredBefore = defferedLoadableAssetList.size();
-            if (loadAsset(path))
-            {
-                MLOG(STR("EditorAssetManager:: Delta loaded: ") + path);
-                hotReloadWatcher.watchAsset(assetMap[path]);
-                changed = true;
-                for (size_t i = deferredBefore; i < defferedLoadableAssetList.size(); ++i)
-                    if (defferedLoadableAssetList[i])
-                        defferedLoadableAssetList[i]->deferredAssetLoad(false);
-
-                lastLoadedAsset = path;
-            }
-            else
-            {
-                failedAssetPaths.insert(path);
-            }
-        }
-    }
-
-    // Detect directory additions or removals
-    if (currentDirs != directoryPaths)
-    {
-        for (const auto& dirPath : currentDirs)
-        {
-            if (!directoryPaths.contains(dirPath) && !hasMetaData(dirPath))
-                createMetaFile(dirPath);
-        }
-        directoryPaths = currentDirs;
-        changed = true;
-    }
-
-    // Pass 2: deleted files
-    std::vector<SString> toRemove;
-    for (const auto& [path, asset] : assetMap)
-        if (!FileIO::hasFile(path))
-            toRemove.push_back(path);
-
-    for (const auto& path : toRemove)
-    {
-        MLOG(STR("EditorAssetManager:: Delta unloading: ") + path);
-        hotReloadWatcher.unwatchAsset(path);
-        MAsset* asset = assetMap[path];
-        if (asset)
-        {
-            thumbnailCache.evict(asset->getAssetId());
-            const SString id = asset->getAssetId();
-            if (!id.empty()) assetMapByAssetId.erase(id);
-            delete asset;
-        }
-        assetMap.erase(path);
-        changed = true;
-    }
-
-    if (changed)
-    {
-        buildAssetTree();
-        pingAsset(lastLoadedAsset);
-        MLOG(STR("EditorAssetManager:: Delta refresh complete"));
-    }
-}
+// ---------------------------------------------------------------------------
+// Watcher registration
+// ---------------------------------------------------------------------------
 
 void MEditorAssetManager::registerAssetsWithWatcher()
 {
     for (auto& [path, asset] : assetMap)
-        hotReloadWatcher.watchAsset(asset);
+    {
+        watcherThread.watchPath(path);
+        watcherThread.addKnownPath(path);
+    }
+
+    for (const auto& dirPath : directoryPaths)
+    {
+        watcherThread.addKnownDirectory(dirPath);
+    }
 }
 
-// ── Directory scanning ──────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Directory scanning (during full refresh, runs on main thread)
+// ---------------------------------------------------------------------------
 
 void MEditorAssetManager::scanDirectories()
 {
@@ -225,7 +273,9 @@ void MEditorAssetManager::ensureDirectoryNodeExists(const SString& dirPath)
     }
 }
 
-// ── Tree building ───────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Tree building
+// ---------------------------------------------------------------------------
 
 void MEditorAssetManager::buildAssetTree()
 {
@@ -296,7 +346,9 @@ void MEditorAssetManager::recursiveBuildAssetTree(std::queue<SString>& pathQueue
     recursiveBuildAssetTree(pathQueue, existing, asset, parsedPath);
 }
 
-// ── Directory management ────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Directory management
+// ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::createDirectory(const SString& parentPath,
                                            const SString& dirName)
@@ -323,6 +375,7 @@ bool MEditorAssetManager::createDirectory(const SString& parentPath,
 
     createMetaFile(fullPath);
     directoryPaths.insert(fullPath);
+    watcherThread.addKnownDirectory(fullPath);
     buildAssetTree();
 
     MLOG(STR("EditorAssetManager:: Created directory: ") + fullPath);
@@ -352,7 +405,8 @@ bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
 
     for (const auto& path : assetsToRemove)
     {
-        hotReloadWatcher.unwatchAsset(path);
+        watcherThread.unwatchPath(path);
+        watcherThread.removeKnownPath(path);
         MAsset* asset = assetMap[path];
         if (asset)
         {
@@ -372,7 +426,10 @@ bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
             dirsToRemove.push_back(dp);
     }
     for (const auto& dp : dirsToRemove)
+    {
         directoryPaths.erase(dp);
+        watcherThread.removeKnownDirectory(dp);
+    }
 
     std::error_code ec;
     std::filesystem::remove_all(std::filesystem::path(dirPath.str()), ec);
@@ -391,7 +448,9 @@ bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
     return true;
 }
 
-// ── Open asset ──────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Open asset
+// ---------------------------------------------------------------------------
 
 void MEditorAssetManager::openAsset(MAsset* asset)
 {
@@ -422,7 +481,9 @@ int MEditorAssetManager::saveDirtyAssets()
     return savedCount;
 }
 
-// --- Asset deletion ----------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Asset deletion
+// ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::deleteAsset(MAsset* asset)
 {
@@ -453,7 +514,8 @@ bool MEditorAssetManager::deleteAssetByPath(const SString& path)
 
     MLOG(STR("EditorAssetManager:: Deleting asset: ") + path);
 
-    hotReloadWatcher.unwatchAsset(path);
+    watcherThread.unwatchPath(path);
+    watcherThread.removeKnownPath(path);
 
     auto it = assetMap.find(path);
     if (it != assetMap.end())
@@ -487,7 +549,9 @@ bool MEditorAssetManager::deleteAssetByPath(const SString& path)
     return true;
 }
 
-// --- Template loading --------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Template loading
+// ---------------------------------------------------------------------------
 
 SString MEditorAssetManager::loadTemplate(const SString& templateFileName,
                                            const SString& assetName)
@@ -524,7 +588,9 @@ const char* MEditorAssetManager::getShaderTemplateFileName(EShaderTemplate tmpl)
     return nullptr;
 }
 
-// --- File writing ------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// File writing
+// ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::writeNewAssetFile(const SString& filePath,
                                              const SString& content)
@@ -557,7 +623,9 @@ static SString makeUniquePath(const SString& directory, const SString& baseName,
     return filePath;
 }
 
-// --- Create Shader -----------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Create Shader
+// ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::createShaderAsset(const SString& directory,
                                              const SString& name,
@@ -581,11 +649,16 @@ bool MEditorAssetManager::createShaderAsset(const SString& directory,
         return false;
 
     MLOG(SString::format("EditorAssetManager:: Created shader: {0}", filePath));
-    lastDeltaScanTime = std::chrono::steady_clock::time_point{};
+
+    // Tell the background thread to scan immediately so the new file
+    // is picked up without waiting for the normal interval.
+    watcherThread.requestImmediateScan();
     return true;
 }
 
-// --- Create Skybox -----------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Create Skybox
+// ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::createSkyboxAsset(const SString& directory,
                                              const SString& name)
@@ -601,6 +674,9 @@ bool MEditorAssetManager::createSkyboxAsset(const SString& directory,
         return false;
 
     MLOG(SString::format("EditorAssetManager:: Created skybox: {0}", filePath));
-    lastDeltaScanTime = std::chrono::steady_clock::time_point{};
+
+    // Tell the background thread to scan immediately so the new file
+    // is picked up without waiting for the normal interval.
+    watcherThread.requestImmediateScan();
     return true;
 }

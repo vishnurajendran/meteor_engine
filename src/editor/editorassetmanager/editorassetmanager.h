@@ -1,16 +1,17 @@
 //
 // Created by ssj5v on 11-05-2025.
 //
+// Intended location: src/editor/editorassetmanager/editorassetmanager.h
+//
 
 #ifndef EDITORASSETMANAGER_H
 #define EDITORASSETMANAGER_H
 
-#include <chrono>
 #include <queue>
 #include <set>
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "editor_asset_directory_node.h"
-#include "hotreloadwatcher.h"
+#include "asset_watcher_thread.h"
 #include "thumbnail_renderer.h"
 
 enum class EShaderTemplate
@@ -70,7 +71,10 @@ private:
     void recursiveBuildAssetTree(std::queue<SString>& pathQueue, SAssetDirectoryNode* parentNode,
                                  MAsset* asset, SString parsedPath);
     void registerAssetsWithWatcher();
-    void deltaRefresh();
+
+    // Drains events from the background watcher thread and processes them
+    // on the main thread where GL and asset-map access is safe.
+    void handleWatcherEvents();
 
     void scanDirectories();
     void ensureDirectoryNodeExists(const SString& dirPath);
@@ -83,20 +87,18 @@ private:
     static constexpr const char* TEMPLATE_NAME_TOKEN  = "__ASSET_NAME__";
 
 private:
-    SAssetDirectoryNode* assetsTreeRoot      = nullptr;
-    MHotReloadWatcher    hotReloadWatcher;
-    MThumbnailCache      thumbnailCache;
-    MThumbnailRenderer   thumbnailRenderer;
-    int                  totalHotReloadCount = 0;
+    SAssetDirectoryNode*   assetsTreeRoot       = nullptr;
+    MAssetWatcherThread    watcherThread;
+    MThumbnailCache        thumbnailCache;
+    MThumbnailRenderer     thumbnailRenderer;
+    int                    totalHotReloadCount   = 0;
 
-    static constexpr double               DELTA_SCAN_INTERVAL_SECONDS = 1.0;
-    std::chrono::steady_clock::time_point lastDeltaScanTime =
-        std::chrono::steady_clock::now();
+    // Paths that failed to import are skipped on future NewFile events.
+    // A full refresh() clears this set so manual fixes are picked up.
+    std::set<SString>      failedAssetPaths;
+    SString                pendingPingAssetId;
 
-    std::set<SString> failedAssetPaths;
-    SString           pendingPingAssetId;
-
-    std::set<SString> directoryPaths;
+    std::set<SString>      directoryPaths;
 };
 
 #endif // EDITORASSETMANAGER_H

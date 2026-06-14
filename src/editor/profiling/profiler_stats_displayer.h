@@ -1,5 +1,4 @@
-//
-// Created by ssj5v on 31-05-2026.
+// // Created by ssj5v on 31-05-2026.
 //
 
 #ifndef PROFILER_STATS_DISPLAYER_H
@@ -27,10 +26,6 @@ struct SProfilerHistory
 };
 
 /// Draws the profiler stats ImGui panel with per-key line graphs.
-///
-/// Usage:
-///   In your editor window constructor, create an instance.
-///   Each frame, call `draw(viewportMin, viewportSize)` from your GUI code.
 class MProfilerStatsDisplayer : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MProfilerStatsDisplayer)
@@ -52,6 +47,7 @@ private:
                        ImU32 lineColor) const;
 
     std::map<SString, SProfilerHistory> histories;
+    float lastPanelHeight = 200.0f;  // <-- Track panel layout size dynamically
 };
 
 #endif // PROFILER_STATS_DISPLAYER_H

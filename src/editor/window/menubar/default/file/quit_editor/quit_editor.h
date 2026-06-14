@@ -10,7 +10,7 @@
 class MQuitEditorMenubarItem : public MMenubarItem {
     DEFINE_OBJECT_SUBCLASS(MQuitEditorMenubarItem)
 public:
-    [[nodiscard]] int getPriority() const override { return MMenubarItem::MENU_PRIORITY_BASE_FILE + 3; };
+    [[nodiscard]] int getPriority() const override { return MMenubarItem::MENU_PRIORITY_BASE_FILE + 49; };
     [[nodiscard]] SString getPath() const override;
     void onSelect() override;
 private:

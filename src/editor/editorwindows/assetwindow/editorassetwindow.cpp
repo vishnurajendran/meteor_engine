@@ -1060,8 +1060,7 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
     if (ImGui::MenuItem("Show in File Explorer"))
     {
         auto path = target ? target->getPath() : currentDirectoryNode->getPath();
-        auto cmd  = STR("\"") + path + STR("\"");
-        system(cmd.c_str());
+        MEditorUtility::openInFilExplorer(path);
     }
 
     ImGui::Separator();

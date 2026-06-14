@@ -143,7 +143,6 @@ bool MSaveSceneAsMenubarItem::registered = []()
     return true;
 }();
 
-int MSaveSceneAsMenubarItem::getPriority() const { return MMenubarItem::PRIORITY_HIGHEST + 3; }
 SString MSaveSceneAsMenubarItem::getPath()  const { return "File/Save Scene As"; }
 
 void MSaveSceneAsMenubarItem::onSelect()
