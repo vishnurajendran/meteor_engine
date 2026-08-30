@@ -13,8 +13,9 @@ MRenderPipelineManager::MRenderPipelineManager()
 
 MRenderPipelineManager::~MRenderPipelineManager()
 {
-    delete pipeline;
     MLOG("MRenderPipelineManager:: cleaning render pipeline manager");
+    delete pipeline;
+    MLOG("MRenderPipelineManager:: clean complete");
 }
 
 void MRenderPipelineManager::setRenderTarget(SRenderBuffer* renderBuffer)

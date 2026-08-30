@@ -24,6 +24,8 @@
 #include "simulation_manager.h"
 
 #include "core/profiling/profiler.h"
+#include "core/engine/scripting/lua/lua_scripting_engine.h"
+#include "core/engine/scripting/interface/scripting_engine_interface.h"
 #include "core/utils/guid.h"
 #include "editor/editorwindows/console/editorconsolewindow.h"
 #include "editor/editorwindows/hierarchy/editorhierarchywindow.h"
@@ -54,7 +56,7 @@ void MEditorApplication::run() {
     if (canSimulate)
     {
         START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
-        if (simulationState)
+        if (simulationState && canTickPhysics)
            tickPhysics(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
     }
@@ -87,16 +89,36 @@ void MEditorApplication::run() {
 }
 
 void MEditorApplication::cleanup() {
-    MVERBOSE(STR("Cleanup..."));
+    MLOG(STR("[Cleanup] Begin"));
 
-    MVERBOSE(STR("Deleting SceneManager"));
+    if (sceneManagerRef)
+        sceneManagerRef->closeActiveScene();
+
+    MLOG(STR("[Cleanup] Deleting SceneManager"));
     delete sceneManagerRef;
+    sceneManagerRef = nullptr;
+    MLOG(STR("[Cleanup] SceneManager deleted"));
 
-    MVERBOSE(STR("Closing Window"));
+    MLOG(STR("[Cleanup] Cleaning render pipeline"));
+    if (pipelineManager)
+        pipelineManager->cleanup();
+    MLOG(STR("[Cleanup] Render pipeline cleaned"));
+
+    MLOG(STR("[Cleanup] Cleaning asset manager"));
+    if (assetManagerRef)
+        assetManagerRef->cleanup();
+    MLOG(STR("[Cleanup] Asset manager cleaned"));
+
+    MLOG(STR("[Cleanup] Closing window"));
     if (window != nullptr)
         window->close();
+    MLOG(STR("[Cleanup] Window closed"));
+
     window = nullptr;
-    MVERBOSE(STR("Editor Application Cleanup Complete"));
+    MLOG(STR("[Cleanup] Window released"));
+
+    MEngineStatics::saveAll();
+    MLOG(STR("[Cleanup] Complete"));
 }
 
 void MEditorApplication::registerSubsystems()
@@ -115,9 +137,13 @@ void MEditorApplication::registerSubsystems()
     // Init Physics engine
     physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
 
+    // Init Scripting Engine
+    MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();
+
     // Editor Simulation Manager, we will register as the concrete class for now. in the future, if
     // we need to explose APIs for this system, then wire that through an interface.
     simulationManagerSubsystem = MEngineSubsystemRegistry::registerSubsystem<MEditorSimulationManagerSubsystem, MEditorSimulationManagerSubsystem>(false);
+
 }
 
 void MEditorApplication::notifySimulationStateChange()
@@ -214,7 +240,6 @@ void MEditorApplication::initialise() {
     splashShowing = false;
     splashThread.join();
 
-
     // post-load
     if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings())){
         const auto path = SString(settings->lastOpenedScene.get());
@@ -307,7 +332,7 @@ void MEditorApplication::loadPrerequisites()
 
 void MEditorApplication::startSimulation()
 {
-    if (isPlaying())
+    if (isSimulating())
         return;
 
     simulationState = EEditorSimulationState::Simulating;

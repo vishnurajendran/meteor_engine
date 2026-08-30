@@ -13,6 +13,7 @@
 
 class MCubemapAsset;
 
+SCRIPT_BIND_CLASS()
 class MSkyboxEntity : public MSpatialEntity, public IMeteorDrawable
 {
     DEFINE_SPATIAL_CLASS(MSkyboxEntity)

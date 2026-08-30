@@ -137,6 +137,8 @@ private:
     // -- New Folder popup state ------------------------------------------------
     bool pendingNewFolderPopup = false;        // arms ImGui::OpenPopup on next frame
     char newFolderNameBuffer[256] = {};        // text input buffer
+
+    size_t sourcesRowIdx;
 };
 
 #endif // EDITORASSETWINDOW_H

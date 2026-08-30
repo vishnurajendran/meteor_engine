@@ -8,11 +8,12 @@
 #include <pugixml.hpp>
 #include <unordered_set>
 
+#include "core/engine/entities/spatial/spatial.h"
 #include "core/object/object.h"
 #include "core/object/objectpointer.h"
 
 
-class MSpatialEntity;
+SCRIPT_BIND_CLASS()
 class MScene : public MObject {
     friend class MSpatialEntity;
 public:
@@ -24,21 +25,31 @@ public:
     void fixedUpdate(float fixedDeltaTime);
     void close();
     void addToRoot(MSpatialEntity* entity);
+
+    SCRIPT_BIND_FUNC()
     size_t getRootSize() { return rootEntities.size(); }
+
+    SCRIPT_BIND_FUNC()
     std::vector<MSpatialEntity*>& getRootEntities() { return rootEntities; }
-    bool tryParse(pugi::xml_document* doc);
+
+    SCRIPT_BIND_FUNC()
     bool isClosing() { return sceneClosing; }
+
+    bool tryParse(pugi::xml_document* doc);
 
     // Removes entity from its current parent/root, inserts into root list at index.
     void insertRootEntityAt(MSpatialEntity* entity, int index);
 
+    SCRIPT_BIND_FUNC()
+    MSpatialEntity* find(const SString& path);
+
     template<typename T>
-    T* find(SString name) {
+    T* findT(SString name) {
         if (rootEntities.size() <= 0)
             return NULL;
 
         for (auto rootEntity : rootEntities) {
-            auto res = rootEntity->template find<T>(name);
+            auto res = rootEntity->template findT<T>(name);
             if (res != NULL)
                 return res;
         }

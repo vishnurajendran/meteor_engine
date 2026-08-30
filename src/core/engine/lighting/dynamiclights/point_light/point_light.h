@@ -6,6 +6,7 @@
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "core/engine/lighting/light_entity.h"
 
+SCRIPT_BIND_CLASS()
 class MPointLight : public MDynamicLight
 {
     DEFINE_SPATIAL_CLASS(MPointLight)

@@ -87,9 +87,13 @@ void MSceneManager::update(float deltaTime)
 
     activeScene->update(deltaTime);
 }
+
 void MSceneManager::fixedUpdate(float fixedDeltaTime)
 {
-    activeScene->update(fixedDeltaTime);
+    if (activeScene == nullptr)
+        return;
+
+    activeScene->fixedUpdate(fixedDeltaTime);
 }
 
 SString MSceneManager::registerOnLoadCallback(std::function<void(MScene*)> callback)

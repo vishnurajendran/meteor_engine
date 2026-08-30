@@ -10,7 +10,7 @@
 #include "core/utils/aabb.h"
 #include "staticmeshasset.h"
 #include "core/engine/assetmanagement/asset/asset_ref_handle.h"
-
+SCRIPT_BIND_CLASS()
 class MStaticMeshEntity : public MSpatialEntity, public IMeteorDrawable
 {
     DEFINE_SPATIAL_CLASS(MStaticMeshEntity)
@@ -36,12 +36,17 @@ public:
     void calculateBounds();
 
     // Returns a TAssetHandle for API compatibility with existing callers.
-    [[nodiscard]] TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()        const { return meshAsset.get().getHandle(); }
-    [[nodiscard]] TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0) const;
-    [[nodiscard]] MMaterial*        getMaterialInstance(int slotId = 0) const;
-    [[nodiscard]] int               getMaterialSlotCount()              const { return (int)materialSlots.size(); }
-    [[nodiscard]] AABB              getBounds()                         const { return bounds; }
-    [[nodiscard]] bool              getCastsShadow()                    const { return castsShadow.get(); }
+    TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()        const { return meshAsset.get().getHandle(); }
+    TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0) const;
+    MMaterial*        getMaterialInstance(int slotId = 0) const;
+
+    SCRIPT_BIND_FUNC()
+    int getMaterialSlotCount()              const { return (int)materialSlots.size(); }
+    SCRIPT_BIND_FUNC()
+    AABB getBounds()                         const { return bounds; }
+    SCRIPT_BIND_FUNC()
+    bool getCastsShadow()                    const { return castsShadow.get(); }
+    SCRIPT_BIND_FUNC()
     void setCastsShadow(bool v) { castsShadow = v; }
 
 
@@ -63,8 +68,8 @@ private:
     {
         TAssetRef<MMaterialAsset> assetRef;
 
-        [[nodiscard]] bool isValid() const { return assetRef.isValid(); }
-        [[nodiscard]] MMaterial* getMaterial() const
+        bool isValid() const { return assetRef.isValid(); }
+        MMaterial* getMaterial() const
         {
             auto* asset = assetRef.resolve();
             return asset ? asset->getMaterial() : nullptr;

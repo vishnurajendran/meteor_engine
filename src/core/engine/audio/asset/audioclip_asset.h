@@ -11,6 +11,7 @@
 class IAudioClip;
 class IAudioEngineSubsystem;
 
+SCRIPT_BIND_CLASS()
 class MAudioClipAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MAudioClipAsset)
 

@@ -26,8 +26,8 @@ int main() {
         appInst->run();
     }
 
-    MEngineStatics::saveAll();
-    MEngineSubsystemRegistry::cleanup();
     appInst->cleanup();
+    MEngineSubsystemRegistry::cleanup();
+    MLOG("Application exiting...");
     return 0;
 }

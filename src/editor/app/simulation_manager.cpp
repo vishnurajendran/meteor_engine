@@ -26,11 +26,13 @@ void MEditorSimulationManagerSubsystem::init()
 
 void MEditorSimulationManagerSubsystem::cleanup()
 {
+    MLOG("MEditorSimulationManagerSubsystem:: cleanup");
     if (!appInst)
         return;
     if (callbackId.empty())
         return;
     appInst->unregisterFromSimulationStateChangedCallback(callbackId);
+    MLOG("MEditorSimulationManagerSubsystem:: cleanup complete");
 }
 
 void MEditorSimulationManagerSubsystem::onSimulationStateChanged(EEditorSimulationState state)

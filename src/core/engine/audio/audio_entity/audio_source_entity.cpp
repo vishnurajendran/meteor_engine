@@ -93,7 +93,7 @@ void MAudioSource::onStart()
     if (!clipRef.get().isEmpty())
         setClip(clipRef.getHandle());
 
-    if (autoStart.get() && MApplication::getAppInstance()->isPlaying())
+    if (autoStart.get() && MApplication::getAppInstance()->isSimulating())
     {
         play();
         MLOG("MAudioSource:: Autoplaying");
@@ -131,8 +131,8 @@ void MAudioSource::onExit()
 
 void MAudioSource::onDrawGizmo(SVector2 res)
 {
-    const auto* assetPath = useSpatial.get() ? SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_3D
-                                             : SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_2D;
+    const auto* assetPath = useSpatial.get() ? SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_3D
+                                             : SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_2D;
 
     const auto tex =
         MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(assetPath);

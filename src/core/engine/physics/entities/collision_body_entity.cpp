@@ -62,7 +62,7 @@ void MCollisionBodyEntity::onUpdate(float deltaTime)
     body->physicsTick(deltaTime);
 
     auto appInst = MApplication::getAppInstance();
-    if (appInst && appInst->isPlaying())
+    if (appInst && appInst->isSimulating())
     {
         setWorldPosition(body->getBodySyncPosition());
         setWorldRotation(body->getBodySyncRotation());

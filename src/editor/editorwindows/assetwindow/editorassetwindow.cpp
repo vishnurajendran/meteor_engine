@@ -45,6 +45,12 @@ static constexpr ImU32 COL_ROW_ODD           = IM_COL32(42,  42,  42,  255);
 static constexpr ImU32 COL_ROW_HOVER         = IM_COL32(255, 255, 255, 18);
 static constexpr ImU32 COL_ROW_SELECTED      = IM_COL32(26,  95,  180, 200);
 
+// --- Console-style row drawing ------------------------------------------------
+static constexpr ImU32  ROW_SELECTED_BG  = IM_COL32(60,  90,  160, 80);
+static constexpr ImU32  ROW_HOVER_BG     = IM_COL32(255, 255, 255, 12);
+static constexpr ImU32  ROW_ALT_BG       = IM_COL32(255, 255, 255, 4);
+static constexpr float  BORDER_STRIP_W   = 3.0f;
+
 static constexpr ImU32 COL_TEXT_DIM          = IM_COL32(140, 140, 140, 255);
 static constexpr ImU32 COL_SEPARATOR         = IM_COL32(55,  55,  55,  255);
 static constexpr ImU32 COL_TREE_SELECTED     = IM_COL32(26,  95,  180, 200);
@@ -417,10 +423,12 @@ void MEditorAssetWindow::drawToolbar()
 void MEditorAssetWindow::drawSourcesPanel()
 {
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_PANEL_BG));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4);
     ImGui::Text("  SOURCES");
     ImGui::Separator();
+
+    sourcesRowIdx = 0;
 
     if (rootNode)
         drawDirectoryTree(rootNode);
@@ -444,16 +452,39 @@ void MEditorAssetWindow::drawDirectoryTree(SAssetDirectoryNode* node, int depth)
     if (!hasChildren) flags |= ImGuiTreeNodeFlags_Leaf;
     if (isCurrentDir) flags |= ImGuiTreeNodeFlags_Selected;
 
-    if (isCurrentDir)
+    // -- Console-style row background (alternating, selection, hover) ----------
     {
-        ImVec2 p = ImGui::GetCursorScreenPos();
-        float  w = ImGui::GetContentRegionAvail().x;
-        ImGui::GetWindowDrawList()->AddRectFilled(
-            p, ImVec2(p.x + w, p.y + ImGui::GetTextLineHeightWithSpacing()),
-            COL_TREE_SELECTED);
+        ImDrawList* dl    = ImGui::GetWindowDrawList();
+        const float lineH = ImGui::GetTextLineHeightWithSpacing();
+        ImVec2 rowMin     = ImGui::GetCursorScreenPos();
+        float  winX       = ImGui::GetWindowPos().x;
+        float  winW       = ImGui::GetWindowSize().x;
+        ImVec2 rowMax     = { winX + winW, rowMin.y + lineH };
+
+        if (isCurrentDir)
+            dl->AddRectFilled(rowMin, rowMax, ROW_SELECTED_BG);
+        else if (ImGui::IsMouseHoveringRect(rowMin, rowMax))
+            dl->AddRectFilled(rowMin, rowMax, ROW_HOVER_BG);
+        else if (sourcesRowIdx % 2 == 1)
+            dl->AddRectFilled(rowMin, rowMax, ROW_ALT_BG);
+
+        // -- Coloured left-border strip (folder colour) -----------------------
+        dl->AddRectFilled({ winX, rowMin.y },
+                          { winX + BORDER_STRIP_W, rowMax.y },
+                          COL_TYPE_FOLDER);
     }
+    ++sourcesRowIdx;
+
+    // Make the tree node header transparent so the draw-list bg shows through
+    ImGui::PushStyleColor(ImGuiCol_Header,
+                          isCurrentDir ? ImVec4(0.10f, 0.37f, 0.71f, 0.35f)
+                                       : ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(1, 1, 1, 0.07f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive,  ImVec4(1, 1, 1, 0.10f));
 
     bool open = ImGui::TreeNodeEx(node->getName().c_str(), flags);
+
+    ImGui::PopStyleColor(3);
 
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
         navigateTo(node);
@@ -725,7 +756,7 @@ void MEditorAssetWindow::drawAssetTile(SAssetDirectoryNode* node,
 
     if (node->isDirectory)
     {
-        const char* folderIcon = node->isEmptyLeafDirectory() ? SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER;
+        const char* folderIcon = node->isEmptyLeafDirectory() ? SEngineAssetIconPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEngineAssetIconPaths::HIGHRES_TEX_ASSET_FOLDER;
         icon = am->getAsset<MTextureAsset>(folderIcon)
                   ->getTexture()->getCoreTexture();
     }
@@ -905,7 +936,7 @@ void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
     ImGui::SetColumnWidth(0, 300);
     ImGui::SetColumnWidth(1, 120);
 
-    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(COL_TEXT_DIM));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.40f, 0.40f, 0.40f, 1.0f));
     ImGui::Text("  Name");  ImGui::NextColumn();
     ImGui::Text("Type");    ImGui::NextColumn();
     ImGui::Text("Path");    ImGui::NextColumn();
@@ -918,6 +949,10 @@ void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
 
     ImGui::Columns(1);
 
+    // Transparent child bg + tight row spacing (console-style)
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 1));
+
     auto children = getSortedChildren(root, sortMode, filterDirectories, filterFiles, searchBuffer);
 
     for (int i = 0; i < (int)children.size(); ++i)
@@ -926,6 +961,9 @@ void MEditorAssetWindow::drawAssetList(SAssetDirectoryNode* root)
         drawAssetListRow(children[i], am, i);
         ImGui::PopID();
     }
+
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) &&
         !ImGui::IsAnyItemHovered())
@@ -945,15 +983,25 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
 
     ImVec2 p = ImGui::GetCursorScreenPos();
     ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImVec2 rowMax = ImVec2(p.x + rowW, p.y + rowH);
 
-    ImU32 bg = isSelected ? COL_ROW_SELECTED
-             : (rowIndex % 2 == 0) ? COL_ROW_EVEN : COL_ROW_ODD;
-    dl->AddRectFilled(p, ImVec2(p.x + rowW, p.y + rowH), bg);
+    // -- Console-style row background (alternating tint, selection, hover) -----
+    if (isSelected)
+        dl->AddRectFilled(p, rowMax, ROW_SELECTED_BG);
+    else if (ImGui::IsMouseHoveringRect(p, rowMax))
+        dl->AddRectFilled(p, rowMax, ROW_HOVER_BG);
+    else if (rowIndex % 2 == 1)
+        dl->AddRectFilled(p, rowMax, ROW_ALT_BG);
+
+    // -- Coloured left-border strip based on asset type -----------------------
+    dl->AddRectFilled(p,
+                      { p.x + BORDER_STRIP_W, rowMax.y },
+                      getTileTypeColor(node));
 
     sf::Texture* icon = nullptr;
     if (node->isDirectory)
     {
-        const char* folderIcon = node->isEmptyLeafDirectory() ? SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEditorAssetPaths::HIGHRES_TEX_ASSET_FOLDER;
+        const char* folderIcon = node->isEmptyLeafDirectory() ? SEngineAssetIconPaths::HIGHRES_TEX_ASSET_FOLDER_EMPTY : SEngineAssetIconPaths::HIGHRES_TEX_ASSET_FOLDER;
         icon = am->getAsset<MTextureAsset>(folderIcon)
                   ->getTexture()->getCoreTexture();
     }
@@ -969,15 +1017,15 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
         else icon = getFileIcon(am, node);
     }
 
-    bool clicked  = ImGui::InvisibleButton("##row", ImVec2(rowW, rowH));
+    // -- Invisible full-row selectable (console-style) ------------------------
+    ImGui::SetCursorScreenPos({ p.x + BORDER_STRIP_W, p.y });
+    bool clicked  = ImGui::InvisibleButton("##row",
+                        ImVec2(rowW - BORDER_STRIP_W, rowH));
     bool hovered  = ImGui::IsItemHovered();
     bool dblClick = hovered && ImGui::IsMouseDoubleClicked(0);
 
     if (!node->isDirectory && icon)
         doAssetDragSource(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str(), *icon, node);
-
-    if (hovered && !isSelected)
-        dl->AddRectFilled(p, ImVec2(p.x + rowW, p.y + rowH), COL_ROW_HOVER);
 
     if (clicked)  { selectedNode = node; cachedSelectedPath = node->getPath(); selectAssetForInspector(node); }
     if (dblClick)
@@ -995,15 +1043,26 @@ void MEditorAssetWindow::drawAssetListRow(SAssetDirectoryNode* node,
     }
     openContextMenu(node);
 
-    ImGui::SetCursorScreenPos(ImVec2(p.x + 4,  p.y + 3));
-    if (icon) ImGui::Image(*icon, ImVec2(16, 16));
-    ImGui::SetCursorScreenPos(ImVec2(p.x + 24, p.y + 3));
-    ImGui::TextUnformatted(node->getName().c_str());
+    // -- Row content: icon, name, type, path ----------------------------------
+    const float contentX = p.x + BORDER_STRIP_W + 4.0f;
 
+    ImGui::SetCursorScreenPos(ImVec2(contentX,      p.y + 3));
+    if (icon) ImGui::Image(*icon, ImVec2(16, 16));
+    ImGui::SetCursorScreenPos(ImVec2(contentX + 20, p.y + 3));
+
+    // Name text: brighter when selected (like console message text)
+    ImGui::PushStyleColor(ImGuiCol_Text,
+        isSelected ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f)
+                   : ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
+    ImGui::TextUnformatted(node->getName().c_str());
+    ImGui::PopStyleColor();
+
+    // Type label (dim, like console source location)
     ImGui::SetCursorScreenPos(ImVec2(p.x + 304, p.y + 3));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(COL_TEXT_DIM));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.40f, 0.40f, 0.40f, 1.0f));
     ImGui::TextUnformatted(getTileTypeLabel(node).c_str());
 
+    // Path (dim)
     ImGui::SetCursorScreenPos(ImVec2(p.x + 428, p.y + 3));
     ImGui::TextUnformatted(node->getPath().c_str());
     ImGui::PopStyleColor();
@@ -1334,7 +1393,7 @@ sf::Texture* MEditorAssetWindow::getFileIcon(IAssetManagerSubsystem* am, SAssetD
     }
 
     return am->getAsset<MTextureAsset>(
-               SEditorAssetPaths::HIGHRES_TEX_ASSET_DEFAULT)
+               SEngineAssetIconPaths::HIGHRES_TEX_ASSET_DEFAULT)
                ->getTexture()->getCoreTexture();
 }
 

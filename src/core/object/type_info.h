@@ -11,8 +11,10 @@
 #define TYPE_INFO_H
 
 #include <cstdint>
-#include <string>
 #include <functional>
+#include <string>
+
+#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
 
 // Deterministic across platforms - same string always produces the same hash.
 // Evaluated entirely at compile time when fed a string literal.
@@ -31,6 +33,7 @@ namespace MTypeDetail
 
 // MTypeInfo
 
+SCRIPT_BIND_STRUCT()
 struct MTypeInfo
 {
     const char* name;   // human-readable class name (string literal lifetime)
@@ -43,6 +46,9 @@ struct MTypeInfo
     //  Comparisons (hash only - single integer op)
     constexpr bool operator==(const MTypeInfo& o) const noexcept { return hash == o.hash; }
     constexpr bool operator!=(const MTypeInfo& o) const noexcept { return hash != o.hash; }
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] bool equals(const MTypeInfo& o) const noexcept { return hash == o.hash; }
 
     // String output
     // Implicit conversion so it drops into SString / std::string contexts naturally.

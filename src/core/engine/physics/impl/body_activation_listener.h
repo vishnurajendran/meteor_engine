@@ -15,12 +15,10 @@ class MBodyActivationListener : public BodyActivationListener
 public:
     void OnBodyActivated(const BodyID& inBodyID, JPH::uint64 inBodyUserData) override
     {
-        MLOG("MBodyActivationListener::OnBodyActivated");
     }
 
     void OnBodyDeactivated(const BodyID& inBodyID, JPH::uint64 inBodyUserData) override
     {
-        MLOG("MBodyActivationListener::OnBodyDeactivated");
     }
 };
 #endif //BODY_ACTIVATION_LISTENER_H

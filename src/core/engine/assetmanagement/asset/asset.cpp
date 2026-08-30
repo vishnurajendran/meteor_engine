@@ -12,7 +12,7 @@
 #include "core/utils/logger.h"
 
 MAsset::MAsset(const SString& path) {
-    name = "Asset";
+    name = SString::format("Asset_{0}", FileIO::getFileName(path));
     this->path = path;
 }
 

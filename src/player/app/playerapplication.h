@@ -5,8 +5,12 @@
 
 #ifndef METEOR_ENGINE_PLAYERAPPLICATION_H
 #define METEOR_ENGINE_PLAYERAPPLICATION_H
-#include "core/meteor_core.h"
+#include "core/application/application.h"
+#include "core/object/objectpointer.h"
+#include "core/window/simple/windowing.h"
 
+
+class IPhysicsEngineSubsystem;
 enum EPlayerApplicationState
 {
     Playing,
@@ -16,25 +20,35 @@ enum EPlayerApplicationState
 class MPlayerApplication : public MApplication {
 public:
     // application is always in play-state
+    [[nodiscard]] bool isSimulating() const override { return true; };
     [[nodiscard]] bool isPlaying() const override { return playerState == EPlayerApplicationState::Playing; }
+    [[nodiscard]] bool isPaused() const override { return playerState == EPlayerApplicationState::Paused; };
     [[nodiscard]] SString getEngineSettingsPath() const override { return "PlayerSettings.xml"; }
 
-    void pause(const bool& pause) override { playerState = EPlayerApplicationState::Playing; }
-    [[nodiscard]] bool isPaused() const override { return playerState == EPlayerApplicationState::Paused; };
+    void pause(const bool& pause) override;
 
 private:
     DEFINE_OBJECT_SUBCLASS(MPlayerApplication)
+
 private:
-    MObjectPtr<MWindow> window;
-    MRenderPipelineManager pipelineManager;
+    void registerSubsystems();
+
 public:
     MPlayerApplication();
     void initialise() override;
     void run() override;
+    float getPhysicsStep() const;
+    void tickPhysics(float deltaTime);
     void cleanup() override;
     [[nodiscard]] bool isRunning() const override;
 
 private:
     EPlayerApplicationState playerState = EPlayerApplicationState::Playing;
+    MObjectPtr<MWindow> window = nullptr;
+    IRenderPipelineManagerSubsystem* pipelineManager= nullptr;
+    IPhysicsEngineSubsystem* physicsEngineRef = nullptr;
+    float physicsAccumulator = 0.0f;
+    bool internal_tickSpatialFixedUpdateFlag   = false;
+    MSceneManager* sceneManagerRef = nullptr;
 };
 #endif //METEOR_ENGINE_PLAYERAPPLICATION_H

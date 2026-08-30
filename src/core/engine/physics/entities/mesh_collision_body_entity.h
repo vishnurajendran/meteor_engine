@@ -13,6 +13,7 @@
 // MeshShape is Static/Kinematic only — Dynamic is blocked in setupShapeCallbacks.
 // The body is built lazily: onStart tries immediately; onFixedUpdate retries each
 // tick until a mesh asset is available.
+SCRIPT_BIND_CLASS()
 class MMeshCollisionBody : public MCollisionBodyEntity
 {
     DEFINE_SPATIAL_CLASS(MMeshCollisionBody)

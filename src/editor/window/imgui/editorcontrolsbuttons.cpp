@@ -14,7 +14,7 @@ sf::Texture MEditorControlsButtons::stopTexture;
 void MEditorControlsButtons::simulationStartButton()
 {
 
-    const SString METEOR_PLAYER_ICO_PATH = SEditorAssetPaths::LOWRES_TEX_BTTN_PLAY;
+    const SString METEOR_PLAYER_ICO_PATH = SEngineAssetIconPaths::LOWRES_TEX_BTTN_PLAY;
     if (playTexture.getSize().x <= 0)
     {
         playTexture.loadFromFile(METEOR_PLAYER_ICO_PATH.c_str());
@@ -32,7 +32,7 @@ void MEditorControlsButtons::simulationStartButton()
 
 void MEditorControlsButtons::simulationStopButton()
 {
-    const SString METEOR_PLAYER_ICO_PATH = SEditorAssetPaths::LOWRES_TEX_BTTN_STOP;
+    const SString METEOR_PLAYER_ICO_PATH = SEngineAssetIconPaths::LOWRES_TEX_BTTN_STOP;
     if (stopTexture.getSize().x <= 0)
     {
         stopTexture.loadFromFile(METEOR_PLAYER_ICO_PATH.c_str());
@@ -50,7 +50,7 @@ void MEditorControlsButtons::simulationStopButton()
 
 void MEditorControlsButtons::runtimeControls() {
     auto* editorApp = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
-    if (!editorApp->isPlaying())
+    if (!editorApp->isSimulating())
         simulationStartButton();
     else
         simulationStopButton();

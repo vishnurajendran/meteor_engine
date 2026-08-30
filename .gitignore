@@ -1,6 +1,7 @@
+bin/
+documentation/
 cmake-build-debug/
 cmake-build-editor_debug/
 cmake-build-player_debug/
-bin/
-documentation/
 
+src/tools/lua_binding_generator/obj/

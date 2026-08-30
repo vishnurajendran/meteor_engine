@@ -30,13 +30,13 @@
 //   updateTransforms()    - call shape-specific sync (syncBounds, syncRadius...)
 //   onDrawGizmo()         - draw the shape wireframe
 //   onFixedUpdate()       - retry deferred body creation (mesh / convex hull)
+SCRIPT_BIND_CLASS()
 class MCollisionBodyEntity : public MSpatialEntity, public IPhysicsCallbackReceiver
 {
     DEFINE_ABSTRACT_SPATIAL_CLASS(MCollisionBodyEntity)
 
     // ---- Common serialisable fields ----------------------------------------
     // Every collision shape exposes these in the inspector.
-
     DECLARE_FIELD(bodyType,          ECollisionBodyType, ECollisionBodyType::StaticBody)
     DECLARE_FIELD(mass,              float,              10.0f)
     DECLARE_FIELD(affectedByGravity, bool,               false)
@@ -46,6 +46,7 @@ class MCollisionBodyEntity : public MSpatialEntity, public IPhysicsCallbackRecei
     DECLARE_FIELD(angularDamping,    float,              0.0f)
     DECLARE_FIELD(restitution,       float,              0.3f)
     DECLARE_FIELD(friction,          float,              0.6f)
+
     // 0 = Default. Clamped to [0, 31] in the physicsLayer onChange callback.
     DECLARE_FIELD(physicsLayer,      int,                0)
 
@@ -64,7 +65,7 @@ public:
 
     // ---- IPhysicsCallbackReceiver ------------------------------------------
 
-    [[nodiscard]] MSpatialEntity* getEntity() override { return this; }
+    MSpatialEntity* getEntity() override { return this; }
     void dispatchCollisionStart(const SCollisionData& data) override;
     void dispatchCollisionStay (const SCollisionData& data) override;
     void dispatchCollisionEnd  (const SCollisionData& data) override;
@@ -83,48 +84,55 @@ public:
 
     // ---- Damping accessors --------------------------------------------------
 
-    [[nodiscard]] float getLinearDamping() const
+    SCRIPT_BIND_FUNC()
+    float getLinearDamping() const
     {
         auto* b = getBasePhysicsBody();
         return b ? b->getLinearDamping() : linearDamping.get();
     }
 
+    SCRIPT_BIND_FUNC()
     void setLinearDamping(float value)
     {
         linearDamping.set(value);
     }
 
-    [[nodiscard]] float getAngularDamping() const
+    SCRIPT_BIND_FUNC()
+    float getAngularDamping() const
     {
         auto* b = getBasePhysicsBody();
         return b ? b->getAngularDamping() : angularDamping.get();
     }
 
+    SCRIPT_BIND_FUNC()
     void setAngularDamping(float value)
     {
         angularDamping.set(value);
     }
 
     // ---- Velocity accessors ------------------------------------------------
-
-    [[nodiscard]] SVector3 getLinearVelocity() const
+    SCRIPT_BIND_FUNC()
+    SVector3 getLinearVelocity() const
     {
         auto* b = getBasePhysicsBody();
         return b ? b->getLinearVelocity() : SVector3{};
     }
 
-    [[nodiscard]] SVector3 getAngularVelocity() const
+    SCRIPT_BIND_FUNC()
+    SVector3 getAngularVelocity() const
     {
         auto* b = getBasePhysicsBody();
         return b ? b->getAngularVelocity() : SVector3{};
     }
 
+    SCRIPT_BIND_FUNC()
     void setLinearVelocity(const SVector3& velocity)
     {
         auto* b = getBasePhysicsBody();
         if (b) b->setLinearVelocity(velocity);
     }
 
+    SCRIPT_BIND_FUNC()
     void setAngularVelocity(const SVector3& velocity)
     {
         auto* b = getBasePhysicsBody();
@@ -132,13 +140,14 @@ public:
     }
 
     // ---- Force application -------------------------------------------------
-
+    SCRIPT_BIND_FUNC()
     void applyForce(const SVector3& force, EForceMode mode = EForceMode::Force)
     {
         auto* b = getBasePhysicsBody();
         if (b) b->applyForce(force, mode);
     }
 
+    SCRIPT_BIND_FUNC()
     void applyForceAtPosition(const SVector3& force, const SVector3& worldPoint,
                               EForceMode mode = EForceMode::Force)
     {
@@ -146,6 +155,7 @@ public:
         if (b) b->applyForceAtPosition(force, worldPoint, mode);
     }
 
+    SCRIPT_BIND_FUNC()
     void applyTorque(const SVector3& torque, EForceMode mode = EForceMode::Force)
     {
         auto* b = getBasePhysicsBody();
@@ -154,26 +164,29 @@ public:
 
     // ---- Body state queries ------------------------------------------------
 
-    [[nodiscard]] bool isValidBody() const
+    SCRIPT_BIND_FUNC()
+    bool isValidBody() const
     {
         auto* b = getBasePhysicsBody();
         return b && b->isValidBody();
     }
 
-    [[nodiscard]] SVector3 getCenterOfMass() const
+    SCRIPT_BIND_FUNC()
+    SVector3 getCenterOfMass() const
     {
         auto* b = getBasePhysicsBody();
         return b ? b->getCenterOfMass() : SVector3{};
     }
 
     // ---- Constraint accessors ----------------------------------------------
-
+    SCRIPT_BIND_FUNC()
     void setMovementConstraints(bool x, bool y, bool z)
     {
         auto* b = getBasePhysicsBody();
         if (b) b->setMovementConstraints(x, y, z);
     }
 
+    SCRIPT_BIND_FUNC()
     void setRotationConstraints(bool x, bool y, bool z)
     {
         auto* b = getBasePhysicsBody();
@@ -182,7 +195,7 @@ public:
 
     // Return the subclass typed pointer as ICollisionBody*. Returns nullptr if
     // no body has been created yet.
-    [[nodiscard]] virtual ICollisionBody* getBasePhysicsBody() const = 0;
+    virtual ICollisionBody* getBasePhysicsBody() const = 0;
 
 protected:
     // ---- Pure virtuals -----------------------------------------------------

@@ -70,6 +70,11 @@ void MImGuiWindow::update(float deltaTime) {
     while (event = coreWindow.pollEvent()) {
         ImGui::SFML::ProcessEvent(coreWindow, event.value());
         handleWindowEvents(event);
+
+        // handleWindowEvents may shut down ImGui and close the window.
+        // If we keep polling, the next ImGui::SFML::ProcessEvent call
+        // hits a destroyed context and corrupts the heap.
+        if (!coreWindow.isOpen()) break;
     }
 
     // The close event handler shuts down ImGui and closes coreWindow.

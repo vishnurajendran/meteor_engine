@@ -11,17 +11,23 @@
 #include "core/utils/glmhelper.h"
 #include "SFML/Graphics/Texture.hpp"
 
+SCRIPT_BIND_CLASS()
 class MTexture : public MObject {
     DEFINE_OBJECT_SUBCLASS(MTexture)
 private:
     sf::Texture coreTexture;
 public:
     MTexture()= default;
+
+    SCRIPT_BIND_FUNC()
     SVector2 getSize() const;
     virtual void bind(const unsigned int& location, const unsigned int& index);
     virtual sf::Texture* getCoreTexture();
     virtual unsigned int getTextureID();
+
+    SCRIPT_BIND_FUNC()
     virtual bool loadFromPath(const SString &path);
+
     virtual bool loadFromStream(sf::InputStream &stream);
     virtual bool loadFromMemory(const void* data, size_t size);
 };

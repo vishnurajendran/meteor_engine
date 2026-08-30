@@ -8,10 +8,12 @@
 #include "core/engine/physics/entities/collision_body_entity.h"
 #include "core/engine/physics/interface/bodies/sphere/sphere_collision_body.h"
 
+SCRIPT_BIND_CLASS()
 class MSphereCollisionBody : public MCollisionBodyEntity
 {
     DEFINE_SPATIAL_CLASS(MSphereCollisionBody)
 
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(radius, float, 1.0f)
 
 public:

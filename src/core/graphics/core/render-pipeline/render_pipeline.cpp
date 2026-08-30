@@ -72,6 +72,7 @@ void MRenderPipeline::cleanup()
 
     renderItems.clear();
     compositeFlags = ECF_None;
+    initialised = false;
 }
 
 // ---------------------------------------------------------------------------

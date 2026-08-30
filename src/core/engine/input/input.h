@@ -12,8 +12,11 @@
 #include <array>
 #include <string>
 
+#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
+
 // Key codes mirroring sf::Keyboard::Key (SFML 3.0.x) value-for-value.
 // Conversion to/from sf::Keyboard::Key is a zero-cost static_cast.
+SCRIPT_BIND_ENUM()
 enum class EKeyCode : int
 {
     Unknown = -1,
@@ -60,6 +63,7 @@ enum class EKeyCode : int
     KeyCount   // sentinel -- must remain last
 };
 
+SCRIPT_BIND_STRUCT()
 class SInput
 {
 public:
@@ -68,21 +72,30 @@ public:
     static void poll();
 
     // Rising edge -- the key transitioned from up to down this frame.
+    SCRIPT_BIND_FUNC_STATIC()
     static bool pressedThisFrame(EKeyCode key);
 
     // Falling edge -- the key transitioned from down to up this frame
     // (i.e. the user completed a press-and-release gesture).
+    SCRIPT_BIND_FUNC_STATIC()
     static bool pressedAndReleased(EKeyCode key);
 
     // Raw held state -- the key is physically down right now.
+    SCRIPT_BIND_FUNC_STATIC()
     static bool isDown(EKeyCode key);
 
     // Modifier convenience helpers (left OR right counts).
+    SCRIPT_BIND_FUNC_STATIC()
     static bool isCtrlDown();
+
+    SCRIPT_BIND_FUNC_STATIC()
     static bool isShiftDown();
+
+    SCRIPT_BIND_FUNC_STATIC()
     static bool isAltDown();
 
     // Human-readable name for a key code (e.g. EKeyCode::S -> "S").
+    SCRIPT_BIND_FUNC_STATIC()
     static const char* getKeyName(EKeyCode key);
 
 private:
