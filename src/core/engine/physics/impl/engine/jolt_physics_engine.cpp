@@ -93,7 +93,7 @@ void MJoltPhysicsEngine::init()
 
 void MJoltPhysicsEngine::cleanup()
 {
-    MLOG("MJoltPhysicsEngine:: Cleanup");
+    MLOG("MJoltPhysicsEngine:: Cleanup started");
     releaseAllBodies();
     UnregisterTypes();
 
@@ -102,6 +102,7 @@ void MJoltPhysicsEngine::cleanup()
 
     delete jobSystem; jobSystem = nullptr;
     delete tempAlloc; tempAlloc = nullptr;
+    MLOG("MJoltPhysicsEngine:: Cleanup completed");
 }
 
 void MJoltPhysicsEngine::releaseAllBodies()

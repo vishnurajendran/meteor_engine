@@ -14,11 +14,12 @@ class MProceduralSkyboxDrawCall;
 class MDirectionalLight;
 class MAmbientLightEntity;
 
+SCRIPT_BIND_CLASS()
 class MProceduralSkyboxEntity : public MSpatialEntity, public IMeteorDrawable
 {
     DEFINE_SPATIAL_CLASS(MProceduralSkyboxEntity)
 
-    // ── Serialized sky parameters ─────────────────────────────────────────────
+    // -- Serialized sky parameters ---------------------------------------------
     DECLARE_FIELD(elevationDeg,        float,    55.0f)
     DECLARE_FIELD(azimuthDeg,          float,    30.0f)
     DECLARE_FIELD(cycleSpeed,          float,    0.0f)
@@ -33,7 +34,7 @@ public:
     MProceduralSkyboxEntity();
     ~MProceduralSkyboxEntity() override;
 
-    // ── IMeteorDrawable ───────────────────────────────────────────────────────
+    // -- IMeteorDrawable -------------------------------------------------------
     void submitRenderItem(IRenderItemCollector* collector) override;
     bool canDraw() override { return getEnabled() && isEnabledInHierarchy(); }
 
@@ -44,28 +45,56 @@ public:
     void onDisable() override { if (drawCall) drawCall->setCanDraw(false); }
     void onEnable()  override { if (drawCall) drawCall->setCanDraw(true);  }
 
-    // ── Sun direction ─────────────────────────────────────────────────────────
+    // -- Sun direction ---------------------------------------------------------
+    SCRIPT_BIND_FUNC()
     void setSunAngles(float elevationDeg, float azimuthDeg);
+    SCRIPT_BIND_FUNC()
     void setSunDirection(const SVector3& dir);
-    [[nodiscard]] SVector3 getSunDirection() const;
+    SCRIPT_BIND_FUNC()
+    SVector3 getSunDirection() const;
 
-    // ── Parameter API - mirror the DECLARE_FIELDs for external code ──────────
+    // -- Parameter API - mirror the DECLARE_FIELDs for external code ----------
+    SCRIPT_BIND_FUNC()
     void  setDayNightCycleSpeed(float cyclesPerSec) { cycleSpeed = cyclesPerSec; }
+
+    SCRIPT_BIND_FUNC()
     float getDayNightCycleSpeed() const             { return cycleSpeed.get(); }
 
+    SCRIPT_BIND_FUNC()
     void setSunSize            (float v);
+
+    SCRIPT_BIND_FUNC()
     void setSunSizeConvergence (float v);
+
+    SCRIPT_BIND_FUNC()
     void setAtmosphereThickness(float v);
+
+    SCRIPT_BIND_FUNC()
     void setSkyTint            (const SVector3& v);
+
+    SCRIPT_BIND_FUNC()
     void setGroundColor        (const SVector3& v);
+
+    SCRIPT_BIND_FUNC()
     void setExposure           (float v);
 
-    [[nodiscard]] float    getSunSize()             const;
-    [[nodiscard]] float    getSunSizeConvergence()  const;
-    [[nodiscard]] float    getAtmosphereThickness() const;
-    [[nodiscard]] SVector3 getSkyTint()             const;
-    [[nodiscard]] SVector3 getGroundColor()         const;
-    [[nodiscard]] float    getExposure()            const;
+    SCRIPT_BIND_FUNC()
+    float    getSunSize()             const;
+
+    SCRIPT_BIND_FUNC()
+    float    getSunSizeConvergence()  const;
+
+    SCRIPT_BIND_FUNC()
+    float    getAtmosphereThickness() const;
+
+    SCRIPT_BIND_FUNC()
+    SVector3 getSkyTint()             const;
+
+    SCRIPT_BIND_FUNC()
+    SVector3 getGroundColor()         const;
+
+    SCRIPT_BIND_FUNC()
+    float    getExposure()            const;
 
 protected:
     // Push all field values into the draw call after deserialization
@@ -75,8 +104,8 @@ private:
     void rebuildSunDirection();
     void pushFieldsToDrawCall();                // syncs all DECLARE_FIELDs → drawCall
     void updateAmbientLight(MAmbientLightEntity* light) const;
-    [[nodiscard]] MDirectionalLight*   findDirectionalLightChild() const;
-    [[nodiscard]] MAmbientLightEntity* findAmbientLightChild()     const;
+    MDirectionalLight*   findDirectionalLightChild() const;
+    MAmbientLightEntity* findAmbientLightChild()     const;
 
     MProceduralSkyboxDrawCall* drawCall = nullptr;
 };

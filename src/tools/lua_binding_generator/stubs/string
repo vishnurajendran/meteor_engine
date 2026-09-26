@@ -1,0 +1,5 @@
+// Stub <string> for binding generator parsing
+#ifndef STD_STRING_STUB_H
+#define STD_STRING_STUB_H
+#include "std_stub.h"
+#endif

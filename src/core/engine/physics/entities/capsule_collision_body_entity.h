@@ -9,14 +9,20 @@
 #include "core/engine/physics/interface/bodies/capsule/capsule_collision_body.h"
 #include "core/engine/physics/data/shape_axis.h"
 
+SCRIPT_BIND_CLASS()
 class MCapsuleCollisionBody : public MCollisionBodyEntity
 {
     DEFINE_SPATIAL_CLASS(MCapsuleCollisionBody)
 
     // halfHeight is half the cylindrical segment — not the hemisphere caps.
     // Total extent along axis = 2 * (halfHeight + radius).
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(halfHeight, float,      0.5f)
+
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(radius,     float,      0.5f)
+
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(axis,       EShapeAxis, EShapeAxis::Y)
 
 public:

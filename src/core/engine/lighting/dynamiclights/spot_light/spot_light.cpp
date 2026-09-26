@@ -33,7 +33,7 @@ void MSpotLight::onDrawGizmo(SVector2 renderResolution)
 {
     drawSpotLightGizmo();
     auto icon = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_SPOT_LIGHT);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_SPOT_LIGHT);
     if (icon)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f), icon->getTexture());
 }

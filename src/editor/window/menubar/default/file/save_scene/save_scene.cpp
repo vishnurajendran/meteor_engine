@@ -101,7 +101,7 @@ SString MSaveSceneMenubarItem::getPath()  const { return "File/Save Scene"; }
 
 void MSaveSceneMenubarItem::onSelect()
 {
-    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    if (MApplication::getAppInstance()->isSimulating() || MApplication::getAppInstance()->isPaused())
     {
         MWARN("Scene Save operation blocked during play-mode");
         return;
@@ -147,7 +147,7 @@ SString MSaveSceneAsMenubarItem::getPath()  const { return "File/Save Scene As";
 
 void MSaveSceneAsMenubarItem::onSelect()
 {
-    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    if (MApplication::getAppInstance()->isSimulating() || MApplication::getAppInstance()->isPaused())
     {
         MWARN("Scene Save operation blocked during play-mode");
         return;

@@ -37,7 +37,7 @@ void MAudioListener::onCreate()
 void MAudioListener::onDrawGizmo(SVector2 res)
 {
     const auto tex = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_LISTENER);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_AUDIO_LISTENER);
     if (tex)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), tex->getTexture());
 }

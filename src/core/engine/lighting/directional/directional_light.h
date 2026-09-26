@@ -6,6 +6,7 @@
 #include "directional_light_gpu_struct.h"
 #include "core/engine/lighting/light_entity.h"
 
+SCRIPT_BIND_CLASS()
 class MDirectionalLight : public MLightEntity
 {
     DEFINE_SPATIAL_CLASS(MDirectionalLight)
@@ -19,17 +20,27 @@ public:
     MDirectionalLight();
     ~MDirectionalLight() override = default;
 
+    SCRIPT_BIND_FUNC()
     void   setColor(const SColor& color)       override;
+    SCRIPT_BIND_FUNC()
     SColor getColor() const                     override;
+    SCRIPT_BIND_FUNC()
     void   setIntensity(const float& intensity) override;
+    SCRIPT_BIND_FUNC()
     float  getIntensity() const                 override;
 
+    SCRIPT_BIND_FUNC()
     bool getCastsShadow()  const { return castsShadow.get(); }
+    SCRIPT_BIND_FUNC()
     bool getSmoothShadow() const { return smoothShadow.get(); }
+    SCRIPT_BIND_FUNC()
     void setCastsShadow(bool v)  { castsShadow = v; }
+    SCRIPT_BIND_FUNC()
     void setSmoothShadow(bool v) { smoothShadow = v; }
 
+    SCRIPT_BIND_FUNC()
     void prepareLightRender() override;
+
     void onExit() override;
     void onDrawGizmo(SVector2 renderResolution) override;
 

@@ -28,6 +28,8 @@ void MAssetManager::refresh() {
 }
 
 void MAssetManager::cleanup() {
+
+    MLOG("MAssetManager:: Cleanup started");
     for(auto [key, asset] : assetMap) {
         if(asset != nullptr)
             delete asset;
@@ -39,6 +41,7 @@ void MAssetManager::cleanup() {
     // called on the next refresh(). Failing to clear this causes defferedAssetLoad()
     // to be called through dangling pointers, corrupting the heap.
     defferedLoadableAssetList.clear();
+    MLOG("MAssetManager:: Cleanup completed");
 }
 
 void MAssetManager::loadAssetRecursive(SString path) {

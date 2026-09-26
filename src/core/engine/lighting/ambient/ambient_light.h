@@ -4,11 +4,13 @@
 #ifndef AMBIENT_LIGHTS_H
 #define AMBIENT_LIGHTS_H
 
+#include "GL/glew.h"
 #include "ambient_light_gpu_struct.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/light_entity.h"
-#include "GL/glew.h"
 
+
+SCRIPT_BIND_CLASS()
 class MAmbientLightEntity : public MLightEntity
 {
     DEFINE_SPATIAL_CLASS(MAmbientLightEntity)
@@ -24,9 +26,13 @@ public:
 
     void prepareLightRender() override;
 
+    SCRIPT_BIND_FUNC()
     void   setColor(const SColor& color)       override;
+    SCRIPT_BIND_FUNC()
     SColor getColor() const                     override;
+    SCRIPT_BIND_FUNC()
     void   setIntensity(const float& intensity) override;
+    SCRIPT_BIND_FUNC()
     float  getIntensity() const                 override;
 
     void onExit() override;

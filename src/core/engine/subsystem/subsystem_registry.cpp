@@ -12,11 +12,17 @@ void MEngineSubsystemRegistry::init()
 void MEngineSubsystemRegistry::cleanup()
 {
     MLOG("MEngineSubsystemRegistry:: Cleaning registry");
+    int total = subSystems.size();
+    int curr = 0;
     for (auto& [type, inst] : subSystems)
     {
-        inst->cleanup();
+        if (inst)
+            inst->cleanup();
         delete inst;
-    }
 
+        curr++;
+        MLOG(SString::format("MEngineSubsystemRegistry:: {0} / {1} cleaned", curr, total));
+    }
+    MLOG("MEngineSubsystemRegistry:: Registry clean complete");
     subSystems.clear();
 }

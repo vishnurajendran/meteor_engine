@@ -56,8 +56,14 @@ void MScene::fixedUpdate(float fixedDeltaTime)
         if (!ptr->isEnabledInHierarchy())
             continue;
 
+        // call start if the entity was not started.
+        if (!ptr->hasStarted())
+            ptr->onStart();
+
         if (ptr->getCanTick())
             ptr->onFixedUpdate(fixedDeltaTime);
+        else
+            MLOG(SString::format("NON TICK: {0}", ptr->getName()));
     }
 }
 
@@ -115,25 +121,54 @@ void MScene::addToRoot(MSpatialEntity* entity) {
 
 void MScene::insertRootEntityAt(MSpatialEntity* entity, int index)
 {
-    if (!entity) return;
+    if (!entity)
+        return;
 
     // Remove from current parent if any.
     if (entity->getParent())
     {
         auto& siblings = entity->getParent()->getChildren();
         auto it = std::find(siblings.begin(), siblings.end(), entity);
-        if (it != siblings.end()) siblings.erase(it);
+        if (it != siblings.end())
+            siblings.erase(it);
         // Clear parent pointer - can't call setParent(nullptr) as that
         // would call addToSceneRoot which appends to the end.
     }
 
     // Remove from root list if already present.
     auto it = std::find(rootEntities.begin(), rootEntities.end(), entity);
-    if (it != rootEntities.end()) rootEntities.erase(it);
+    if (it != rootEntities.end())
+        rootEntities.erase(it);
 
     // Clamp and insert.
     index = std::clamp(index, 0, (int)rootEntities.size());
     rootEntities.insert(rootEntities.begin() + index, entity);
+}
+
+MSpatialEntity* MScene::find(const SString& path)
+{
+    std::string p = path.str();
+    if (p.starts_with("./"))
+        p = p.substr(2);
+
+    if (p.empty()) return nullptr;
+
+    // First segment matches against root entities
+    size_t slash = p.find('/');
+    std::string first = (slash != std::string::npos) ? p.substr(0, slash) : p;
+
+    for (auto* root : rootEntities)
+    {
+        if (root && root->getName().str() == first)
+        {
+            if (slash == std::string::npos)
+                return root;
+
+            // Delegate remaining path to the entity's find
+            return root->find(SString(p.substr(slash + 1)));
+        }
+    }
+    return nullptr;
 }
 
 bool MScene::tryParse(pugi::xml_document* doc) {

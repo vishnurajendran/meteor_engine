@@ -29,7 +29,7 @@ void MPointLight::onExit()
 void MPointLight::onDrawGizmo(SVector2 renderResolution)
 {
     auto icon = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_POINT_LIGHT);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_POINT_LIGHT);
     if (icon)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f), icon->getTexture());
 

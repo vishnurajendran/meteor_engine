@@ -38,7 +38,7 @@ void MCameraEntity::setClipPlanes(float nearClip, float farClip)
     farPlane  = farClip;
 }
 
-std::pair<float, float> MCameraEntity::getClipPlanes() const
+SVector2 MCameraEntity::getClipPlanes() const
 {
     return { nearPlane.get(), farPlane.get() };
 }
@@ -72,7 +72,7 @@ SMatrix4 MCameraEntity::getViewMatrix() const
 void MCameraEntity::onDrawGizmo(SVector2 renderResolution)
 {
     const auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_CAMERA);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_CAMERA);
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
     MGizmos::drawWireFrustum(getViewMatrix(), getProjectionMatrix(renderResolution),
                              SColor(1, 1, 1, 1), 1.0f);

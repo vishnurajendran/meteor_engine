@@ -91,6 +91,6 @@ void MAmbientLightEntity::onExit()
 void MAmbientLightEntity::onDrawGizmo(SVector2 renderResolution)
 {
     auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AMBIENT_LIGHT);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_AMBIENT_LIGHT);
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

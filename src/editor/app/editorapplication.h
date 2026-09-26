@@ -34,6 +34,7 @@ public:
 
     [[nodiscard]] bool isPaused()  const override  { return simulationState == SimulationPaused; };
     [[nodiscard]] bool isPlaying() const override  { return simulationState == Simulating;       };
+    [[nodiscard]] bool isSimulating() const override { return simulationState == Simulating;     };
     float getPhysicsStep() const;
 
     SString getEngineSettingsPath() const override { return SString::format("{0}{1}", DEFAULT_SETTINGS_PATH, "EditorSettings.xml"); }

@@ -41,8 +41,8 @@ pugi::xml_node MCameraEntityDeserialiser::serialise(MSpatialEntity* entity,
     pugi::xml_node node   = writeSpatialBase(entity, parent, "camera");
     pugi::xml_node attrib = node.child(ATTRIB_NODE.c_str());
     pugi::xml_node cn     = attrib.append_child("camera");
-    writeFloat(cn, "nearClip",     cam->getClipPlanes().first);
-    writeFloat(cn, "farClip",      cam->getClipPlanes().second);
+    writeFloat(cn, "nearClip",     cam->getClipPlanes().x);
+    writeFloat(cn, "farClip",      cam->getClipPlanes().y);
     writeFloat(cn, "fov",          cam->getFov());
     writeInt  (cn, "priority",     cam->getPriority());
     writeBool (cn, "orthographic", cam->getOrthographic());

@@ -7,6 +7,7 @@
 #include "core/object/object.h"
 #include "defferedloadableasset.h"
 
+SCRIPT_BIND_CLASS()
 class MAsset : public MObject, IDefferedLoadableAsset
 {
     DEFINE_OBJECT_CLASS(MAsset)
@@ -19,11 +20,18 @@ public:
     MAsset(const SString& path);
     ~MAsset() override = default;
 
+    SCRIPT_BIND_FUNC()
     SString getPath() const;
+
+    SCRIPT_BIND_FUNC()
     SString getFullPath() const;
+
+    SCRIPT_BIND_FUNC()
     bool isValid() const;
 
+    SCRIPT_BIND_FUNC()
     SString getAssetId() const { return assetId; }
+
     void internal_SetAssetId(const SString& assetId);
 
     // tries handling of asset open request.

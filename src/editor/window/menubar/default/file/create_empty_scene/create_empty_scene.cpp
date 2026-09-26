@@ -23,7 +23,7 @@ SString MCreateEmptySceneMenubarItem::getPath() const
 
 void MCreateEmptySceneMenubarItem::onSelect()
 {
-    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    if (MApplication::getAppInstance()->isSimulating() || MApplication::getAppInstance()->isPaused())
     {
         MWARN("New Scene operation blocked during play-mode");
         return;

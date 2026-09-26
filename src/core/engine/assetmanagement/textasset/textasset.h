@@ -6,13 +6,16 @@
 #define TEXTASSET_H
 #include "core/engine/assetmanagement/asset/asset.h"
 
-
+SCRIPT_BIND_CLASS()
 class MTextAsset : public MAsset {
 private:
     SString text;
 public:
     MTextAsset(const SString& path);
+
+    SCRIPT_BIND_FUNC()
     SString getText() const;
+
     void setText(const SString& newText);
     bool save();
 

@@ -8,12 +8,18 @@
 #include "core/engine/physics/entities/collision_body_entity.h"
 #include "core/engine/physics/interface/bodies/box/box_collision_body.h"
 
+SCRIPT_BIND_CLASS()
 class MBoxCollisionBody : public MCollisionBodyEntity
 {
     DEFINE_SPATIAL_CLASS(MBoxCollisionBody)
 
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(halfExtentX, float, 0.5f)
+
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(halfExtentY, float, 0.5f)
+
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(halfExtentZ, float, 0.5f)
 
 public:

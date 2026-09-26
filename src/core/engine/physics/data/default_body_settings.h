@@ -5,7 +5,9 @@
 #ifndef DEFAULT_BODY_SETTINGS_H
 #define DEFAULT_BODY_SETTINGS_H
 #include "../../../utils/glmhelper.h"
+#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
 
+SCRIPT_BIND_ENUM()
 enum ECollisionBodyType
 {
     StaticBody=0,

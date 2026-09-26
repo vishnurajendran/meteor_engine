@@ -4,6 +4,8 @@
 
 #include "spatialentityinspectordrawer.h"
 #include "core/engine/entities/spatial/spatial.h"
+#include "core/engine/scripting/lua/lua_script_asset.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -130,8 +132,12 @@ MSpatialEntityInspectorDrawer::fieldDrawerMap =
 // ---------------------------------------------------------------------------
 
 MSpatialEntityInspectorDrawer::MSpatialEntityInspectorDrawer() {
-    // trfTexture removed: it was loaded but never referenced in any draw call.
-    // Re-add here if an icon is needed beside the Transform header.
+    // Set up the persistent script-reference control.
+    // The accept callback filters drag-drop to only allow .lua script assets.
+    scriptRefControl = new MAssetReferenceControl();
+    scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
+        return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -157,6 +163,7 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target) {
     }
 
     drawTransformField(target);
+    drawScriptField(target);
 }
 
 // ---------------------------------------------------------------------------
@@ -235,6 +242,56 @@ void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
         // if you want a visible placeholder (e.g. a grayed-out label).
 
         ImGui::PopID();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Script reference field
+// ---------------------------------------------------------------------------
+
+void MSpatialEntityInspectorDrawer::drawScriptField(MSpatialEntity* target)
+{
+    if (!ImGui::CollapsingHeader("Script", ImGuiTreeNodeFlags_DefaultOpen))
+        return;
+
+    // Read the asset ID directly from the field, no resolution needed.
+    // This is stable regardless of which asset manager path resolves.
+    SString entityScriptId = target->getScriptAssetId();
+
+    // Read what the control currently references
+    auto controlHandle = scriptRefControl->getAssetReference();
+    SString controlId  = controlHandle.isNull() ? SString() : controlHandle.getAssetId();
+
+    // Sync the control to match the entity's stored reference.
+    // This runs after scene load, undo, or any external change to the field.
+    if (entityScriptId != controlId)
+    {
+        if (!entityScriptId.empty())
+        {
+            // Resolve the entity's stored asset ID through the asset manager
+            // and push the result into the control so it displays correctly.
+            auto* am = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+            if (am)
+            {
+                auto handle = am->getAssetById<MAsset>(entityScriptId);
+                if (!handle.isNull())
+                    scriptRefControl->setAssetReference(handle);
+            }
+        }
+        else
+        {
+            delete scriptRefControl;
+            scriptRefControl = new MAssetReferenceControl();
+            scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
+                return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
+            };
+        }
+    }
+
+    if (scriptRefControl->drawCompactControl("Script Asset"))
+    {
+        MAsset* newAsset = scriptRefControl->getAssetReference().get();
+        target->setScriptAssetRef(newAsset);
     }
 }
 

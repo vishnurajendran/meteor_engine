@@ -17,6 +17,7 @@ struct SVertex {
 };
 
 /// Represents a static mesh, in the meteor engine.
+SCRIPT_BIND_CLASS()
 class MStaticMesh : public MObject
 {
     // Non-spatial, non-serialized - just needs typeInfo() for editor/reflection.
@@ -26,12 +27,18 @@ class MStaticMesh : public MObject
 public:
     MStaticMesh(std::vector<SVertex> vertices, std::vector<unsigned int> indices);
 
-    [[nodiscard]] const std::vector<SVertex>&      getVertices()   const { return vertices; }
-    [[nodiscard]] const std::vector<unsigned int>& getIndices()    const { return indices; }
-    [[nodiscard]] unsigned int getVAO()        const { return VAO; }
-    [[nodiscard]] unsigned int getEBO()        const { return EBO; }
-    [[nodiscard]] int          getIndexCount() const { return static_cast<int>(indices.size()); }
-    [[nodiscard]] int          getVertexCount()const { return static_cast<int>(vertices.size()); }
+    SCRIPT_BIND_FUNC()
+    const std::vector<SVertex>&      getVertices()   const { return vertices; }
+    SCRIPT_BIND_FUNC()
+    const std::vector<unsigned int>& getIndices()    const { return indices; }
+
+    unsigned int getVAO()        const { return VAO; }
+    unsigned int getEBO()        const { return EBO; }
+
+    SCRIPT_BIND_FUNC()
+    int          getIndexCount() const { return static_cast<int>(indices.size()); }
+    SCRIPT_BIND_FUNC()
+    int          getVertexCount()const { return static_cast<int>(vertices.size()); }
 
     void prepareMesh();
     void draw();

@@ -75,7 +75,7 @@ void MSkyboxEntity::onExit()
 void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)
 {
     const auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_SKYBOX);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_SKYBOX);
     if (texture)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }
