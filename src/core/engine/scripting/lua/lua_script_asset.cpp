@@ -10,6 +10,7 @@
 MLuaScriptAsset::MLuaScriptAsset(const SString& path) : MAsset(path)
 {
     loadSourceFromFile();
+    name = FileIO::getFileName(path);
 }
 
 

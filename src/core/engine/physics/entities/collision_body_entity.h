@@ -82,6 +82,19 @@ public:
     void setOnTriggerStay   (std::function<void(const SOverlapData&)>   cb) { onTriggerStayCb    = std::move(cb); }
     void setOnTriggerEnd    (std::function<void(const SOverlapData&)>   cb) { onTriggerEndCb     = std::move(cb); }
 
+    // ---- Body Type ----------------------------------------------------------
+    SCRIPT_BIND_FUNC()
+    ECollisionBodyType getBodyType() const
+    {
+        return bodyType.get();
+    }
+
+    SCRIPT_BIND_FUNC()
+    void setBodyType(const ECollisionBodyType& type)
+    {
+        bodyType.set(type);
+    }
+
     // ---- Damping accessors --------------------------------------------------
 
     SCRIPT_BIND_FUNC()

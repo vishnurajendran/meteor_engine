@@ -87,12 +87,6 @@ void MAudioSource::onCreate()
 void MAudioSource::onStart()
 {
     MSpatialEntity::onStart();
-
-    // By onStart(), de-serialisation is complete and clipRef is populated.
-    // Forward the stored reference to the audio backend now that we can.
-    if (!clipRef.get().isEmpty())
-        setClip(clipRef.getHandle());
-
     if (autoStart.get() && MApplication::getAppInstance()->isSimulating())
     {
         play();
@@ -203,6 +197,11 @@ void MAudioSource::play()
         MERROR("MAudioSource:: Clip reference is invalid");
         return;
     }
+
+    // de-serialisation is complete and clipRef is populated.
+    // Forward the stored reference to the audio backend now that we can.
+    if (!clipRef.get().isEmpty())
+        setClip(clipRef.getHandle());
 
     source->play();
     sourcePlaying = true;
