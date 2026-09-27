@@ -82,6 +82,9 @@ void MAudioSource::onCreate()
     syncAudioEngineState();
     initialized = true;
     setCanTick(true);
+
+    // force initialise this bool
+    setUseSpatial(getUseSpatial());
 }
 
 void MAudioSource::onStart()
@@ -144,7 +147,6 @@ void MAudioSource::onDrawGizmo(SVector2 res)
 void MAudioSource::onEnable()
 {
     MSpatialEntity::onEnable();
-    syncAudioEngineState();
     if (isPlaying())
     {
         source->play();
@@ -189,9 +191,6 @@ void MAudioSource::play()
     if (!initialized)
         return;
 
-    if (outOfSync)
-        syncAudioEngineState();
-
     if (!clipRef.get().isValid())
     {
         MERROR("MAudioSource:: Clip reference is invalid");
@@ -205,6 +204,9 @@ void MAudioSource::play()
 
     source->play();
     sourcePlaying = true;
+
+    if (outOfSync)
+        syncAudioEngineState();
 }
 
 void MAudioSource::stop()

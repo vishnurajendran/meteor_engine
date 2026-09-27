@@ -31,12 +31,15 @@ public:
     SCRIPT_BIND_FUNC()
     std::vector<MStaticMesh*> getMeshes() const;
 
-    bool requestReload() override { loadMesh(path); return valid; }
+    bool requestReload() override { loadMesh(); return valid; }
 
 private:
     MStaticMesh* processMesh(aiMesh *mesh);
     void processNode(aiNode *node, const aiScene *scene,std::vector<MStaticMesh*>& meshes);
-    void loadMesh(SString path);
+    // Imports through the active asset source (see MAssimpAssetIOSystem), so
+    // companion files like .mtl / .bin are read through the source as well.
+    // On failure the previously loaded meshes are kept.
+    void loadMesh();
 };
 
 #endif //MESH_H

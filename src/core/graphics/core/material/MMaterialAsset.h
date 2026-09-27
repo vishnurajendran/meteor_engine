@@ -21,7 +21,8 @@ class MMaterialAsset : public MAsset, public SerializedClassBase
 public:
     bool hasDeferredLoad() const override { return true; }
     void deferredAssetLoad(bool forced) override;
-    bool requestReload() override { loadFromFile(path); deferredAssetLoad(true); return valid; }
+    bool dependsOn(const SString& assetPath) const override { return getShaderPath() == assetPath; }
+    bool requestReload() override { valid = loadFromSource(); deferredAssetLoad(true); return valid; }
 
     DECLARE_FIELD(shaderPathField,    std::string, "")
     DECLARE_FIELD(shadingModeStr,     std::string, "lit")  // "lit" | "unlit"
@@ -31,17 +32,16 @@ public:
     ~MMaterialAsset() override;
 
     MMaterial* getMaterial();
-    bool save();
+    bool save() override;
 
     void buildMaterialAsset();
 
     MMaterial::ShadingMode getShadingMode() const { return shadingMode; }
     SString                getShaderPath()  const { return SString(shaderPathField.get().c_str()); }
 
-    static bool createNewMaterial(const SString& directory,
-                                  const SString& materialName,
-                                  const SString& shaderPath,
-                                  MMaterial::ShadingMode mode = MMaterial::ShadingMode::Lit);
+    // New materials are created by the editor's "material" asset template
+    // (builtin_asset_templates.cpp), via
+    // MEditorAssetManager::createAssetFromTemplate().
 
 private:
     MMaterial* original   = nullptr;
@@ -49,7 +49,7 @@ private:
     std::vector<SString> loadOrder;  // property key order from the XML file
     MMaterial::ShadingMode shadingMode = MMaterial::ShadingMode::Lit;
 
-    bool loadFromFile(const SString& path);
+    bool loadFromSource();
     void syncFromFields();
 };
 

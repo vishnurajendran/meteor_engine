@@ -8,7 +8,7 @@
 #include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/texture/textureasset.h"
-#include "core/utils/fileio.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/utils/logger.h"
 #include "cubemaptexture.h"
 #include "pugixml.hpp"
@@ -26,33 +26,50 @@ const char* const MCubemapAsset::FACE_LABELS[FACE_COUNT] = {
 MCubemapAsset::MCubemapAsset(const SString& path)
 {
     this->path = path;
-    valid = false;
     facePaths.resize(FACE_COUNT);
 
-    SString data;
-    if (!FileIO::readFile(path, data))
+    // Mark valid so the importer keeps the asset.
+    // The GPU cubemap doesn't exist yet - it's built in deferredAssetLoad().
+    valid = parseDefinition();
+}
+
+bool MCubemapAsset::parseDefinition()
+{
+    std::vector<uint8_t> bytes;
+    if (!MAssetSources::getActive()->readBytes(path, bytes))
     {
         MERROR(STR("MCubemapAsset: could not load file ") + path);
-        return;
+        return false;
     }
 
     pugi::xml_document doc;
-    doc.load_string(data.c_str());
+    if (doc.load_buffer(bytes.data(), bytes.size()).status != pugi::status_ok)
+    {
+        MERROR(STR("MCubemapAsset: could not parse file ") + path);
+        return false;
+    }
+
     pugi::xml_node root = doc.child("cubemap");
     name = root.attribute("name").as_string();
 
     for (int i = 0; i < FACE_COUNT; ++i)
         facePaths[i] = root.child(FACE_LABELS[i]).attribute("src").as_string();
 
-    // Mark valid so the importer keeps the asset.
-    // The GPU cubemap doesn't exist yet - it's built in deferredAssetLoad().
-    valid = true;
+    return true;
+}
+
+MCubemapAsset::~MCubemapAsset()
+{
+    releaseCubemap();
 }
 
 void MCubemapAsset::deferredAssetLoad(bool forced)
 {
     // Skip if already built, unless a forced rebuild was requested
     if (texture && !forced) return;
+
+    // A forced rebuild used to overwrite `texture` and leak the old one.
+    releaseCubemap();
 
     if (!buildCubemap())
     {
@@ -91,6 +108,14 @@ bool MCubemapAsset::buildCubemap()
 
 MTexture* MCubemapAsset::getTexture() { return texture; }
 
+bool MCubemapAsset::dependsOn(const SString& assetPath) const
+{
+    for (const auto& face : facePaths)
+        if (face == assetPath)
+            return true;
+    return false;
+}
+
 SString MCubemapAsset::getFacePath(int index) const
 {
     if (index < 0 || index >= FACE_COUNT) return "";
@@ -112,10 +137,16 @@ bool MCubemapAsset::save()
     for (int i = 0; i < FACE_COUNT; ++i)
         root.append_child(FACE_LABELS[i]).append_attribute("src").set_value(facePaths[i].c_str());
 
+    auto target = MAssetSources::getWritable();
+    if (!target)
+    {
+        MERROR("MCubemapAsset::save — active asset source is read-only: " + path);
+        return false;
+    }
+
     std::ostringstream oss;
     doc.save(oss);
-    SString str = oss.str();
-    if (!FileIO::writeFile(path, str))
+    if (!target->writeText(path, SString(oss.str())))
     {
         MERROR("MCubemapAsset::save — failed to write " + path);
         return false;
@@ -125,20 +156,23 @@ bool MCubemapAsset::save()
 
 bool MCubemapAsset::requestReload()
 {
-    // Clean up old GL cubemap texture to avoid leaking.
-    // NOTE: MCubemapTexture has no destructor that calls glDeleteTextures,
-    //       so we do it manually here.  This is a pre-existing gap — the
-    //       class itself should own the cleanup, but fixing that is out of
-    //       scope for this change.
-    if (texture)
-    {
-        unsigned int texId = texture->getTextureID();
-        if (texId != 0)
-            glDeleteTextures(1, &texId);
-        delete texture;
-        texture = nullptr;
-    }
-
-    valid = buildCubemap();
+    // Re-read the .skybox file so face-path edits made outside the editor are
+    // picked up, then rebuild the GPU cubemap.
+    releaseCubemap();
+    valid = parseDefinition() && buildCubemap();
     return valid;
+}
+
+void MCubemapAsset::releaseCubemap()
+{
+    // MCubemapTexture has no destructor that calls glDeleteTextures, so the
+    // GL handle is released here. If MCubemapTexture ever gains a destructor
+    // that deletes its texture, remove the glDeleteTextures call below.
+    if (!texture) return;
+
+    unsigned int texId = texture->getTextureID();
+    if (texId != 0)
+        glDeleteTextures(1, &texId);
+    delete texture;
+    texture = nullptr;
 }

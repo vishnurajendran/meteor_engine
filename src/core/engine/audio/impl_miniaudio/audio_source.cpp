@@ -3,6 +3,8 @@
 //
 
 #include "audio_source.h"
+#include <algorithm>
+
 #include "core/utils/logger.h"
 
 void MMiniAudioSource::init()
@@ -62,8 +64,14 @@ void MMiniAudioSource::setClip(IAudioClip* inClip)
         return;
     }
 
+    // The path is an asset path; the engine's resource manager opens it
+    // through the asset VFS.
+    //   preloaded -> decode fully up front (cached per path by miniaudio)
+    //   streaming -> MA_SOUND_FLAG_STREAM: decode incrementally from the
+    //                source on a job thread. (Previously 0, which loads the
+    //                whole encoded file into memory and decodes on the fly.)
     const auto* assetPath = clip->getFilePath().c_str();
-    const ma_uint32 flags = clip->isPreloaded() ? MA_SOUND_FLAG_DECODE : 0;
+    const ma_uint32 flags = clip->isPreloaded() ? MA_SOUND_FLAG_DECODE : MA_SOUND_FLAG_STREAM;
 
     const ma_result result = ma_sound_init_from_file(
         engineHandle, assetPath, flags, nullptr, nullptr, &soundHandle);

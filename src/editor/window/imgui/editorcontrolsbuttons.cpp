@@ -5,6 +5,7 @@
 #include "editorcontrolsbuttons.h"
 #include "default_engine_icon_paths.h"
 #include "editor/app/editorapplication.h"
+#include "editor/editor_utils/engine_textures.h"
 #include "imgui-SFML.h"
 #include "imgui.h"
 
@@ -14,10 +15,12 @@ sf::Texture MEditorControlsButtons::stopTexture;
 void MEditorControlsButtons::simulationStartButton()
 {
 
-    const SString METEOR_PLAYER_ICO_PATH = SEngineAssetIconPaths::LOWRES_TEX_BTTN_PLAY;
-    if (playTexture.getSize().x <= 0)
+    // Try once; a missing icon should not retry (and warn) every frame.
+    static bool playTried = false;
+    if (!playTried)
     {
-        playTexture.loadFromFile(METEOR_PLAYER_ICO_PATH.c_str());
+        playTried = true;
+        loadEngineTexture(playTexture, SEngineAssetIconPaths::LOWRES_TEX_BTTN_PLAY);
     }
 
     auto windowSize = ImGui::GetWindowSize();
@@ -32,10 +35,11 @@ void MEditorControlsButtons::simulationStartButton()
 
 void MEditorControlsButtons::simulationStopButton()
 {
-    const SString METEOR_PLAYER_ICO_PATH = SEngineAssetIconPaths::LOWRES_TEX_BTTN_STOP;
-    if (stopTexture.getSize().x <= 0)
+    static bool stopTried = false;
+    if (!stopTried)
     {
-        stopTexture.loadFromFile(METEOR_PLAYER_ICO_PATH.c_str());
+        stopTried = true;
+        loadEngineTexture(stopTexture, SEngineAssetIconPaths::LOWRES_TEX_BTTN_STOP);
     }
 
     auto windowSize = ImGui::GetWindowSize();

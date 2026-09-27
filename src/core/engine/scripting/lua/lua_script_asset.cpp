@@ -4,21 +4,22 @@
 
 #include "lua_script_asset.h"
 
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 
 MLuaScriptAsset::MLuaScriptAsset(const SString& path) : MAsset(path)
 {
-    loadSourceFromFile();
+    loadSource();
     name = FileIO::getFileName(path);
 }
 
 
-void MLuaScriptAsset::loadSourceFromFile()
+void MLuaScriptAsset::loadSource()
 {
-    valid = FileIO::readFile(path, scriptSrc);
+    valid = MAssetSources::getActive()->readText(path, scriptSrc);
     if (!valid)
     {
-        MERROR("Failed to read file");
+        MERROR("MLuaScriptAsset:: Failed to read script " + path);
     }
 }

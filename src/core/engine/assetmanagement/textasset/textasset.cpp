@@ -4,12 +4,12 @@
 
 #include "textasset.h"
 
-#include "core/utils/fileio.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/utils/logger.h"
 
 MTextAsset::MTextAsset(const SString& path) : MAsset(path){
     name = "TextAsset";
-    valid = loadFromPath(path);
+    valid = loadFromSource();
 }
 
 SString MTextAsset::getText() const {
@@ -21,8 +21,14 @@ void MTextAsset::setText(const SString& newText) {
 }
 
 bool MTextAsset::save() {
-    SString data = text;
-    if (!FileIO::writeFile(path, data))
+    auto target = MAssetSources::getWritable();
+    if (!target)
+    {
+        MERROR("MTextAsset::save - active asset source is read-only: " + path);
+        return false;
+    }
+
+    if (!target->writeText(path, text))
     {
         MERROR("MTextAsset::save - failed to write " + path);
         return false;
@@ -31,6 +37,6 @@ bool MTextAsset::save() {
     return true;
 }
 
-bool MTextAsset::loadFromPath(const SString& path) {
-    return FileIO::readFile(path, text);
+bool MTextAsset::loadFromSource() {
+    return MAssetSources::getActive()->readText(path, text);
 }

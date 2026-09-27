@@ -3,6 +3,8 @@
 //
 // Miniaudio-backed IAudioClip. Opens a temporary ma_decoder on init
 // to read format metadata, then closes it -- no PCM data is held.
+// The decoder reads through the asset VFS, so the file path is an asset
+// path and works for both loose files and packages.
 //
 // preloadAudio() / enableStreaming() set a flag that IAudioSource
 // implementations read when creating their ma_sound.
@@ -24,6 +26,7 @@ public:
 
     // Called by the engine factory before init().
     void internal_setEngineHandle(ma_engine* handle) { engineHandle = handle; }
+    void internal_setVFS(ma_vfs* inVfs)              { vfs = inVfs; }
     void internal_setFilePath(const SString& path)   { filePath = path; }
 
     // -- Metadata -------------------------------------------------------------
@@ -46,6 +49,7 @@ public:
 
 private:
     ma_engine* engineHandle   = nullptr;
+    ma_vfs*    vfs            = nullptr;   // nullptr = OS file system
     SString    filePath;
     bool       initialized    = false;
 

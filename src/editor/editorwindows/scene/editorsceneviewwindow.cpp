@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include "editor/editor_utils/engine_textures.h"
 #include "imgui-SFML.h"
 
 #include "editorsceneviewwindow.h"
@@ -117,13 +118,13 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     renderTexture = sf::RenderTexture({ 1920, 1080 }, settings);
     updateRenderTarget();
 
-    translateIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_MOVE);
-    rotateIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_ROTATE);
-    scaleIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_SCALE);
-    localSpaceIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_LOCALSPACE);
-    worldSpaceIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_WORLDSPACE);
-    gizmoOnIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_ENABLED);
-    gizmoOffIcon.loadFromFile(SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_DISABLED);
+    loadEngineTexture(translateIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_MOVE);
+    loadEngineTexture(rotateIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_ROTATE);
+    loadEngineTexture(scaleIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_SCALE);
+    loadEngineTexture(localSpaceIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_LOCALSPACE);
+    loadEngineTexture(worldSpaceIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_WORLDSPACE);
+    loadEngineTexture(gizmoOnIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_ENABLED);
+    loadEngineTexture(gizmoOffIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_DISABLED);
 
     editorAppInst = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
     if (!editorAppInst) return;

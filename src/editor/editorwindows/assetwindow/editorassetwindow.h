@@ -6,7 +6,9 @@
 #define EDITORASSETWINDOW_H
 #pragma once
 
+#include <map>
 #include <queue>
+#include <string>
 #include "SFML/Graphics.hpp"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "editor/editorassetmanager/editor_asset_directory_node.h"
@@ -87,6 +89,19 @@ private:
     // -- Popup drawing - called every frame from onGui() -----------------------
     void drawDeleteConfirmModal();
     void drawNewFolderPopup();
+    void drawCreateAssetPopup();
+
+    // -- Create from template ---------------------------------------------------
+    // Folder new assets go into: the right-clicked folder, else the folder
+    // being viewed. Empty at the tree root (which is not a real folder).
+    SString getCreateTargetDir(SAssetDirectoryNode* clicked) const;
+    // "Create" submenu built from MAssetTemplateRegistry (menuPath "A/B/C").
+    void drawCreateMenuItems(const SString& targetDir);
+    // Arms the create dialog for a template.
+    void beginCreateFromTemplate(const SString& templateId, const SString& targetDir);
+    // All asset paths under `root` with the given extension (no dot), sorted.
+    static void collectAssetPaths(SAssetDirectoryNode* root, const std::string& extension,
+                                  std::vector<SString>& out);
 
 public:
     MEditorAssetWindow();
@@ -137,6 +152,14 @@ private:
     // -- New Folder popup state ------------------------------------------------
     bool pendingNewFolderPopup = false;        // arms ImGui::OpenPopup on next frame
     char newFolderNameBuffer[256] = {};        // text input buffer
+
+    // -- Create-asset dialog state ---------------------------------------------
+    bool                          pendingCreatePopup = false;
+    SString                       createTemplateId;
+    SString                       createTargetDir;
+    char                          createNameBuffer[256] = {};
+    std::map<SString, std::string> createParamValues;
+    SString                       createError;
 
     size_t sourcesRowIdx;
 };

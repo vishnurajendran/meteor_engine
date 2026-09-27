@@ -5,6 +5,7 @@
 //
 
 #include "asset_watcher_thread.h"
+#include "core/engine/assetmanagement/source/directory_asset_source.h"
 #include "core/utils/logger.h"
 
 MAssetWatcherThread::~MAssetWatcherThread()
@@ -16,12 +17,44 @@ MAssetWatcherThread::~MAssetWatcherThread()
 // Lifecycle
 // ---------------------------------------------------------------------------
 
-void MAssetWatcherThread::start(const std::vector<SString>& searchPaths)
+void MAssetWatcherThread::setSource(std::shared_ptr<const MDirectoryAssetSource> source)
+{
+    std::vector<std::shared_ptr<const MDirectoryAssetSource>> list;
+    if (source) list.push_back(std::move(source));
+    setSources(std::move(list));
+}
+
+void MAssetWatcherThread::setSources(std::vector<std::shared_ptr<const MDirectoryAssetSource>> sources)
 {
     if (running.load())
+    {
+        MWARN("MAssetWatcherThread:: setSources ignored while running; call stop() first");
+        return;
+    }
+    sources_ = std::move(sources);
+}
+
+const MDirectoryAssetSource* MAssetWatcherThread::sourceFor(const std::string& assetPath) const
+{
+    for (const auto& src : sources_)
+    {
+        for (const auto& searchPath : src->getSearchPaths())
+        {
+            std::string prefix = MAssetPath::normalize(searchPath).str();
+            if (prefix.empty()) continue;
+            if (prefix.back() != '/') prefix.push_back('/');
+            if (assetPath.compare(0, prefix.size(), prefix) == 0)
+                return src.get();
+        }
+    }
+    return sources_.empty() ? nullptr : sources_.front().get();
+}
+
+void MAssetWatcherThread::start()
+{
+    if (running.load() || sources_.empty())
         return;
 
-    searchPaths_  = searchPaths;
     stopRequested = false;
     running       = true;
 
@@ -165,6 +198,15 @@ void MAssetWatcherThread::pollWatchedFiles()
     {
         const auto currentWriteTime = getWriteTime(path);
 
+        // File is gone (or unreadable): the delta scan reports it as Deleted.
+        // Reporting Modified too would make the editor try to reload a
+        // missing file.
+        if (currentWriteTime == std::filesystem::file_time_type{})
+        {
+            entry.hasPendingChange = false;
+            continue;
+        }
+
         // Detect initial change
         if (!entry.hasPendingChange && currentWriteTime != entry.lastWriteTime)
         {
@@ -196,6 +238,9 @@ void MAssetWatcherThread::pollWatchedFiles()
 
 void MAssetWatcherThread::scanForNewAndDeletedFiles()
 {
+    if (sources_.empty())
+        return;
+
     // Snapshot known state so locks are held briefly.
     std::set<std::string> knownPathsSnapshot;
     std::set<std::string> knownDirsSnapshot;
@@ -207,12 +252,15 @@ void MAssetWatcherThread::scanForNewAndDeletedFiles()
 
     std::set<std::string> diskPaths;
     std::set<std::string> diskDirs;
+    std::vector<SWatchEvent> found;
 
-    // Walk all search paths
-    for (const auto& searchPath : searchPaths_)
+    // Walk all search paths of every source
+    for (const auto& source : sources_)
+    for (const auto& searchPath : source->getSearchPaths())
     {
-        std::filesystem::path dir(searchPath.str());
-        if (!std::filesystem::exists(dir))
+        const std::filesystem::path dir = source->resolve(searchPath);
+        std::error_code ec;
+        if (!std::filesystem::exists(dir, ec))
             continue;
 
         try
@@ -222,47 +270,33 @@ void MAssetWatcherThread::scanForNewAndDeletedFiles()
                 if (stopRequested.load())
                     return;
 
+                const SString assetPath = source->toAssetPath(entry.path());
+                const std::string& key  = assetPath.str();
+
                 if (entry.is_directory())
                 {
-                    std::string dirStr = entry.path().string();
-                    for (char& c : dirStr)
-                        if (c == '\\') c = '/';
-                    diskDirs.insert(dirStr);
-
-                    if (knownDirsSnapshot.find(dirStr) == knownDirsSnapshot.end())
-                    {
-                        std::lock_guard eLock(eventMutex);
-                        pendingEvents.push_back({EWatchEvent::NewDirectory, SString(dirStr)});
-                    }
+                    diskDirs.insert(key);
+                    if (!knownDirsSnapshot.contains(key))
+                        found.push_back({EWatchEvent::NewDirectory, assetPath});
                     continue;
                 }
 
                 if (!entry.is_regular_file())
                     continue;
 
-                std::string filename = entry.path().filename().string();
-                if (!filename.empty() && filename[0] == '~')
+                if (MAssetPath::isIgnored(assetPath))   // .meta and ~files
                     continue;
 
-                std::string path = entry.path().string();
-                for (char& c : path)
-                    if (c == '\\') c = '/';
-
-                if (entry.path().extension().string() == ".meta")
-                    continue;
-
-                diskPaths.insert(path);
-
-                if (knownPathsSnapshot.find(path) == knownPathsSnapshot.end())
-                {
-                    std::lock_guard eLock(eventMutex);
-                    pendingEvents.push_back({EWatchEvent::NewFile, SString(path)});
-                }
+                diskPaths.insert(key);
+                if (!knownPathsSnapshot.contains(key))
+                    found.push_back({EWatchEvent::NewFile, assetPath});
             }
         }
         catch (const std::filesystem::filesystem_error&)
         {
-            // Directory may have been deleted mid-scan -- ignore.
+            // Directory may have been deleted mid-scan -- skip deletion
+            // detection this round so we don't report false deletes.
+            return;
         }
     }
 
@@ -272,11 +306,8 @@ void MAssetWatcherThread::scanForNewAndDeletedFiles()
         if (stopRequested.load())
             return;
 
-        if (diskPaths.find(known) == diskPaths.end())
-        {
-            std::lock_guard eLock(eventMutex);
-            pendingEvents.push_back({EWatchEvent::Deleted, SString(known)});
-        }
+        if (!diskPaths.contains(known))
+            found.push_back({EWatchEvent::Deleted, SString(known)});
     }
 
     // Detect deleted directories
@@ -285,22 +316,24 @@ void MAssetWatcherThread::scanForNewAndDeletedFiles()
         if (stopRequested.load())
             return;
 
-        if (diskDirs.find(known) == diskDirs.end())
-        {
-            std::lock_guard eLock(eventMutex);
-            pendingEvents.push_back({EWatchEvent::DeletedDirectory, SString(known)});
-        }
+        if (!diskDirs.contains(known))
+            found.push_back({EWatchEvent::DeletedDirectory, SString(known)});
+    }
+
+    if (!found.empty())
+    {
+        std::lock_guard eLock(eventMutex);
+        pendingEvents.insert(pendingEvents.end(), found.begin(), found.end());
     }
 }
 
-std::filesystem::file_time_type MAssetWatcherThread::getWriteTime(const std::string& path)
+std::filesystem::file_time_type MAssetWatcherThread::getWriteTime(const std::string& assetPath) const
 {
-    try
-    {
-        return std::filesystem::last_write_time(std::filesystem::path(path));
-    }
-    catch (...)
-    {
+    const MDirectoryAssetSource* source = sourceFor(assetPath);
+    if (!source)
         return {};
-    }
+
+    std::error_code ec;
+    const auto t = std::filesystem::last_write_time(source->resolve(SString(assetPath)), ec);
+    return ec ? std::filesystem::file_time_type{} : t;
 }

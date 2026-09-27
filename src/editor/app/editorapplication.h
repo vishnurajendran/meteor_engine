@@ -4,6 +4,7 @@
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "editor/window/imgui/imguisubwindow.h"
 #include "editor/window/imgui/imguiwindow.h"
+#include "editor/project/editor_project_manager.h"
 
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
@@ -63,6 +64,7 @@ public:
 private:
     MEditorSceneManager* sceneManagerRef = nullptr;
     MEditorAssetManager* assetManagerRef = nullptr;
+    MEditorProjectManager projectManager;
     MEditorSimulationManagerSubsystem* simulationManagerSubsystem = nullptr;
 
     // sub-system interfaces

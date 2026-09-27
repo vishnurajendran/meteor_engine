@@ -16,11 +16,11 @@ public:
     MLuaScriptAsset(const SString& path);
     ~MLuaScriptAsset() override = default;
 
-    bool requestReload() override { loadSourceFromFile(); return valid; }
+    bool requestReload() override { loadSource(); return valid; }
     SString getScriptSrc() const override { return scriptSrc; }
 
 private:
-    void loadSourceFromFile();
+    void loadSource();
 private:
     SString scriptSrc;
 };

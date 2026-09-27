@@ -6,11 +6,11 @@
 
 #include "GL/glew.h"
 #include "SFML/Graphics/Image.hpp"
-#include "core/utils/fileio.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/utils/logger.h"
 #include "pugixml.hpp"
 #include <algorithm>
-#include <sstream>
+#include <vector>
 
 // -- String <-> enum helpers (file-local) ----------------------------------------
 
@@ -211,24 +211,34 @@ bool MTextureAsset::requestReload()
 
 bool MTextureAsset::loadWithSettings()
 {
+    std::vector<uint8_t> bytes;
+    if (!MAssetSources::getActive()->readBytes(path, bytes) || bytes.empty())
+    {
+        MERROR("MTextureAsset: failed to read image " + path);
+        return false;
+    }
+
     bool needsProcessing = (maxImportSize > 0)
                         || (compression != ETextureCompression::None);
 
     if (!needsProcessing)
     {
-        // Fast path - load directly via SFML, then apply GL params
-        if (!texture.loadFromPath(path))
+        // Fast path - SFML decodes and uploads directly, then apply GL params
+        if (!texture.loadFromMemory(bytes.data(), bytes.size()))
+        {
+            MERROR("MTextureAsset: failed to decode image " + path);
             return false;
+        }
 
         applyGLParams();
         return true;
     }
 
-    // Slow path - load to CPU (sf::Image) so we can resize / compress
+    // Slow path - decode to CPU (sf::Image) so we can resize / compress
     sf::Image img;
-    if (!img.loadFromFile(path.c_str()))
+    if (!img.loadFromMemory(bytes.data(), bytes.size()))
     {
-        MERROR("MTextureAsset: failed to load image file " + path);
+        MERROR("MTextureAsset: failed to decode image " + path);
         return false;
     }
 
@@ -317,18 +327,21 @@ void MTextureAsset::loadImportSettings(const pugi::xml_node& node)
 
 bool MTextureAsset::saveImportSettings()
 {
-    // Read existing meta file
-    SString metaPath = path + ".meta";
-    SString data;
-    pugi::xml_document doc;
+    auto target = MAssetSources::getWritable();
+    if (!target)
+    {
+        MERROR("MTextureAsset::saveImportSettings - active asset source is read-only: " + path);
+        return false;
+    }
 
-    if (FileIO::readFile(metaPath, data))
-        doc.load_string(data.c_str());
+    // Read existing meta so the GUID and anything else in it is preserved.
+    pugi::xml_document doc;
+    target->readMeta(path, doc);
 
     auto root = doc.child("asset_id");
     if (!root)
     {
-        MERROR("MTextureAsset::saveImportSettings - meta file missing <asset_id> root: " + metaPath);
+        MERROR("MTextureAsset::saveImportSettings - meta file missing <asset_id> root: " + path);
         return false;
     }
 
@@ -343,8 +356,5 @@ bool MTextureAsset::saveImportSettings()
     settings.append_child("maxSize").text().set(maxImportSize);
     settings.append_child("compression").text().set(compressionToString(compression));
 
-    std::ostringstream oss;
-    doc.save(oss);
-    SString str = oss.str();
-    return FileIO::writeFile(metaPath, str);
+    return target->writeMeta(path, doc);
 }

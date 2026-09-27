@@ -11,19 +11,23 @@
 class MSceneAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MSceneAsset)
 private:
-    pugi::xml_document* sceneHierarchy;
+    // Owned by value: nothing to leak on reload, nothing to double-free
+    // when the initial load fails.
+    pugi::xml_document sceneHierarchy;
 public:
 
     explicit MSceneAsset(const SString& path);
-    ~MSceneAsset() override;
+    ~MSceneAsset() override = default;
 
     bool openAsset() override;
+
+    // nullptr when the scene failed to load.
     pugi::xml_document* getSceneHierarchy();
 
-    bool requestReload() override { return loadFromPath(path);}
+    bool requestReload() override { valid = loadFromSource(); return valid; }
 
 private:
-    bool loadFromPath(const SString& path);
+    bool loadFromSource();
 };
 
 #endif //SCENEASSET_H
