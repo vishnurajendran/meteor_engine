@@ -3,6 +3,7 @@
 //
 
 #include <GL/glew.h>
+#include "core/utils/meteor_paths.h"
 #include "imgui.h"
 #include "imgui-SFML.h"
 #include "imguiwindow.h"
@@ -42,7 +43,7 @@ bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int
     }
 
     ImGuiIO& io = ImGui::GetIO();
-    loadFontFile("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf", 18);
+    loadFontFile(ENGINE_PATH("meteor_assets/fonts/Open-sans/OpenSansEmoji.ttf"), 18);
 
     io.FontGlobalScale = 1;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls

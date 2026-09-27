@@ -16,6 +16,7 @@ public:
     static const char* const FACE_LABELS[FACE_COUNT]; // "right","left","top","bottom","back","front"
 
     explicit MCubemapAsset(const SString& path);
+    ~MCubemapAsset() override;
 
     MTexture* getTexture() override;
 
@@ -25,11 +26,12 @@ public:
     // available.
     bool hasDeferredLoad() const override { return true; }
     void deferredAssetLoad(bool forced) override;
+    bool dependsOn(const SString& assetPath) const override;
 
     SString getFacePath(int index)  const;
     void    setFacePath(int index, const SString& facePath);
 
-    bool save();              // write cubemap XML with current face paths
+    bool save() override;     // write cubemap XML with current face paths
     bool requestReload() override;  // rebuild GPU cubemap from current face paths
 
 private:
@@ -37,6 +39,8 @@ private:
     std::vector<SString> facePaths;  // always size 6
 
     bool buildCubemap();  // shared between deferredAssetLoad and requestReload
+    void releaseCubemap(); // frees the GL texture and the MCubemapTexture
+    bool parseDefinition(); // reads face paths from the .skybox file
 };
 
 #endif //CUBEMAPASSET_H

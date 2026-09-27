@@ -11,7 +11,12 @@
 
 void MMiniAudioEngineSubsystem::init()
 {
-    if (const ma_result result = ma_engine_init(nullptr, &engine); result != MA_SUCCESS)
+    // Route every file miniaudio opens (decode, stream, metadata) through the
+    // active asset source instead of the OS file system.
+    ma_engine_config config = ma_engine_config_init();
+    config.pResourceManagerVFS = assetVFS.get();
+
+    if (const ma_result result = ma_engine_init(&config, &engine); result != MA_SUCCESS)
     {
         MERROR("MiniAudioEngine::Failed initializing audio engine");
         return;
@@ -46,6 +51,11 @@ void MMiniAudioEngineSubsystem::cleanup()
     audioSources.clear();
     audioListeners.clear();
     audioClips.clear();
+
+    // Was missing: without this the device thread and resource manager
+    // job threads kept running after shutdown.
+    ma_engine_uninit(&engine);
+    initialized = false;
 
     MLOG("MiniAudioEngine::Shutdown audio engine");
 }
@@ -110,6 +120,7 @@ IAudioClip* MMiniAudioEngineSubsystem::createAudioClip(const SString& filePath)
 
     auto* inst = new MMiniAudioClip();
     inst->internal_setEngineHandle(&engine);
+    inst->internal_setVFS(assetVFS.get());
     inst->internal_setFilePath(filePath);
     inst->init();
     audioClips.push_back(inst);

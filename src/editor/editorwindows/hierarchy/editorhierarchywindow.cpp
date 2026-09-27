@@ -22,6 +22,7 @@
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
 #include "core/engine/skybox/skybox.h"
 #include "editor/app/editorapplication.h"
+#include "editor/editor_utils/engine_textures.h"
 #include "editor/window/menubar/menubartree.h"
 
 // --- Palette ------------------------------------------------------------------
@@ -60,40 +61,37 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
     title = "Hierarchy";
 
     // mesh
-    typeToIcon[MStaticMeshEntity::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_STATICMESH);
+    typeToIcon[MStaticMeshEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_STATICMESH);
 
     // lights
-    typeToIcon[MDirectionalLight::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_DIRECTIONAL_LIGHT);
-    typeToIcon[MPointLight::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_POINT_LIGHT);
-    typeToIcon[MSpotLight::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_SPOT_LIGHT);
-    typeToIcon[MAmbientLightEntity::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_AMBIENT_LIGHT);
+    typeToIcon[MDirectionalLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_DIRECTIONAL_LIGHT);
+    typeToIcon[MPointLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_POINT_LIGHT);
+    typeToIcon[MSpotLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_SPOT_LIGHT);
+    typeToIcon[MAmbientLightEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_AMBIENT_LIGHT);
 
     // audio
-    typeToIcon[MAudioListener::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_AUDIO_LISTENER);
-    typeToIcon[MAudioSource::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_AUDIO_SOURCE);
+    typeToIcon[MAudioListener::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_AUDIO_LISTENER);
+    typeToIcon[MAudioSource::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_AUDIO_SOURCE);
 
     // skybox
-    typeToIcon[MSkyboxEntity::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_SKY);
-    typeToIcon[MProceduralSkyboxEntity::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_PROC_SKY);
+    typeToIcon[MSkyboxEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_SKY);
+    typeToIcon[MProceduralSkyboxEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_PROC_SKY);
 
     // camera
-    typeToIcon[MCameraEntity::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_CAMERA);
+    typeToIcon[MCameraEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_CAMERA);
 
     // collision
-    typeToIcon[MBoxCollisionBody::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_BOX);
-    typeToIcon[MSphereCollisionBody::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_SPHERE);
-    typeToIcon[MCylinderCollisionBody::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CYLINDER);
-    typeToIcon[MCapsuleCollisionBody::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CAPSULE);
-    typeToIcon[MMeshCollisionBody::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_MESH);
-    typeToIcon[MConvexHullCollisionBody::staticTypeInfo()] = sf::Texture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CONVEXHULL);
+    typeToIcon[MBoxCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_BOX);
+    typeToIcon[MSphereCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_SPHERE);
+    typeToIcon[MCylinderCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CYLINDER);
+    typeToIcon[MCapsuleCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CAPSULE);
+    typeToIcon[MMeshCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_MESH);
+    typeToIcon[MConvexHullCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CONVEXHULL);
 
 
     // default
-    const std::filesystem::path sceneTexPath(SEngineAssetIconPaths::LOWRES_TEX_SCENE);
-    const std::filesystem::path entityTexPath(SEngineAssetIconPaths::LOWRES_TEX_SPATIAL);
-
-    sceneTex.loadFromFile( sceneTexPath);
-    entityTex.loadFromFile(entityTexPath);
+    loadEngineTexture(sceneTex,  SEngineAssetIconPaths::LOWRES_TEX_SCENE);
+    loadEngineTexture(entityTex, SEngineAssetIconPaths::LOWRES_TEX_SPATIAL);
 
     sceneTexSize  = sf::Vector2f(sceneTex.getSize().x, sceneTex.getSize().y);
     entityTexSize = sf::Vector2f(entityTex.getSize().x, entityTex.getSize().y);

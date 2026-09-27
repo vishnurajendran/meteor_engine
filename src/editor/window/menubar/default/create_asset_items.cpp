@@ -2,18 +2,59 @@
 
 #include "create_asset_items.h"
 
+#include <cstring>
+#include <map>
 #include <vector>
 #include <string>
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/subsystem/subsystem_registry.h"
-#include "core/graphics/core/material/MMaterialAsset.h"
-#include "core/graphics/core/material/material.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/logger.h"
+#include "editor/editorassetmanager/builtin_asset_templates.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/window/menubar/menubartree.h"
 #include "imgui.h"
+
+// -------------------------------------------------------------------------------
+//  Shared helpers
+// -------------------------------------------------------------------------------
+
+static MEditorAssetManager* editorAssets()
+{
+    return dynamic_cast<MEditorAssetManager*>(
+        MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+}
+
+// Creates through the template registry. Returns the new asset path, or an
+// empty string with `outError` set.
+static SString createFromTemplate(const char* templateId, const char* directory, const char* name,
+                                  const std::map<SString, SString>& params, std::string& outError)
+{
+    auto* editorAM = editorAssets();
+    if (!editorAM)
+    {
+        outError = "Editor asset manager is not available.";
+        return {};
+    }
+
+    const SString created = editorAM->createAssetFromTemplate(
+        SString(templateId), SString(directory), SString(name), params);
+
+    if (created.empty())
+        outError = "Could not create the asset. See the console for details.";
+    else
+        outError.clear();
+    return created;
+}
+
+static void drawError(const std::string& error)
+{
+    if (error.empty()) return;
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.f));
+    ImGui::TextWrapped("%s", error.c_str());
+    ImGui::PopStyleColor();
+}
 
 // -------------------------------------------------------------------------------
 //  Material
@@ -28,13 +69,13 @@ bool MCreateMaterialItem::registered = []() {
 static std::vector<SShaderEntry> buildShaderList()
 {
     std::vector<SShaderEntry> list;
-    auto* editorAM = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+    auto* editorAM = editorAssets();
     if (!editorAM) return list;
 
     SAssetDirectoryNode* root = editorAM->getAssetRootNode();
     if (!root) return list;
 
-    // BFS over the asset tree, collect all .mesl files.
+    // BFS over the asset tree, collect all shader assets.
     std::queue<SAssetDirectoryNode*> q;
     q.push(root);
     while (!q.empty())
@@ -72,6 +113,7 @@ void MCreateMaterialItem::onSelect()
     std::strncpy(matName,  "NewMaterial", sizeof(matName));
     shadingMode    = 0;
     selectedShader = 0;
+    lastError.clear();
 
     // Rebuild the shader list from the live asset tree each time the dialog
     // opens so newly imported shaders appear without restarting the editor.
@@ -127,7 +169,6 @@ void MCreateMaterialItem::drawPopup()
     }
     else
     {
-        // Build a null-terminated label array for ImGui::Combo.
         // Each entry is "ShaderName  (path/to/shader.mesl)".
         const char* preview = cachedShaders[selectedShader].label.c_str();
         if (ImGui::BeginCombo("##cn_shader", preview))
@@ -136,10 +177,7 @@ void MCreateMaterialItem::drawPopup()
             {
                 const bool sel = (i == selectedShader);
                 if (ImGui::Selectable(cachedShaders[i].label.c_str(), sel))
-                {
                     selectedShader = i;
-                    MLOG(SString::format("Selected Item {0}", cachedShaders[selectedShader].label));
-                }
                 if (sel) ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
@@ -154,7 +192,10 @@ void MCreateMaterialItem::drawPopup()
     ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
     ImGui::Text("Output: %s%s.material", directory, matName);
+    ImGui::TextUnformatted("A numeric suffix is added if the name is taken.");
     ImGui::PopStyleColor();
+
+    drawError(lastError);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -167,21 +208,24 @@ void MCreateMaterialItem::drawPopup()
     ImGui::BeginDisabled(!canCreate);
     if (ImGui::Button("Create", ImVec2(120, 0)))
     {
-        auto mode = (shadingMode == 1)
-                    ? MMaterial::ShadingMode::Unlit
-                    : MMaterial::ShadingMode::Lit;
-
         const std::string& chosenPath = cachedShaders[selectedShader].path;
-        if (MMaterialAsset::createNewMaterial(
-            SString(directory),
-            SString(matName),
-            SString(chosenPath.c_str()),
-            mode))
+
+        // The "material" template reads the shader's declared property
+        // defaults and writes them in declaration order.
+        const SString created = createFromTemplate(
+            SBuiltInTemplateIds::Material, directory, matName,
+            {
+                { SBuiltInTemplateIds::MaterialParamShader, SString(chosenPath) },
+                { SBuiltInTemplateIds::MaterialParamMode,   shadingMode == 1 ? "unlit" : "lit" },
+            },
+            lastError);
+
+        if (!created.empty())
         {
-           MLOG(SString::format("Created Material {0}", matName));
+            MLOG(SString::format("Created Material {0}", created));
+            showDialog = false;
+            ImGui::CloseCurrentPopup();
         }
-        showDialog = false;
-        ImGui::CloseCurrentPopup();
     }
 
     ImGui::EndDisabled();
@@ -193,7 +237,6 @@ void MCreateMaterialItem::drawPopup()
     }
 
     ImGui::EndPopup();
-    
 }
 
 // -------------------------------------------------------------------------------
@@ -205,25 +248,33 @@ bool MCreateShaderItem::registered = []() {
     return true;
 }();
 
-// Labels and enum values shown in the template combo.
-static constexpr const char* k_templateLabels[] = {
-    "Lit (Standard)",
-    "Unlit",
-    "Unlit Color",
-    "Toon",
-};
-static constexpr EShaderTemplate k_templateValues[] = {
-    EShaderTemplate::Lit,
-    EShaderTemplate::Unlit,
-    EShaderTemplate::UnlitColor,
-    EShaderTemplate::Toon,
-};
-static constexpr int k_templateCount = sizeof(k_templateValues) / sizeof(k_templateValues[0]);
+// Every template that produces a shader file, in registration order.
+static std::vector<SShaderTemplateEntry> buildShaderTemplateList()
+{
+    std::vector<SShaderTemplateEntry> list;
+    auto* editorAM = editorAssets();
+    if (!editorAM) return list;
+
+    for (const auto& t : editorAM->getTemplateRegistry().getAll())
+    {
+        if (t.extension != SString(SEditorPaths::EXTENSION_SHADER))
+            continue;
+
+        SShaderTemplateEntry e;
+        e.id        = t.id.str();
+        e.label     = t.displayName.str();
+        e.extension = t.extension.str();
+        list.push_back(std::move(e));
+    }
+    return list;
+}
 
 void MCreateShaderItem::onSelect()
 {
     std::strncpy(shaderName, "NewShader", sizeof(shaderName));
     selectedTemplate = 0;
+    lastError.clear();
+    cachedTemplates = buildShaderTemplateList();
     showDialog = true;
 }
 
@@ -265,32 +316,54 @@ void MCreateShaderItem::drawPopup()
     ImGui::Text("Template");
     ImGui::SameLine(LW);
     ImGui::SetNextItemWidth(-1.f);
-    ImGui::Combo("##cs_tmpl", &selectedTemplate, k_templateLabels, k_templateCount);
+
+    if (cachedTemplates.empty())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 0.4f, 0.4f, 1.f));
+        ImGui::TextUnformatted("No shader templates registered.");
+        ImGui::PopStyleColor();
+    }
+    else
+    {
+        if (ImGui::BeginCombo("##cs_tmpl", cachedTemplates[selectedTemplate].label.c_str()))
+        {
+            for (int i = 0; i < (int)cachedTemplates.size(); ++i)
+            {
+                const bool sel = (i == selectedTemplate);
+                if (ImGui::Selectable(cachedTemplates[i].label.c_str(), sel))
+                    selectedTemplate = i;
+                if (sel) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+    }
 
     ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
-    ImGui::Text("Output: %s%s.mesl", directory, shaderName);
+    ImGui::Text("Output: %s%s%s", directory, shaderName, SEditorPaths::EXTENSION_SHADER);
+    ImGui::TextUnformatted("A numeric suffix is added if the name is taken.");
     ImGui::PopStyleColor();
+
+    drawError(lastError);
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    const bool canCreate = shaderName[0] != '\0' && directory[0] != '\0';
+    const bool canCreate = shaderName[0] != '\0' && directory[0] != '\0' && !cachedTemplates.empty();
 
     ImGui::BeginDisabled(!canCreate);
     if (ImGui::Button("Create", ImVec2(120, 0)))
     {
-        auto* editorAM = dynamic_cast<MEditorAssetManager*>(
-            MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
-        if (editorAM)
+        const SString created = createFromTemplate(
+            cachedTemplates[selectedTemplate].id.c_str(), directory, shaderName, {}, lastError);
+
+        if (!created.empty())
         {
-            EShaderTemplate tmpl = k_templateValues[selectedTemplate];
-            if (editorAM->createShaderAsset(SString(directory), SString(shaderName), tmpl))
-                MLOG(SString::format("Created Shader {0}", shaderName));
+            MLOG(SString::format("Created Shader {0}", created));
+            showDialog = false;
+            ImGui::CloseCurrentPopup();
         }
-        showDialog = false;
-        ImGui::CloseCurrentPopup();
     }
     ImGui::EndDisabled();
 
@@ -316,6 +389,7 @@ bool MCreateSkyboxItem::registered = []() {
 void MCreateSkyboxItem::onSelect()
 {
     std::strncpy(skyboxName, "NewSkybox", sizeof(skyboxName));
+    lastError.clear();
     showDialog = true;
 }
 
@@ -357,12 +431,15 @@ void MCreateSkyboxItem::drawPopup()
     ImGui::Spacing();
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
     ImGui::Text("Output: %s%s%s", directory, skyboxName, SEditorPaths::EXTENSION_SKYBOX);
+    ImGui::TextUnformatted("A numeric suffix is added if the name is taken.");
     ImGui::PopStyleColor();
     ImGui::Spacing();
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
-    ImGui::TextWrapped("Creates a skybox asset with six empty face slots. ");
+    ImGui::TextWrapped("Creates a skybox asset using the default engine skybox faces.");
     ImGui::PopStyleColor();
+
+    drawError(lastError);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -373,15 +450,15 @@ void MCreateSkyboxItem::drawPopup()
     ImGui::BeginDisabled(!canCreate);
     if (ImGui::Button("Create", ImVec2(120, 0)))
     {
-        auto* editorAM = dynamic_cast<MEditorAssetManager*>(
-            MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
-        if (editorAM)
+        const SString created = createFromTemplate(
+            SBuiltInTemplateIds::Skybox, directory, skyboxName, {}, lastError);
+
+        if (!created.empty())
         {
-            if (editorAM->createSkyboxAsset(SString(directory), SString(skyboxName)))
-                MLOG(SString::format("Created Skybox {0}", skyboxName));
+            MLOG(SString::format("Created Skybox {0}", created));
+            showDialog = false;
+            ImGui::CloseCurrentPopup();
         }
-        showDialog = false;
-        ImGui::CloseCurrentPopup();
     }
     ImGui::EndDisabled();
 

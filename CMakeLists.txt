@@ -10,8 +10,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 option(BUILD_EDITOR "Build editor" ON)
 option(BUILD_PLAYER "Build player" ON)
 
-set(PLAYER_NAME meteor_player)
-set(EDITOR_NAME meteorite)
+set(PLAYER_NAME MeteorPlayer)
+set(EDITOR_NAME Meteorite)
 
 include(FetchContent)
 
@@ -281,13 +281,13 @@ endif()
 # ---------------------------------------------------------------------------
 # GLOB_RECURSE replaces the old manual file lists.
 #
-# Tradeoff: newly added or deleted files are not detected until you
-# re-run cmake configure (cmake ..). The CMAKE_CONFIGURE_DEPENDS
-# property below mitigates this by forcing a re-configure whenever
-# the directory contents change.
+# CONFIGURE_DEPENDS makes every build re-check the globs, so added or
+# deleted source files are picked up without reloading CMake by hand.
+# (The directory property below only catches files added directly in
+# src/core, src/editor or src/player, not in their subfolders.)
 # ---------------------------------------------------------------------------
 
-file(GLOB_RECURSE CORE_SOURCES
+file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/src/core/*.cpp"
         "${CMAKE_SOURCE_DIR}/src/core/*.h"
 )
@@ -298,12 +298,12 @@ list(APPEND CORE_SOURCES
         src/default_engine_icon_paths.h
 )
 
-file(GLOB_RECURSE EDITOR_SOURCES
+file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/src/editor/*.cpp"
         "${CMAKE_SOURCE_DIR}/src/editor/*.h"
 )
 
-file(GLOB_RECURSE PLAYER_SOURCES
+file(GLOB_RECURSE PLAYER_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_SOURCE_DIR}/src/player/*.cpp"
         "${CMAKE_SOURCE_DIR}/src/player/*.h"
 )
@@ -402,6 +402,12 @@ endif()
 # Lua Binding Generator (must come AFTER targets are defined)
 # ---------------------------------------------------------------------------
 include(src/tools/lua_binding_generator/cmake/LuaBindingGenerator.cmake)
+
+# ---------------------------------------------------------------------------
+# Meteor Launcher (WPF, Windows). Uses DOTNET_EXECUTABLE from above and
+# copies MeteorLauncher.exe into bin/ next to the editor.
+# ---------------------------------------------------------------------------
+include(src/tools/launcher/cmake/MeteorLauncher.cmake)
 
 # ---------------------------------------------------------------------------
 # Common Defines

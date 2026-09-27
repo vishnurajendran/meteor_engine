@@ -4,17 +4,14 @@
 
 #include "sceneasset.h"
 
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/meteor_utils.h"
+#include "core/utils/logger.h"
 #include "scenemanager.h"
 
 MSceneAsset::MSceneAsset(const SString& path) : MAsset(path){
     name = "SceneAsset";
-    valid = loadFromPath(path);
-}
-
-MSceneAsset::~MSceneAsset()
-{
-    delete sceneHierarchy;
+    valid = loadFromSource();
 }
 
 bool MSceneAsset::openAsset()
@@ -22,20 +19,22 @@ bool MSceneAsset::openAsset()
     return MSceneManager::getSceneManagerInstance()->loadScene(path);
 }
 
-bool MSceneAsset::loadFromPath(const SString& path) {
+bool MSceneAsset::loadFromSource() {
+    sceneHierarchy.reset();
 
-    if (!FileIO::hasFile(path)) return false;
+    std::vector<uint8_t> bytes;
+    if (!MAssetSources::getActive()->readBytes(path, bytes))
+        return false;
 
-    SString dataTxt;
-    auto res = false;
-    if(FileIO::readFile(path, dataTxt)) {
-        sceneHierarchy = new pugi::xml_document();
-        sceneHierarchy->load_string(dataTxt.c_str());
-        res = true;
+    const auto res = sceneHierarchy.load_buffer(bytes.data(), bytes.size());
+    if (res.status != pugi::status_ok)
+    {
+        MERROR(SString("MSceneAsset:: failed to parse ") + path + " - " + res.description());
+        return false;
     }
-    return res;
+    return true;
 }
 
 pugi::xml_document * MSceneAsset::getSceneHierarchy() {
-    return sceneHierarchy;
+    return valid ? &sceneHierarchy : nullptr;
 }

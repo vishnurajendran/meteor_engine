@@ -59,17 +59,22 @@ bool MSceneManager::loadScene(const SString& path) {
 
     loadEmptyScene();
     const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MSceneAsset>(path);
-    if(asset) {
-        MLOG(STR("MSceneManager:: Failed to load Scene Asset"));
+    // Was `if(asset)`: that bailed out whenever the scene asset WAS found, and
+    // dereferenced a null handle below when it wasn't.
+    if(!asset) {
+        MERROR(STR("MSceneManager:: Scene asset not found: ") + path);
         return false;
     }
 
     if(!asset->isValid()) {
-        MLOG(STR("Invalid Asset"));
+        MERROR(STR("MSceneManager:: Invalid scene asset: ") + path);
         return false;
     }
 
-   if (MSceneSerializer::load(path, activeScene))
+   // Reads through the active asset source (loose file or package). This
+   // re-reads the bytes rather than using asset->getSceneHierarchy(), so a
+   // scene saved moments ago loads correctly even before hot reload runs.
+   if (MSceneSerializer::load(asset->getPath().str(), activeScene))
    {
        currentScenePath= asset->getPath();
        MLOG("MSceneManager:: Scene Loaded");

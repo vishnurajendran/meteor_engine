@@ -3,6 +3,7 @@
 //
 
 #include "shadercompiler.h"
+#include "core/utils/meteor_paths.h"
 #include "core/utils/logger.h"
 #include <filesystem>
 #include <fstream>
@@ -106,7 +107,8 @@ bool MShaderCompiler::initialiseEngine()
         return false;
 
     MLOG(STR("MShaderCompiler::Initialising Shader Compiler."));
-    auto directoryPath = "meteor_assets/shader_utils";
+    // Engine-owned include files, always read from the engine install.
+    const std::string directoryPath = ENGINE_PATH("meteor_assets/shader_utils").str();
     try {
         for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
             if (entry.is_regular_file()) {

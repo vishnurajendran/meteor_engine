@@ -1,5 +1,8 @@
 // lua_scripting_engine.cpp
 #include "lua_scripting_engine.h"
+#include <algorithm>
+#include <cctype>
+#include "core/utils/meteor_paths.h"
 #include "core/utils/logger.h"
 #include "engine_lua_bindings.h"
 #include "lua_script_instance.h"
@@ -22,7 +25,9 @@ void MLuaScriptingEngineSubsystem::init()
 
 void MLuaScriptingEngineSubsystem::loadEngineModules()
 {
-    const std::filesystem::path libDir = ".engine_data/scripting/modules/lua";
+    // Engine-owned modules are always loaded from the engine install. The
+    // project keeps a synced copy only so VS Code can resolve them.
+    const std::filesystem::path libDir = ENGINE_PATH(".engine_data/scripting/modules/lua").str();
 
     if (!std::filesystem::exists(libDir))
     {
@@ -38,8 +43,22 @@ void MLuaScriptingEngineSubsystem::loadEngineModules()
     // Load behaviour.lua first via script_file (not require)
     // Then populate the require cache manually so user scripts
     // calling require("behaviour") get the correct version.
-    auto behaviourPath = libDir / "behaviour.lua";
-    if (std::filesystem::exists(behaviourPath))
+    // The file ships as "Behaviour.lua". Match the name case-insensitively so
+    // this also works on case-sensitive file systems (Linux/macOS).
+    auto isBehaviourFile = [](const std::filesystem::path& p)
+    {
+        std::string name = p.filename().string();
+        std::transform(name.begin(), name.end(), name.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        return name == "behaviour.lua";
+    };
+
+    std::filesystem::path behaviourPath;
+    for (auto& entry : std::filesystem::directory_iterator(libDir))
+        if (entry.is_regular_file() && isBehaviourFile(entry.path()))
+            behaviourPath = entry.path();
+
+    if (!behaviourPath.empty())
     {
         auto result = vm.script_file(behaviourPath.string(), sol::script_pass_on_error);
         if (!result.valid())
@@ -59,7 +78,9 @@ void MLuaScriptingEngineSubsystem::loadEngineModules()
     {
         if (!entry.is_regular_file()) continue;
         if (entry.path().extension() != ".lua") continue;
-        if (entry.path().filename() == "behaviour.lua") continue;
+        // Already loaded above. The old exact-case check never matched
+        // "Behaviour.lua", so the file ran twice.
+        if (isBehaviourFile(entry.path())) continue;
         moduleFiles.push_back(entry.path());
     }
     std::sort(moduleFiles.begin(), moduleFiles.end());

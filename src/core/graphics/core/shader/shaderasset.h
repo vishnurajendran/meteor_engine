@@ -41,10 +41,19 @@ private:
     static const SString SHDR_FALLBACK_MISSING_FRAG_PASS;
 
     MShader* shader{};
+
+    // Shaders replaced by a hot reload. Materials (and anything else) may
+    // still hold raw MShader* to them, so they are only freed when the asset
+    // itself is destroyed. Once reloads notify dependent materials, these can
+    // be deleted right after the swap instead.
+    std::vector<MShader*> retiredShaders;
 private:
-    void loadShader(const SString& path);
-    bool loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass, const bool& hasFragPass);
-    bool loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass, const bool& hasFragPass);
+    // Reads the shader (and its base source, if any) through the active asset
+    // source. On success swaps in the new MShader; on failure keeps the last
+    // good one so a typo during hot reload doesn't break every material.
+    void loadShader();
+    MShader* loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass, const bool& hasFragPass);
+    MShader* loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass, const bool& hasFragPass);
 
     [[nodiscard]] static std::unordered_map<SString, SShaderPropertyValue> getShaderProperties(
         pugi::xml_node node, std::vector<SString>& outOrder);
@@ -55,7 +64,7 @@ public:
     ~MShaderAsset() override;
     [[nodiscard]] MShader* getShader() const;
 
-    bool requestReload() override { loadShader(path); return valid; }
+    bool requestReload() override { loadShader(); return valid; }
 };
 
 

@@ -3,6 +3,7 @@
 //
 
 #include "editorapplication.h"
+#include "core/utils/meteor_paths.h"
 
 #include <windows.h>
 
@@ -176,6 +177,10 @@ void MEditorApplication::initialise() {
 
     MApplication::initialise();
 
+    // Read the .mtproj and make sure the project folders exist before any
+    // settings are loaded or saved (they live under .engine_data/settings).
+    projectManager.prepare();
+
     // init engine settings.
     MEngineStatics::loadSettings<MEditorSettings>(SSettingsPaths
     {
@@ -193,7 +198,7 @@ void MEditorApplication::initialise() {
     const auto winX = MEngineStatics::getEngineSettings()->resX.get();
     const auto winY = MEngineStatics::getEngineSettings()->resY.get();
     const auto fps= MEngineStatics::getEngineSettings()->fps.get();
-    window->initialiseWindow(STR("Meteorite Editor"), SVector2(winX, winY), fps);
+    window->initialiseWindow(STR("Meteorite Editor - ") + projectManager.getDescriptor().name, SVector2(winX, winY), fps);
     window->setWindowResizeCallback([this](const SVector2& size)
     {
         MVERBOSE(STR("Meteorite:: Resized Window"));
@@ -241,13 +246,17 @@ void MEditorApplication::initialise() {
     splashThread.join();
 
     // post-load
-    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings())){
-        const auto path = SString(settings->lastOpenedScene.get());
-        if (path.empty())
-            return;
-        MVERBOSE(SString::format("[MEditorApplication]::Loading last opened scene {0}", path));
-        sceneManagerRef->loadScene(path);
-    }
+    // Last opened scene (stored per project), else the project's startup scene.
+    SString startScene;
+    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+        startScene = SString(settings->lastOpenedScene.get());
+    if (startScene.empty())
+        startScene = projectManager.getDescriptor().startupScene;
+    if (startScene.empty())
+        return;
+
+    MVERBOSE(SString::format("[MEditorApplication]::Loading scene {0}", startScene));
+    sceneManagerRef->loadScene(startScene);
 
 }
 
@@ -283,14 +292,14 @@ void MEditorApplication::showSplashScreen()
 
 
     sf::Texture splashTexture;
-    splashTexture.loadFromFile("meteor_assets/splash.png");
+    splashTexture.loadFromFile(ENGINE_PATH("meteor_assets/splash.png").str());
 
     sf::Sprite sprite(splashTexture);
     sprite.setScale( { splashWindow.getSize().x / (float)splashTexture.getSize().x,
                     splashWindow.getSize().y / (float)splashTexture.getSize().y});
 
     sf::Font font;
-    font.openFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
+    font.openFromFile(ENGINE_PATH("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf").str());
     sf::Text text(font, "Loading Meteorite...");
     text.setCharacterSize(12); // in pixels
     text.setFillColor(sf::Color::White);
@@ -317,6 +326,9 @@ void MEditorApplication::showSplashScreen()
 
 void MEditorApplication::loadPrerequisites()
 {
+    // Project folder + engine install (meteor_assets/), project templates,
+    // __PROJECT_NAME__. Must happen before the first refresh.
+    projectManager.applyToAssetManager(*assetManagerRef);
     assetManagerRef->refresh();
     pipelineManager->init(); // manual init
     pipelineManager->getPipeline()->addStage<MGizmoStage>();

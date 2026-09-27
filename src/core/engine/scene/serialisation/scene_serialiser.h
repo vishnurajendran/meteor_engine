@@ -7,6 +7,11 @@
 //   MSceneSerializer::save(scene, "levels/level01.scene");
 //   MSceneSerializer::load("levels/level01.scene", scene);
 //
+// Paths are asset paths and go through the active asset source, so loading
+// works from a project folder and from a package. Saving needs a writable
+// source (editor) and fails cleanly in packaged builds. Absolute paths are
+// also accepted by the directory source (e.g. from a save dialog).
+//
 // Scene file format:
 //
 //   <scene name="Level01">
@@ -42,13 +47,20 @@ class MSceneSerializer : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MSceneSerializer)
 public:
-    // Write `scene` to `asset`. Overwrites any existing file.
+    // Write `scene` to `filePath`. Overwrites any existing file.
+    // If the path is a loaded MSceneAsset, the asset is reloaded so its
+    // cached hierarchy matches what was written.
     // Returns true on success.
     static bool save(MScene* scene, const std::string& filePath);
 
     // Read and populate `scene` (appending to any existing entities).
     // Returns true on success.
     static bool load(const std::string& filePath, MScene* scene);
+
+    // Populate `scene` from an already-parsed document, e.g.
+    // MSceneAsset::getSceneHierarchy(). `debugName` is only used for logs.
+    static bool loadFromDocument(const pugi::xml_document& doc, MScene* scene,
+                                 const std::string& debugName = "<document>");
 
 private:
     MSceneSerializer() = delete;

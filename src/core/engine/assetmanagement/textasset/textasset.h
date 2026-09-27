@@ -17,11 +17,11 @@ public:
     SString getText() const;
 
     void setText(const SString& newText);
-    bool save();
+    bool save() override;
 
-    bool requestReload() override { loadFromPath(path); return true; };
+    bool requestReload() override { valid = loadFromSource(); return valid; }
 private:
-    bool loadFromPath(const SString& path);
+    bool loadFromSource();
 };
 
 

@@ -14,6 +14,7 @@
 #include <cstring>
 #include <queue>
 
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/utils/fileio.h"
 #include "default_engine_icon_paths.h"
@@ -300,6 +301,7 @@ void MEditorAssetWindow::onGui(float deltaTime)
     // Modal popups - drawn at window scope so they aren't clipped.
     drawDeleteConfirmModal();
     drawNewFolderPopup();
+    drawCreateAssetPopup();
 
     // -- Status bar ------------------------------------------------------------
     ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -587,24 +589,19 @@ void MEditorAssetWindow::drawContentArea()
         ImGui::TextDisabled("This Folder");
         ImGui::Separator();
 
-        // Create submenu - populated automatically by registered MMenubarItems
-        // (Material, Shader, Skybox, etc. under Assets/Create/Rendering/...).
-        auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
-        if (createNode)
+        // Create submenu - built from MAssetTemplateRegistry.
+        if (ImGui::BeginMenu("Create"))
         {
-            if (ImGui::BeginMenu("Create"))
-            {
-                createNode->renderAsContextMenu();
-                ImGui::EndMenu();
-            }
-            ImGui::Separator();
+            drawCreateMenuItems(getCreateTargetDir(nullptr));
+            ImGui::EndMenu();
         }
 
         ImGui::Separator();
 
         if (ImGui::MenuItem("Show in File Explorer"))
         {
-            MEditorUtility::openInFilExplorer(currentDirectoryNode->getPath());
+            MEditorUtility::openInFilExplorer(
+                MAssetSources::getActive()->getDiskPath(currentDirectoryNode->getPath()).str(), false);
         }
 
         ImGui::EndPopup();
@@ -662,7 +659,7 @@ static ImU32 getTileTypeColor(SAssetDirectoryNode* node)
         ext == "tga" || ext == "hdr" || ext == "exr" || ext == "dds")
         return COL_TYPE_TEXTURE;
     if (ext == "mesl" || ext == "glsl" || ext == "vert" || ext == "frag" ||
-        ext == "cubemap")
+        ext == "cubemap" || ext == "skybox")
         return COL_TYPE_SHADER;
     if (ext == "mscene" || ext == "scene")
         return COL_TYPE_SCENE;
@@ -691,7 +688,8 @@ static std::string getTileTypeLabel(SAssetDirectoryNode* node)
         ext == "exr" || ext == "dds")                   return "Texture";
     if (ext == "mesl")                                  return "Shader";
     if (ext == "glsl" || ext == "vert" || ext == "frag")return "GLSL";
-    if (ext == "cubemap")                               return "Skybox";
+    if (ext == "cubemap" || ext == "skybox")            return "Skybox";
+    if (ext == "lua")                                   return "Lua Script";
     if (ext == "mscene" || ext == "scene")              return "Scene";
     if (ext == "wav" || ext == "ogg" || ext == "mp3")   return "Audio";
     if (ext == "txt" || ext == "json" || ext == "xml" ||
@@ -1103,23 +1101,21 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
 
     ImGui::Separator();
 
-    // Create submenu - populated by registered MMenubarItems ------------------
-    auto* createNode = MMenubarTreeNode::getNodeAtPath("Assets/Create");
-    if (createNode)
+    // Create submenu - built from MAssetTemplateRegistry ------------------------
+    if (ImGui::BeginMenu("Create"))
     {
-        if (ImGui::BeginMenu("Create"))
-        {
-            createNode->renderAsContextMenu();
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
+        drawCreateMenuItems(getCreateTargetDir(target));
+        ImGui::EndMenu();
     }
+    ImGui::Separator();
 
     // -- Show in explorer ----------------------------------------------------
     if (ImGui::MenuItem("Show in File Explorer"))
     {
         auto path = target ? target->getPath() : currentDirectoryNode->getPath();
-        MEditorUtility::openInFilExplorer(path);
+        // Resolve through the asset source: engine assets (meteor_assets/)
+        // live in the engine install, not under the working directory.
+        MEditorUtility::openInFilExplorer(MAssetSources::getActive()->getDiskPath(path).str(), false);
     }
 
     ImGui::Separator();
@@ -1314,6 +1310,294 @@ void MEditorAssetWindow::drawNewFolderPopup()
     ImGui::EndPopup();
 }
 
+
+// --- Create from template ------------------------------------------------------
+
+SString MEditorAssetWindow::getCreateTargetDir(SAssetDirectoryNode* clicked) const
+{
+    SAssetDirectoryNode* dir = (clicked && clicked->isDirectory) ? clicked : currentDirectoryNode;
+    if (!dir || dir == rootNode)
+        return {};
+    return dir->getPath();
+}
+
+void MEditorAssetWindow::drawCreateMenuItems(const SString& targetDir)
+{
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+        MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+    if (!editorAM) return;
+
+    if (targetDir.empty())
+    {
+        ImGui::TextDisabled("Open a folder to create assets here");
+        return;
+    }
+
+    // ImGui appends to a menu when BeginMenu is called again with the same
+    // label, so templates sharing a prefix ("Shader/Lit", "Shader/Toon")
+    // end up in one submenu, in registration order.
+    for (const auto& tmpl : editorAM->getTemplateRegistry().getAll())
+    {
+        std::vector<SString> segments;
+        for (const auto& seg : tmpl.menuPath.split("/"))
+            if (!seg.empty()) segments.push_back(seg);
+        if (segments.empty())
+            segments.push_back(tmpl.displayName);
+
+        int  opened  = 0;
+        bool visible = true;
+        for (size_t i = 0; i + 1 < segments.size(); ++i)
+        {
+            if (!ImGui::BeginMenu(segments[i].c_str())) { visible = false; break; }
+            ++opened;
+        }
+
+        if (visible)
+        {
+            ImGui::PushID(tmpl.id.c_str());
+            if (ImGui::MenuItem(segments.back().c_str()))
+                beginCreateFromTemplate(tmpl.id, targetDir);
+            ImGui::PopID();
+        }
+
+        for (int i = 0; i < opened; ++i)
+            ImGui::EndMenu();
+    }
+}
+
+void MEditorAssetWindow::beginCreateFromTemplate(const SString& templateId, const SString& targetDir)
+{
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+        MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+    if (!editorAM) return;
+
+    const SAssetTemplate* tmpl = editorAM->getTemplateRegistry().find(templateId);
+    if (!tmpl) return;
+
+    createTemplateId = templateId;
+    createTargetDir  = targetDir;
+    createError.clear();
+    createParamValues.clear();
+
+    std::strncpy(createNameBuffer, tmpl->defaultName.c_str(), sizeof(createNameBuffer) - 1);
+    createNameBuffer[sizeof(createNameBuffer) - 1] = '\0';
+
+    for (const auto& p : tmpl->params)
+    {
+        std::string value = p.defaultValue.str();
+        if (value.empty() && p.kind == ETemplateParamKind::Enum && !p.options.empty())
+            value = p.options.front().str();
+        createParamValues[p.key] = value;
+    }
+
+    pendingCreatePopup = true;
+}
+
+void MEditorAssetWindow::collectAssetPaths(SAssetDirectoryNode* root, const std::string& extension,
+                                           std::vector<SString>& out)
+{
+    if (!root) return;
+
+    std::string suffix = "." + extension;
+    for (auto& c : suffix) c = (char)std::tolower(c);
+
+    std::queue<SAssetDirectoryNode*> q;
+    q.push(root);
+    while (!q.empty())
+    {
+        auto* node = q.front(); q.pop();
+        if (!node->isDirectory && node->assetReference)
+        {
+            std::string path = node->getPath().str();
+            // Engine-internal assets (e.g. internal shaders) are not meant to
+            // be referenced by user assets; same rule as the menubar dialogs.
+            if (path.find("/internal/") != std::string::npos)
+            {
+                for (auto* child : node->getChildrenNodes())
+                    if (child) q.push(child);
+                continue;
+            }
+            std::string lower = path;
+            for (auto& c : lower) c = (char)std::tolower(c);
+            if (lower.size() >= suffix.size() &&
+                lower.compare(lower.size() - suffix.size(), suffix.size(), suffix) == 0)
+                out.push_back(node->getPath());
+        }
+        for (auto* child : node->getChildrenNodes())
+            if (child) q.push(child);
+    }
+    std::sort(out.begin(), out.end());
+}
+
+void MEditorAssetWindow::drawCreateAssetPopup()
+{
+    if (pendingCreatePopup)
+    {
+        ImGui::OpenPopup("##create_asset_dlg");
+        pendingCreatePopup = false;
+    }
+
+    ImVec2 centre = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(centre, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(460, 0), ImGuiCond_Appearing);
+
+    if (!ImGui::BeginPopupModal("##create_asset_dlg", nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                ImGuiWindowFlags_NoTitleBar))
+        return;
+
+    auto* am       = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(am);
+    const SAssetTemplate* tmpl = editorAM ? editorAM->getTemplateRegistry().find(createTemplateId) : nullptr;
+    if (!tmpl)
+    {
+        ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+        return;
+    }
+
+    // -- Header ----------------------------------------------------------------
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.75f, 0.3f, 1.f));
+    ImGui::Text("New %s", tmpl->displayName.c_str());
+    ImGui::PopStyleColor();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    constexpr float LABEL_W = 110.0f;
+
+    // -- Name --------------------------------------------------------------------
+    ImGui::Text("Name");
+    ImGui::SameLine(LABEL_W);
+    ImGui::SetNextItemWidth(-1.f);
+    if (ImGui::IsWindowAppearing())
+        ImGui::SetKeyboardFocusHere();
+    bool enterPressed = ImGui::InputText("##ca_name", createNameBuffer, sizeof(createNameBuffer),
+                                         ImGuiInputTextFlags_EnterReturnsTrue);
+
+    // -- Template parameters -----------------------------------------------------
+    bool missingRequired = false;
+    for (const auto& param : tmpl->params)
+    {
+        ImGui::PushID(param.key.c_str());
+        std::string& value = createParamValues[param.key];
+
+        if (param.required && value.empty())
+            missingRequired = true;
+
+        ImGui::Text("%s%s", param.label.c_str(), param.required ? " *" : "");
+        ImGui::SameLine(LABEL_W);
+        ImGui::SetNextItemWidth(-1.f);
+
+        switch (param.kind)
+        {
+            case ETemplateParamKind::Text:
+            {
+                char buf[256] = {};
+                std::strncpy(buf, value.c_str(), sizeof(buf) - 1);
+                if (ImGui::InputText("##v", buf, sizeof(buf)))
+                    value = buf;
+                break;
+            }
+
+            case ETemplateParamKind::Enum:
+            {
+                if (ImGui::BeginCombo("##v", value.c_str()))
+                {
+                    for (const auto& opt : param.options)
+                        if (ImGui::Selectable(opt.c_str(), value == opt.str()))
+                            value = opt.str();
+                    ImGui::EndCombo();
+                }
+                break;
+            }
+
+            case ETemplateParamKind::AssetRef:
+            {
+                const char* preview = value.empty() ? "<select or drop an asset>" : value.c_str();
+                if (ImGui::BeginCombo("##v", preview, ImGuiComboFlags_HeightLarge))
+                {
+                    std::vector<SString> candidates;
+                    collectAssetPaths(rootNode, param.assetExtension.str(), candidates);
+                    if (candidates.empty())
+                        ImGui::TextDisabled("No .%s assets found", param.assetExtension.c_str());
+                    for (const auto& path : candidates)
+                        if (ImGui::Selectable(path.c_str(), value == path.str()))
+                            value = path.str();
+                    ImGui::EndCombo();
+                }
+
+                // Accept an asset dragged from the browser (payload = asset id).
+                if (am && ImGui::BeginDragDropTarget())
+                {
+                    if (const ImGuiPayload* payload =
+                            ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
+                    {
+                        const SString assetId(static_cast<const char*>(payload->Data));
+                        if (MAsset* asset = am->getAssetById<MAsset>(assetId).get())
+                            value = asset->getPath().str();
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+                break;
+            }
+        }
+        ImGui::PopID();
+    }
+
+    // -- Footer ------------------------------------------------------------------
+    ImGui::Spacing();
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
+    ImGui::Text("Location: %s/", createTargetDir.c_str());
+    ImGui::PopStyleColor();
+
+    if (!createError.empty())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.f));
+        ImGui::TextWrapped("%s", createError.c_str());
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    const bool canCreate = createNameBuffer[0] != '\0' && !missingRequired;
+
+    ImGui::BeginDisabled(!canCreate);
+    if (ImGui::Button("Create", ImVec2(120, 0)) || (enterPressed && canCreate))
+    {
+        std::map<SString, SString> params;
+        for (const auto& [key, value] : createParamValues)
+            params[key] = SString(value);
+
+        // On success the manager registers the asset and pings it; the
+        // browser navigates to it and selects it next frame.
+        const SString created = editorAM->createAssetFromTemplate(
+            createTemplateId, createTargetDir, SString(createNameBuffer), params);
+
+        if (created.empty())
+        {
+            createError = "Could not create the asset. See the console for details.";
+        }
+        else
+        {
+            createError.clear();
+            createParamValues.clear();
+            ImGui::CloseCurrentPopup();
+        }
+    }
+    ImGui::EndDisabled();
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel", ImVec2(120, 0)))
+    {
+        createError.clear();
+        createParamValues.clear();
+        ImGui::CloseCurrentPopup();
+    }
+
+    ImGui::EndPopup();
+}
 
 // --- Navigation --------------------------------------------------------------
 
