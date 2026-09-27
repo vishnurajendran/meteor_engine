@@ -25,28 +25,38 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" VerticalAlignment="Center" Margin="20,0">
-                    <TextBlock Text="Meteor Engine" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
-                    <TextBlock Text="Launcher" FontSize="11" Foreground="#757575"/>
-                </StackPanel>
+                <!-- Top Header Panel -->
+                <WrapPanel Grid.Row="0" VerticalAlignment="Center" Margin="20,0">
+                    <Image Height="50" Width="50" Source="/res/meteor_icon.png" RenderOptions.BitmapScalingMode="Linear"/>
+                    <StackPanel VerticalAlignment="Center" Margin="20,0">
+                        <TextBlock Text="Meteorite" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
+                        <TextBlock Text="Launcher" FontSize="11" Foreground="#757575"/>
+                    </StackPanel>
+                </WrapPanel>
 
+                <!-- Sidebar Navigation Buttons -->
                 <StackPanel Grid.Row="1" Margin="0,10,0,0">
                     <Button Style="{StaticResource SidebarButtonStyle}" Content="Projects"
                             Foreground="{StaticResource TextPrimary}" Background="{StaticResource DividerBrush}"/>
-                    <Button Style="{StaticResource SidebarButtonStyle}" Content="Learning &amp; Tutorials"
+        
+                    <!-- Fixed: Escaped Ampersand using standard WPF syntax -->
+                    <Button Style="{StaticResource SidebarButtonStyle}" Content="Learning &amp;&amp; Tutorials"
                             IsEnabled="False" ToolTip="Coming soon" ToolTipService.ShowOnDisabled="True"/>
+        
                     <Button Style="{StaticResource SidebarButtonStyle}" Content="Marketplace"
                             IsEnabled="False" ToolTip="Coming soon" ToolTipService.ShowOnDisabled="True"/>
                     <Button Style="{StaticResource SidebarButtonStyle}" Content="Settings"
                             IsEnabled="False" ToolTip="Coming soon" ToolTipService.ShowOnDisabled="True"/>
                 </StackPanel>
 
+                <!-- Footer Meta Text -->
                 <StackPanel Grid.Row="2" Margin="20">
                     <TextBlock x:Name="VersionText" Text="Version" Foreground="#555555" FontSize="11"/>
                     <TextBlock x:Name="EditorPathText" Foreground="#444444" FontSize="10" Margin="0,4,0,0"
                                TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Grid>
+
         </Border>
 
         <!-- Main area ======================================================= -->

@@ -281,13 +281,13 @@ endif()
 # ---------------------------------------------------------------------------
 # GLOB_RECURSE replaces the old manual file lists.
 #
-# CONFIGURE_DEPENDS makes every build re-check the globs, so added or
-# deleted source files are picked up without reloading CMake by hand.
-# (The directory property below only catches files added directly in
-# src/core, src/editor or src/player, not in their subfolders.)
+# Tradeoff: newly added or deleted files are not detected until you
+# re-run cmake configure (cmake ..). The CMAKE_CONFIGURE_DEPENDS
+# property below mitigates this by forcing a re-configure whenever
+# the directory contents change.
 # ---------------------------------------------------------------------------
 
-file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE CORE_SOURCES
         "${CMAKE_SOURCE_DIR}/src/core/*.cpp"
         "${CMAKE_SOURCE_DIR}/src/core/*.h"
 )
@@ -298,12 +298,12 @@ list(APPEND CORE_SOURCES
         src/default_engine_icon_paths.h
 )
 
-file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE EDITOR_SOURCES
         "${CMAKE_SOURCE_DIR}/src/editor/*.cpp"
         "${CMAKE_SOURCE_DIR}/src/editor/*.h"
 )
 
-file(GLOB_RECURSE PLAYER_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE PLAYER_SOURCES
         "${CMAKE_SOURCE_DIR}/src/player/*.cpp"
         "${CMAKE_SOURCE_DIR}/src/player/*.h"
 )

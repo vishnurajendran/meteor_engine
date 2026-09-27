@@ -13,12 +13,7 @@ namespace MeteorLauncher;
 /// </summary>
 public partial class App : Application
 {
-    /// <summary>"2026.1.0-Beta" - written into new projects and shown in the sidebar.</summary>
-    public static string Version { get; } =
-        Assembly.GetExecutingAssembly()
-                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-        ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString()
-        ?? "dev";
+    public static string Version => Statics.VERSION;
 
     protected override void OnStartup(StartupEventArgs e)
     {
