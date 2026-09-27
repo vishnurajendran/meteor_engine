@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+
+        <AssemblyName>MeteorLauncher</AssemblyName>
+        <RootNamespace>MeteorLauncher</RootNamespace>
+        <Version>2026.1.0</Version>
+        <InformationalVersion>2026.1.0-Beta</InformationalVersion>
+        <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+        <!-- Same icon as the editor (repo root). -->
+        <ApplicationIcon>..\..\..\..\meteorite.ico</ApplicationIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Resource Include="res\meteor_icon.png" />
+    </ItemGroup>
+
+</Project>

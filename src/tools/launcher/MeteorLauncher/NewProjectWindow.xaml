@@ -1,0 +1,41 @@
+<Window x:Class="MeteorLauncher.NewProjectWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="New Project" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Icon="res/meteor_icon.png"
+        Background="{StaticResource WindowBackground}" TextElement.Foreground="#E0E0E0">
+
+    <StackPanel Margin="30,25,30,25">
+        <TextBlock Text="New Project" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+        <TextBlock Text="Creates the project folder and opens it in the editor." FontSize="12"
+                   Foreground="#888888" Margin="0,4,0,20"/>
+
+        <TextBlock Text="Project name" FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+        <TextBox x:Name="NameBox" Style="{StaticResource DarkTextBoxStyle}" TextChanged="Input_TextChanged"/>
+
+        <TextBlock Text="Location" FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,16,0,6"/>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="LocationBox" Grid.Column="0" Style="{StaticResource DarkTextBoxStyle}"
+                     TextChanged="Input_TextChanged"/>
+            <Button Grid.Column="1" Content="Browse..." Width="90" Margin="8,0,0,0"
+                    Style="{StaticResource OutlineButtonStyle}" Click="Browse_Click"/>
+        </Grid>
+
+        <TextBlock x:Name="PreviewText" FontSize="11" Foreground="{StaticResource TextDim}" Margin="0,10,0,0"
+                   TextWrapping="Wrap"/>
+        <TextBlock x:Name="ErrorText" FontSize="12" Foreground="{StaticResource TextError}" Margin="0,6,0,0"
+                   TextWrapping="Wrap" Visibility="Collapsed"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+            <Button Content="Cancel" Width="100" Height="35" Margin="0,0,10,0" IsCancel="True"
+                    Style="{StaticResource OutlineButtonStyle}"/>
+            <Button x:Name="CreateButton" Content="Create &amp; Open" Width="140" Height="35" IsDefault="True"
+                    Style="{StaticResource PrimaryButtonStyle}" Click="Create_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

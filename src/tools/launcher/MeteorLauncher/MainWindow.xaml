@@ -1,0 +1,170 @@
+<Window x:Class="MeteorLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Meteor Launcher" Height="520" Width="860" MinHeight="420" MinWidth="720"
+        WindowStartupLocation="CenterScreen"
+        Icon="res/meteor_icon.png"
+        Background="{StaticResource WindowBackground}" TextElement.Foreground="#E0E0E0">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar ========================================================= -->
+        <Border Grid.Column="0" Background="{StaticResource PanelBackground}"
+                BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="80"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" VerticalAlignment="Center" Margin="20,0">
+                    <TextBlock Text="Meteor Engine" FontSize="18" FontWeight="Bold" Foreground="{StaticResource Accent}"/>
+                    <TextBlock Text="Launcher" FontSize="11" Foreground="#757575"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                    <Button Style="{StaticResource SidebarButtonStyle}" Content="Projects"
+                            Foreground="{StaticResource TextPrimary}" Background="{StaticResource DividerBrush}"/>
+                    <Button Style="{StaticResource SidebarButtonStyle}" Content="Learning &amp; Tutorials"
+                            IsEnabled="False" ToolTip="Coming soon" ToolTipService.ShowOnDisabled="True"/>
+                    <Button Style="{StaticResource SidebarButtonStyle}" Content="Marketplace"
+                            IsEnabled="False" ToolTip="Coming soon" ToolTipService.ShowOnDisabled="True"/>
+                    <Button Style="{StaticResource SidebarButtonStyle}" Content="Settings"
+                            IsEnabled="False" ToolTip="Coming soon" ToolTipService.ShowOnDisabled="True"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Margin="20">
+                    <TextBlock x:Name="VersionText" Text="Version" Foreground="#555555" FontSize="11"/>
+                    <TextBlock x:Name="EditorPathText" Foreground="#444444" FontSize="10" Margin="0,4,0,0"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main area ======================================================= -->
+        <Grid Grid.Column="1" Margin="30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="90"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <TextBlock Text="Welcome Back" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="Select a recent project or create a new one to get started." FontSize="13"
+                           Foreground="#888888" Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="Recent Projects" FontSize="14" FontWeight="Bold"
+                           Foreground="{StaticResource TextSecondary}" Margin="0,0,0,10"/>
+
+                <ListBox x:Name="RecentList" Grid.Row="1"
+                         Background="Transparent" BorderThickness="0"
+                         HorizontalContentAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         SelectionChanged="RecentList_SelectionChanged"
+                         MouseDoubleClick="RecentList_MouseDoubleClick"
+                         KeyDown="RecentList_KeyDown"
+                         ContextMenuOpening="RecentList_ContextMenuOpening">
+
+                    <!-- Right-clicking a row selects it, so the menu acts on the selection. -->
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Open" Click="ContextOpen_Click"/>
+                            <MenuItem Header="Show in Explorer" Click="ContextShowInExplorer_Click"/>
+                            <Separator/>
+                            <MenuItem Header="Remove from list" Click="ContextRemove_Click"/>
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Margin" Value="0,0,0,8"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Card" Background="{StaticResource PanelBackground}"
+                                                BorderBrush="Transparent" BorderThickness="1" CornerRadius="4" Padding="15">
+                                            <ContentPresenter/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Card" Property="Background" Value="{StaticResource PanelHover}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                                                <Setter TargetName="Card" Property="Background" Value="{StaticResource PanelHover}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="Row">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium"
+                                               Foreground="{StaticResource TextPrimary}"/>
+                                    <TextBlock Text="{Binding Folder}" FontSize="11" Foreground="{StaticResource TextDim}"
+                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis"
+                                               ToolTip="{Binding ProjectFile}"/>
+                                </StackPanel>
+                                <TextBlock x:Name="Status" Grid.Column="1" Text="{Binding LastOpenedText}"
+                                           VerticalAlignment="Center" Margin="15,0,0,0"
+                                           Foreground="#888888" FontSize="12"/>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Exists}" Value="False">
+                                    <Setter TargetName="Row" Property="Opacity" Value="0.5"/>
+                                    <Setter TargetName="Status" Property="Foreground" Value="{StaticResource TextError}"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock x:Name="EmptyText" Grid.Row="1" Visibility="Collapsed"
+                           Text="No recent projects yet. Create a new project or open an existing .mtproj file."
+                           Foreground="{StaticResource TextDim}" FontSize="13" TextWrapping="Wrap" Margin="0,10,0,0"/>
+            </Grid>
+
+            <!-- Actions ===================================================== -->
+            <Border Grid.Row="2" BorderBrush="{StaticResource DividerBrush}" BorderThickness="0,1,0,0">
+                <Grid VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Content="New Project" Width="120" Height="35" Margin="0,0,10,0"
+                                Style="{StaticResource SecondaryButtonStyle}" Click="NewProject_Click"/>
+                        <Button Content="Open Existing" Width="120" Height="35"
+                                Style="{StaticResource OutlineButtonStyle}" Click="OpenExisting_Click"/>
+                    </StackPanel>
+
+                    <Button x:Name="LaunchButton" Content="OPEN PROJECT" HorizontalAlignment="Right"
+                            Width="180" Height="45" FontSize="14" IsEnabled="False"
+                            Style="{StaticResource PrimaryButtonStyle}" Click="Launch_Click"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
