@@ -14,7 +14,7 @@
 
 // `path` is an asset path. Reading goes through the active asset source so
 // this works from a project folder and from a package.
-bool MTexture::loadFromPath(const SString &path) {
+bool MTexture::loadFromPath(const SString& path) {
     std::vector<uint8_t> bytes;
     if (!MAssetSources::getActive()->readBytes(path, bytes) || bytes.empty())
         return false;

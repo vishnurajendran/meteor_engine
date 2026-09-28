@@ -26,9 +26,9 @@ public:
     virtual unsigned int getTextureID();
 
     SCRIPT_BIND_FUNC()
-    virtual bool loadFromPath(const SString &path);
+    virtual bool loadFromPath(const SString& path);
 
-    virtual bool loadFromStream(sf::InputStream &stream);
+    virtual bool loadFromStream(sf::InputStream& stream);
     virtual bool loadFromMemory(const void* data, size_t size);
 };
 

@@ -67,22 +67,28 @@
         vec2  texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
         float bias      = texelSize.x * 0.5;
 
+        // Fade shadows out over the outer 10% of the shadow area so the
+        // shadow distance limit isn't a hard visible line.
+        vec2  edgeDist = abs(projCoords.xy - 0.5) * 2.0;
+        float fade     = 1.0 - smoothstep(0.9, 1.0, max(edgeDist.x, edgeDist.y));
+
+        float shadow = 0.0;
         if (smoothShadows == 1)
         {
-            float shadow = 0.0;
             float spread = texelSize.x * 2.0;
             for (int i = 0; i < 16; ++i)
             {
                 float d = texture(shadowMap, projCoords.xy + poissonDisk[i] * spread).r;
                 shadow += (projCoords.z - bias > d) ? 1.0 : 0.0;
             }
-            return shadow / 16.0;
+            shadow /= 16.0;
         }
         else
         {
             float d = texture(shadowMap, projCoords.xy).r;
-            return (projCoords.z - bias > d) ? 1.0 : 0.0;
+            shadow = (projCoords.z - bias > d) ? 1.0 : 0.0;
         }
+        return shadow * fade;
     }
 
     // ---- Main fragment ------------------------------------------------------
