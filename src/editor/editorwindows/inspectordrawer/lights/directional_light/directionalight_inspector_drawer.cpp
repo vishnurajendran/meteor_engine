@@ -36,5 +36,12 @@ void MDirecionalLightInspectorDrawer::drawDLGui(MDirectionalLight* light) {
 
         if (ImGui::Checkbox("Smooth Shadows", &smooth))
             light->setSmoothShadow(smooth);
+
+        float dist = light->getShadowDistance();
+        if (ImGui::DragFloat("Shadow Distance", &dist, 1.0f,
+                             MDirectionalLight::MIN_SHADOW_DISTANCE,
+                             MDirectionalLight::MAX_SHADOW_DISTANCE, "%.0f",
+                             ImGuiSliderFlags_AlwaysClamp))
+            light->setShadowDistance(dist);
     }
 }

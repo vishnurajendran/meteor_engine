@@ -13,6 +13,10 @@ class MEditorUtility
 public:
     static void openInFilExplorer(const std::string& path, bool isRelative=true);
     static void openUrl(const std::string& url);
+
+    // Opens `workspaceDir` as a VS Code workspace and `filePath` inside it.
+    // Requires `code` on PATH. Returns false if it could not be started.
+    static bool openInVsCode(const std::string& filePath, const std::string& workspaceDir);
 };
 
 

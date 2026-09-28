@@ -159,16 +159,71 @@ FetchContent_MakeAvailable(pugixml)
 # Vendor Dependencies (GLEW + ASSIMP...)
 # ---------------------------------------------------------------------------
 
-# My Libs for Glew and Assimp are stored in this directory using Msys2
+# BUILD_SHARED_LIBS is a global switch, so it is turned on only for these two
+# fetches and restored afterwards - otherwise Jolt, Lua etc. would flip too.
+set(_METEOR_SAVED_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS ON)
 
-include_directories(C:/msys64/mingw64/include)
-find_library(ASSIMP_LIBRARY assimp PATHS C:/msys64/mingw64/lib)
-include_directories(C:/msys64/mingw64/include)
+# ---- GLEW (official release tarball) ---------------------------------------
+# The GLEW git repo cannot be built directly - its sources are generated at
+# release time - so we use the release tarball, which ships a CMake project
+# under build/cmake.
+set(GLEW_VERSION 2.2.0)
+set(BUILD_UTILS OFF CACHE BOOL "" FORCE) # skip glewinfo / visualinfo
 
-set(GLEW_INCLUDE_DIR "C:/msys64/mingw64/include")
-set(GLEW_LIBRARY "C:/msys64/mingw64/lib/libglew32.dll.a")
+# GLEW's CMakeLists asks for cmake_minimum_required(2.8.12), Ignored by CMake 3.x.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
-include_directories(${GLEW_INCLUDE_DIR})
+FetchContent_Declare(
+        glew
+        URL "https://github.com/nigels-com/glew/releases/download/glew-${GLEW_VERSION}/glew-${GLEW_VERSION}.tgz"
+        URL_HASH SHA256=d4fc82893cfb00109578d0a1a2337fb8ca335b3ceccf97b97e5cc7f08e4353e1
+        SOURCE_SUBDIR build/cmake
+)
+FetchContent_MakeAvailable(glew)
+unset(CMAKE_POLICY_VERSION_MINIMUM)
+
+# GLEW only exports its include dir for installed builds, not in-tree ones.
+target_include_directories(glew INTERFACE $<BUILD_INTERFACE:${glew_SOURCE_DIR}/include>)
+# GLEW overrides the output dir to its own build folder — put glew32.dll in bin/.
+set_target_properties(glew PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+# GLEW always defines a static variant too — we don't use it, so don't build it.
+set_target_properties(glew_s PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+# ---- ASSIMP (glTF / GLB only) -----------------------------------------------
+set(ASSIMP_BUILD_TESTS                   OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS            OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_SAMPLES                 OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL                       OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT                     ON  CACHE BOOL "" FORCE) # import only
+set(ASSIMP_WARNINGS_AS_ERRORS            OFF CACHE BOOL "" FORCE) # newer GCC warns more
+set(ASSIMP_INJECT_DEBUG_POSTFIX          OFF CACHE BOOL "" FORCE) # stops a global "d" postfix leaking out
+set(ASSIMP_IGNORE_GIT_HASH               ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ZLIB                    ON  CACHE BOOL "" FORCE) # bundled zlib — no system dependency
+
+# Disable every importer, then opt in to the formats we support.
+# glTF covers both .gltf and .glb. To add a format later, add a line —
+# e.g. ASSIMP_BUILD_FBX_IMPORTER / ASSIMP_BUILD_OBJ_IMPORTER.
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_GLTF_IMPORTER           ON  CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG v6.0.2
+        GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(assimp)
+
+# Restore — everything fetched below this point is static again.
+set(BUILD_SHARED_LIBS ${_METEOR_SAVED_BUILD_SHARED_LIBS})
+unset(_METEOR_SAVED_BUILD_SHARED_LIBS)
+
+# The force-include below applies to every target defined after it — including
+# miniaudio, Jolt and Lua — so they all need to be able to find GL/glew.h.
+# Previously the global MSYS2 include path provided that.
+include_directories(${glew_SOURCE_DIR}/include)
 
 # ensure glew is first header
 if (MINGW OR WIN32)
@@ -345,8 +400,8 @@ if (BUILD_EDITOR)
             stb
             imguizmo
 
-            ${GLEW_LIBRARY}
-            ${ASSIMP_LIBRARY}
+            glew
+            assimp::assimp
             pugixml
             serialized_class
             ImGuiFileDialog
@@ -385,8 +440,8 @@ if (BUILD_PLAYER)
             glm::glm
             stb
 
-            ${GLEW_LIBRARY}
-            ${ASSIMP_LIBRARY}
+            glew
+            assimp::assimp
             pugixml
             serialized_class
             miniaudio

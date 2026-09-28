@@ -58,3 +58,37 @@ void MEditorUtility::openUrl(const std::string& url)
     std::cerr << "Unsupported operating system." << std::endl;
 #endif
 }
+
+// ---------------------------------------------------------------------------
+// VS Code
+// ---------------------------------------------------------------------------
+
+bool MEditorUtility::openInVsCode(const std::string& filePath, const std::string& workspaceDir)
+{
+    MLOG(SString::format("EditorUtility:: Opening {0} in VS Code ({1})", filePath, workspaceDir));
+
+    // Expects `code` on PATH. Passing the folder and the file together opens
+    // the folder as the workspace and the file in it; an existing window for
+    // that folder is reused.
+#if defined(_WIN32) || defined(_WIN64)
+    // `code` is code.cmd; ShellExecute resolves it through PATH/PATHEXT, and
+    // SW_HIDE keeps its console window from flashing up.
+    const std::string params = "\"" + workspaceDir + "\" \"" + filePath + "\"";
+    const auto result = reinterpret_cast<INT_PTR>(
+        ShellExecuteA(NULL, "open", "code", params.c_str(), workspaceDir.c_str(), SW_HIDE));
+    if (result <= 32)
+    {
+        MWARN("EditorUtility:: failed to start VS Code - is `code` on PATH?");
+        return false;
+    }
+    return true;
+#else
+    const std::string command = "code \"" + workspaceDir + "\" \"" + filePath + "\" &";
+    if (std::system(command.c_str()) != 0)
+    {
+        MWARN("EditorUtility:: failed to start VS Code - is `code` on PATH?");
+        return false;
+    }
+    return true;
+#endif
+}

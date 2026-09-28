@@ -15,6 +15,10 @@ class MDirectionalLight : public MLightEntity
     DECLARE_FIELD(intensity,    float,    1.0f)
     DECLARE_FIELD(castsShadow,  bool,     true)
     DECLARE_FIELD(smoothShadow, bool,     false)
+    // How far in front of the camera directional shadows are drawn, in world
+    // units. Larger values cover more of the scene but spread the same shadow
+    // map over a bigger area, so shadows get softer / blockier.
+    DECLARE_FIELD(shadowDistance, float,  100.0f)
 
 public:
     MDirectionalLight();
@@ -37,6 +41,17 @@ public:
     void setCastsShadow(bool v)  { castsShadow = v; }
     SCRIPT_BIND_FUNC()
     void setSmoothShadow(bool v) { smoothShadow = v; }
+
+    static constexpr float MIN_SHADOW_DISTANCE = 5.0f;
+    static constexpr float MAX_SHADOW_DISTANCE = 1000.0f;
+
+    SCRIPT_BIND_FUNC()
+    float getShadowDistance() const { return shadowDistance.get(); }
+    SCRIPT_BIND_FUNC()
+    void  setShadowDistance(float v)
+    {
+        shadowDistance = glm::clamp(v, MIN_SHADOW_DISTANCE, MAX_SHADOW_DISTANCE);
+    }
 
     SCRIPT_BIND_FUNC()
     void prepareLightRender() override;

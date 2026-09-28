@@ -67,7 +67,7 @@ void MStaticMeshAsset::loadMesh() {
     Assimp::Importer importer;
     importer.SetIOHandler(new MAssimpAssetIOSystem(MAssetSources::getActive()));   // importer owns it
 
-    constexpr auto flags = aiProcess_Triangulate | aiProcess_GenNormals;
+    constexpr auto flags = aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs;
     const aiScene* scene = importer.ReadFile(path.c_str(), flags);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         MERROR(STR("Error (Assimp) ") + importer.GetErrorString() + " - " + path);

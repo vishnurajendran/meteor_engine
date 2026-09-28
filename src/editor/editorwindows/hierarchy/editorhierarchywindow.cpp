@@ -23,6 +23,7 @@
 #include "core/engine/skybox/skybox.h"
 #include "editor/app/editorapplication.h"
 #include "editor/editor_utils/engine_textures.h"
+#include "editor/editor_utils/entity_duplicator.h"
 #include "editor/window/menubar/menubartree.h"
 
 // --- Palette ------------------------------------------------------------------
@@ -572,9 +573,10 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
         std::strncpy(renameBuffer, target->getName().c_str(), sizeof(renameBuffer) - 1);
     }
 
-    if (ImGui::MenuItem("Duplicate"))
+    if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, MEntityDuplicator::canDuplicate(target)))
     {
-        // TODO: Add duplication logic here later
+        MEntityDuplicator::duplicateAndSelect(target);
+        rightClickedEntity = nullptr;
     }
 
     // ---- Add submenu -------------------------------------------------------

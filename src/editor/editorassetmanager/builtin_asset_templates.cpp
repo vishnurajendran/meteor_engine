@@ -199,7 +199,8 @@ void registerBuiltInAssetTemplates(MAssetTemplateRegistry& registry)
     shaderParam.key            = MaterialParamShader;
     shaderParam.label          = "Shader";
     shaderParam.kind           = ETemplateParamKind::AssetRef;
-    shaderParam.assetExtension = "shader";
+    // Picker filter, without the dot: shaders are .mesl files.
+    shaderParam.assetExtension = SEditorPaths::EXTENSION_SHADER + 1;
     material.params.push_back(shaderParam);
 
     STemplateParam modeParam;

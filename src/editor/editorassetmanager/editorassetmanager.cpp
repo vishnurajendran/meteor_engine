@@ -19,6 +19,8 @@
 #include "core/engine/assetmanagement/source/directory_asset_source.h"
 #include "core/engine/assetmanagement/source/routed_asset_source.h"
 #include "core/utils/meteor_paths.h"
+#include "core/engine/scripting/interface/script_asset.h"
+#include "editor/editor_utils/editor_utility.h"
 #include "core/utils/logger.h"
 #include "core/meteor_utils.h"
 
@@ -515,6 +517,14 @@ void MEditorAssetManager::openAsset(MAsset* asset)
             MWARN("EditorAssetManager:: asset has no file on disk: " + asset->getPath());
             return;
         }
+
+        // Scripts open in VS Code with the project folder as the workspace,
+        // so LuaLS picks up .vscode/settings.json and the engine stubs.
+        // Falls back to the OS default handler if VS Code isn't installed.
+        if (dynamic_cast<IScriptAsset*>(asset) != nullptr &&
+            MEditorUtility::openInVsCode(fullPath.str(), PROJECT_PATH().str()))
+            return;
+
         auto cmd = STR("\"") + fullPath + STR("\"");
         system(cmd.c_str());
     }
