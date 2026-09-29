@@ -5,8 +5,7 @@
 > [!WARNING]
 > Meteor is a **work in progress** and is **not ready for making games**. Expect breaking changes, missing features and rough edges.
 
-![Meteorite editor](https://i.ibb.co/dw66j6YK/Screenshot-2026-06-01-013540.png)
-![Meteorite editor in action](https://i.ibb.co/mC2ZqqQs/meteor.gif)
+![Meteorite editor](https://i.postimg.cc/3R3zjZwK/Screenshot-2026-09-28-201652.png)
 
 ---
 
