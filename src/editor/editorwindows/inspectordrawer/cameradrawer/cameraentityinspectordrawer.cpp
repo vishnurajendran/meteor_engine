@@ -27,8 +27,8 @@ void MCameraEntityInspectorDrawer::drawCameraGUI(MCameraEntity* cameraTarget) {
 
     auto fov = cameraTarget->getFov();
     auto isOrtho = cameraTarget->getOrthographic();
-    auto nearClip = cameraTarget->getClipPlanes().first;
-    auto farClip = cameraTarget->getClipPlanes().second;
+    auto nearClip = cameraTarget->getClipPlanes().x;
+    auto farClip = cameraTarget->getClipPlanes().y;
 
     ImGui::BeginChild("##Camera", ImVec2(0, 250), true, ImGuiChildFlags_Borders);
     ImGui::Text("Camera");

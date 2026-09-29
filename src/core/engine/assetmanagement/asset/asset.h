@@ -7,7 +7,8 @@
 #include "core/object/object.h"
 #include "defferedloadableasset.h"
 
-class MAsset : public MObject, IDefferedLoadableAsset
+SCRIPT_BIND_CLASS()
+class MAsset : public MObject, public IDefferedLoadableAsset
 {
     DEFINE_OBJECT_CLASS(MAsset)
 protected:
@@ -19,11 +20,21 @@ public:
     MAsset(const SString& path);
     ~MAsset() override = default;
 
+    SCRIPT_BIND_FUNC()
     SString getPath() const;
+
+    /// Absolute path on disk, resolved through the active asset source.
+    /// Empty when the asset is not backed by a loose file (package builds),
+    /// so only use it for editor features like "open in external program".
+    SCRIPT_BIND_FUNC()
     SString getFullPath() const;
+
+    SCRIPT_BIND_FUNC()
     bool isValid() const;
 
+    SCRIPT_BIND_FUNC()
     SString getAssetId() const { return assetId; }
+
     void internal_SetAssetId(const SString& assetId);
 
     // tries handling of asset open request.
@@ -34,6 +45,8 @@ public:
 
     // Override in subclasses that support saving (e.g. MMaterialAsset).
     // Returns true on success. Clears the dirty flag on successful save.
+    // Saving goes through the writable asset source, so it fails cleanly
+    // (returns false) in builds that run from a read-only package.
     virtual bool save() { return false; }
 
     /// Inform that this asset needs deferred loading.\n\n
@@ -48,6 +61,13 @@ public:
     /// Override this method to do all loading asset after all other independent assets are ready.\n\n
     /// This does not guarantee that all deferred loads will succeed, since an asset could be dependent
     /// on another deferred load asset, at this point the order will dictate the asset-load success
+    /// Return true if this asset must be rebuilt when the asset at `assetPath`
+    /// is reloaded (e.g. a material depends on its shader, a cubemap on its
+    /// face textures). MAssetManager::reloadAsset() calls
+    /// deferredAssetLoad(true) on every dependent, so only assets with
+    /// hasDeferredLoad() == true are considered.
+    virtual bool dependsOn(const SString& assetPath) const { return false; }
+
     virtual void deferredAssetLoad(bool forced) override
     {
         /* Do nothing here at this level, this function is used for late

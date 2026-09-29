@@ -51,8 +51,9 @@ void MMeshCollisionBody::setupShapeCallbacks()
 // Deferred retry
 // ---------------------------------------------------------------------------
 
-void MMeshCollisionBody::onFixedUpdate(float)
+void MMeshCollisionBody::onFixedUpdate(float dt)
 {
+    MSpatialEntity::onFixedUpdate(dt);
     if (!initialized || physicsBody) return;
 
     if (auto* child = findMeshEntityChild())

@@ -8,6 +8,7 @@
 #include "core/engine/audio/interfaces/engine_interface.h"
 #include "core/engine/entities/spatial/spatial.h"
 
+SCRIPT_BIND_CLASS()
 class MAudioListener : public MSpatialEntity {
     DEFINE_SPATIAL_CLASS(MAudioListener)
 public:

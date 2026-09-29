@@ -14,7 +14,7 @@ public:
 
     bool canImport(SString fileExtension) override;
     MAsset * importAsset(SString path, const pugi::xml_document& metaData) override;
-    [[nodiscard]] SString getIconPath() const override { return SEditorAssetPaths::HIGHRES_TEX_ASSET_AUDIOCLIP; }
+    [[nodiscard]] SString getIconPath() const override { return SEngineAssetIconPaths::HIGHRES_TEX_ASSET_AUDIOCLIP; }
 private:
     static bool registeredAssetImporter;
 };

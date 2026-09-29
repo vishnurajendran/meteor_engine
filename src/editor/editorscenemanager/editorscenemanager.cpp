@@ -39,7 +39,7 @@ bool MEditorSceneManager::loadScene(const SString& path)
     {
         // only do this when app is not simulating
         const auto* appInstRef = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
-        if (appInstRef && !appInstRef->isPlaying() && !appInstRef->isPaused())
+        if (appInstRef && !appInstRef->isSimulating() && !appInstRef->isPaused())
         {
             MVERBOSE(SString::format("[MEditorApplication]::Setting last opened scene {0}", currentScenePath));
             settings->lastOpenedScene.set(currentScenePath);

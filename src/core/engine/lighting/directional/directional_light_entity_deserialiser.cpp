@@ -35,6 +35,8 @@ MSpatialEntity* MDirectionalLightEntityDeserialiser::deserialize(pugi::xml_node 
         entity->setCastsShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
     if (const auto n = ln.child("smoothShadow"))
         entity->setSmoothShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
+    if (const auto n = ln.child("shadowDistance"))
+        entity->setShadowDistance(n.attribute(ATTRIB_VALUE_KEY.c_str()).as_float(100.0f));
 
     return entity;
 }
@@ -50,5 +52,6 @@ pugi::xml_node MDirectionalLightEntityDeserialiser::serialise(MSpatialEntity* en
     writeFloat(ln, "intensity",    light->getIntensity());
     writeBool (ln, "castsShadow",  light->getCastsShadow());
     writeBool (ln, "smoothShadow", light->getSmoothShadow());
+    writeFloat(ln, "shadowDistance", light->getShadowDistance());
     return node;
 }

@@ -6,19 +6,22 @@
 #define TEXTASSET_H
 #include "core/engine/assetmanagement/asset/asset.h"
 
-
+SCRIPT_BIND_CLASS()
 class MTextAsset : public MAsset {
 private:
     SString text;
 public:
     MTextAsset(const SString& path);
-    SString getText() const;
-    void setText(const SString& newText);
-    bool save();
 
-    bool requestReload() override { loadFromPath(path); return true; };
+    SCRIPT_BIND_FUNC()
+    SString getText() const;
+
+    void setText(const SString& newText);
+    bool save() override;
+
+    bool requestReload() override { valid = loadFromSource(); return valid; }
 private:
-    bool loadFromPath(const SString& path);
+    bool loadFromSource();
 };
 
 

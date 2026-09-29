@@ -14,6 +14,7 @@
 #include "inspectordrawer.h"
 
 #include "data/field_base.h"
+#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 
 class MSpatialEntityInspectorDrawer : public MInspectorDrawer {
     DEFINE_OBJECT_SUBCLASS(MSpatialEntityInspectorDrawer)
@@ -41,6 +42,7 @@ protected:
 private:
     bool drawTextField(const SString& label, SString& text);
     void drawTransformField(MSpatialEntity* target);
+    void drawScriptField(MSpatialEntity* target);
 
     // Iterates target->getFields() and draws a widget for each supported type.
     void drawFields(MSpatialEntity* target);
@@ -49,6 +51,10 @@ private:
     // drawXYZComponent) and the field to draw. Returns true if value changed.
     using FieldDrawFn = std::function<bool(MSpatialEntityInspectorDrawer*, FieldBase*)>;
     static const std::unordered_map<std::type_index, FieldDrawFn> fieldDrawerMap;
+
+    // Persistent control for the script asset reference widget.
+    // Filters to only accept MLuaScriptAsset via canAcceptAssetFuncCallback.
+    MAssetReferenceControl* scriptRefControl = nullptr;
 
     struct EulerCache
     {

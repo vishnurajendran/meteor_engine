@@ -6,10 +6,15 @@
 //   onSelect()  - arms a flag to open the dialog
 //   drawPopup() - draws the modal every frame (called by drawAllPopups())
 //
-// To add a new creatable asset type:
-//   1. Declare a class with DECLARE_CREATE_ASSET_ITEM (or manually).
-//   2. Implement onSelect(), drawPopup(), and the static registered bool.
-//   3. That's it - the menubar tree picks it up automatically.
+// All three items create assets through the editor's template registry
+// (MEditorAssetManager::createAssetFromTemplate), the same path the asset
+// browser's Create menu uses. Template content lives in the templates folder
+// and templates.xml; these dialogs only collect the name, folder and params.
+//
+// To add a new creatable asset type, prefer adding a template (templates.xml,
+// or registerBuiltInAssetTemplates for generated ones): it shows up in the
+// asset browser's Create menu automatically. A menubar item is only needed
+// if it should also appear in the top menu bar.
 
 #pragma once
 #ifndef CREATE_ASSET_ITEMS_H
@@ -27,7 +32,7 @@
 struct SShaderEntry
 {
     std::string label;  // display name shown in the combo
-    std::string path;   // asset path passed to createNewMaterial
+    std::string path;   // shader asset path passed to the material template
 };
 
 class MCreateMaterialItem : public MMenubarItem
@@ -48,10 +53,18 @@ private:
     int  selectedShader  = 0;   // index into the shader list built on open
 
     std::vector<SShaderEntry> cachedShaders;
+    std::string               lastError;
     static bool registered;
 };
 
 // --- Shader ------------------------------------------------------------------
+
+struct SShaderTemplateEntry
+{
+    std::string id;     // template id, e.g. "shader.lit"
+    std::string label;  // display name, e.g. "Lit Shader"
+    std::string extension;
+};
 
 class MCreateShaderItem : public MMenubarItem
 {
@@ -67,8 +80,12 @@ private:
     bool showDialog     = false;
     char shaderName[128] = "NewShader";
     char directory [512] = "assets/shaders/";
-    int  selectedTemplate = 0; // index into k_templateLabels
+    int  selectedTemplate = 0; // index into cachedTemplates
 
+    // Every registered template that produces a shader, rebuilt on open so
+    // shader templates added through templates.xml appear here too.
+    std::vector<SShaderTemplateEntry> cachedTemplates;
+    std::string                       lastError;
     static bool registered;
 };
 
@@ -89,6 +106,7 @@ private:
     char skyboxName[128] = "NewSkybox";
     char directory [512] = "assets/skybox/";
 
+    std::string lastError;
     static bool registered;
 };
 

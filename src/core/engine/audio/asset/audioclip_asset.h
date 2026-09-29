@@ -11,6 +11,7 @@
 class IAudioClip;
 class IAudioEngineSubsystem;
 
+SCRIPT_BIND_CLASS()
 class MAudioClipAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MAudioClipAsset)
 
@@ -18,10 +19,14 @@ public:
     explicit MAudioClipAsset(const SString& path);
     ~MAudioClipAsset() override;
 
-    [[nodiscard]] bool requestReload() override { return true; }
+    // Drops the runtime clip; the next getAudioClip() re-reads metadata
+    // through the asset source. Sources pick up the new audio the next time
+    // they bind the clip (MAudioSource::play / setClip).
+    [[nodiscard]] bool requestReload() override;
     [[nodiscard]] bool hasDeferredLoad() const override { return false; }
 
-    // Persist the preload flag back to the .meta XML file.
+    // Persist the preload flag back to the asset's meta (via the writable
+    // asset source; fails cleanly in read-only / packaged builds).
     [[nodiscard]] bool save() override;
 
     // Called by the importer after construction to apply settings

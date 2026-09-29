@@ -5,7 +5,7 @@
 #ifndef EDITOR_ASSET_PATHS_H
 #define EDITOR_ASSET_PATHS_H
 
-struct SEditorAssetPaths
+struct SEngineAssetIconPaths
 {
     // Editor Icons
     static constexpr const char* LOWRES_TEX_STATICMESH           = "meteor_assets/engine_assets/icons/lowres/static_mesh.png";
@@ -49,6 +49,7 @@ struct SEditorAssetPaths
     static constexpr const char* HIGHRES_TEX_ASSET_SKYBOX       = "meteor_assets/engine_assets/icons/highres/file-skybox.png";
     static constexpr const char* HIGHRES_TEX_ASSET_TEXT         = "meteor_assets/engine_assets/icons/highres/file-text.png";
     static constexpr const char* HIGHRES_TEX_ASSET_AUDIOCLIP    = "meteor_assets/engine_assets/icons/highres/file-sound.png";
+    static constexpr const char* HIGHRES_TEX_ASSET_SCRIPT      = "meteor_assets/engine_assets/icons/highres/file-script.png";
     static constexpr const char* HIGHRES_TEX_ASSET_FOLDER       = "meteor_assets/engine_assets/icons/highres/folder.png";
     static constexpr const char* HIGHRES_TEX_ASSET_FOLDER_EMPTY = "meteor_assets/engine_assets/icons/highres/folder-empty.png";
     static constexpr const char* HIGHRES_TEX_ASSET_DEFAULT      = "meteor_assets/engine_assets/icons/highres/file-default.png";

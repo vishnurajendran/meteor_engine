@@ -9,11 +9,12 @@
 
 #include "staticmesh.h"
 #include "assimp/postprocess.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
+#include "core/engine/assetmanagement/source/assimp_asset_io.h"
 #include "core/utils/logger.h"
 
 MStaticMeshAsset::MStaticMeshAsset(const SString& path) : MAsset(path) {
-    this->path= path;
-    loadMesh(path);
+    loadMesh();
 }
 
 MStaticMeshAsset::~MStaticMeshAsset() {
@@ -31,7 +32,8 @@ MStaticMesh* MStaticMeshAsset::processMesh(aiMesh *mesh) {
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         SVertex vertex;
         vertex.Position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-        vertex.Normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        if (mesh->mNormals)   // GenNormals skips point/line meshes
+            vertex.Normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         if(hasTextureCoords)
             vertex.TexCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         vertices.push_back(vertex);
@@ -60,24 +62,32 @@ void MStaticMeshAsset::processNode(aiNode *node, const aiScene *scene, std::vect
     }
 }
 
-void MStaticMeshAsset::loadMesh(SString path) {
-
-    for (auto mesh : meshes)
-    {
-        delete mesh;
-    }
-    meshes.clear();
+void MStaticMeshAsset::loadMesh() {
 
     Assimp::Importer importer;
-    constexpr auto flags = aiProcess_Triangulate | aiProcess_GenNormals;
-    const aiScene* scene = importer.ReadFile(path, flags);
+    importer.SetIOHandler(new MAssimpAssetIOSystem(MAssetSources::getActive()));   // importer owns it
+
+    constexpr auto flags = aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs;
+    const aiScene* scene = importer.ReadFile(path.c_str(), flags);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        MERROR(STR("Error (Assimp) ") + importer.GetErrorString());
+        MERROR(STR("Error (Assimp) ") + importer.GetErrorString() + " - " + path);
+        valid = !meshes.empty();
         return;
     }
-    // Start the recursive processing from the root node
-    processNode(scene->mRootNode, scene, meshes);
-    valid = !meshes.empty();
+
+    // Build into a temporary list so a failed reload keeps the old meshes.
+    std::vector<MStaticMesh*> loaded;
+    processNode(scene->mRootNode, scene, loaded);
+    if (loaded.empty()) {
+        MERROR(STR("MStaticMeshAsset:: no meshes found in ") + path);
+        valid = !meshes.empty();
+        return;
+    }
+
+    for (auto mesh : meshes)
+        delete mesh;
+    meshes = std::move(loaded);
+    valid = true;
 }
 
 std::vector<MStaticMesh *> MStaticMeshAsset::getMeshes() const {

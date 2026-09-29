@@ -111,7 +111,7 @@ void MProceduralSkyboxEntity::onUpdate(float deltaTime)
 void MProceduralSkyboxEntity::onDrawGizmo(SVector2 res)
 {
     const auto tex = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_PROC_SKYBOX);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_PROC_SKYBOX);
     if (tex)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), tex->getTexture());
 }

@@ -7,13 +7,21 @@
 #ifndef EDITORASSETMANAGER_H
 #define EDITORASSETMANAGER_H
 
+#include <memory>
 #include <queue>
 #include <set>
+#include <map>
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "asset_template_registry.h"
 #include "editor_asset_directory_node.h"
 #include "asset_watcher_thread.h"
 #include "thumbnail_renderer.h"
 
+class IWritableAssetSource;
+class MDirectoryAssetSource;
+
+// Legacy: prefer createAssetFromTemplate() with the ids in
+// builtin_asset_templates.h. Kept so existing UI code keeps compiling.
 enum class EShaderTemplate
 {
     Lit,
@@ -27,6 +35,7 @@ class MEditorAssetManager : public MAssetManager
     DEFINE_OBJECT_SUBCLASS(MEditorAssetManager)
 public:
     void refresh() override;
+    void cleanup() override;
     void openAsset(MAsset* asset);
     virtual int saveDirtyAssets();
     int tickHotReload();
@@ -53,7 +62,27 @@ public:
         requestThumbnail(asset);
     }
 
+    // -- Asset registration ----------------------------------------------------
+    // Imports a file that was just written and registers it with the watcher,
+    // synchronously. Every create* method calls this, so new assets appear in
+    // the browser in the same frame. Safe to call for a path the watcher also
+    // reports later (it is a no-op for already-loaded paths).
+    bool onFileAdded(const SString& path, bool rebuildTree = true);
+
     // -- Asset creation --------------------------------------------------------
+    // Templates available for the "Create >" menu. Built-ins are registered on
+    // first refresh(); templates.xml files in template directories add more.
+    MAssetTemplateRegistry&       getTemplateRegistry()       { ensureTemplatesRegistered(); return templateRegistry; }
+    const MAssetTemplateRegistry& getTemplateRegistry() const { return templateRegistry; }
+
+    // Generates content from the template, writes it to a unique path in
+    // `directory` (name, name_1, ...), registers it and pings it.
+    // Returns the new asset path, or an empty string on failure.
+    SString createAssetFromTemplate(const SString& templateId, const SString& directory,
+                                    const SString& name,
+                                    const std::map<SString, SString>& params = {});
+
+    // Legacy wrappers around createAssetFromTemplate().
     bool createShaderAsset(const SString& directory, const SString& name,
                            EShaderTemplate shaderTemplate);
     bool createSkyboxAsset(const SString& directory, const SString& name);
@@ -66,7 +95,14 @@ public:
     bool deleteAsset(MAsset* asset);
     bool deleteAssetByPath(const SString& path);
 
+protected:
+    bool unregisterAsset(const SString& path) override;
+
 private:
+    // Writable view of the active source. nullptr if the active source is
+    // read-only (should not happen in the editor).
+    IWritableAssetSource* writableSource();
+
     void buildAssetTree();
     void recursiveBuildAssetTree(std::queue<SString>& pathQueue, SAssetDirectoryNode* parentNode,
                                  MAsset* asset, SString parsedPath);
@@ -79,12 +115,9 @@ private:
     void scanDirectories();
     void ensureDirectoryNodeExists(const SString& dirPath);
 
-    static bool writeNewAssetFile(const SString& filePath, const SString& content);
-    static SString loadTemplate(const SString& templateFileName, const SString& assetName);
-    static const char* getShaderTemplateFileName(EShaderTemplate tmpl);
-
-    static constexpr const char* DIR_TEMPLATES        = SEditorPaths::DIR_TEMPLATES_PATH;
-    static constexpr const char* TEMPLATE_NAME_TOKEN  = "__ASSET_NAME__";
+    SString makeUniquePath(const SString& directory, const SString& baseName,
+                           const SString& extension);
+    void    ensureTemplatesRegistered();
 
 private:
     SAssetDirectoryNode*   assetsTreeRoot       = nullptr;
@@ -99,6 +132,9 @@ private:
     SString                pendingPingAssetId;
 
     std::set<SString>      directoryPaths;
+
+    MAssetTemplateRegistry templateRegistry;
+    bool                   templatesRegistered = false;
 };
 
 #endif // EDITORASSETMANAGER_H

@@ -10,6 +10,7 @@
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/assetmanagement/asset/field_asset_ref_types.h"
 
+SCRIPT_BIND_CLASS()
 class MAudioSource : public MSpatialEntity {
     DEFINE_SPATIAL_CLASS(MAudioSource)
 
@@ -50,43 +51,74 @@ public:
     void setClip(TAssetHandle<MAudioClipAsset> clip);
     /// Get current clip reference (carries both GUID and path)
     TAssetRef<MAudioClipAsset> getClip() const { return clipRef.get(); }
+
     /// Play this source
+    SCRIPT_BIND_FUNC()
     void play();
     /// Stop this source
+    SCRIPT_BIND_FUNC()
     void stop();
     /// Play this clip as oneshot
+    SCRIPT_BIND_FUNC()
     void playOneShot(TAssetHandle<MAudioClipAsset> clip);
 
     // -- Audio control accessors (used by the inspector) ----------------------
+    SCRIPT_BIND_FUNC()
     bool isPlaying() const { return sourcePlaying; }
 
+    SCRIPT_BIND_FUNC()
     bool getAutoStart() const { return autoStart.get(); }
+
+    SCRIPT_BIND_FUNC()
     void setAutoStart(const bool& as) { autoStart.set(as); }
 
-    bool  getLoop()   const { return loop.get(); }
+    SCRIPT_BIND_FUNC()
+    bool  getLoop() const { return loop.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setLoop(const bool&  v)   { loop.set(v); }
 
+    SCRIPT_BIND_FUNC()
     float getVolume() const { return volume.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setVolume(const float&  v){ volume.set(v); }
 
+    SCRIPT_BIND_FUNC()
     float getPitch()  const { return pitch.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setPitch(const float&  v) { pitch.set(v); }
 
     // -- Spatialization accessors ---------------------------------------------
 
+    SCRIPT_BIND_FUNC()
     bool  getUseSpatial()   const { return useSpatial.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setUseSpatial(bool v)   { useSpatial.set(v); }
 
+    SCRIPT_BIND_FUNC()
     float getRollOff()      const { return rollOff.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setRollOff(float v)     { rollOff.set(v); }
 
     float getMinDist()      const { return minDist.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setMinDist(float v)     { minDist.set(v); }
 
+    SCRIPT_BIND_FUNC()
     float getMaxDist()      const { return maxDist.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setMaxDist(float v)     { maxDist.set(v); }
 
+    SCRIPT_BIND_FUNC()
     float getDopplerStrength()  const { return dopplerStrength.get(); }
+
+    SCRIPT_BIND_FUNC()
     void  setDopplerStrength(float v) { dopplerStrength.set(v); }
 
 private:

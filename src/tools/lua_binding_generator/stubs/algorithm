@@ -1,0 +1,4 @@
+#ifndef STD_STUB_REDIRECT_H
+#define STD_STUB_REDIRECT_H
+#include "std_stub.h"
+#endif

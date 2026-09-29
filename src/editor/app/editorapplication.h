@@ -4,6 +4,7 @@
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "editor/window/imgui/imguisubwindow.h"
 #include "editor/window/imgui/imguiwindow.h"
+#include "editor/project/editor_project_manager.h"
 
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
@@ -34,6 +35,7 @@ public:
 
     [[nodiscard]] bool isPaused()  const override  { return simulationState == SimulationPaused; };
     [[nodiscard]] bool isPlaying() const override  { return simulationState == Simulating;       };
+    [[nodiscard]] bool isSimulating() const override { return simulationState == Simulating;     };
     float getPhysicsStep() const;
 
     SString getEngineSettingsPath() const override { return SString::format("{0}{1}", DEFAULT_SETTINGS_PATH, "EditorSettings.xml"); }
@@ -62,6 +64,7 @@ public:
 private:
     MEditorSceneManager* sceneManagerRef = nullptr;
     MEditorAssetManager* assetManagerRef = nullptr;
+    MEditorProjectManager projectManager;
     MEditorSimulationManagerSubsystem* simulationManagerSubsystem = nullptr;
 
     // sub-system interfaces

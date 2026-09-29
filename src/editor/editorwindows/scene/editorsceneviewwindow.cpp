@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include "editor/editor_utils/engine_textures.h"
 #include "imgui-SFML.h"
 
 #include "editorsceneviewwindow.h"
@@ -117,13 +118,13 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     renderTexture = sf::RenderTexture({ 1920, 1080 }, settings);
     updateRenderTarget();
 
-    translateIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_MOVE);
-    rotateIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_ROTATE);
-    scaleIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_SCALE);
-    localSpaceIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_LOCALSPACE);
-    worldSpaceIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_WORLDSPACE);
-    gizmoOnIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_ENABLED);
-    gizmoOffIcon.loadFromFile(SEditorAssetPaths::LOWRES_TEX_BTTN_GIZMO_DISABLED);
+    loadEngineTexture(translateIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_MOVE);
+    loadEngineTexture(rotateIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_ROTATE);
+    loadEngineTexture(scaleIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_SCALE);
+    loadEngineTexture(localSpaceIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_LOCALSPACE);
+    loadEngineTexture(worldSpaceIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_WORLDSPACE);
+    loadEngineTexture(gizmoOnIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_ENABLED);
+    loadEngineTexture(gizmoOffIcon, SEngineAssetIconPaths::LOWRES_TEX_BTTN_GIZMO_DISABLED);
 
     editorAppInst = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
     if (!editorAppInst) return;
@@ -142,7 +143,7 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     if (!editorAppInst)
         return;
 
-    bool playing = editorAppInst->isPlaying() && !editorAppInst->isPaused();
+    bool playing = editorAppInst->isSimulating() && !editorAppInst->isPaused();
 
     // Toolbar bar above the scene - always visible
     drawToolbar(playing);
@@ -259,7 +260,7 @@ void MEditorSceneViewWindow::handleInput(float dt)
     if (!editorAppInst)
         return;
 
-    if (editorAppInst->isPlaying() || editorAppInst->isPaused())
+    if (editorAppInst->isSimulating() || editorAppInst->isPaused())
         return;
 
     const bool rmbOrMmbHeld = ImGui::IsMouseDown(ImGuiMouseButton_Right) ||

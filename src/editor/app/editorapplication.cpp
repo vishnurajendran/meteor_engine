@@ -3,6 +3,7 @@
 //
 
 #include "editorapplication.h"
+#include "core/utils/meteor_paths.h"
 
 #include <windows.h>
 
@@ -24,6 +25,8 @@
 #include "simulation_manager.h"
 
 #include "core/profiling/profiler.h"
+#include "core/engine/scripting/lua/lua_scripting_engine.h"
+#include "core/engine/scripting/interface/scripting_engine_interface.h"
 #include "core/utils/guid.h"
 #include "editor/editorwindows/console/editorconsolewindow.h"
 #include "editor/editorwindows/hierarchy/editorhierarchywindow.h"
@@ -54,7 +57,7 @@ void MEditorApplication::run() {
     if (canSimulate)
     {
         START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
-        if (simulationState)
+        if (simulationState && canTickPhysics)
            tickPhysics(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
     }
@@ -87,16 +90,36 @@ void MEditorApplication::run() {
 }
 
 void MEditorApplication::cleanup() {
-    MVERBOSE(STR("Cleanup..."));
+    MLOG(STR("[Cleanup] Begin"));
 
-    MVERBOSE(STR("Deleting SceneManager"));
+    if (sceneManagerRef)
+        sceneManagerRef->closeActiveScene();
+
+    MLOG(STR("[Cleanup] Deleting SceneManager"));
     delete sceneManagerRef;
+    sceneManagerRef = nullptr;
+    MLOG(STR("[Cleanup] SceneManager deleted"));
 
-    MVERBOSE(STR("Closing Window"));
+    MLOG(STR("[Cleanup] Cleaning render pipeline"));
+    if (pipelineManager)
+        pipelineManager->cleanup();
+    MLOG(STR("[Cleanup] Render pipeline cleaned"));
+
+    MLOG(STR("[Cleanup] Cleaning asset manager"));
+    if (assetManagerRef)
+        assetManagerRef->cleanup();
+    MLOG(STR("[Cleanup] Asset manager cleaned"));
+
+    MLOG(STR("[Cleanup] Closing window"));
     if (window != nullptr)
         window->close();
+    MLOG(STR("[Cleanup] Window closed"));
+
     window = nullptr;
-    MVERBOSE(STR("Editor Application Cleanup Complete"));
+    MLOG(STR("[Cleanup] Window released"));
+
+    MEngineStatics::saveAll();
+    MLOG(STR("[Cleanup] Complete"));
 }
 
 void MEditorApplication::registerSubsystems()
@@ -115,9 +138,13 @@ void MEditorApplication::registerSubsystems()
     // Init Physics engine
     physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
 
+    // Init Scripting Engine
+    MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();
+
     // Editor Simulation Manager, we will register as the concrete class for now. in the future, if
     // we need to explose APIs for this system, then wire that through an interface.
     simulationManagerSubsystem = MEngineSubsystemRegistry::registerSubsystem<MEditorSimulationManagerSubsystem, MEditorSimulationManagerSubsystem>(false);
+
 }
 
 void MEditorApplication::notifySimulationStateChange()
@@ -150,6 +177,10 @@ void MEditorApplication::initialise() {
 
     MApplication::initialise();
 
+    // Read the .mtproj and make sure the project folders exist before any
+    // settings are loaded or saved (they live under .engine_data/settings).
+    projectManager.prepare();
+
     // init engine settings.
     MEngineStatics::loadSettings<MEditorSettings>(SSettingsPaths
     {
@@ -167,7 +198,7 @@ void MEditorApplication::initialise() {
     const auto winX = MEngineStatics::getEngineSettings()->resX.get();
     const auto winY = MEngineStatics::getEngineSettings()->resY.get();
     const auto fps= MEngineStatics::getEngineSettings()->fps.get();
-    window->initialiseWindow(STR("Meteorite Editor"), SVector2(winX, winY), fps);
+    window->initialiseWindow(STR("Meteorite Editor - ") + projectManager.getDescriptor().name, SVector2(winX, winY), fps);
     window->setWindowResizeCallback([this](const SVector2& size)
     {
         MVERBOSE(STR("Meteorite:: Resized Window"));
@@ -214,15 +245,18 @@ void MEditorApplication::initialise() {
     splashShowing = false;
     splashThread.join();
 
-
     // post-load
-    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings())){
-        const auto path = SString(settings->lastOpenedScene.get());
-        if (path.empty())
-            return;
-        MVERBOSE(SString::format("[MEditorApplication]::Loading last opened scene {0}", path));
-        sceneManagerRef->loadScene(path);
-    }
+    // Last opened scene (stored per project), else the project's startup scene.
+    SString startScene;
+    if (const auto settings = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
+        startScene = SString(settings->lastOpenedScene.get());
+    if (startScene.empty())
+        startScene = projectManager.getDescriptor().startupScene;
+    if (startScene.empty())
+        return;
+
+    MVERBOSE(SString::format("[MEditorApplication]::Loading scene {0}", startScene));
+    sceneManagerRef->loadScene(startScene);
 
 }
 
@@ -258,14 +292,14 @@ void MEditorApplication::showSplashScreen()
 
 
     sf::Texture splashTexture;
-    splashTexture.loadFromFile("meteor_assets/splash.png");
+    splashTexture.loadFromFile(ENGINE_PATH("meteor_assets/splash.png").str());
 
     sf::Sprite sprite(splashTexture);
     sprite.setScale( { splashWindow.getSize().x / (float)splashTexture.getSize().x,
                     splashWindow.getSize().y / (float)splashTexture.getSize().y});
 
     sf::Font font;
-    font.openFromFile("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf");
+    font.openFromFile(ENGINE_PATH("meteor_assets/fonts/open-sans/OpenSans-Regular.ttf").str());
     sf::Text text(font, "Loading Meteorite...");
     text.setCharacterSize(12); // in pixels
     text.setFillColor(sf::Color::White);
@@ -292,6 +326,9 @@ void MEditorApplication::showSplashScreen()
 
 void MEditorApplication::loadPrerequisites()
 {
+    // Project folder + engine install (meteor_assets/), project templates,
+    // __PROJECT_NAME__. Must happen before the first refresh.
+    projectManager.applyToAssetManager(*assetManagerRef);
     assetManagerRef->refresh();
     pipelineManager->init(); // manual init
     pipelineManager->getPipeline()->addStage<MGizmoStage>();
@@ -307,7 +344,7 @@ void MEditorApplication::loadPrerequisites()
 
 void MEditorApplication::startSimulation()
 {
-    if (isPlaying())
+    if (isSimulating())
         return;
 
     simulationState = EEditorSimulationState::Simulating;

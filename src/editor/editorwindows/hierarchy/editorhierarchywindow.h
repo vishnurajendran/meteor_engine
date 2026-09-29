@@ -53,6 +53,8 @@ private:
 
     MSpatialEntity* draggedEntity       = nullptr;
     MSpatialEntity* dropTargetEntity    = nullptr;
+
+    size_t          hierRowIdx;
 };
 
 #endif // METEOR_ENGINE_EDITORHIERARCHYWINDOW_H

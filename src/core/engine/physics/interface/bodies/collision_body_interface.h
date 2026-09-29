@@ -5,10 +5,12 @@
 #ifndef IPHYSICSBODY_H
 #define IPHYSICSBODY_H
 #include "../../data/default_body_settings.h"
+#include "core/engine/scripting/script_binding_macros.h"
 
 // Determines how a force value is interpreted when passed to the apply* methods.
 // The naming mirrors Unity's ForceMode so it stays intuitive for anyone familiar
 // with standard game-engine conventions.
+SCRIPT_BIND_ENUM()
 enum class EForceMode
 {
     Force,         // Continuous force in Newtons - accumulated each physics step.

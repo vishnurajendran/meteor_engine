@@ -13,6 +13,11 @@
 //
 // The main thread calls drainEvents() once per frame and handles them.
 //
+// All paths (watched, known, and reported) are asset paths as produced by
+// MDirectoryAssetSource: relative to the source root, forward slashes. The
+// watcher maps them to disk through the source, so the project root does not
+// have to be the working directory.
+//
 // Intended location: src/editor/editorassetmanager/asset_watcher_thread.h
 //
 
@@ -24,6 +29,7 @@
 #include <chrono>
 #include <filesystem>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <string>
@@ -31,6 +37,8 @@
 #include <vector>
 
 #include "core/object/object.h"
+
+class MDirectoryAssetSource;
 
 enum class EWatchEvent
 {
@@ -63,8 +71,16 @@ public:
     MAssetWatcherThread() = default;
     ~MAssetWatcherThread();
 
-    // Start the background thread. Call once after assets are loaded.
-    void start(const std::vector<SString>& searchPaths);
+    // Set the directory source(s) used to map asset paths to disk. Call BEFORE
+    // watchPath() so initial write times are read correctly, and only while
+    // stopped. With several sources (project + engine install), each asset
+    // path belongs to the source whose search path it starts with.
+    void setSource(std::shared_ptr<const MDirectoryAssetSource> source);
+    void setSources(std::vector<std::shared_ptr<const MDirectoryAssetSource>> sources);
+
+    // Start the background thread (scans the source's search paths).
+    // Call once after assets are registered.
+    void start();
 
     // Stop the background thread. Blocks until the thread joins.
     void stop();
@@ -103,7 +119,7 @@ private:
     void pollWatchedFiles();
     void scanForNewAndDeletedFiles();
 
-    static std::filesystem::file_time_type getWriteTime(const std::string& path);
+    std::filesystem::file_time_type getWriteTime(const std::string& assetPath) const;
 
 private:
     std::thread             workerThread;
@@ -126,7 +142,10 @@ private:
     mutable std::mutex      knownMutex;
     std::set<std::string>   knownPaths;
     std::set<std::string>   knownDirectories;
-    std::vector<SString>    searchPaths_;
+    std::vector<std::shared_ptr<const MDirectoryAssetSource>> sources_;
+
+    // Source owning an asset path (by search-path prefix), else the first.
+    const MDirectoryAssetSource* sourceFor(const std::string& assetPath) const;
 
     // -- Output event queue (protected by eventMutex) --------------------------
     mutable std::mutex      eventMutex;

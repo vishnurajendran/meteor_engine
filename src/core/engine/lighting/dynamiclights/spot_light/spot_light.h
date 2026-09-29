@@ -5,6 +5,7 @@
 #define SPOT_LIGHT_H
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 
+SCRIPT_BIND_CLASS()
 class MSpotLight : public MDynamicLight
 {
     DEFINE_SPATIAL_CLASS(MSpotLight)
@@ -17,7 +18,9 @@ public:
     void onExit() override;
     void onDrawGizmo(SVector2 renderResolution) override;
 
+    SCRIPT_BIND_FUNC()
     [[nodiscard]] float getSpotAngle() const;   // returns degrees
+    SCRIPT_BIND_FUNC()
     void setSpotAngle(float angleDeg);
 
 private:

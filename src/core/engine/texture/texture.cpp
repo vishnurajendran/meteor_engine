@@ -6,11 +6,19 @@
 
 #include <GL/glew.h>
 
+#include <vector>
+
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
 
-bool MTexture::loadFromPath(const SString &path) {
-    return coreTexture.loadFromFile(path.c_str());
+// `path` is an asset path. Reading goes through the active asset source so
+// this works from a project folder and from a package.
+bool MTexture::loadFromPath(const SString& path) {
+    std::vector<uint8_t> bytes;
+    if (!MAssetSources::getActive()->readBytes(path, bytes) || bytes.empty())
+        return false;
+    return coreTexture.loadFromMemory(bytes.data(), bytes.size());
 }
 
 bool MTexture::loadFromStream(sf::InputStream &stream) {

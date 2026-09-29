@@ -3,18 +3,62 @@
 //
 // Intended location: src/editor/editorassetmanager/editorassetmanager.cpp
 //
+// All project file access goes through the active asset source
+// (MDirectoryAssetSource in the editor). Template files are read by
+// MAssetTemplateRegistry from the editor's resources folder.
+//
 
 #include "editorassetmanager.h"
 
-#include <filesystem>
-#include <fstream>
 #include <queue>
-#include <sstream>
+
+#include "builtin_asset_templates.h"
 
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/asset/defferedloadableasset.h"
+#include "core/engine/assetmanagement/source/directory_asset_source.h"
+#include "core/engine/assetmanagement/source/routed_asset_source.h"
+#include "core/utils/meteor_paths.h"
+#include "core/engine/scripting/interface/script_asset.h"
+#include "editor/editor_utils/editor_utility.h"
 #include "core/utils/logger.h"
 #include "core/meteor_utils.h"
+
+// ---------------------------------------------------------------------------
+// Source access
+// ---------------------------------------------------------------------------
+
+// Every on-disk directory behind `source`: itself, or the parts of a routed
+// source. Package or other non-directory sources are not watched.
+static std::vector<std::shared_ptr<const MDirectoryAssetSource>>
+collectDirectorySources(const std::shared_ptr<IAssetSource>& source)
+{
+    std::vector<std::shared_ptr<const MDirectoryAssetSource>> out;
+    if (!source) return out;
+
+    std::vector<std::shared_ptr<IAssetSource>> parts;
+    if (auto routed = std::dynamic_pointer_cast<MRoutedAssetSource>(source))
+        parts = routed->getSources();
+    else
+        parts.push_back(source);
+
+    for (const auto& part : parts)
+        if (auto dir = std::dynamic_pointer_cast<const MDirectoryAssetSource>(part))
+            out.push_back(dir);
+    return out;
+}
+
+IWritableAssetSource* MEditorAssetManager::writableSource()
+{
+    auto* writable = source().asWritable();
+    if (!writable)
+        MERROR("EditorAssetManager:: active asset source is read-only");
+    return writable;
+}
+
+// ---------------------------------------------------------------------------
+// Refresh / cleanup
+// ---------------------------------------------------------------------------
 
 void MEditorAssetManager::refresh()
 {
@@ -28,12 +72,18 @@ void MEditorAssetManager::refresh()
     thumbnailCache.evictAll();
     thumbnailRenderer.clearQueue();
     failedAssetPaths.clear();
+    ensureTemplatesRegistered();
 
     MAssetManager::refresh();
 
     scanDirectories();
 
     buildAssetTree();
+
+    // The watcher maps asset paths to disk through the directory source(s),
+    // so it must be given them before any path is registered. With a project
+    // open that is two: the project folder and the engine install.
+    watcherThread.setSources(collectDirectorySources(getAssetSource()));
     registerAssetsWithWatcher();
 
     if (!thumbnailRenderer.isInitialised())
@@ -42,8 +92,17 @@ void MEditorAssetManager::refresh()
     totalHotReloadCount = 0;
 
     // Start the background thread now that all assets and directories
-    // are registered as known paths.
-    watcherThread.start(ASSET_SEARCH_PATHS);
+    // are registered as known paths. No-op if the source is not a directory.
+    watcherThread.start();
+}
+
+void MEditorAssetManager::cleanup()
+{
+    // Assets are about to be deleted; make sure nothing on the watcher thread
+    // is mid-scan and no events referring to them are handled afterwards.
+    watcherThread.stop();
+    watcherThread.drainEvents();
+    MAssetManager::cleanup();
 }
 
 int MEditorAssetManager::tickHotReload()
@@ -58,6 +117,60 @@ int MEditorAssetManager::tickHotReload()
 }
 
 // ---------------------------------------------------------------------------
+// Registration
+// ---------------------------------------------------------------------------
+
+bool MEditorAssetManager::onFileAdded(const SString& rawPath, bool rebuildTree)
+{
+    const SString path = MAssetPath::normalize(rawPath);
+
+    // Asset might already be loaded (race between drain and registration,
+    // or the watcher reporting a file we registered synchronously).
+    if (assetMap.contains(path))
+        return true;
+
+    if (failedAssetPaths.contains(path) || MAssetPath::isIgnored(path))
+        return false;
+
+    const size_t deferredBefore = defferedLoadableAssetList.size();
+    if (!loadAsset(path))
+    {
+        failedAssetPaths.insert(path);
+        return false;
+    }
+
+    MLOG(STR("EditorAssetManager:: Loaded ") + path);
+    watcherThread.watchPath(path);
+    watcherThread.addKnownPath(path);
+
+    // Run deferred loads for any newly added assets that need them.
+    for (size_t i = deferredBefore; i < defferedLoadableAssetList.size(); ++i)
+        if (defferedLoadableAssetList[i])
+            defferedLoadableAssetList[i]->deferredAssetLoad(false);
+
+    if (rebuildTree)
+    {
+        buildAssetTree();
+        // The asset browser looks pings up by asset id (findNodeByAssetId).
+        // This used to pass the path, so pings never matched.
+        pingAsset(assetMap[path]->getAssetId());
+    }
+    return true;
+}
+
+bool MEditorAssetManager::unregisterAsset(const SString& path)
+{
+    watcherThread.unwatchPath(path);
+    watcherThread.removeKnownPath(path);
+
+    auto it = assetMap.find(path);
+    if (it != assetMap.end() && it->second)
+        thumbnailCache.evict(it->second->getAssetId());
+
+    return MAssetManager::unregisterAsset(path);
+}
+
+// ---------------------------------------------------------------------------
 // Watcher event handling (main thread)
 // ---------------------------------------------------------------------------
 
@@ -68,7 +181,7 @@ void MEditorAssetManager::handleWatcherEvents()
         return;
 
     bool treeChanged = false;
-    SString lastLoadedAsset;
+    SString lastLoadedAssetId;
 
     for (const auto& evt : events)
     {
@@ -80,7 +193,9 @@ void MEditorAssetManager::handleWatcherEvents()
                 if (it != assetMap.end() && it->second)
                 {
                     MLOG(STR("AssetWatcher:: Reloading ") + evt.path);
-                    it->second->requestReload();
+                    // Also rebuilds dependents (materials of a shader,
+                    // cubemaps of a face texture).
+                    reloadAsset(it->second);
                     ++totalHotReloadCount;
                 }
                 break;
@@ -88,57 +203,23 @@ void MEditorAssetManager::handleWatcherEvents()
 
             case EWatchEvent::NewFile:
             {
-                // Asset might already be loaded (race between drain and registration).
                 if (assetMap.contains(evt.path))
                     break;
-
-                if (failedAssetPaths.contains(evt.path))
-                    break;
-
-                if (FileIO::getFileExtension(evt.path) == STR("meta"))
-                    break;
-
-                const size_t deferredBefore = defferedLoadableAssetList.size();
-                if (loadAsset(evt.path))
+                if (onFileAdded(evt.path, false))
                 {
-                    MLOG(STR("AssetWatcher:: Delta loaded: ") + evt.path);
-                    watcherThread.watchPath(evt.path);
-                    watcherThread.addKnownPath(evt.path);
-
-                    // Run deferred loads for any newly added assets that need them.
-                    for (size_t i = deferredBefore; i < defferedLoadableAssetList.size(); ++i)
-                        if (defferedLoadableAssetList[i])
-                            defferedLoadableAssetList[i]->deferredAssetLoad(false);
-
-                    lastLoadedAsset = evt.path;
+                    lastLoadedAssetId = assetMap[evt.path]->getAssetId();
                     treeChanged = true;
-                }
-                else
-                {
-                    failedAssetPaths.insert(evt.path);
                 }
                 break;
             }
 
             case EWatchEvent::Deleted:
             {
-                auto it = assetMap.find(evt.path);
-                if (it == assetMap.end())
+                if (!assetMap.contains(evt.path))
                     break;
 
                 MLOG(STR("AssetWatcher:: Delta unloading: ") + evt.path);
-                watcherThread.unwatchPath(evt.path);
-                watcherThread.removeKnownPath(evt.path);
-
-                MAsset* asset = it->second;
-                if (asset)
-                {
-                    thumbnailCache.evict(asset->getAssetId());
-                    const SString id = asset->getAssetId();
-                    if (!id.empty()) assetMapByAssetId.erase(id);
-                    delete asset;
-                }
-                assetMap.erase(it);
+                unregisterAsset(evt.path);
                 treeChanged = true;
                 break;
             }
@@ -173,8 +254,8 @@ void MEditorAssetManager::handleWatcherEvents()
     if (treeChanged)
     {
         buildAssetTree();
-        if (!lastLoadedAsset.empty())
-            pingAsset(lastLoadedAsset);
+        if (!lastLoadedAssetId.empty())
+            pingAsset(lastLoadedAssetId);
         MLOG(STR("AssetWatcher:: Tree rebuilt after delta changes"));
     }
 }
@@ -228,24 +309,15 @@ void MEditorAssetManager::scanDirectories()
 {
     directoryPaths.clear();
 
-    for (const auto& searchPath : ASSET_SEARCH_PATHS)
+    source().enumerate([this](const SAssetSourceEntry& entry)
     {
-        std::filesystem::path dir(searchPath.str());
-        if (!std::filesystem::exists(dir)) continue;
+        if (!entry.isDirectory) return;
 
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(dir))
-        {
-            if (!entry.is_directory()) continue;
+        if (!hasMetaData(entry.path))
+            createMetaFile(entry.path);
 
-            SString path = STR(entry.path().string());
-            path.replace("\\", "/");
-
-            if (!hasMetaData(path))
-                createMetaFile(path);
-
-            directoryPaths.insert(path);
-        }
-    }
+        directoryPaths.insert(entry.path);
+    });
 }
 
 void MEditorAssetManager::ensureDirectoryNodeExists(const SString& dirPath)
@@ -353,25 +425,23 @@ void MEditorAssetManager::recursiveBuildAssetTree(std::queue<SString>& pathQueue
 bool MEditorAssetManager::createDirectory(const SString& parentPath,
                                            const SString& dirName)
 {
+    auto* target = writableSource();
+    if (!target) return false;
+
     SString fullPath = parentPath;
     if (!fullPath.empty() && fullPath.str().back() != '/')
         fullPath += "/";
     fullPath += dirName;
+    fullPath = MAssetPath::normalize(fullPath);
 
-    std::filesystem::path dirFsPath(fullPath.str());
-    if (std::filesystem::exists(dirFsPath))
+    if (target->exists(fullPath))
     {
         MWARN("EditorAssetManager:: Directory already exists: " + fullPath);
         return false;
     }
 
-    std::error_code ec;
-    if (!std::filesystem::create_directories(dirFsPath, ec) || ec)
-    {
-        MERROR(SString::format("EditorAssetManager:: Failed to create directory: {0} ({1})",
-                                fullPath, SString(ec.message().c_str())));
+    if (!target->createDirectory(fullPath))
         return false;
-    }
 
     createMetaFile(fullPath);
     directoryPaths.insert(fullPath);
@@ -382,10 +452,13 @@ bool MEditorAssetManager::createDirectory(const SString& parentPath,
     return true;
 }
 
-bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
+bool MEditorAssetManager::deleteDirectory(const SString& rawDirPath)
 {
-    std::filesystem::path dirFsPath(dirPath.str());
-    if (!std::filesystem::exists(dirFsPath) || !std::filesystem::is_directory(dirFsPath))
+    auto* target = writableSource();
+    if (!target) return false;
+
+    const SString dirPath = MAssetPath::normalize(rawDirPath);
+    if (!target->exists(dirPath))
     {
         MWARN("EditorAssetManager:: Directory does not exist: " + dirPath);
         return false;
@@ -393,7 +466,7 @@ bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
 
     MLOG(STR("EditorAssetManager:: Deleting directory: ") + dirPath);
 
-    std::string prefix = dirPath.str() + "/";
+    const std::string prefix = dirPath.str() + "/";
 
     std::vector<SString> assetsToRemove;
     for (const auto& [path, asset] : assetMap)
@@ -402,21 +475,8 @@ bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
         if (ps.compare(0, prefix.size(), prefix) == 0)
             assetsToRemove.push_back(path);
     }
-
     for (const auto& path : assetsToRemove)
-    {
-        watcherThread.unwatchPath(path);
-        watcherThread.removeKnownPath(path);
-        MAsset* asset = assetMap[path];
-        if (asset)
-        {
-            thumbnailCache.evict(asset->getAssetId());
-            const SString id = asset->getAssetId();
-            if (!id.empty()) assetMapByAssetId.erase(id);
-            delete asset;
-        }
-        assetMap.erase(path);
-    }
+        unregisterAsset(path);
 
     std::vector<SString> dirsToRemove;
     for (const auto& dp : directoryPaths)
@@ -431,16 +491,8 @@ bool MEditorAssetManager::deleteDirectory(const SString& dirPath)
         watcherThread.removeKnownDirectory(dp);
     }
 
-    std::error_code ec;
-    std::filesystem::remove_all(std::filesystem::path(dirPath.str()), ec);
-    if (ec)
-    {
-        MWARN(SString::format("EditorAssetManager:: Failed to delete directory: {0} ({1})",
-                              dirPath, SString(ec.message().c_str())));
-    }
-
-    SString metaPath = dirPath + ".meta";
-    std::filesystem::remove(std::filesystem::path(metaPath.str()), ec);
+    // Removes the directory, everything in it, and its own .meta sidecar.
+    target->removeDirectory(dirPath);
 
     buildAssetTree();
 
@@ -459,7 +511,21 @@ void MEditorAssetManager::openAsset(MAsset* asset)
     MLOG(SString::format("EditorAssetManager:: Open Asset {0}", asset->getName()));
     if (!asset->openAsset())
     {
-        auto cmd = STR("\"") + asset->getFullPath() + STR("\"");
+        const SString fullPath = asset->getFullPath();
+        if (fullPath.empty())
+        {
+            MWARN("EditorAssetManager:: asset has no file on disk: " + asset->getPath());
+            return;
+        }
+
+        // Scripts open in VS Code with the project folder as the workspace,
+        // so LuaLS picks up .vscode/settings.json and the engine stubs.
+        // Falls back to the OS default handler if VS Code isn't installed.
+        if (dynamic_cast<IScriptAsset*>(asset) != nullptr &&
+            MEditorUtility::openInVsCode(fullPath.str(), PROJECT_PATH().str()))
+            return;
+
+        auto cmd = STR("\"") + fullPath + STR("\"");
         system(cmd.c_str());
     }
 }
@@ -489,59 +555,29 @@ bool MEditorAssetManager::deleteAsset(MAsset* asset)
 {
     if (!asset) return false;
 
-    SString targetPath;
-    for (const auto& [path, a] : assetMap)
-    {
-        if (a == asset)
-        {
-            targetPath = path;
-            break;
-        }
-    }
-
-    if (targetPath.empty())
+    // The asset knows its own key; no need to search the map.
+    const SString path = asset->getPath();
+    if (!assetMap.contains(path) || assetMap[path] != asset)
     {
         MWARN("EditorAssetManager:: deleteAsset -- asset not found in map");
         return false;
     }
 
-    return deleteAssetByPath(targetPath);
+    return deleteAssetByPath(path);
 }
 
-bool MEditorAssetManager::deleteAssetByPath(const SString& path)
+bool MEditorAssetManager::deleteAssetByPath(const SString& rawPath)
 {
-    if (path.empty()) return false;
+    if (rawPath.empty()) return false;
 
+    auto* target = writableSource();
+    if (!target) return false;
+
+    const SString path = MAssetPath::normalize(rawPath);
     MLOG(STR("EditorAssetManager:: Deleting asset: ") + path);
 
-    watcherThread.unwatchPath(path);
-    watcherThread.removeKnownPath(path);
-
-    auto it = assetMap.find(path);
-    if (it != assetMap.end())
-    {
-        MAsset* asset = it->second;
-        if (asset)
-        {
-            thumbnailCache.evict(asset->getAssetId());
-            const SString id = asset->getAssetId();
-            if (!id.empty())
-                assetMapByAssetId.erase(id);
-            delete asset;
-        }
-        assetMap.erase(it);
-    }
-
-    std::error_code ec;
-    std::filesystem::remove(std::filesystem::path(path.str()), ec);
-    if (ec)
-    {
-        MWARN(SString::format("EditorAssetManager:: Failed to delete file: {0} ({1})",
-                              path, SString(ec.message().c_str())));
-    }
-
-    SString metaPath = path + ".meta";
-    std::filesystem::remove(std::filesystem::path(metaPath.str()), ec);
+    unregisterAsset(path);
+    target->remove(path);   // file + .meta sidecar
 
     buildAssetTree();
 
@@ -550,133 +586,104 @@ bool MEditorAssetManager::deleteAssetByPath(const SString& path)
 }
 
 // ---------------------------------------------------------------------------
-// Template loading
+// Templates
 // ---------------------------------------------------------------------------
 
-SString MEditorAssetManager::loadTemplate(const SString& templateFileName,
-                                           const SString& assetName)
+void MEditorAssetManager::ensureTemplatesRegistered()
 {
-    std::filesystem::path templatePath =
-        std::filesystem::path(DIR_TEMPLATES) / templateFileName.str();
+    if (templatesRegistered)
+        return;
+    templatesRegistered = true;
 
-    std::ifstream ifs(templatePath);
-    if (!ifs.is_open())
-    {
-        MERROR(SString::format("EditorAssetManager:: Template not found: {0}",
-                               SString(templatePath.string().c_str())));
-        return SString();
-    }
-
-    std::ostringstream ss;
-    ss << ifs.rdbuf();
-    ifs.close();
-
-    SString content = STR(ss.str().c_str());
-    content.replace(TEMPLATE_NAME_TOKEN, assetName);
-    return content;
+    // Built-ins first, then templates.xml from the engine templates folder, so
+    // data can add templates or override a built-in by id. Phase 4 adds
+    // <project>/templates on top in the same way.
+    registerBuiltInAssetTemplates(templateRegistry);
+    templateRegistry.addTemplateDirectory(ENGINE_PATH(SEditorPaths::DIR_TEMPLATES_PATH));
 }
 
-const char* MEditorAssetManager::getShaderTemplateFileName(EShaderTemplate tmpl)
+SString MEditorAssetManager::makeUniquePath(const SString& directory, const SString& baseName,
+                                             const SString& extension)
 {
-    switch (tmpl)
-    {
-    case EShaderTemplate::Lit:            return SEditorPaths::TEMPLATE_SHADER_LIT_FILE;
-    case EShaderTemplate::Unlit:          return SEditorPaths::TEMPLATE_SHADER_UNLIT_FILE;
-    case EShaderTemplate::UnlitColor:     return SEditorPaths::TEMPLATE_SHADER_UNLIT_COLOR_FILE;
-    case EShaderTemplate::Toon:           return SEditorPaths::TEMPLATE_SHADER_TOONLIT_FILE;
-    }
-    return nullptr;
-}
-
-// ---------------------------------------------------------------------------
-// File writing
-// ---------------------------------------------------------------------------
-
-bool MEditorAssetManager::writeNewAssetFile(const SString& filePath,
-                                             const SString& content)
-{
-    std::filesystem::path p(filePath.str());
-    std::error_code ec;
-    std::filesystem::create_directories(p.parent_path(), ec);
-
-    std::ofstream ofs(p, std::ios::out | std::ios::trunc);
-    if (!ofs.is_open())
-    {
-        MERROR(SString::format("EditorAssetManager:: Failed to create file: {0}", filePath));
-        return false;
-    }
-    ofs << content.str();
-    ofs.close();
-    return true;
-}
-
-static SString makeUniquePath(const SString& directory, const SString& baseName,
-                               const SString& extension)
-{
-    SString filePath = directory + "/" + baseName + extension;
+    SString filePath = MAssetPath::normalize(directory + "/" + baseName + extension);
     int suffix = 1;
-    while (std::filesystem::exists(std::filesystem::path(filePath.str())))
+    while (source().exists(filePath))
     {
-        filePath = directory + "/" + baseName + "_" + SString::fromInt(suffix) + extension;
+        filePath = MAssetPath::normalize(directory + "/" + baseName + "_" + SString::fromInt(suffix) + extension);
         ++suffix;
     }
     return filePath;
 }
 
+SString MEditorAssetManager::createAssetFromTemplate(const SString& templateId, const SString& directory,
+                                                     const SString& name,
+                                                     const std::map<SString, SString>& params)
+{
+    ensureTemplatesRegistered();
+
+    auto* target = writableSource();
+    if (!target) return {};
+
+    const SAssetTemplate* tmpl = templateRegistry.find(templateId);
+    if (!tmpl)
+    {
+        MERROR(STR("EditorAssetManager:: unknown template ") + templateId);
+        return {};
+    }
+
+    const SString fileName = name.empty() ? tmpl->defaultName : name;
+    const SString filePath = makeUniquePath(directory, fileName, tmpl->extension);
+
+    // Tokens use the final file name so __ASSET_NAME__ matches the file
+    // (e.g. "Lit_1" when "Lit" already existed).
+    std::string stem = filePath.str().substr(filePath.str().find_last_of('/') + 1);
+    stem = stem.substr(0, stem.size() - tmpl->extension.str().size());
+
+    SString content;
+    if (!templateRegistry.generate(templateId, directory, SString(stem), params, content))
+        return {};
+
+    if (!target->writeText(filePath, content))
+    {
+        MERROR(SString::format("EditorAssetManager:: Failed to create file: {0}", filePath));
+        return {};
+    }
+
+    MLOG(SString::format("EditorAssetManager:: Created {0}: {1}", tmpl->displayName, filePath));
+
+    // Register now instead of waiting for the watcher, so the new asset is
+    // selectable in the same frame.
+    if (!onFileAdded(filePath))
+        return {};
+    return filePath;
+}
+
 // ---------------------------------------------------------------------------
-// Create Shader
+// Legacy creation wrappers
 // ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::createShaderAsset(const SString& directory,
                                              const SString& name,
                                              EShaderTemplate shaderTemplate)
 {
-    const char* tmplFile = getShaderTemplateFileName(shaderTemplate);
-    if (!tmplFile)
+    const char* id = nullptr;
+    switch (shaderTemplate)
+    {
+    case EShaderTemplate::Lit:        id = SBuiltInTemplateIds::ShaderLit;        break;
+    case EShaderTemplate::Unlit:      id = SBuiltInTemplateIds::ShaderUnlit;      break;
+    case EShaderTemplate::UnlitColor: id = SBuiltInTemplateIds::ShaderUnlitColor; break;
+    case EShaderTemplate::Toon:       id = SBuiltInTemplateIds::ShaderToon;       break;
+    }
+    if (!id)
     {
         MERROR("EditorAssetManager:: Unknown shader template");
         return false;
     }
-
-    SString fileName = name.empty() ? SString("New_Shader") : name;
-    SString filePath = makeUniquePath(directory, fileName, STR(SEditorPaths::EXTENSION_SHADER));
-
-    SString content = loadTemplate(STR(tmplFile), fileName);
-    if (content.empty())
-        return false;
-
-    if (!writeNewAssetFile(filePath, content))
-        return false;
-
-    MLOG(SString::format("EditorAssetManager:: Created shader: {0}", filePath));
-
-    // Tell the background thread to scan immediately so the new file
-    // is picked up without waiting for the normal interval.
-    watcherThread.requestImmediateScan();
-    return true;
+    return !createAssetFromTemplate(id, directory, name).empty();
 }
-
-// ---------------------------------------------------------------------------
-// Create Skybox
-// ---------------------------------------------------------------------------
 
 bool MEditorAssetManager::createSkyboxAsset(const SString& directory,
                                              const SString& name)
 {
-    SString fileName = name.empty() ? SString("New_Skybox") : name;
-    SString filePath = makeUniquePath(directory, fileName, STR(".skybox"));
-
-    SString content = loadTemplate(STR(SEditorPaths::TEMPLATE_SKYBOX_FILE), fileName);
-    if (content.empty())
-        return false;
-
-    if (!writeNewAssetFile(filePath, content))
-        return false;
-
-    MLOG(SString::format("EditorAssetManager:: Created skybox: {0}", filePath));
-
-    // Tell the background thread to scan immediately so the new file
-    // is picked up without waiting for the normal interval.
-    watcherThread.requestImmediateScan();
-    return true;
+    return !createAssetFromTemplate(SBuiltInTemplateIds::Skybox, directory, name).empty();
 }

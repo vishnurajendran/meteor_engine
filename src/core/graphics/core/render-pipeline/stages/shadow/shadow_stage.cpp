@@ -4,6 +4,7 @@
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/camera/viewmanagement.h"
+#include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
@@ -161,19 +162,43 @@ void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
 
     MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
 
-    const glm::vec3 anchor   = camera ? glm::vec3(camera->getWorldPosition()) : glm::vec3(0.f);
-    // Fixed shadow distance. At 1 unit = 1 metre this gives 50m coverage -
-    // a generous range for a typical scene without wasting shadow map resolution.
-    constexpr float pullback = 120.0f;
+    // Shadow distance comes from the light (inspector: "Shadow Distance").
+    const auto* dir      = dynamic_cast<MDirectionalLight*>(dirLight);
+    const float distance = dir ? dir->getShadowDistance() : 100.0f;
+
+    // The shadow map covers a square of side `distance`. Shift it forward so
+    // the camera sits near its back edge - coverage behind the camera is
+    // mostly wasted.
+    const glm::vec3 camPos = camera ? glm::vec3(camera->getWorldPosition()) : glm::vec3(0.f);
+    const glm::vec3 camFwd = camera
+        ? glm::normalize(glm::vec3(camera->getWorldRotation() * glm::vec3(0, 0, -1)))
+        : glm::vec3(0.f);
+    const float     half   = distance * 0.5f;
+    const glm::vec3 anchor = camPos + camFwd * (half * 0.8f);
+
+    // Pull the light back far enough to catch casters outside the view
+    // (tall objects, things behind the camera) that throw shadows into it.
+    const float     pullback = glm::max(distance, 100.0f);
     const glm::vec3 lightPos = anchor + towardLight * pullback;
 
     const glm::vec3 up = (glm::abs(glm::dot(towardLight, glm::vec3(0,1,0))) < 0.99f)
                           ? glm::vec3(0,1,0) : glm::vec3(1,0,0);
 
     const glm::mat4 lightView = glm::lookAt(lightPos, anchor, up);
-    constexpr float half      = 80.0f * 0.5f;
-    const glm::mat4 lightProj = glm::ortho(-half, half, -half, half,
-                                            0.1f, 80.0f * 2.f + 80.0f);
+    glm::mat4       lightProj = glm::ortho(-half, half, -half, half,
+                                           0.1f, pullback * 2.0f);
+
+    // Snap the projection to whole shadow-map texels. Without this, the
+    // shadow map's texel grid slides with the camera and shadow edges
+    // shimmer - more noticeable the larger the distance.
+    {
+        const float res    = static_cast<float>(SShadowBuffer::SHADOW_MAP_RESOLUTION);
+        glm::vec4   origin = lightProj * lightView * glm::vec4(0, 0, 0, 1);
+        origin *= res * 0.5f;
+        const glm::vec2 offset = (glm::round(glm::vec2(origin)) - glm::vec2(origin)) * (2.0f / res);
+        lightProj[3][0] += offset.x;
+        lightProj[3][1] += offset.y;
+    }
 
     shadowBuffer->lightSpaceMatrix = lightProj * lightView;
 

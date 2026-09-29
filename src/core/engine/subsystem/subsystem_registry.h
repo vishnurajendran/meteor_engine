@@ -8,6 +8,7 @@
 #include "core/utils/logger.h"
 #include "subsystem_interface.h"
 
+SCRIPT_BIND_CLASS()
 class MEngineSubsystemRegistry : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MEngineSubsystemRegistry)

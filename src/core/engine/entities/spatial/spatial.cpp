@@ -1,6 +1,10 @@
 #include "spatial.h"
+
+#include "core/application/application.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
+#include "core/engine/scripting/interface/scripting_engine_interface.h"
+#include "core/engine/scripting/scripting_call_symbols.h"
 
 
 IMPLEMENT_SPATIAL_CLASS(MSpatialEntity)
@@ -60,6 +64,8 @@ MSpatialEntity::MSpatialEntity(MSpatialEntity* parentEntity)
     name = "MSpatialEntity";
     if (parentEntity) parentEntity->addChild(this);
     else              addToSceneRoot(this);
+
+    canTick = true;
 }
 
 void MSpatialEntity::setParent(MSpatialEntity* newParent)
@@ -156,9 +162,132 @@ SVector3 MSpatialEntity::getForwardVector() const
     { return glm::normalize(getWorldRotation() * SVector3(0, 0, -1)); }
 SVector3 MSpatialEntity::getRightVector() const
     { return glm::normalize(getWorldRotation() * SVector3(1, 0, 0)); }
-SVector3 MSpatialEntity::getUpVector() const
-    { return glm::normalize(getWorldRotation() * SVector3(0, 1, 0)); }
+SVector3 MSpatialEntity::getUpVector() const { return glm::normalize(getWorldRotation() * SVector3(0, 1, 0)); }
 
+
+void MSpatialEntity::ensureScript()
+{
+    if (scriptInstance != nullptr)
+        return;
+
+    if (scriptReference.get().isEmpty())
+        return;
+
+    auto* engine = MEngineSubsystemRegistry::getSubsystem<IScriptingEngineSubsystem>();
+    if (engine == nullptr)
+    {
+        MERROR("MSpatialEntity::ensureScript: scripting engine is null");
+        return;
+    }
+
+    scriptInstance = engine->createScriptInstance(scriptReference.get().resolve(), this);
+
+    // A valid script needs per-frame updates so the scene loop
+    // calls onUpdate, which drives scriptTick / onTick().
+    if (scriptInstance != nullptr)
+        canTick = true;
+}
+
+void MSpatialEntity::scriptStart()
+{
+    if (!MApplication::getAppInstance()->isSimulating())
+        return;
+    ensureScript();
+    if (scriptInstance)
+    {
+        SDynValue outVar;
+        scriptInstance->callFunc(ScriptinCallSymbols::SCRIPT_FUNC_START, std::vector<SDynValue>{}, outVar);
+    }
+}
+
+void MSpatialEntity::scriptTick(float dt)
+{
+    if (!MApplication::getAppInstance()->isSimulating())
+        return;
+
+    if (!scriptInstance)
+    {
+        ensureScript();
+        if (scriptInstance)
+            scriptStart();
+    }
+
+    if (scriptInstance)
+    {
+        SDynValue outVar;
+        SDynValue dtVar;
+        dtVar.setFloat(dt);
+        scriptInstance->callFunc(ScriptinCallSymbols::SCRIPT_FUNC_TICK, std::vector<SDynValue>{dtVar}, outVar);
+    }
+}
+
+void MSpatialEntity::scriptFixedTick(float fdt)
+{
+    if (!MApplication::getAppInstance()->isSimulating())
+        return;
+
+    if (!scriptInstance)
+    {
+        ensureScript();
+        if (scriptInstance)
+            scriptStart();
+    }
+
+    if (scriptInstance)
+    {
+        SDynValue outVar;
+        SDynValue dtVar;
+        dtVar.setFloat(fdt);
+        scriptInstance->callFunc(ScriptinCallSymbols::SCRIPT_FUNC_FIXED_TICK, std::vector<SDynValue>{dtVar}, outVar);
+    }
+}
+
+void MSpatialEntity::scriptStop()
+{
+    if (!MApplication::getAppInstance()->isSimulating())
+        return;
+
+    if (scriptInstance)
+    {
+        SDynValue outVar;
+        scriptInstance->callFunc(ScriptinCallSymbols::SCRIPT_FUNC_STOP, std::vector<SDynValue>{}, outVar);
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// Script reference accessors (used by the inspector)
+// ---------------------------------------------------------------------------
+
+MAsset* MSpatialEntity::getScriptAssetRef() const
+{
+    // resolve() does GUID-first lookup with path fallback,
+    // which handles legacy scene files and copied directories
+    return scriptReference.get().resolve();
+}
+
+void MSpatialEntity::setScriptAssetRef(MAsset* asset)
+{
+    // Release the previous script instance so ensureScript() will
+    // create a fresh one from the new asset on the next tick
+    if (scriptInstance)
+    {
+        scriptStop();
+        auto* engine = MEngineSubsystemRegistry::getSubsystem<IScriptingEngineSubsystem>();
+        if (engine)
+            engine->releaseScriptInstance(scriptInstance);
+        scriptInstance = nullptr;
+    }
+
+    // TAssetRef's raw-pointer constructor captures both GUID and path.
+    // Passing nullptr clears both fields, which represents "no script".
+    scriptReference.set(TAssetRef<MLuaScriptAsset>(dynamic_cast<MLuaScriptAsset*>(asset)));
+}
+
+SString MSpatialEntity::getScriptAssetId() const
+{
+    return scriptReference.get().getAssetId();
+}
 
 void MSpatialEntity::onSerialise(pugi::xml_node& node)
 {
@@ -238,14 +367,16 @@ void MSpatialEntity::destroy()
 
 void MSpatialEntity::insertChildAt(MSpatialEntity* entity, int index)
 {
-    if (!entity || entity == this) return;
+    if (!entity || entity == this)
+        return;
 
     // Remove from current parent.
     if (entity->parent)
     {
         auto& siblings = entity->parent->children;
         auto it = std::ranges::find(siblings, entity);
-        if (it != siblings.end()) siblings.erase(it);
+        if (it != siblings.end())
+            siblings.erase(it);
         entity->parent = nullptr;
     }
     else
@@ -261,11 +392,74 @@ void MSpatialEntity::insertChildAt(MSpatialEntity* entity, int index)
     entity->updateTransforms();
 }
 
+MSpatialEntity* MSpatialEntity::find(const SString& path)
+{
+    std::string p = path.str();
+
+    // Strip "./" prefix if present
+    if (p.starts_with("./"))
+        p = p.substr(2);
+
+    if (p.empty()) return nullptr;
+
+    // Traverse children step by step along each "/" segment
+    MSpatialEntity* current = this;
+    size_t start = 0;
+
+    while (start < p.size())
+    {
+        size_t slash = p.find('/', start);
+        std::string segment = (slash != std::string::npos)
+            ? p.substr(start, slash - start)
+            : p.substr(start);
+        start = (slash != std::string::npos) ? slash + 1 : p.size();
+
+        if (segment.empty()) continue;
+
+        bool found = false;
+        for (auto* child : current->children)
+        {
+            if (child && child->getName().str() == segment)
+            {
+                current = child;
+                found = true;
+                break;
+            }
+        }
+        if (!found) return nullptr;
+    }
+
+    return current == this ? nullptr : current;
+}
+
 void MSpatialEntity::onCreate()  {}
-void MSpatialEntity::onStart()   { entityStarted = true; }
-void MSpatialEntity::onUpdate(float) {}
-void MSpatialEntity::onExit()    {}
-void MSpatialEntity::onDrawGizmo(SVector2) {}
+void MSpatialEntity::onStart()
+{
+    entityStarted = true;
+    scriptStart();
+}
+
+void MSpatialEntity::onUpdate(const float deltaTime)
+{
+    scriptTick(deltaTime);
+}
+
+void MSpatialEntity::onFixedUpdate(const float fixedDeltaTime)
+{
+    scriptFixedTick(fixedDeltaTime);
+}
+
+
+void MSpatialEntity::onExit()
+{
+    onExitCalled = true;
+    scriptStop();
+}
+
+void MSpatialEntity::onDrawGizmo(SVector2)
+{
+
+}
 
 void MSpatialEntity::setEnabled(bool enable)
 {

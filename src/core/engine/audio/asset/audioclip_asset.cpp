@@ -3,6 +3,7 @@
 //
 
 #include "audioclip_asset.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/engine/audio/interfaces/audioclip_interface.h"
 #include "core/engine/audio/interfaces/engine_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
@@ -13,6 +14,16 @@ MAudioClipAsset::MAudioClipAsset(const SString& path) : MAsset(path)
 {
     auto fileName = FileIO::getFileName(path);
     name = fileName;
+
+    // The clip itself is created lazily; here we only confirm the file exists.
+    valid = MAssetSources::getActive()->exists(path);
+}
+
+bool MAudioClipAsset::requestReload()
+{
+    releaseClip();
+    valid = MAssetSources::getActive()->exists(path);
+    return valid;
 }
 
 MAudioClipAsset::~MAudioClipAsset()
@@ -34,12 +45,17 @@ void MAudioClipAsset::loadSettings(const pugi::xml_document& metaData)
 
 bool MAudioClipAsset::save()
 {
-    SString metaPath = getPath() + ".meta";
+    auto target = MAssetSources::getWritable();
+    if (!target)
+    {
+        MERROR("MAudioClipAsset:: active asset source is read-only, cannot save " + path);
+        return false;
+    }
 
-    // Load the existing .meta file (if any) so we don't clobber unrelated
-    // data that other systems might have written into the same file.
+    // Load the existing meta (if any) so we don't clobber the GUID or data
+    // other systems wrote into the same file.
     pugi::xml_document doc;
-    doc.load_file(metaPath.c_str());
+    target->readMeta(path, doc);
 
     // Find or create the <audioclip> node.
     auto node = doc.child("audioclip");
@@ -51,10 +67,9 @@ bool MAudioClipAsset::save()
     if (!preloadNode)
         preloadNode = node.append_child("preload");
 
-    // Set the text content -- remove any existing PCDATA first.
     preloadNode.text().set(preloadSetting ? "true" : "false");
 
-    if (!doc.save_file(metaPath.c_str()))
+    if (!target->writeMeta(path, doc))
     {
         MERROR("MAudioClipAsset:: Failed to write .meta file");
         return false;

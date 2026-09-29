@@ -21,5 +21,5 @@ std::vector<MAssetImporter*>* MAssetImporter::getImporters() { return importers;
 
 SString MAssetImporter::getIconPath() const
 {
-    return SEditorAssetPaths::HIGHRES_TEX_ASSET_DEFAULT;
+    return SEngineAssetIconPaths::HIGHRES_TEX_ASSET_DEFAULT;
 }

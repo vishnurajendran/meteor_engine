@@ -7,17 +7,17 @@
 #include <algorithm>
 #include <sstream>
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/shader/shader_utils.h"
 #include "core/graphics/core/shader/shaderasset.h"
-#include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 #include "material.h"
 #include "pugixml.hpp"
 
 MMaterialAsset::MMaterialAsset(const SString& path) : MAsset(path)
 {
-    valid = loadFromFile(path);
+    valid = loadFromSource();
 }
 
 MMaterialAsset::~MMaterialAsset()
@@ -91,24 +91,24 @@ void MMaterialAsset::deferredAssetLoad(bool forced)
     buildMaterialAsset();
 }
 
-bool MMaterialAsset::loadFromFile(const SString& path)
+bool MMaterialAsset::loadFromSource()
 {
-    SString data;
-    if (!FileIO::readFile(path, data))
+    std::vector<uint8_t> bytes;
+    if (!MAssetSources::getActive()->readBytes(path, bytes))
     {
-        MERROR("MMaterialAsset::loadFromFile -- cannot read " + path);
+        MERROR("MMaterialAsset::loadFromSource -- cannot read " + path);
         return false;
     }
 
     pugi::xml_document doc;
-    if (doc.load_string(data.c_str()).status != pugi::status_ok)
+    if (doc.load_buffer(bytes.data(), bytes.size()).status != pugi::status_ok)
     {
-        MERROR("MMaterialAsset::loadFromFile -- XML parse failed: " + path);
+        MERROR("MMaterialAsset::loadFromSource -- XML parse failed: " + path);
         return false;
     }
 
     auto root = doc.child("material");
-    if (!root) { MERROR("MMaterialAsset::loadFromFile -- missing <material>: " + path); return false; }
+    if (!root) { MERROR("MMaterialAsset::loadFromSource -- missing <material>: " + path); return false; }
 
     if (root.attribute("name"))
         name = root.attribute("name").value();
@@ -195,11 +195,17 @@ bool MMaterialAsset::save()
         prop.append_attribute("value").set_value(vls.c_str());
     }
 
+    auto target = MAssetSources::getWritable();
+    if (!target)
+    {
+        MERROR("MMaterialAsset::save -- active asset source is read-only: " + path);
+        return false;
+    }
+
     std::ostringstream oss;
     doc.save(oss);
 
-    auto data = SString(oss.str().c_str());
-    if (!FileIO::writeFile(path, data))
+    if (!target->writeText(path, SString(oss.str())))
     {
         MERROR("MMaterialAsset::save -- failed to write " + path);
         return false;
@@ -210,91 +216,5 @@ bool MMaterialAsset::save()
     loadOrder = original->getPropertyOrder();
 
     MLOG("MMaterialAsset::save -- saved " + path);
-    return true;
-}
-
-bool MMaterialAsset::createNewMaterial(const SString& directory,
-                                        const SString& materialName,
-                                        const SString& shaderPath,
-                                        MMaterial::ShadingMode mode)
-{
-    SString filePath = directory;
-    if (!filePath.empty() && filePath.str().back() != '/')
-        filePath += "/";
-    filePath += materialName + ".material";
-
-    if (FileIO::hasFile(filePath))
-    {
-        MWARN("MMaterialAsset::createNewMaterial - file already exists: " + filePath);
-        return false;
-    }
-
-    const char* modeStr = (mode == MMaterial::ShadingMode::Lit) ? "lit" : "unlit";
-
-    pugi::xml_document doc;
-    auto root = doc.append_child("material");
-    root.append_attribute("name").set_value(materialName.c_str());
-
-    root.append_child("shaderPathField").text().set(shaderPath.c_str());
-    root.append_child("shadingModeStr").text().set(modeStr);
-
-    MLOG(SString::format("Creating material with shader {0}", shaderPath));
-    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(shaderPath);
-    if (!shaderAsset)
-    {
-        MERROR(SString::format("Invalid Shader Asset {0}", shaderPath));
-        return false;
-    }
-
-    if (!shaderAsset->getShader())
-    {
-        MERROR(SString::format("Invalid Shader {0}", shaderPath));
-        return false;
-    }
-
-    auto* shaderInstance = shaderAsset->getShader();
-    // Write properties in the shader's declaration order so the .material
-    // file matches the .mesl file top to bottom.  Use safe defaults for
-    // each type rather than the shader's mutable state.
-    auto xmlProps = root.append_child("properties");
-    const auto& props = shaderInstance->getProperties();
-    for (const auto& key : shaderInstance->getPropertyOrder())
-    {
-        auto it = props.find(key);
-        if (it == props.end()) continue;
-        const auto& val = it->second;
-
-        const char* defaultValue = "";
-        switch (val.getType())
-        {
-            case SShaderPropertyType::Float:       defaultValue = "0";             break;
-            case SShaderPropertyType::Int:         defaultValue = "0";             break;
-            case SShaderPropertyType::Bool:        defaultValue = "False";         break;
-            case SShaderPropertyType::UniformVec2: defaultValue = "(0,0)";         break;
-            case SShaderPropertyType::UniformVec3: defaultValue = "(0,0,0)";       break;
-            case SShaderPropertyType::UniformVec4: defaultValue = "(0,0,0,1)";     break;
-            case SShaderPropertyType::Color:       defaultValue = "(1,1,1,1)";     break;
-            case SShaderPropertyType::Texture:     defaultValue = "";              break;
-            default:                               defaultValue = "0";             break;
-        }
-
-        auto child = xmlProps.append_child("property");
-        child.append_attribute("key").set_value(key.c_str());
-        child.append_attribute("type").set_value(
-            MShaderUtility::getTypeStr(val.getType()).c_str());
-        child.append_attribute("value").set_value(defaultValue);
-    }
-
-    std::ostringstream oss;
-    doc.save(oss);
-
-    auto data = SString(oss.str().c_str());
-    if (!FileIO::writeFile(filePath, data))
-    {
-        MERROR("MMaterialAsset::createNewMaterial - failed to write " + filePath);
-        return false;
-    }
-
-    MLOG("MMaterialAsset::createNewMaterial - created " + filePath);
     return true;
 }

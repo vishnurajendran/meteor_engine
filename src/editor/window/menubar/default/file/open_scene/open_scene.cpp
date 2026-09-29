@@ -29,7 +29,7 @@ SString MOpenSceneMenubarItem::getPath() const
 
 void MOpenSceneMenubarItem::onSelect()
 {
-    if (MApplication::getAppInstance()->isPlaying() || MApplication::getAppInstance()->isPaused())
+    if (MApplication::getAppInstance()->isSimulating() || MApplication::getAppInstance()->isPaused())
     {
         MWARN("Open Scene operation blocked during play-mode");
         return;

@@ -18,9 +18,10 @@ void MMiniAudioClip::init()
     ma_decoder_config config = ma_decoder_config_init_default();
     ma_decoder decoder;
 
-    if (ma_decoder_init_file(filePath.c_str(), &config, &decoder) != MA_SUCCESS)
+    // ma_decoder_init_vfs falls back to the OS file system when vfs is null.
+    if (ma_decoder_init_vfs(vfs, filePath.c_str(), &config, &decoder) != MA_SUCCESS)
     {
-        MERROR("MMiniAudioClip:: Failed to read metadata from file");
+        MERROR("MMiniAudioClip:: Failed to read metadata from " + filePath);
         return;
     }
 

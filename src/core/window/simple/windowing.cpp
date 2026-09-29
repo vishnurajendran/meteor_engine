@@ -113,6 +113,10 @@ void MWindow::update(float deltaTime) {
     while (event = coreWindow.pollEvent())
     {
         handleWindowEvents(event);
+
+        // The close handler may have shut down the window. Stop polling
+        // so we do not touch a closed RenderWindow on the next iteration.
+        if (!coreWindow.isOpen()) break;
     }
 
     if (!coreWindow.isOpen())
@@ -158,5 +162,3 @@ void MWindow::handleWindowEvents(const std::optional<sf::Event>& event)
         }
     }
 }
-
-

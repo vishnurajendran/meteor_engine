@@ -82,18 +82,15 @@ void MAudioSource::onCreate()
     syncAudioEngineState();
     initialized = true;
     setCanTick(true);
+
+    // force initialise this bool
+    setUseSpatial(getUseSpatial());
 }
 
 void MAudioSource::onStart()
 {
     MSpatialEntity::onStart();
-
-    // By onStart(), de-serialisation is complete and clipRef is populated.
-    // Forward the stored reference to the audio backend now that we can.
-    if (!clipRef.get().isEmpty())
-        setClip(clipRef.getHandle());
-
-    if (autoStart.get() && MApplication::getAppInstance()->isPlaying())
+    if (autoStart.get() && MApplication::getAppInstance()->isSimulating())
     {
         play();
         MLOG("MAudioSource:: Autoplaying");
@@ -131,8 +128,8 @@ void MAudioSource::onExit()
 
 void MAudioSource::onDrawGizmo(SVector2 res)
 {
-    const auto* assetPath = useSpatial.get() ? SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_3D
-                                             : SEditorAssetPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_2D;
+    const auto* assetPath = useSpatial.get() ? SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_3D
+                                             : SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_AUDIO_SOURCE_2D;
 
     const auto tex =
         MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(assetPath);
@@ -150,7 +147,6 @@ void MAudioSource::onDrawGizmo(SVector2 res)
 void MAudioSource::onEnable()
 {
     MSpatialEntity::onEnable();
-    syncAudioEngineState();
     if (isPlaying())
     {
         source->play();
@@ -195,17 +191,22 @@ void MAudioSource::play()
     if (!initialized)
         return;
 
-    if (outOfSync)
-        syncAudioEngineState();
-
     if (!clipRef.get().isValid())
     {
         MERROR("MAudioSource:: Clip reference is invalid");
         return;
     }
 
+    // de-serialisation is complete and clipRef is populated.
+    // Forward the stored reference to the audio backend now that we can.
+    if (!clipRef.get().isEmpty())
+        setClip(clipRef.getHandle());
+
     source->play();
     sourcePlaying = true;
+
+    if (outOfSync)
+        syncAudioEngineState();
 }
 
 void MAudioSource::stop()

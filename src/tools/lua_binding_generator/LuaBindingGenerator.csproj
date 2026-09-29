@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>MeteorBindingGenerator</RootNamespace>
+    <AssemblyName>MeteorBindingGenerator</AssemblyName>
+    <Nullable>enable</Nullable>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CppAst" Version="0.15.0" />
+    <PackageReference Include="libClangSharp.runtime.win-x64" Version="18.1.3" />
+  </ItemGroup>
+
+</Project>

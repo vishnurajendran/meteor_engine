@@ -5,6 +5,7 @@
 #define CAMERA_H
 #include "core/engine/entities/spatial/spatial.h"
 
+SCRIPT_BIND_CLASS()
 class MCameraEntity : public MSpatialEntity
 {
     DEFINE_SPATIAL_CLASS(MCameraEntity)
@@ -19,20 +20,30 @@ public:
     MCameraEntity();
     ~MCameraEntity() override;
 
+    SCRIPT_BIND_FUNC()
     void setPriority(const int& priority);
-    [[nodiscard]] int getPriority() const;
+    SCRIPT_BIND_FUNC()
+    int getPriority() const;
 
+    SCRIPT_BIND_FUNC()
     void setOrthographic(const bool& orthographic);
-    [[nodiscard]] bool getOrthographic() const;
+    SCRIPT_BIND_FUNC()
+    bool getOrthographic() const;
 
+    SCRIPT_BIND_FUNC()
     void setClipPlanes(float nearClip, float farClip);
-    [[nodiscard]] std::pair<float, float> getClipPlanes() const;
+    SCRIPT_BIND_FUNC()
+    SVector2 getClipPlanes() const;
 
-    [[nodiscard]] SMatrix4 getProjectionMatrix(const SVector2& resolution) const;
-    [[nodiscard]] SMatrix4 getViewMatrix() const;
+    SCRIPT_BIND_FUNC()
+    SMatrix4 getProjectionMatrix(const SVector2& resolution) const;
+    SCRIPT_BIND_FUNC()
+    SMatrix4 getViewMatrix() const;
 
+    SCRIPT_BIND_FUNC()
     void setFov(const float& fov);
-    [[nodiscard]] float getFov() const;
+    SCRIPT_BIND_FUNC()
+    float getFov() const;
 
     void onDrawGizmo(SVector2 renderResolution) override;
 };

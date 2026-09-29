@@ -86,7 +86,7 @@ void MDirectionalLight::onExit()
 void MDirectionalLight::onDrawGizmo(SVector2 renderResolution)
 {
     auto texture = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-        ->getAsset<MTextureAsset>(SEditorAssetPaths::HIGHRES_TEX_GIZMOS_DIRECTIONAL_LIGHT);
+        ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_DIRECTIONAL_LIGHT);
     MGizmos::drawRay(getWorldPosition(), -getForwardVector(), 0.5f, SColor(1, 1, 1, 1), 3);
     MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
 }

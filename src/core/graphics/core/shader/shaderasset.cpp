@@ -3,7 +3,7 @@
 //
 
 #include "shaderasset.h"
-#include "core/utils/fileio.h"
+#include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/utils/logger.h"
 #include "core/utils/serialisation_utils.h"
 #include "pugixml.hpp"
@@ -35,16 +35,17 @@ const SString MShaderAsset::SHDR_DEFINE_COMPILE_FRAG =  "#define COMPILE_FRAGMEN
 const SString MShaderAsset::SHDR_FALLBACK_MISSING_VERT_PASS = "#define NO_VERTEX_PASS_DEFINED\n";
 const SString MShaderAsset::SHDR_FALLBACK_MISSING_FRAG_PASS = "#define NO_FRAGMENT_PASS_DEFINED\n";
 
-void MShaderAsset::loadShader(const SString& path)
+void MShaderAsset::loadShader()
 {
-    valid = false;
+    const auto source = MAssetSources::getActive();
+
     SString data;
-    auto fileReadRes = FileIO::readFile(path, data);
-    if (!fileReadRes)
+    if (!source->readText(path, data))
     {
-        MERROR("MShaderAsset::loadShader(): Failed to read file");
+        MERROR("MShaderAsset::loadShader(): Failed to read file " + path);
+        valid = shader != nullptr;
         return;
-    };
+    }
 
     bool hasVertPass = data.find(SHDR_VERT_PROGRAM_BEGIN) != std::string::npos &&
         data.find(SHDR_VERT_PROGRAM_END) != std::string::npos;
@@ -63,38 +64,54 @@ void MShaderAsset::loadShader(const SString& path)
     if (parseRes.status != pugi::status_ok)
     {
         MERROR(STR("MShaderAsset::loadShader(): Failed to parse shader file - ") + parseRes.description() + "\n");
+        valid = shader != nullptr;
         return;
-    };
+    }
 
     pugi::xml_node rootNode = document.child(SHDR_ROOTNODE.c_str());
     if (!rootNode)
     {
         MERROR("MShaderAsset::loadShader(): shader file structure incorrect, missing shader-tree");
+        valid = shader != nullptr;
         return;
     }
 
     auto baseSourcePath = STR(rootNode.attribute(SHDR_ATTRIB_BASE_SOURCE.c_str()).value());
 
-    bool isSubShader = true;
+    MShader* built = nullptr;
     if (baseSourcePath.empty())
     {
         //Shader is not using a base shader file, compile as if it is an independent shader
-        isSubShader = false;
-    }
-
-    if (isSubShader)
-    {
-        auto baseSource = STR("");
-        FileIO::readFile(baseSourcePath, baseSource);
-        valid = loadAsSubShader(rootNode, baseSource, hasVertPass, hasFragPass);
+        built = loadAsIndependantShader(rootNode, hasVertPass, hasFragPass);
     }
     else
     {
-        valid = loadAsIndependantShader(rootNode, hasVertPass, hasFragPass);
+        // The base file goes through the asset source too, so it must be
+        // included when the project is packaged.
+        auto baseSource = STR("");
+        if (!source->readText(baseSourcePath, baseSource))
+        {
+            MERROR("MShaderAsset::loadShader(): Failed to read base source " + baseSourcePath
+                   + " (referenced by " + path + ")");
+            valid = shader != nullptr;
+            return;
+        }
+        built = loadAsSubShader(rootNode, baseSource, hasVertPass, hasFragPass);
     }
+
+    if (!built)
+    {
+        valid = shader != nullptr;
+        return;
+    }
+
+    if (shader)
+        retiredShaders.push_back(shader);
+    shader = built;
+    valid  = true;
 }
 
-bool MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass,
+MShader* MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass,
                                    const bool& hasFragPass)
 {
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
@@ -120,13 +137,13 @@ bool MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString
 
     std::vector<SString> propOrder;
     const auto properties = getShaderProperties(rootNode, propOrder);
-    shader = new MShader(vertexSource, fragmentSource, properties);
-    shader->setName(name);
-    shader->setPropertyOrder(propOrder);
-    return true;
+    auto* built = new MShader(vertexSource, fragmentSource, properties);
+    built->setName(name);
+    built->setPropertyOrder(propOrder);
+    return built;
 }
 
-bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass,const bool& hasFragPass)
+MShader* MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass,const bool& hasFragPass)
 {
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
     name = nameAndVersiontring.first;
@@ -139,13 +156,13 @@ bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const
     if (!hasVertPass)
     {
         MERROR("MShaderAsset::loadAsIndependantShader(): shader file structure incorrect, Vertex Program Missing");
-        return false;
+        return nullptr;
     }
 
     if (!hasFragPass)
     {
         MERROR("MShaderAsset::loadAsIndependantShader(): shader file structure incorrect, Fragment Program Missing");
-        return false;
+        return nullptr;
     }
 
     vertexSource += rootNode.child(SHDR_VERTNODE.c_str()).text().get();
@@ -153,10 +170,10 @@ bool MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const
 
     std::vector<SString> propOrder;
     const auto properties = getShaderProperties(rootNode, propOrder);
-    shader = new MShader(vertexSource, fragmentSource, properties);
-    shader->setName(name);
-    shader->setPropertyOrder(propOrder);
-    return true;
+    auto* built = new MShader(vertexSource, fragmentSource, properties);
+    built->setName(name);
+    built->setPropertyOrder(propOrder);
+    return built;
 }
 
 
@@ -223,13 +240,16 @@ std::pair<SString, SString> MShaderAsset::getShaderNameAndVersion(pugi::xml_node
 
 MShaderAsset::MShaderAsset(const SString &path) : MAsset(path) {
     name = STR("ShaderAsset");
-    loadShader(path);
+    loadShader();
 }
 
 MShaderAsset::~MShaderAsset() {
-    if (valid) {
-        delete shader;
-    }
+    // Delete regardless of `valid`: the old code leaked the shader whenever
+    // the last reload had failed.
+    delete shader;
+    for (auto* old : retiredShaders)
+        delete old;
+    retiredShaders.clear();
 }
 
 MShader *MShaderAsset::getShader() const {

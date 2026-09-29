@@ -8,6 +8,7 @@
 #include "core/engine/subsystem/subsystem_interface.h"
 #include "core/object/object.h"
 #include "miniaudio.h"
+#include "miniaudio_asset_vfs.h"
 
 class MMiniAudioEngineSubsystem : public MObject, public IAudioEngineSubsystem {
     DEFINE_OBJECT_SUBCLASS(MAudioEngine)
@@ -30,6 +31,10 @@ public:
     [[nodiscard]] bool releaseAudioClip(IAudioClip* clip) override;
 
 private:
+    // Must outlive `engine`: the resource manager keeps a pointer to it.
+    // Declared before `engine` so it is destroyed after it.
+    SMiniAudioAssetVFS assetVFS;
+
     ma_engine engine = {};
     bool initialized = false;
 

@@ -22,6 +22,8 @@
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
 #include "core/engine/skybox/skybox.h"
 #include "editor/app/editorapplication.h"
+#include "editor/editor_utils/engine_textures.h"
+#include "editor/editor_utils/entity_duplicator.h"
 #include "editor/window/menubar/menubartree.h"
 
 // --- Palette ------------------------------------------------------------------
@@ -38,6 +40,21 @@ static constexpr ImU32  COL_SEPARATOR    = IM_COL32(55, 55, 55, 255);
 static constexpr ImVec4 COL_TEXT_MATCH   = {1.0f, 0.85f, 0.3f, 1.0f};
 static constexpr ImU32  COL_TREE_LINE    = IM_COL32(70, 70, 70, 140);
 
+// --- Console-style row colours ------------------------------------------------
+static constexpr ImU32  ROW_SELECTED_BG  = IM_COL32(60,  90,  160, 80);
+static constexpr ImU32  ROW_HOVER_BG     = IM_COL32(255, 255, 255, 12);
+static constexpr ImU32  ROW_ALT_BG       = IM_COL32(255, 255, 255, 4);
+static constexpr float  BORDER_STRIP_W   = 3.0f;
+
+// --- Entity type border-strip colours -----------------------------------------
+static constexpr ImU32  STRIP_SPATIAL    = IM_COL32(60,  140, 220, 160);  // blue
+static constexpr ImU32  STRIP_LIGHT      = IM_COL32(220, 180,  40, 180);  // amber
+static constexpr ImU32  STRIP_CAMERA     = IM_COL32(100, 200, 100, 160);  // green
+static constexpr ImU32  STRIP_MESH       = IM_COL32(60,  160, 200, 160);  // teal
+static constexpr ImU32  STRIP_AUDIO      = IM_COL32(180,  80, 180, 160);  // purple
+static constexpr ImU32  STRIP_SKYBOX     = IM_COL32(100, 160, 220, 160);  // sky
+static constexpr ImU32  STRIP_COLLISION  = IM_COL32(210,  90,  60, 160);  // red-orange
+
 MEditorHierarchyWindow::MEditorHierarchyWindow() : MEditorHierarchyWindow(300, 600) {}
 
 MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x, y)
@@ -45,45 +62,65 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
     title = "Hierarchy";
 
     // mesh
-    typeToIcon[MStaticMesh::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_STATICMESH);
+    typeToIcon[MStaticMeshEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_STATICMESH);
 
     // lights
-    typeToIcon[MDirectionalLight::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_DIRECTIONAL_LIGHT);
-    typeToIcon[MPointLight::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_POINT_LIGHT);
-    typeToIcon[MSpotLight::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_SPOT_LIGHT);
-    typeToIcon[MAmbientLightEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_AMBIENT_LIGHT);
+    typeToIcon[MDirectionalLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_DIRECTIONAL_LIGHT);
+    typeToIcon[MPointLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_POINT_LIGHT);
+    typeToIcon[MSpotLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_SPOT_LIGHT);
+    typeToIcon[MAmbientLightEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_AMBIENT_LIGHT);
 
     // audio
-    typeToIcon[MAudioListener::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_AUDIO_LISTENER);
-    typeToIcon[MAudioSource::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_AUDIO_SOURCE);
+    typeToIcon[MAudioListener::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_AUDIO_LISTENER);
+    typeToIcon[MAudioSource::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_AUDIO_SOURCE);
 
     // skybox
-    typeToIcon[MSkyboxEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_SKY);
-    typeToIcon[MProceduralSkyboxEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_PROC_SKY);
+    typeToIcon[MSkyboxEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_SKY);
+    typeToIcon[MProceduralSkyboxEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_PROC_SKY);
 
     // camera
-    typeToIcon[MCameraEntity::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_CAMERA);
+    typeToIcon[MCameraEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_CAMERA);
 
     // collision
-    typeToIcon[MBoxCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_BOX);
-    typeToIcon[MSphereCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_SPHERE);
-    typeToIcon[MCylinderCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_CYLINDER);
-    typeToIcon[MCapsuleCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_CAPSULE);
-    typeToIcon[MMeshCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_MESH);
-    typeToIcon[MConvexHullCollisionBody::staticTypeInfo()] = sf::Texture(SEditorAssetPaths::LOWRES_TEX_COLLISION_CONVEXHULL);
+    typeToIcon[MBoxCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_BOX);
+    typeToIcon[MSphereCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_SPHERE);
+    typeToIcon[MCylinderCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CYLINDER);
+    typeToIcon[MCapsuleCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CAPSULE);
+    typeToIcon[MMeshCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_MESH);
+    typeToIcon[MConvexHullCollisionBody::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_COLLISION_CONVEXHULL);
 
 
     // default
-    const std::filesystem::path sceneTexPath(SEditorAssetPaths::LOWRES_TEX_SCENE);
-    const std::filesystem::path entityTexPath(SEditorAssetPaths::LOWRES_TEX_SPATIAL);
-
-    sceneTex.loadFromFile( sceneTexPath);
-    entityTex.loadFromFile(entityTexPath);
+    loadEngineTexture(sceneTex,  SEngineAssetIconPaths::LOWRES_TEX_SCENE);
+    loadEngineTexture(entityTex, SEngineAssetIconPaths::LOWRES_TEX_SPATIAL);
 
     sceneTexSize  = sf::Vector2f(sceneTex.getSize().x, sceneTex.getSize().y);
     entityTexSize = sf::Vector2f(entityTex.getSize().x, entityTex.getSize().y);
 }
 
+
+static ImU32 getEntityStripColor(MSpatialEntity* entity)
+{
+    if (!entity) return STRIP_SPATIAL;
+    const auto& info = entity->typeInfo();
+    if (info == MStaticMeshEntity::staticTypeInfo())        return STRIP_MESH;
+    if (info == MDirectionalLight::staticTypeInfo() ||
+        info == MPointLight::staticTypeInfo()       ||
+        info == MSpotLight::staticTypeInfo()        ||
+        info == MAmbientLightEntity::staticTypeInfo())      return STRIP_LIGHT;
+    if (info == MCameraEntity::staticTypeInfo())             return STRIP_CAMERA;
+    if (info == MAudioListener::staticTypeInfo() ||
+        info == MAudioSource::staticTypeInfo())              return STRIP_AUDIO;
+    if (info == MSkyboxEntity::staticTypeInfo() ||
+        info == MProceduralSkyboxEntity::staticTypeInfo())   return STRIP_SKYBOX;
+    if (info == MBoxCollisionBody::staticTypeInfo()      ||
+        info == MSphereCollisionBody::staticTypeInfo()   ||
+        info == MCylinderCollisionBody::staticTypeInfo() ||
+        info == MCapsuleCollisionBody::staticTypeInfo()  ||
+        info == MMeshCollisionBody::staticTypeInfo()     ||
+        info == MConvexHullCollisionBody::staticTypeInfo()) return STRIP_COLLISION;
+    return STRIP_SPATIAL;
+}
 
 void MEditorHierarchyWindow::onGui(float deltaTime)
 {
@@ -92,6 +129,9 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
     drawToolbar();
 
     const float statusH = 22.0f;
+
+    // Reset the visible-row counter used for alternating row tints
+    hierRowIdx = 0;
 
     // Tighten indent and row padding for the whole tree.
     // ImGui defaults (IndentSpacing=21, FramePadding.y=3) are sized for
@@ -220,7 +260,12 @@ void MEditorHierarchyWindow::drawSceneRoot(MScene* scene)
     if (open)
     {
         for (auto* root : scene->getRootEntities())
+        {
+            // Skip entities that were reparented but not yet removed from
+            // the scene's root list — avoids drawing them twice.
+            if (root->getParent()) continue;
             drawEntityRow(root);
+        }
         ImGui::TreePop();
     }
 }
@@ -240,6 +285,29 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
     const bool isRenaming = (renamingEntity == entity);
 
     ImGui::PushID(entity->getGUID().c_str());
+
+    // -- Console-style row background (alternating, selection, hover) ----------
+    {
+        ImDrawList* dl   = ImGui::GetWindowDrawList();
+        const float lineH = ImGui::GetFrameHeightWithSpacing();
+        ImVec2 rowMin     = ImGui::GetCursorScreenPos();
+        float  winX       = ImGui::GetWindowPos().x;
+        float  winW       = ImGui::GetWindowSize().x;
+        ImVec2 rowMax     = { winX + winW, rowMin.y + lineH };
+
+        if (isSelected)
+            dl->AddRectFilled(rowMin, rowMax, ROW_SELECTED_BG);
+        else if (ImGui::IsMouseHoveringRect(rowMin, rowMax))
+            dl->AddRectFilled(rowMin, rowMax, ROW_HOVER_BG);
+        else if (hierRowIdx % 2 == 1)
+            dl->AddRectFilled(rowMin, rowMax, ROW_ALT_BG);
+
+        // -- Coloured left-border strip based on entity type ------------------
+        dl->AddRectFilled({ winX, rowMin.y },
+                          { winX + BORDER_STRIP_W, rowMax.y },
+                          getEntityStripColor(entity));
+    }
+    ++hierRowIdx;
 
     // Inject row colour before the tree node so ImGui picks it up at draw time
     ImGui::PushStyleColor(ImGuiCol_Header,
@@ -505,9 +573,10 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
         std::strncpy(renameBuffer, target->getName().c_str(), sizeof(renameBuffer) - 1);
     }
 
-    if (ImGui::MenuItem("Duplicate"))
+    if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, MEntityDuplicator::canDuplicate(target)))
     {
-        // TODO: Add duplication logic here later
+        MEntityDuplicator::duplicateAndSelect(target);
+        rightClickedEntity = nullptr;
     }
 
     // ---- Add submenu -------------------------------------------------------
@@ -581,6 +650,10 @@ int MEditorHierarchyWindow::countVisibleEntities(MScene* scene) const
         return n;
     };
     int total = 0;
-    for (auto* root : scene->getRootEntities()) total += count(root);
+    for (auto* root : scene->getRootEntities())
+    {
+        if (root->getParent()) continue;
+        total += count(root);
+    }
     return total;
 }
