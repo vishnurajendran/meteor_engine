@@ -5,29 +5,50 @@
 #include "dynamic_light.h"
 
 #include "../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
-void MDynamicLight::setColor(const SColor& color)
+
+// Setters write through to both the serialized field and lightData — the field
+// is what gets saved, lightData is what the renderer / shadow stage read.
+void MDynamicLight::setColor(const SColor& c)
 {
-    lightData.color = {color.r, color.g, color.b};
+    color           = SVector3(c.r, c.g, c.b);
+    lightData.color = color.get();
 }
 
 SColor MDynamicLight::getColor() const
 {
-    return SColor(lightData.color.x,lightData.color.y, lightData.color.z,1) ;
+    const SVector3& v = color.get();
+    return SColor(v.x, v.y, v.z, 1);
 }
 
-void MDynamicLight::setIntensity(const float& intensity)
+void MDynamicLight::setIntensity(const float& i)
 {
-    lightData.intensity = intensity;
+    intensity           = i;
+    lightData.intensity = i;
 }
 
 float MDynamicLight::getIntensity() const
 {
-    return lightData.intensity;
+    return intensity.get();
 }
 
-void MDynamicLight::setRange(const float& range)
+void MDynamicLight::setRange(const float& r)
 {
-    lightData.range = range;
+    range           = r;
+    lightData.range = r;
+}
+
+void MDynamicLight::onDeserialise(const pugi::xml_node& node)
+{
+    MLightEntity::onDeserialise(node);
+
+    lightData.color        = color.get();
+    lightData.intensity    = intensity.get();
+    lightData.range        = range.get();
+    lightData.smoothShadow = smoothShadow.get() ? 1 : 0;
+
+    // Range feeds the light BVH bounds — rebuild so culling uses the loaded value
+    // instead of the default 10 the light was constructed with.
+    MLightSystemManager::getInstance()->requestLightSceneRebuild();
 }
 
 void MDynamicLight::prepareLightRender()
@@ -63,4 +84,3 @@ void MDynamicLight::onUpdate(float deltaTime)
         MLightSystemManager::getInstance()->requestLightSceneRebuild();
     }
 }
-

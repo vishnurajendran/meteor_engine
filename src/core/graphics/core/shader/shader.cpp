@@ -177,7 +177,8 @@ void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
 }
 
 void MShader::setTexture(const SString &name, const SString& textureAssetPath, const unsigned int& index) const {
-    auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(textureAssetPath);
+    // textureAssetPath is a reference string — "guid:<id>" or a bare path.
+    auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetFromReference<MTextureAsset>(textureAssetPath);
     if(!asset) {
         MERROR("Shader: Invalid Texture Asset");
         return;
@@ -192,4 +193,4 @@ void MShader::setTexture(const SString &name, const SString& textureAssetPath, c
         texture->bind(location, index);
         glUniform1i(location, static_cast<GLint>(index));
     }
-}
+}

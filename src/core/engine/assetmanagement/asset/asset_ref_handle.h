@@ -26,7 +26,7 @@
 //
 // This ensures that post-copy directories and older scene files that only
 // contain asset paths keep working, while new saves always emit the GUID
-// for rename-safe references.
+// for rename-safe references ("guid:<id>", see field_asset_ref_types.h).
 //
 // Usage in an entity:
 //
@@ -134,7 +134,13 @@ public:
         {
             auto handle = manager->getAssetById<T>(m_assetId);
             if (T* asset = handle.get())
+            {
+                // Scenes now store only "guid:<id>" — backfill the path so
+                // inspectors that display getPath() still have something to show.
+                if (m_path.empty())
+                    m_path = asset->getPath();
                 return asset;
+            }
         }
 
         // Fallback: resolve by file path.
@@ -189,9 +195,10 @@ public:
 
 private:
     // Mutable because resolve() may backfill the GUID from a path-based
-    // lookup. This is a cache, not observable state.
+    // lookup (and the path from a GUID-based one). This is a cache, not
+    // observable state.
     mutable SString m_assetId;
-    SString m_path;
+    mutable SString m_path;
 };
 
-#endif // ASSET_REF_HANDLE_H
+#endif // ASSET_REF_HANDLE_H

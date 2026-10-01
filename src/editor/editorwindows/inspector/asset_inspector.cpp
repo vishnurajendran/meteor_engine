@@ -385,7 +385,11 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
         };
 
         row("Name:",   asset->getName().c_str());
-        row("Shader:", asset->getShaderPath().c_str());
+        // The material stores "guid:<id>" — show the shader's path instead.
+        const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                                     ->getAssetFromReference<MAsset>(asset->getShaderPath());
+        const SString shaderLabel = shaderAsset ? shaderAsset->getPath() : asset->getShaderPath();
+        row("Shader:", shaderLabel.c_str());
         row("Mode:",   asset->getShadingMode() == MMaterial::ShadingMode::Lit ? "Lit" : "Unlit");
         row("Path:",   asset->getPath().c_str());
 
@@ -771,9 +775,10 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
 
             for (int i = 0; i < MCubemapAsset::FACE_COUNT; ++i)
             {
-                SString facePath = asset->getFacePath(i);
-                TAssetHandle<MAsset> expected = !facePath.empty()
-                    ? MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MTextureAsset>(facePath)
+                // Face entries are reference strings — "guid:<id>" or a path.
+                SString faceRef = asset->getFacePath(i);
+                TAssetHandle<MAsset> expected = !faceRef.empty()
+                    ? MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetFromReference<MTextureAsset>(faceRef)
                     : TAssetHandle<MTextureAsset>();
                 if (ctrls.faces[i]->getAssetReference() != expected)
                     ctrls.faces[i]->setAssetReference(expected);
@@ -790,7 +795,7 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
                 {
                     const auto newRef = ctrls.faces[i]->getAssetReference();
                     asset->setFacePath(i,
-                        newRef ? newRef->getPath() : SString(""));
+                        newRef ? newRef.toRefString() : SString(""));
                 }
                 ImGui::PopID();
             }
@@ -996,4 +1001,4 @@ void MAssetInspector::drawGenericAsset(MAsset* asset)
     ImGui::Text("Name: %s", asset->getName().c_str());
     ImGui::Text("Path: %s", asset->getPath().c_str());
     ImGui::Text("ID:   %s", asset->getAssetId().c_str());
-}
+}

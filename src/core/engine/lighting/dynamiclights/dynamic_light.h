@@ -10,12 +10,23 @@
 SCRIPT_BIND_CLASS()
 class MDynamicLight : public MLightEntity {
     DEFINE_OBJECT_SUBCLASS(MDynamicLight)
+
+    // Serialized — these are the source of truth for the scene file.
+    // lightData (below) is the GPU-side copy; setters write through to both,
+    // and onDeserialise() pushes the loaded values into lightData.
+    // Defaults match SDynamicLightDataStruct so new lights look the same as before.
+    DECLARE_FIELD(color,        SVector3, SVector3(1.0f, 1.0f, 1.0f))
+    DECLARE_FIELD(intensity,    float,    1.0f)
+    DECLARE_FIELD(range,        float,    10.0f)
+    DECLARE_FIELD(castsShadow,  bool,     true)
+    DECLARE_FIELD(smoothShadow, bool,     false)
+
 protected:
     SDynamicLightDataStruct lightData;
 public:
 
     SCRIPT_BIND_FUNC()
-    [[nodiscard]] float getRange() const { return lightData.range; }
+    [[nodiscard]] float getRange() const { return range.get(); }
     SCRIPT_BIND_FUNC()
     void setColor(const SColor& color) override;
     SCRIPT_BIND_FUNC()
@@ -39,7 +50,7 @@ public:
     // Whether this light renders a shadow map each frame.
     // Defaults to true. Set false for cheap lights that don't need shadows.
     SCRIPT_BIND_FUNC()
-    bool getCastsShadow() const  { return castsShadow; }
+    bool getCastsShadow() const  { return castsShadow.get(); }
     SCRIPT_BIND_FUNC()
     void setCastsShadow(bool v)  { castsShadow = v; }
 
@@ -50,15 +61,20 @@ public:
     void setShadowIndex(int idx)  { lightData.shadowIndex = idx; }
 
     SCRIPT_BIND_FUNC()
-    bool getSmoothShadow() const  { return lightData.smoothShadow != 0; }
+    bool getSmoothShadow() const  { return smoothShadow.get(); }
     SCRIPT_BIND_FUNC()
-    void setSmoothShadow(bool v)  { lightData.smoothShadow = v ? 1 : 0; }
+    void setSmoothShadow(bool v)  { smoothShadow = v; lightData.smoothShadow = v ? 1 : 0; }
+
+protected:
+    // Fields are loaded by SerializedClassBase before this runs — copy them
+    // into lightData so the renderer and shadow stage see the saved values
+    // from the very first frame.
+    void onDeserialise(const pugi::xml_node& node) override;
 
 private:
     static constexpr int EpsilonDist  = 0.001f;
     static constexpr int EpsilonAngle = 0.035f;
 
-    bool        castsShadow     = true;
     SVector3    prevPosition    = {};
     SQuaternion prevOrientation = {};
 };

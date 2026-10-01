@@ -7,13 +7,15 @@
 // AFTER both data/field.h and asset_ref_handle.h are visible.
 // Follows the same pattern as field_engine_types.h.
 //
-// Serializes both the asset GUID and file path into XML. On load, reads
-// whichever is present. This supports three scenarios:
-//   - New files: both <id> and <path> are present.
-//   - Legacy files: only <path> is present (pre-GUID scene files).
-//   - Copied directories: <path> is valid, <id> may not resolve yet.
+// Serializes the reference as a single string:
+//   "guid:<id>"  — when the asset's GUID is known (always the case once resolved)
+//   "<path>"     — fallback when the GUID isn't known (e.g. the asset is missing)
 //
 // XML format:
+//   <fieldName>guid:3d4c5ab2-7f32-...</fieldName>
+//   <fieldName>assets/meshes/cube.obj</fieldName>      (hand-written / unresolved)
+//
+// Legacy format — still read, never written:
 //   <fieldName>
 //       <id>guid-string</id>
 //       <path>assets/meshes/cube.obj</path>
@@ -60,30 +62,62 @@ struct Field<TAssetRef<T>> : public FieldBase
 
     Field& operator=(const TAssetRef<T>& v) { rawValue = v; return *this; }
 
-    // Write both GUID and path as child nodes.
+    // Writes "guid:<id>" when possible, otherwise the bare path.
     void write(pugi::xml_node& parent) const override
     {
-        auto node = parent.append_child(name.c_str());
-        node.append_child("id").text().set(rawValue.getAssetId().c_str());
-        node.append_child("path").text().set(rawValue.getPath().c_str());
+        // Upgrade path-only references to a GUID before saving. resolve()
+        // backfills m_assetId on a successful path lookup — one map lookup
+        // per reference per save.
+        rawValue.resolve();
+
+        SString ref;
+        if (!rawValue.getAssetId().empty())
+            ref = SString(ASSET_REF_GUID_PREFIX) + rawValue.getAssetId();
+        else
+            ref = rawValue.getPath();
+
+        parent.append_child(name.c_str()).text().set(ref.c_str());
     }
 
-    // Read whichever children are present. Missing nodes are silently
-    // ignored, so legacy files with only <path> still load correctly.
+    // Reads either the new single-string form or the legacy <id>/<path> form.
+    // Missing nodes are silently ignored.
     void load(const pugi::xml_node& parent) override
     {
         auto node = parent.child(name.c_str());
         if (!node) return;
 
-        if (auto idNode = node.child("id"))
-            rawValue.setAssetId(SString(idNode.text().as_string("")));
+        const auto idNode   = node.child("id");
+        const auto pathNode = node.child("path");
 
-        if (auto pathNode = node.child("path"))
-            rawValue.setPath(SString(pathNode.text().as_string("")));
+        if (idNode || pathNode)
+        {
+            // Legacy format.
+            if (idNode)   rawValue.setAssetId(SString(idNode.text().as_string("")));
+            if (pathNode) rawValue.setPath(SString(pathNode.text().as_string("")));
+        }
+        else
+        {
+            const SString ref(node.text().as_string(""));
+            if (IAssetManagerSubsystem::isGuidReference(ref))
+            {
+                rawValue.setAssetId(SString(ref.str().substr(ASSET_REF_GUID_PREFIX_LEN)));
+                rawValue.setPath(SString{});
+            }
+            else
+            {
+                rawValue.setAssetId(SString{});
+                rawValue.setPath(ref);
+            }
+        }
+
+        // Fill in whichever half is missing (path for the inspector, GUID for
+        // fast lookups). Scenes load after the asset database, so this succeeds
+        // for any asset that exists.
+        rawValue.resolve();
     }
 
 private:
     std::function<void(const TAssetRef<T>&)> onChangeCallback;
 };
 
-#endif // FIELD_ASSET_REF_TYPES_H
+#endif // FIELD_ASSET_REF_TYPES_H

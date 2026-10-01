@@ -18,8 +18,9 @@ class MSkyboxEntity : public MSpatialEntity, public IMeteorDrawable
 {
     DEFINE_SPATIAL_CLASS(MSkyboxEntity)
 
-    // Asset reference serialized as a path string.
-    // onDeserialise loads the actual asset from this path.
+    // Asset reference string — "guid:<id>" or a bare path (older scenes).
+    // onDeserialise resolves the actual asset from it.
+    // Name kept as-is so existing scene files still load.
     DECLARE_FIELD(cubemapAssetPath, std::string, "")
 
 public:
@@ -44,4 +45,4 @@ private:
     TAssetHandle<MCubemapAsset>  cubemapAsset;
 };
 
-#endif // SKYBOXENTITIY_H
+#endif // SKYBOXENTITIY_H

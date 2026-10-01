@@ -240,17 +240,16 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
         texRefControl = textureReferences[controlRefId];
 
         // Sync the control to match the material's current property value.
-        const auto assetPath = value.getTexAssetReference();
-        if (!assetPath.empty())
+        // The value is a reference string ("guid:<id>" or path), so compare by
+        // the resolved asset's GUID rather than the raw string.
+        const auto assetRef = value.getTexAssetReference();
+        if (!assetRef.empty())
         {
+            auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                                 ->getAssetFromReference<MAsset>(assetRef);
             auto current = texRefControl->getAssetReference();
-            if (!current || current->getPath() != assetPath)
-            {
-                auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-                                     ->getAsset<MAsset>(assetPath);
-                if (texAsset)
-                    texRefControl->setAssetReference(texAsset);
-            }
+            if (texAsset && current != texAsset)
+                texRefControl->setAssetReference(texAsset);
         }
         else
         {
@@ -266,11 +265,11 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
         texRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset)
         { return dynamic_cast<MTextureAsset*>(asset.get()) != nullptr; };
 
-        const auto assetPath = value.getTexAssetReference();
-        if (!assetPath.empty())
+        const auto assetRef = value.getTexAssetReference();
+        if (!assetRef.empty())
         {
             auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-                                 ->getAsset<MAsset>(assetPath);
+                                 ->getAssetFromReference<MAsset>(assetRef);
             if (texAsset)
                 texRefControl->setAssetReference(texAsset);
         }
@@ -279,7 +278,8 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
     if (texRefControl->drawCompactControl(label))
     {
         auto asset = texRefControl->getAssetReference();
-        value.setTextureReference(asset ? asset->getPath() : SString(""));
+        // Store as "guid:<id>" — rename-safe.
+        value.setTextureReference(asset ? asset.toRefString() : SString(""));
         target->setProperty(label, SShaderPropertyValue(value));
     }
 }
@@ -290,4 +290,4 @@ void MMaterialPropertyControl::clearTextureReferences()
         delete ctrl;
     textureReferences.clear();
     lastPropertyCount = -1;
-}
+}
