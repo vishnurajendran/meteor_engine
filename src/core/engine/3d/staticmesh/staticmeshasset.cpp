@@ -67,7 +67,15 @@ void MStaticMeshAsset::loadMesh() {
     Assimp::Importer importer;
     importer.SetIOHandler(new MAssimpAssetIOSystem(MAssetSources::getActive()));   // importer owns it
 
-    constexpr auto flags = aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_FlipUVs;
+    // PreTransformVertices - bakes each node's full parent→child transform into
+    // its mesh's vertices, then merges meshes that share a material. Without it,
+    // sub-meshes stay in their local space and pile up at the origin.
+    // Static meshes only - it discards the node hierarchy, bones and animations,
+    // so a future skeletal importer must NOT use this flag.
+    constexpr auto flags = aiProcess_Triangulate
+                         | aiProcess_GenNormals
+                         | aiProcess_FlipUVs
+                         | aiProcess_PreTransformVertices;
     const aiScene* scene = importer.ReadFile(path.c_str(), flags);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         MERROR(STR("Error (Assimp) ") + importer.GetErrorString() + " - " + path);

@@ -117,7 +117,8 @@ bool generateMaterial(const STemplateContext& ctx, SString& outContent)
     pugi::xml_document doc;
     auto root = doc.append_child("material");
     root.append_attribute("name").set_value(ctx.name.c_str());
-    root.append_child("shaderPathField").text().set(shaderPath.c_str());
+    // Reference the shader by GUID — "guid:<id>".
+    root.append_child("shaderPathField").text().set(shaderAsset.toRefString().c_str());
     root.append_child("shadingModeStr").text().set(mode == "unlit" ? "unlit" : "lit");
 
     const auto declared = readDeclaredDefaults(shaderPath);
@@ -212,4 +213,4 @@ void registerBuiltInAssetTemplates(MAssetTemplateRegistry& registry)
     material.params.push_back(modeParam);
 
     registry.registerTemplate(material);
-}
+}

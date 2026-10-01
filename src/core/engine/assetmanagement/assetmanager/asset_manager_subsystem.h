@@ -40,30 +40,48 @@ public:
         return TAssetHandle<T>();
     }
 
-    // Parses the "guid::<id>" / "rawp::<path>" serialisation format.
+    // Parses a serialized asset reference.
     //
-    //   "guid::abc-123"           : getAssetById<T>("abc-123")
-    //   "rawp::assets/tex.png"    : getAsset<T>("assets/tex.png")
+    //   "guid:abc-123"            : getAssetById<T>("abc-123")
+    //   "assets/tex.png"          : getAsset<T>("assets/tex.png")   — no prefix = path
+    //   ""                        : null handle
     //
-    // Both return a GUID handle. On re-save, toRefString() writes "guid::".
-    // This lets scene files use human-readable paths as defaults that are
-    // automatically upgraded to stable GUIDs once the asset is loaded.
+    // Both return a GUID handle. On re-save, toRefString() writes "guid:".
+    // This lets hand-written files use human-readable paths that are
+    // automatically upgraded to stable GUIDs the next time they are saved.
+    //
+    // Cost: one prefix compare + one std::map lookup — same order as getAsset().
 
     template <typename T>
     TAssetHandle<T> getAssetFromReference(const SString& refString) {
         static_assert(std::is_base_of_v<MAsset, T>, "T must inherit from MAsset");
 
         const std::string& s = refString.str();
+        if (s.empty())
+            return TAssetHandle<T>();
 
-        if (s.size() > REF_PREFIX_LEN)
-        {
-            if (s.compare(0, REF_PREFIX_LEN, REF_GUID_PREFIX) == 0)
-                return getAssetById<T>(SString(s.substr(REF_PREFIX_LEN)));
+        if (isGuidReference(refString))
+            return getAssetById<T>(SString(s.substr(ASSET_REF_GUID_PREFIX_LEN)));
 
-            if (s.compare(0, REF_PREFIX_LEN, REF_PATH_PREFIX) == 0)
-                return getAsset<T>(SString(s.substr(REF_PREFIX_LEN)));
-        }
-        return TAssetHandle<T>();
+        return getAsset<T>(refString);
+    }
+
+    // True if the string uses the "guid:<id>" form.
+    static bool isGuidReference(const SString& refString)
+    {
+        const std::string& s = refString.str();
+        return s.size() > ASSET_REF_GUID_PREFIX_LEN
+            && s.compare(0, ASSET_REF_GUID_PREFIX_LEN, ASSET_REF_GUID_PREFIX) == 0;
+    }
+
+    // Rewrites any reference (path or guid) into the canonical "guid:<id>" form.
+    // If the asset can't be found the original string is returned unchanged, so
+    // a broken reference is never silently erased on save.
+    template <typename T = MAsset>
+    SString toCanonicalReference(const SString& refString)
+    {
+        const auto handle = getAssetFromReference<T>(refString);
+        return handle.isValid() ? handle.toRefString() : refString;
     }
 
 protected:
@@ -107,13 +125,6 @@ protected:
     const SString META_FILE_EXTENSION = "meta";
     const SString ASSET_FILE_TAG = "asset_id";
     const SString ASSET_ID_ATTRIB = "id";
-
-    // Used by getAssetFromReference() when loading saved data.
-    // "rawp::" references are converted to GUID handles on load and
-    // re-saved as "guid::" - the path form is a load-time convenience only.
-    static constexpr const char* REF_GUID_PREFIX = "guid::";
-    static constexpr const char* REF_PATH_PREFIX = "rawp::";
-    static constexpr size_t      REF_PREFIX_LEN  = 6;
 
     std::map<SString, MAsset*> assetMap;
     std::map<SString, MAsset*> assetMapByAssetId;

@@ -115,28 +115,70 @@ Start `MeteorLauncher.exe` to create or open a project. The launcher opens the e
 | `METEOR_LAUNCHER_SELF_CONTAINED` | `OFF`   | Bundle the .NET runtime into the launcher (~70 MB larger) |
 
 ---
-
 ## Scripting
 
-A script is a Lua file that extends `Behaviour` and returns the new class. Every callback is optional.
+A script is a Lua file that declares a class with `Behaviour:extend { ... }` and returns it. Fields and methods, including the lifecycle callbacks, are defined inside that table, and each method takes `self` as its first argument.
 
 ```lua
-local Mover = Behaviour:extend({ speed = 5.0 })
+---@class Mover
+local Mover = Behaviour:extend {
+    speed = 5,
 
-function Mover:onStart()
-    MLogger.info("Mover attached to " .. self:myEntity():getName())
-end
+    onStart = function(self)
+        MLogger.info("Mover attached to " .. self:myEntity():getName())
+    end,
 
-function Mover:onTick(dt)
-    local entity = self:myEntity()
-    if SInput.isDown(EKeyCode.W) then
-        local step = entity:getForwardVector() * (self.speed * dt)
-        entity:setRelativePosition(entity:getRelativePosition() + step)
-    end
-end
+    onTick = function(self, dt)
+        local entt = self:myEntity()
+        if SInput.isDown(EKeyCode.W) then
+            local newPos = entt:getWorldPosition() + entt:getForwardVector() * self.speed * dt
+            entt:setWorldPosition(newPos)
+        end
+    end,
+
+    onFixedTick = function(self, dt)
+    end,
+
+    onStop = function(self)
+    end,
+}
 
 return Mover
 ```
+
+To use a specific entity type, cast the entity by calling the type. The cast returns `nil` if the entity isn't that type:
+
+```lua
+onStart = function(self)
+    local src = MAudioSource(self:myEntity())
+    if src == nil then
+        return
+    end
+
+    src:play()
+end,
+```
+
+To talk to another script, find its entity and call `getScript()`:
+
+```lua
+local scene = MSceneManager.getSceneManagerInstance():getActiveScene()
+local camera = MCameraEntity(scene:find("./MainCamera"))
+if camera then
+    camera:getScript():move(xAxis, yAxis)
+end
+```
+
+| Callback                  | When it runs                              |
+|---------------------------|-------------------------------------------|
+| `onStart(self)`           | Once, when play starts                    |
+| `onTick(self, dt)`        | Every frame                               |
+| `onFixedTick(self, dt)`   | Every fixed step (physics rate)           |
+| `onStop(self)`            | Once, when play stops                     |
+
+**How the bindings are made.** Classes are exposed to Lua by annotating the C++ headers. At build time, the binding generator (`src/tools/lua_binding_generator`) parses those headers with libclang and generates the sol2 bindings. It also generates `meteor_api.lua`, the LuaLS type definitions, which are copied to `bin/.engine_data/scripting/symbols/lua/` for editor autocomplete.
+
+---
 
 | Callback          | When it runs                              |
 |-------------------|-------------------------------------------|

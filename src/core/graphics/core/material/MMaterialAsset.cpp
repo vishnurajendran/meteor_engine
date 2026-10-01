@@ -9,6 +9,7 @@
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/shader/shader_utils.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/logger.h"
@@ -46,7 +47,8 @@ void MMaterialAsset::buildMaterialAsset()
         return;
     }
 
-    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(sp.c_str());
+    // "guid:<id>" or a bare path.
+    const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetFromReference<MShaderAsset>(sp.c_str());
     if (!shaderAsset)
     {
         MERROR("MMaterialAsset::buildMaterialAsset(): shader asset not found: " + SString(sp.c_str()));
@@ -83,6 +85,21 @@ void MMaterialAsset::buildMaterialAsset()
             finalOrder.push_back(key);
     }
     original->setPropertyOrder(finalOrder);
+}
+
+bool MMaterialAsset::dependsOn(const SString& assetPath) const
+{
+    // The shader may be referenced by GUID, so compare against the resolved
+    // asset's path. Only runs on hot-reload, so the extra lookup is fine.
+    const SString ref = getShaderPath();
+    if (ref == assetPath)
+        return true;
+
+    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    if (!assetManager) return false;
+
+    const auto shaderAsset = assetManager->getAssetFromReference<MAsset>(ref);
+    return shaderAsset && shaderAsset->getPath() == assetPath;
 }
 
 void MMaterialAsset::deferredAssetLoad(bool forced)
@@ -168,6 +185,13 @@ bool MMaterialAsset::save()
 
     shadingModeStr = std::string(shadingMode == MMaterial::ShadingMode::Lit ? "lit" : "unlit");
 
+    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+
+    // Upgrade the shader reference to "guid:<id>". Unresolvable references are
+    // kept unchanged so a missing shader isn't silently erased.
+    if (assetManager)
+        shaderPathField = assetManager->toCanonicalReference<MShaderAsset>(getShaderPath()).str();
+
     pugi::xml_document doc;
     auto root = doc.append_child("material");
     root.append_attribute("name").set_value(name.c_str());
@@ -188,6 +212,10 @@ bool MMaterialAsset::save()
         SString ts  = MShaderUtility::getTypeStr(val.getType());
         SString vls = MShaderUtility::getValueStr(val);
         if (ts.empty()) continue;
+
+        // Texture values are asset references — write them as "guid:<id>".
+        if (val.getType() == SShaderPropertyType::Texture && !vls.empty() && assetManager)
+            vls = assetManager->toCanonicalReference<MTextureAsset>(vls);
 
         auto prop = propsNode.append_child("property");
         prop.append_attribute("key").set_value(key.c_str());

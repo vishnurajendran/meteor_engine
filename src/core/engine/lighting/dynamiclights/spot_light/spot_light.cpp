@@ -26,8 +26,21 @@ void MSpotLight::onExit()
     MLightSystemManager::getInstance()->unregisterLight(this);
 }
 
-float MSpotLight::getSpotAngle() const         { return glm::degrees(lightData.angle); }
-void  MSpotLight::setSpotAngle(float angleDeg) { lightData.angle = glm::radians(angleDeg); }
+float MSpotLight::getSpotAngle() const { return glm::degrees(spotAngle.get()); }
+
+// Writes through to both the serialized field and lightData.
+void MSpotLight::setSpotAngle(float angleDeg)
+{
+    spotAngle       = glm::radians(angleDeg);
+    lightData.angle = spotAngle.get();
+}
+
+void MSpotLight::onDeserialise(const pugi::xml_node& node)
+{
+    // Base syncs color / intensity / range / shadow flags into lightData.
+    MDynamicLight::onDeserialise(node);
+    lightData.angle = spotAngle.get();
+}
 
 void MSpotLight::onDrawGizmo(SVector2 renderResolution)
 {

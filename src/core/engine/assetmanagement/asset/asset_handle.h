@@ -18,10 +18,10 @@
 //   Downcasts that don't match return nullptr from get().
 //
 // ── Serialisation ─────────────────────────────────────────────────────────────
-//   toRefString()  produces "guid::<id>".
-//   The manager also accepts "rawp::<path>" at load time, but that is
+//   toRefString()  produces "guid:<id>".
+//   The manager also accepts a bare asset path at load time — that is
 //   converted to a GUID handle immediately. On re-save the reference is
-//   always written as "guid::<id>".
+//   always written as "guid:<id>".
 //
 // ── Creation ──────────────────────────────────────────────────────────────────
 //   Handles should only be created through MAssetManager.
@@ -32,9 +32,17 @@
 #ifndef ASSETHANDLE_H
 #define ASSETHANDLE_H
 
+#include <cstddef>
 #include <type_traits>
 #include "core/engine/assetmanagement/asset/asset.h"
 // NOTE: No include of assetmanager.h - the handle is manager-agnostic.
+
+// Prefix used by every serialized asset reference (scenes, materials, skyboxes…).
+//   "guid:<id>"  — resolve by GUID
+//   anything else — treated as an asset path
+// Lives here (not in the manager) so the handle and the manager share one definition.
+inline constexpr const char*  ASSET_REF_GUID_PREFIX     = "guid:";
+inline constexpr std::size_t  ASSET_REF_GUID_PREFIX_LEN = 5;
 
 template<typename T>
 class TAssetHandle
@@ -111,11 +119,11 @@ public:
 
     // ── Serialisation ─────────────────────────────────────────────────────────
 
-    // Always produces "guid::<id>". Returns empty string for null handles.
+    // Always produces "guid:<id>". Returns empty string for null handles.
     SString toRefString() const
     {
         if (assetId.empty()) return SString();
-        return SString("guid::") + assetId;
+        return SString(ASSET_REF_GUID_PREFIX) + assetId;
     }
 
     // ── Comparison ────────────────────────────────────────────────────────────
@@ -124,4 +132,4 @@ public:
     bool operator!=(const TAssetHandle<T>& other) const { return assetId != other.assetId; }
 };
 
-#endif // ASSETHANDLE_H
+#endif // ASSETHANDLE_H

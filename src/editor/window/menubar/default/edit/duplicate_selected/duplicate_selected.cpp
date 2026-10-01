@@ -23,5 +23,5 @@ void MDuplicateSelectedMenubarItem::onSelect()
     if (ImGui::GetCurrentContext() && ImGui::GetIO().WantTextInput)
         return;
 
-    SEntityDuplicator::duplicateAndSelect(MEditorApplication::SelectedObject);
+    MEntityDuplicator::duplicateAndSelect(MEditorApplication::SelectedObject);
 }
