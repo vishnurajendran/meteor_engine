@@ -231,8 +231,10 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
                 {
                     if (val.getTexAssetReference().empty()) continue;
 
+                    // "guid:<id>" or a bare path — prefix check + one map lookup,
+                    // same cost as the old path lookup.
                     const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-                        ->getAsset<MTextureAsset>(val.getTexAssetReference());
+                        ->getAssetFromReference<MTextureAsset>(val.getTexAssetReference());
                     if (!texAsset || !texAsset->getTexture()) continue;
 
                     glActiveTexture(GL_TEXTURE0 + matTexUnit);
@@ -292,4 +294,4 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     pipeline->addCompositeFlag(ECF_Lights);
 }
 
-void MLightingStage::postRender(IRenderPipeline* const pipeline) {}
+void MLightingStage::postRender(IRenderPipeline* const pipeline) {}

@@ -34,15 +34,12 @@ void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
     // SerializedClassBase before this method is called.
 
     // Write material slots manually since they are a dynamic-length array.
-    // Each slot stores both asset ID and path for the same fallback behavior
-    // that TAssetRef provides.
+    // Each slot uses the same reference format as Field<TAssetRef<T>>:
+    // "guid:<id>" when known, otherwise the bare path.
     //
     // Format:
     //   <materialSlots>
-    //       <slot index="0">
-    //           <id>guid-string</id>
-    //           <path>assets/materials/brick.material</path>
-    //       </slot>
+    //       <slot index="0">guid:3d4c5ab2-...</slot>
     //   </materialSlots>
     auto slotsNode = node.append_child("materialSlots");
     for (int i = 0; i < (int)materialSlots.size(); ++i)
@@ -50,8 +47,11 @@ void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
         auto slotNode = slotsNode.append_child("slot");
         slotNode.append_attribute("index").set_value(i);
         const auto& ref = materialSlots[i].assetRef;
-        slotNode.append_child("id").text().set(ref.getAssetId().c_str());
-        slotNode.append_child("path").text().set(ref.getPath().c_str());
+        ref.resolve(); // upgrade path-only refs to a GUID before writing
+        const SString refStr = !ref.getAssetId().empty()
+            ? SString(ASSET_REF_GUID_PREFIX) + ref.getAssetId()
+            : ref.getPath();
+        slotNode.text().set(refStr.c_str());
     }
 }
 
@@ -100,7 +100,7 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
             int idx = slotNode.attribute("index").as_int(-1);
             if (idx < 0 || idx >= (int)materialSlots.size()) continue;
 
-            // New format: <slot> has <id> and <path> children.
+            // Legacy format: <slot> has <id> and <path> children.
             auto idNode   = slotNode.child("id");
             auto pathNode = slotNode.child("path");
 
@@ -112,11 +112,14 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
             }
             else
             {
-                // Old format: slot text content is the path directly.
-                //   <slot index="0">assets/materials/brick.material</slot>
-                SString matPath = slotNode.text().as_string("");
-                if (!matPath.empty())
-                    materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(SString{}, matPath);
+                // Current format — slot text is a reference string:
+                //   <slot index="0">guid:3d4c5ab2-...</slot>
+                //   <slot index="0">assets/materials/brick.material</slot>   (path — also the oldest format)
+                SString ref = slotNode.text().as_string("");
+                if (IAssetManagerSubsystem::isGuidReference(ref))
+                    materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(SString(ref.str().substr(ASSET_REF_GUID_PREFIX_LEN)));
+                else if (!ref.empty())
+                    materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(SString{}, ref);
             }
         }
     }
@@ -288,4 +291,4 @@ void MStaticMeshEntity::calculateBounds()
             mn = glm::min(mn, wp); mx = glm::max(mx, wp);
         }
     bounds.min = mn; bounds.max = mx;
-}
+}

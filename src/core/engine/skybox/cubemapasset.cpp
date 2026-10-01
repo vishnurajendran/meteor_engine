@@ -92,11 +92,12 @@ bool MCubemapAsset::buildCubemap()
             return false;
         }
 
-        const auto faceAsset = assetManager->getAsset<MTextureAsset>(facePaths[i]);
+        // Face entries are reference strings — "guid:<id>" or a bare path.
+        const auto faceAsset = assetManager->getAssetFromReference<MTextureAsset>(facePaths[i]);
         if (!faceAsset)
         {
             MERROR(STR("MCubemapAsset: failed to load face '") + FACE_LABELS[i]
-                   + "' at path: " + facePaths[i]);
+                   + "' from reference: " + facePaths[i]);
             return false;
         }
         faceAssets.push_back(faceAsset);
@@ -110,12 +111,23 @@ MTexture* MCubemapAsset::getTexture() { return texture; }
 
 bool MCubemapAsset::dependsOn(const SString& assetPath) const
 {
+    // Faces may be stored as "guid:<id>", so compare against the resolved
+    // asset's path rather than the raw string. Only runs on hot-reload.
+    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    if (!assetManager) return false;
+
     for (const auto& face : facePaths)
+    {
         if (face == assetPath)
             return true;
+        const auto faceAsset = assetManager->getAssetFromReference<MAsset>(face);
+        if (faceAsset && faceAsset->getPath() == assetPath)
+            return true;
+    }
     return false;
 }
 
+// Returns the face's reference string — "guid:<id>" or a path.
 SString MCubemapAsset::getFacePath(int index) const
 {
     if (index < 0 || index >= FACE_COUNT) return "";
@@ -134,8 +146,15 @@ bool MCubemapAsset::save()
     auto root = doc.append_child("cubemap");
     root.append_attribute("name").set_value(name.c_str());
 
+    // Write faces as "guid:<id>". Unresolvable references are kept as-is so a
+    // missing texture doesn't silently wipe the face.
+    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
     for (int i = 0; i < FACE_COUNT; ++i)
+    {
+        if (assetManager && !facePaths[i].empty())
+            facePaths[i] = assetManager->toCanonicalReference<MTextureAsset>(facePaths[i]);
         root.append_child(FACE_LABELS[i]).append_attribute("src").set_value(facePaths[i].c_str());
+    }
 
     auto target = MAssetSources::getWritable();
     if (!target)

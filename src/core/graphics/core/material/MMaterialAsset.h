@@ -21,9 +21,11 @@ class MMaterialAsset : public MAsset, public SerializedClassBase
 public:
     bool hasDeferredLoad() const override { return true; }
     void deferredAssetLoad(bool forced) override;
-    bool dependsOn(const SString& assetPath) const override { return getShaderPath() == assetPath; }
+    bool dependsOn(const SString& assetPath) const override;
     bool requestReload() override { valid = loadFromSource(); deferredAssetLoad(true); return valid; }
 
+    // Shader reference — "guid:<id>" or a bare path (hand-written / older files).
+    // Name kept as-is so existing .material files still load.
     DECLARE_FIELD(shaderPathField,    std::string, "")
     DECLARE_FIELD(shadingModeStr,     std::string, "lit")  // "lit" | "unlit"
 
@@ -37,6 +39,7 @@ public:
     void buildMaterialAsset();
 
     MMaterial::ShadingMode getShadingMode() const { return shadingMode; }
+    // Raw reference string as stored in the file ("guid:<id>" or path).
     SString                getShaderPath()  const { return SString(shaderPathField.get().c_str()); }
 
     // New materials are created by the editor's "material" asset template
@@ -53,4 +56,4 @@ private:
     void syncFromFields();
 };
 
-#endif // MMATERIALASSET_H
+#endif // MMATERIALASSET_H
