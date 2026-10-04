@@ -104,7 +104,10 @@ MSpatialEntity* MEntityDuplicator::duplicate(MSpatialEntity* source)
     // ...and load it back. deserialiseEntity registers every entity in the
     // subtree with the active scene; the new root lands at the end of the
     // scene root list and is moved into place below.
-    MSpatialEntity* clone = MSpatialEntity::deserialiseEntity(node);
+    // resolveCompositions = false — copy a composition instance exactly as it
+    // is (including unsaved edits) instead of rebuilding it from its .comp.
+    // The copy keeps the link, so it is another instance of the same asset.
+    MSpatialEntity* clone = MSpatialEntity::deserialiseEntity(node, false);
     if (!clone)
     {
         MERROR(SString("Duplicate:: failed to rebuild ") + source->getName());

@@ -5,6 +5,7 @@
 #include "core/engine/scene/scenemanager.h"
 #include "core/engine/scripting/interface/scripting_engine_interface.h"
 #include "core/engine/scripting/scripting_call_symbols.h"
+#include "core/engine/composition/composition_utility.h"
 
 
 IMPLEMENT_SPATIAL_CLASS(MSpatialEntity)
@@ -295,6 +296,13 @@ void MSpatialEntity::onSerialise(pugi::xml_node& node)
     node.append_attribute("enabled") = enabled;
     node.append_attribute("flags")   = static_cast<uint32_t>(flags);
 
+    // Composition change-tracking — only on instance roots.
+    if (!compAssetReference.get().isEmpty())
+    {
+        node.append_attribute(MCompositionAsset::SOURCE_HASH_ATTRIBUTE) = compSourceHash.c_str();
+        node.append_attribute(MCompositionAsset::STATE_HASH_ATTRIBUTE)  = compStateHash.c_str();
+    }
+
     std::vector<FieldBase*> tmp;
     Field<SVector3>    pos  (tmp, "relativePosition", relativePosition);
     Field<SQuaternion> rot  (tmp, "relativeRotation", relativeRotation);
@@ -307,6 +315,9 @@ void MSpatialEntity::onDeserialise(const pugi::xml_node& node)
     if (auto a = node.attribute("name"))    setName(SString(a.value()));
     if (auto a = node.attribute("enabled")) enabled = a.as_bool(true);
     if (auto a = node.attribute("flags"))   flags   = static_cast<EEntityFlags>(a.as_uint());
+
+    compSourceHash = SString(node.attribute(MCompositionAsset::SOURCE_HASH_ATTRIBUTE).as_string(""));
+    compStateHash  = SString(node.attribute(MCompositionAsset::STATE_HASH_ATTRIBUTE).as_string(""));
 
     std::vector<FieldBase*> tmp;
     Field<SVector3>    pos  (tmp, "relativePosition", relativePosition);
@@ -335,8 +346,14 @@ pugi::xml_node MSpatialEntity::serialiseEntity(pugi::xml_node parent) const
     return node;
 }
 
-MSpatialEntity* MSpatialEntity::deserialiseEntity(const pugi::xml_node& node)
+MSpatialEntity* MSpatialEntity::deserialiseEntity(const pugi::xml_node& node, bool resolveCompositions)
 {
+    // A clean composition instance whose asset changed is built from the
+    // .comp (keeping its root name / transform) — its saved children are stale.
+    if (resolveCompositions)
+        if (MSpatialEntity* fromAsset = MCompositionUtility::tryBuildFromAsset(node))
+            return fromAsset;
+
     const std::string type = node.attribute("type").as_string("MSpatialEntity");
     MSpatialEntity* entity = MEntityTypeRegistry::get().create(type);
 
@@ -349,7 +366,7 @@ MSpatialEntity* MSpatialEntity::deserialiseEntity(const pugi::xml_node& node)
 
     if (pugi::xml_node childrenNode = node.child("children"))
         for (pugi::xml_node childNode : childrenNode.children("entity"))
-            if (auto* child = deserialiseEntity(childNode))
+            if (auto* child = deserialiseEntity(childNode, resolveCompositions))
                 entity->addChild(child);
 
     return entity;
@@ -494,4 +511,4 @@ void MSpatialEntity::propagateActiveState(bool active)
         if (child && child->enabled)
             child->propagateActiveState(active);
     }
-}
+}

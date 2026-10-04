@@ -44,6 +44,10 @@ private:
     void drawTransformField(MSpatialEntity* target);
     void drawScriptField(MSpatialEntity* target);
 
+    // Save / Reset / Unlink for composition instances. Returns true if the
+    // instance was rebuilt (target is then stale — stop drawing it this frame).
+    bool drawCompositionField(MSpatialEntity* target);
+
     // Iterates target->getFields() and draws a widget for each supported type.
     void drawFields(MSpatialEntity* target);
 
@@ -64,4 +68,4 @@ private:
     std::unordered_map<MSpatialEntity*, EulerCache> eulerCache_;
 };
 
-#endif //METEOR_ENGINE_SPATIALENTITYINSPECTORDRAWER_H
+#endif //METEOR_ENGINE_SPATIALENTITYINSPECTORDRAWER_H

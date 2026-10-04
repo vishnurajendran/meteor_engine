@@ -6,6 +6,7 @@
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 
 class SShadowBuffer;
+struct SFrustum;
 class MShader;
 class MLightEntity;
 
@@ -27,12 +28,16 @@ private:
     void renderPointShadows     (IRenderPipeline* const pipeline);
 
     // For mesl-based shaders (directional, spot).
+    // cullFrustum — the light's own frustum; items whose bounds are entirely
+    // outside it are skipped. nullptr draws every caster.
     void drawItems(IRenderPipeline* const pipeline, MShader* shader,
-                   unsigned int* rawProg, bool shadowCastersOnly);
+                   unsigned int* rawProg, bool shadowCastersOnly,
+                   const SFrustum* cullFrustum = nullptr);
 
     // For the inline point shadow program - sets model via raw GL uniform.
     void drawItemsRaw(IRenderPipeline* const pipeline,
-                      unsigned int prog, bool shadowCastersOnly);
+                      unsigned int prog, bool shadowCastersOnly,
+                      const SFrustum* cullFrustum = nullptr);
 
     SShadowBuffer* shadowBuffer       = nullptr;
     MShader*       shadowShader       = nullptr;

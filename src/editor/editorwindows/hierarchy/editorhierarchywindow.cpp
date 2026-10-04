@@ -8,6 +8,7 @@
 #include "core/engine/audio/audio_entity/audio_listener_entity.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"
+#include "core/engine/composition/composition_utility.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/ambient/ambient_light.h"
 #include "core/engine/lighting/directional/directional_light.h"
@@ -24,6 +25,8 @@
 #include "editor/app/editorapplication.h"
 #include "editor/editor_utils/engine_textures.h"
 #include "editor/editor_utils/entity_duplicator.h"
+#include "editor/editor_utils/asset_drop_spawner.h"
+#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/window/menubar/menubartree.h"
 
 // --- Palette ------------------------------------------------------------------
@@ -39,6 +42,11 @@ static constexpr ImU32  COL_TOOLBAR_BG   = IM_COL32(45, 45, 45, 255);
 static constexpr ImU32  COL_SEPARATOR    = IM_COL32(55, 55, 55, 255);
 static constexpr ImVec4 COL_TEXT_MATCH   = {1.0f, 0.85f, 0.3f, 1.0f};
 static constexpr ImU32  COL_TREE_LINE    = IM_COL32(70, 70, 70, 140);
+
+// --- Composition (prefab) instance tint ----------------------------------------
+// Same hue as the selection blue, much fainter — reads as "linked", not "selected".
+static constexpr ImVec4 COL_TEXT_COMPOSITION = {0.55f, 0.72f, 1.00f, 1.00f};
+static constexpr ImU32  ROW_COMPOSITION_BG   = IM_COL32(55, 110, 230, 24);
 
 // --- Console-style row colours ------------------------------------------------
 static constexpr ImU32  ROW_SELECTED_BG  = IM_COL32(60,  90,  160, 80);
@@ -177,6 +185,19 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
     }
 
     ImGui::EndChild();
+
+    // Asset dropped on empty space in the tree → new entity at the scene root.
+    // Rows are smaller targets, so a drop on a row is handled by the row instead.
+    if (scene && ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload =
+                ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
+        {
+            MAssetDropSpawner::spawn(SString(static_cast<const char*>(payload->Data)));
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     ImGui::PopStyleVar(3); // IndentSpacing, FramePadding, ItemSpacing
 
     ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -284,6 +305,10 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
     const bool isLeaf     = entity->getChildren().empty();
     const bool isRenaming = (renamingEntity == entity);
 
+    // Part of a composition instance — the root itself or anything under it.
+    // findInstanceRoot walks up the parents, so this is O(depth) per row.
+    const bool inComposition = MCompositionUtility::findInstanceRoot(entity) != nullptr;
+
     ImGui::PushID(entity->getGUID().c_str());
 
     // -- Console-style row background (alternating, selection, hover) ----------
@@ -297,10 +322,18 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
         if (isSelected)
             dl->AddRectFilled(rowMin, rowMax, ROW_SELECTED_BG);
-        else if (ImGui::IsMouseHoveringRect(rowMin, rowMax))
-            dl->AddRectFilled(rowMin, rowMax, ROW_HOVER_BG);
-        else if (hierRowIdx % 2 == 1)
-            dl->AddRectFilled(rowMin, rowMax, ROW_ALT_BG);
+        else
+        {
+            // Composition tint goes underneath — hover / alternating rows
+            // still layer on top of it.
+            if (inComposition)
+                dl->AddRectFilled(rowMin, rowMax, ROW_COMPOSITION_BG);
+
+            if (ImGui::IsMouseHoveringRect(rowMin, rowMax))
+                dl->AddRectFilled(rowMin, rowMax, ROW_HOVER_BG);
+            else if (hierRowIdx % 2 == 1)
+                dl->AddRectFilled(rowMin, rowMax, ROW_ALT_BG);
+        }
 
         // -- Coloured left-border strip based on entity type ------------------
         dl->AddRectFilled({ winX, rowMin.y },
@@ -452,6 +485,39 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
             }
             draggedEntity = dropTargetEntity = nullptr;
         }
+
+        // Asset dragged from the asset browser — create the entity, then place
+        // it with the same zones as an entity drag: centre = child of this row,
+        // top / bottom edge = sibling before / after it.
+        if (const ImGuiPayload* payload =
+                ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
+        {
+            // spawn() puts the new entity at the END of the scene root list,
+            // so it's never before the target — no index adjustment needed.
+            if (MSpatialEntity* spawned = MAssetDropSpawner::spawn(SString(static_cast<const char*>(payload->Data))))
+            {
+                if (zone == EDropZone::Reparent)
+                {
+                    spawned->setParent(entity);
+                }
+                else
+                {
+                    const int offset = (zone == EDropZone::After) ? 1 : 0;
+                    if (auto* targetParent = entity->getParent())
+                    {
+                        auto& siblings = targetParent->getChildren();
+                        const auto it  = std::find(siblings.begin(), siblings.end(), entity);
+                        targetParent->insertChildAt(spawned, (int)(it - siblings.begin()) + offset);
+                    }
+                    else if (auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene())
+                    {
+                        auto& roots   = scene->getRootEntities();
+                        const auto it = std::find(roots.begin(), roots.end(), entity);
+                        scene->insertRootEntityAt(spawned, (int)(it - roots.begin()) + offset);
+                    }
+                }
+            }
+        }
         ImGui::EndDragDropTarget();
     }
 
@@ -516,7 +582,10 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
     }
     else
     {
+        // Search-match yellow (above) wins over the composition blue.
+        if (inComposition) ImGui::PushStyleColor(ImGuiCol_Text, COL_TEXT_COMPOSITION);
         ImGui::TextUnformatted(entity->getName().c_str());
+        if (inComposition) ImGui::PopStyleColor();
         if (!activeInHierarchy) ImGui::PopStyleVar();
     }
 

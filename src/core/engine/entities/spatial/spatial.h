@@ -8,6 +8,7 @@
 
 #include <vector>
 #include "core/engine/assetmanagement/asset/field_asset_ref_types.h"
+#include "core/engine/composition/composition_asset.h"
 #include "core/engine/entities/entity_type_registry.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
@@ -25,6 +26,11 @@ class MSpatialEntity : public MObject, public SerializedClassBase
 private:
     DEFINE_SPATIAL_CLASS(MSpatialEntity)
     DECLARE_FIELD(scriptReference, TAssetRef<MLuaScriptAsset>, {})
+
+    // Composition (prefab) link — empty for normal entities. When set, this
+    // entity is the root of a composition instance and its subtree mirrors the
+    // .comp asset. Clearing it breaks the link (see MCompositionUtility).
+    DECLARE_FIELD(compAssetReference, TAssetRef<MCompositionAsset>, {})
 
 public:
     static MSpatialEntity* createInstance(const SString& name = {});
@@ -48,7 +54,21 @@ public:
 
     // Scene serialization
     pugi::xml_node serialiseEntity(pugi::xml_node parent) const;
-    static MSpatialEntity* deserialiseEntity(const pugi::xml_node& node);
+
+    // resolveCompositions — when true (scene loading), clean composition
+    // instances whose .comp has changed are rebuilt from the asset instead of
+    // the saved snapshot. Pass false for an exact copy (duplicate, instantiate).
+    static MSpatialEntity* deserialiseEntity(const pugi::xml_node& node, bool resolveCompositions = true);
+
+    // Composition change-tracking hashes — only meaningful on an instance root.
+    // Written by MCompositionUtility; see composition_utility.h for what they mean.
+    [[nodiscard]] const SString& getCompSourceHash() const { return compSourceHash; }
+    [[nodiscard]] const SString& getCompStateHash()  const { return compStateHash; }
+    void setCompositionHashes(const SString& sourceHash, const SString& stateHash)
+    {
+        compSourceHash = sourceHash;
+        compStateHash  = stateHash;
+    }
 
     SCRIPT_BIND_FUNC()
     void destroy();
@@ -213,10 +233,15 @@ private:
     static SString generateName(const SString& base);
     void propagateActiveState(bool active);
 
+    // Plain members (not DECLARE_FIELDs) so the generic inspector doesn't show
+    // them — serialised as attributes in onSerialise / onDeserialise.
+    SString compSourceHash;
+    SString compStateHash;
+
     bool canTick = false;
     bool entityStarted = false;
     IScriptInstance* scriptInstance = nullptr;
     bool onExitCalled = false;
 };
 
-#endif // SPATIAL_H
+#endif // SPATIAL_H

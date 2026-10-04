@@ -143,16 +143,14 @@ void MRenderPipeline::preRender()
             SFrustum frustum;
             frustum.extractFromVP(vp);
 
-            renderItems.erase(
-                std::remove_if(renderItems.begin(), renderItems.end(),
-                    [&frustum](const SRenderItem& item)
-                    {
-                        if (item.bounds.min == item.bounds.max)
-                            return false;
-
-                        return !frustum.testAABB(item.bounds);
-                    }),
-                renderItems.end());
+            // Flag, don't erase — the shadow stage still needs off-screen
+            // casters, and culls them per light against the light's volume.
+            for (SRenderItem& item : renderItems)
+            {
+                // Degenerate bounds (min == max) mean "no bounds" — never cull.
+                item.cameraVisible = (item.bounds.min == item.bounds.max)
+                                     || frustum.testAABB(item.bounds);
+            }
         }
     }
 
