@@ -6,6 +6,9 @@
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/scripting/lua/lua_script_asset.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/composition/composition_asset.h"
+#include "core/engine/composition/composition_utility.h"
+#include "editor/app/editorapplication.h"
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -138,6 +141,24 @@ MSpatialEntityInspectorDrawer::MSpatialEntityInspectorDrawer() {
     scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
         return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
     };
+
+    // Resetting a composition instance replaces its entities — move the
+    // selection to the new root if it pointed anywhere inside the old one,
+    // otherwise it would dangle once the scene frees the old entities.
+    // (Set here because this drawer is the editor code that owns Reset; every
+    // drawer subclass re-assigns the same lambda, which is harmless.)
+    MCompositionUtility::onInstanceReplaced = [](MSpatialEntity* oldRoot, MSpatialEntity* newRoot)
+    {
+        auto* selected = dynamic_cast<MSpatialEntity*>(MEditorApplication::SelectedObject);
+        for (MSpatialEntity* e = selected; e; e = e->getParent())
+        {
+            if (e == oldRoot)
+            {
+                MEditorApplication::SelectedObject = newRoot;
+                return;
+            }
+        }
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -162,8 +183,91 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target) {
             target->setName(name);
     }
 
+    // Reset rebuilds the instance — `target` is stale after that, so stop here;
+    // the new root is selected and drawn next frame.
+    if (drawCompositionField(target))
+        return;
+
     drawTransformField(target);
     drawScriptField(target);
+}
+
+// ---------------------------------------------------------------------------
+// Composition (prefab) instance controls
+// ---------------------------------------------------------------------------
+
+bool MSpatialEntityInspectorDrawer::drawCompositionField(MSpatialEntity* target)
+{
+    MSpatialEntity* root = MCompositionUtility::findInstanceRoot(target);
+    if (!root)
+        return false;
+
+    if (!ImGui::CollapsingHeader("Composition", ImGuiTreeNodeFlags_DefaultOpen))
+        return false;
+
+    MCompositionAsset* asset = MCompositionUtility::getAsset(root);
+
+    // Serialises the instance subtree to compare hashes — only for the
+    // selected entity, so it's one subtree per frame.
+    const ECompositionInstanceState state = MCompositionUtility::getState(root);
+
+    ImGui::TextDisabled("Asset:");
+    ImGui::SameLine();
+    ImGui::TextUnformatted(asset ? asset->getPath().c_str() : "(missing)");
+
+    if (root != target)
+    {
+        ImGui::TextDisabled("Instance root:");
+        ImGui::SameLine();
+        ImGui::TextUnformatted(root->getName().c_str());
+    }
+
+    const char* stateLabel = "";
+    ImVec4      stateColor = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+    switch (state)
+    {
+    case ECompositionInstanceState::Synced:       stateLabel = "Synced";                  stateColor = ImVec4(0.45f, 0.80f, 0.45f, 1.0f); break;
+    case ECompositionInstanceState::Modified:     stateLabel = "Modified (unsaved)";      stateColor = ImVec4(0.95f, 0.80f, 0.30f, 1.0f); break;
+    case ECompositionInstanceState::OutOfDate:    stateLabel = "Out of date";             stateColor = ImVec4(0.95f, 0.55f, 0.25f, 1.0f); break;
+    case ECompositionInstanceState::MissingAsset: stateLabel = "Asset missing";           stateColor = ImVec4(0.95f, 0.35f, 0.35f, 1.0f); break;
+    default: break;
+    }
+    ImGui::TextDisabled("State:");
+    ImGui::SameLine();
+    ImGui::TextColored(stateColor, "%s", stateLabel);
+
+    // Saving / resetting during play would bake runtime values into the asset
+    // (or rebuild entities mid-simulation), so both are editor-time only.
+    const auto* app        = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+    const bool  simulating = app && (app->isSimulating() || app->isPaused());
+    const bool  hasAsset   = asset && asset->isValid();
+
+    bool replaced = false;
+    const float buttonWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
+
+    ImGui::BeginDisabled(simulating || !hasAsset);
+    if (ImGui::Button("Save##comp", ImVec2(buttonWidth, 0)))
+        MCompositionUtility::saveInstance(root);
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("Write this instance to the .comp and update every other unmodified instance.");
+
+    ImGui::SameLine();
+    if (ImGui::Button("Reset##comp", ImVec2(buttonWidth, 0)))
+        replaced = MCompositionUtility::resetInstance(root) != nullptr;
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("Discard changes and rebuild this instance from the .comp.\n"
+                          "Name, enabled state and root transform are kept.");
+    ImGui::EndDisabled();
+
+    ImGui::SameLine();
+    ImGui::BeginDisabled(simulating);
+    if (ImGui::Button("Unlink##comp", ImVec2(buttonWidth, 0)))
+        MCompositionUtility::unlink(root);
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("Break the link to the .comp — the entities stay as plain entities.");
+    ImGui::EndDisabled();
+
+    return replaced;
 }
 
 // ---------------------------------------------------------------------------
@@ -543,4 +647,4 @@ bool MSpatialEntityInspectorDrawer::drawXYComponent(const SString& label, SVecto
     ImGui::EndTable();
     ImGui::PopStyleVar();
     return res1 || res2;
-}
+}

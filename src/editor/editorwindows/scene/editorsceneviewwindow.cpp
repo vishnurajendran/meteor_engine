@@ -15,6 +15,7 @@
 #include "core/graphics/core/render-pipeline/stages/composite/composite_stage.h"
 #include "default_engine_icon_paths.h"
 #include "editor/app/editorapplication.h"
+#include "editor/editor_utils/asset_drop_spawner.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/settings/editor_settings.h"
 #include "scene_raycast.h"
@@ -215,31 +216,22 @@ void MEditorSceneViewWindow::handleDragDropBehaviour()
         if (const ImGuiPayload* payload =
                 ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
         {
-            SString droppedId(static_cast<const char*>(payload->Data));
-            const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetById<MStaticMeshAsset>(droppedId);
+            const SString droppedId(static_cast<const char*>(payload->Data));
 
-            if (asset)
+            // Raycast BEFORE spawning so the new entity can't be hit by its own ray.
+            auto* camera = MViewManagement::getFirstActiveCamera();
+            auto* scene  = MSceneManager::getSceneManagerInstance()->getActiveScene();
+            SVector3 rayOrigin, rayDir;
+
+            if (camera && scene && MAssetDropSpawner::canSpawn(droppedId) &&
+                screenPointToRay(camera, ImGui::GetMousePos(), rayOrigin, rayDir))
             {
-                // Raycast from the mouse position into the scene.
-                auto* camera = MViewManagement::getFirstActiveCamera();
-                auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+                const SRaycastHit hit = SceneRaycast::castRay(scene, rayOrigin, rayDir);
 
-                if (camera && scene)
-                {
-                    SVector3 rayOrigin, rayDir;
-
-                    if (screenPointToRay(camera, ImGui::GetMousePos(), rayOrigin, rayDir))
-                    {
-                        SRaycastHit hit = SceneRaycast::castRay(scene, rayOrigin, rayDir);
-
-                        auto* entity = MSpatialEntity::createInstance<MStaticMeshEntity>(
-                            asset->getName());
-                        entity->setStaticMeshAsset(asset);
-                        entity->setWorldPosition(hit.point);
-
-                        MEditorApplication::SelectedObject = entity;
-                    }
-                }
+                // Mesh → static mesh entity, audio clip → audio source,
+                // .comp → composition instance. Selected by the spawner.
+                if (MSpatialEntity* entity = MAssetDropSpawner::spawn(droppedId))
+                    entity->setWorldPosition(hit.point);
             }
         }
         ImGui::EndDragDropTarget();
@@ -798,4 +790,4 @@ SString MEditorSceneViewWindow::getCurrentTransformModeText() const
         case ImGuizmo::WORLD: return "World";
         default:              return "???";
     }
-}
+}

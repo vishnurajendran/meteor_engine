@@ -19,6 +19,62 @@
 #include "core/utils/fileio.h"
 #include "default_engine_icon_paths.h"
 #include "editor/editor_utils/editor_utility.h"
+#include "editor/editor_utils/entity_duplicator.h"
+#include "core/engine/composition/composition_asset.h"
+#include "core/engine/composition/composition_utility.h"
+#include "core/engine/entities/spatial/spatial.h"
+#include "core/utils/logger.h"
+
+namespace
+{
+// Saves `entity`'s subtree as "<dir>/<entity name>.comp" (unique name), registers
+// the new asset and turns `entity` into an instance of it.
+void createCompositionFromEntity(MSpatialEntity* entity, const SString& dir)
+{
+    if (!entity || !MEntityDuplicator::canDuplicate(entity))
+        return;
+
+    if (dir.empty())
+    {
+        MWARN("Composition:: open a folder in the asset browser before creating a composition");
+        return;
+    }
+
+    auto* editorAM = dynamic_cast<MEditorAssetManager*>(
+        MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+    if (!editorAM)
+        return;
+
+    // Entity names can contain characters that aren't valid in file names.
+    std::string base = entity->getName().str();
+    for (char& c : base)
+        if (std::strchr("\\/:*?\"<>|", c))
+            c = '_';
+    if (base.empty())
+        base = "Composition";
+
+    const std::string ext = std::string(".") + MCompositionAsset::FILE_EXTENSION;
+    SString path = MAssetPath::normalize(dir + "/" + SString(base.c_str()) + SString(ext.c_str()));
+    for (int i = 1; MAssetSources::getActive()->exists(path); ++i)
+        path = MAssetPath::normalize(dir + "/" + SString(base.c_str()) + "_" + SString::fromInt(i) + SString(ext.c_str()));
+
+    if (!MCompositionUtility::writeNewAsset(entity, path))
+        return;
+
+    // Register now (pings it in the browser) instead of waiting for the watcher.
+    if (!editorAM->onFileAdded(path))
+    {
+        MERROR(SString("Composition:: created but failed to import ") + path);
+        return;
+    }
+
+    if (const auto asset = editorAM->getAsset<MCompositionAsset>(path))
+    {
+        MCompositionUtility::link(entity, asset.get());
+        MLOG(SString::format("Composition:: created {0} from '{1}'", path, entity->getName()));
+    }
+}
+} // namespace
 
 // --- Colour palette ------------------------------------------------------------
 static constexpr ImU32 COL_PANEL_BG          = IM_COL32(30,  30,  30,  255);
@@ -297,6 +353,16 @@ void MEditorAssetWindow::onGui(float deltaTime)
     drawBreadcrumbs();
     drawContentArea();
     ImGui::EndChild();
+
+    // Drop an entity from the hierarchy onto the browser to save it as a .comp
+    // in the current folder. The child window is the last item, so it is the target.
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_ENTITY"))
+            createCompositionFromEntity(*static_cast<MSpatialEntity**>(payload->Data),
+                                        getCreateTargetDir(nullptr));
+        ImGui::EndDragDropTarget();
+    }
 
     // Modal popups - drawn at window scope so they aren't clipped.
     drawDeleteConfirmModal();
@@ -1705,4 +1771,4 @@ void MEditorAssetWindow::doAssetDragSource(SString key,
 
         ImGui::EndDragDropSource();
     }
-}
+}

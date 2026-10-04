@@ -24,6 +24,8 @@
 #include "editor/app/editorapplication.h"
 #include "editor/editor_utils/engine_textures.h"
 #include "editor/editor_utils/entity_duplicator.h"
+#include "editor/editor_utils/asset_drop_spawner.h"
+#include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/window/menubar/menubartree.h"
 
 // --- Palette ------------------------------------------------------------------
@@ -177,6 +179,19 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
     }
 
     ImGui::EndChild();
+
+    // Asset dropped on empty space in the tree → new entity at the scene root.
+    // Rows are smaller targets, so a drop on a row is handled by the row instead.
+    if (scene && ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload =
+                ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
+        {
+            MAssetDropSpawner::spawn(SString(static_cast<const char*>(payload->Data)));
+        }
+        ImGui::EndDragDropTarget();
+    }
+
     ImGui::PopStyleVar(3); // IndentSpacing, FramePadding, ItemSpacing
 
     ImDrawList* dl = ImGui::GetWindowDrawList();
@@ -451,6 +466,39 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
                 }
             }
             draggedEntity = dropTargetEntity = nullptr;
+        }
+
+        // Asset dragged from the asset browser — create the entity, then place
+        // it with the same zones as an entity drag: centre = child of this row,
+        // top / bottom edge = sibling before / after it.
+        if (const ImGuiPayload* payload =
+                ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
+        {
+            // spawn() puts the new entity at the END of the scene root list,
+            // so it's never before the target — no index adjustment needed.
+            if (MSpatialEntity* spawned = MAssetDropSpawner::spawn(SString(static_cast<const char*>(payload->Data))))
+            {
+                if (zone == EDropZone::Reparent)
+                {
+                    spawned->setParent(entity);
+                }
+                else
+                {
+                    const int offset = (zone == EDropZone::After) ? 1 : 0;
+                    if (auto* targetParent = entity->getParent())
+                    {
+                        auto& siblings = targetParent->getChildren();
+                        const auto it  = std::find(siblings.begin(), siblings.end(), entity);
+                        targetParent->insertChildAt(spawned, (int)(it - siblings.begin()) + offset);
+                    }
+                    else if (auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene())
+                    {
+                        auto& roots   = scene->getRootEntities();
+                        const auto it = std::find(roots.begin(), roots.end(), entity);
+                        scene->insertRootEntityAt(spawned, (int)(it - roots.begin()) + offset);
+                    }
+                }
+            }
         }
         ImGui::EndDragDropTarget();
     }
