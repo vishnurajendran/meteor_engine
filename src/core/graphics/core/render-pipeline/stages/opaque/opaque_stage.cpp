@@ -91,6 +91,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0 || !item.material) continue;
+        if (!item.cameraVisible) continue; // outside the camera frustum
 
         item.material->bindMaterial();
         setMVP(item.transform);

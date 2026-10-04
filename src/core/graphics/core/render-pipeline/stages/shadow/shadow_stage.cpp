@@ -14,6 +14,7 @@
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/graphics/core/shader/shaderasset.h"
+#include "core/utils/frustum.h"
 #include "core/utils/logger.h"
 #include "shadow_stage.h"
 
@@ -87,6 +88,16 @@ static void setGLDepthOnlyState()
     glCullFace(GL_BACK);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(2.0f, 4.0f); // stronger offset reduces shadow acne artifacts
+}
+
+// Per-light shadow culling — true if the item can land in this light's
+// shadow map. Deliberately ignores item.cameraVisible: a caster outside the
+// camera view can still throw a shadow into it.
+static bool passesShadowCull(const SRenderItem& item, const SFrustum* frustum)
+{
+    if (!frustum) return true;
+    if (item.bounds.min == item.bounds.max) return true; // no bounds — never cull
+    return frustum->testAABB(item.bounds);
 }
 
 static void restoreGLDepthOnlyState()
@@ -212,7 +223,12 @@ void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
     v.setMat4Val(lightView); p.setMat4Val(lightProj);
     shadowShader->setPropertyValue("view",       v);
     shadowShader->setPropertyValue("projection", p);
-    drawItems(pipeline, shadowShader, nullptr, true);
+
+    // Cull against the shadow map's ortho box — anything inside it can cast
+    // into the map, whether or not the camera sees it.
+    SFrustum lightFrustum;
+    lightFrustum.extractFromVP(shadowBuffer->lightSpaceMatrix);
+    drawItems(pipeline, shadowShader, nullptr, true, &lightFrustum);
 
     restoreGLDepthOnlyState();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -286,7 +302,10 @@ void MShadowStage::renderSpotShadows(IRenderPipeline* const pipeline)
             if (projLoc >= 0) glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(lightProj));
             if (viewLoc >= 0) glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(lightView));
         }
-        drawItemsRaw(pipeline, pointShadowProgram, true);
+        // Cull against the spot's perspective frustum (cone bounded by range).
+        SFrustum spotFrustum;
+        spotFrustum.extractFromVP(lightProj * lightView);
+        drawItemsRaw(pipeline, pointShadowProgram, true, &spotFrustum);
 
         glDisable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(0.f, 0.f);
@@ -374,7 +393,11 @@ void MShadowStage::renderPointShadows(IRenderPipeline* const pipeline)
             if (viewLoc >= 0)
                 glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(faceView));
 
-            drawItemsRaw(pipeline, pointShadowProgram, true);
+            // Cull per cube face — each face is a 90° frustum out to range,
+            // so an item is only drawn into the faces it can actually touch.
+            SFrustum faceFrustum;
+            faceFrustum.extractFromVP(proj * faceView);
+            drawItemsRaw(pipeline, pointShadowProgram, true, &faceFrustum);
 
             glDisable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(0.f, 0.f);
@@ -398,12 +421,13 @@ void MShadowStage::renderPointShadows(IRenderPipeline* const pipeline)
 
 void MShadowStage::drawItems(IRenderPipeline* const pipeline,
                              MShader* shader, unsigned int* rawProg,
-                             bool shadowCastersOnly)
+                             bool shadowCastersOnly, const SFrustum* cullFrustum)
 {
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
         if (shadowCastersOnly && !item.castsShadow) continue;
+        if (!passesShadowCull(item, cullFrustum)) continue;
 
         SShaderPropertyValue modelVal;
         modelVal.setMat4Val(item.transform);
@@ -422,13 +446,15 @@ void MShadowStage::drawItems(IRenderPipeline* const pipeline,
 }
 
 void MShadowStage::drawItemsRaw(IRenderPipeline* const pipeline,
-                                unsigned int prog, bool shadowCastersOnly)
+                                unsigned int prog, bool shadowCastersOnly,
+                                const SFrustum* cullFrustum)
 {
     GLint modelLoc = glGetUniformLocation(prog, "model");
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
         if (shadowCastersOnly && !item.castsShadow) continue;
+        if (!passesShadowCull(item, cullFrustum)) continue;
 
         if (modelLoc >= 0)
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(item.transform));

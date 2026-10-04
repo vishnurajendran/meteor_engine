@@ -205,6 +205,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
+        if (!item.cameraVisible) continue; // outside the camera frustum
         if (item.getShadingMode() == MMaterial::ShadingMode::Unlit) continue;
 
         SShaderPropertyValue modelVal;

@@ -93,6 +93,7 @@ void MDepthRenderStage::render(IRenderPipeline* const pipeline)
     for (const SRenderItem& item : pipeline->getRenderItems())
     {
         if (item.vao == 0) continue;
+        if (!item.cameraVisible) continue; // outside the camera frustum
 
         SShaderPropertyValue modelVal;
         modelVal.setMat4Val(item.transform);

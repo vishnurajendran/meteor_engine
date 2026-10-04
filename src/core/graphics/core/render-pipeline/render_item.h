@@ -44,6 +44,14 @@ struct SRenderItem
     // Set per-entity via MStaticMeshEntity::setCastsShadow().
     bool      castsShadow  = true;
 
+    // Set every frame by MRenderPipeline::preRender() — false when the bounds
+    // are entirely outside the active camera's frustum.
+    // Camera-view stages (depth, opaque, lighting) skip items where this is
+    // false. The shadow stage ignores it and culls against each light's own
+    // volume instead — an object the camera can't see can still cast a
+    // shadow into view.
+    bool      cameraVisible = true;
+
     // World-space bounds - used by MLightSystemManager::prepareDynamicLights()
     // to query which spot/point lights affect this object.
     AABB      bounds;
