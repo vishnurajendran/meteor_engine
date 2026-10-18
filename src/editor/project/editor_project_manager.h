@@ -23,6 +23,9 @@
 #ifndef EDITOR_PROJECT_MANAGER_H
 #define EDITOR_PROJECT_MANAGER_H
 
+#include <cstdint>
+#include <limits>
+
 #include "core/project/project_descriptor.h"
 
 class MEditorAssetManager;
@@ -37,6 +40,12 @@ public:
     // Per-project folders created on open (relative to PROJECT_PATH).
     static constexpr const char* PROJECT_TEMPLATES_DIR = "templates";
 
+    // Generated per project: every script's class (base, cast, members) and
+    // one typed import() overload per script, so LuaLS autocompletes names
+    // and members. Lives under the symbols folder VS Code already loads as a
+    // library.
+    static constexpr const char* SCRIPT_INDEX_FILE = ".engine_data/scripting/symbols/lua/script_index.lua";
+
     bool prepare();
     void applyToAssetManager(MEditorAssetManager& assetManager) const;
 
@@ -46,6 +55,10 @@ public:
     // Writes the current descriptor back to the .mtproj (no-op without one).
     bool saveDescriptor() const;
 
+    // Rewrites SCRIPT_INDEX_FILE when scripts were added, changed or removed.
+    // Cheap to call every frame — it compares one counter until something moves.
+    void syncScriptIndex();
+
 private:
     void ensureDirectories() const;
     void syncEngineScripting() const;
@@ -54,6 +67,7 @@ private:
 
     SProjectDescriptor descriptor;
     bool               prepared = false;
+    uint64_t           scriptIndexGeneration = std::numeric_limits<uint64_t>::max(); // never written yet
 };
 
 #endif // EDITOR_PROJECT_MANAGER_H

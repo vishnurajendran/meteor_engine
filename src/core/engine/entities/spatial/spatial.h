@@ -201,7 +201,7 @@ public:
     // without resolving through the asset manager. Safe to call even when the
     // asset manager subsystem is unavailable.
     [[nodiscard]] SString getScriptAssetId() const;
-    ~MSpatialEntity() override = default;
+    ~MSpatialEntity() override;
 
 private:
     void ensureScript();
@@ -209,6 +209,7 @@ private:
     void scriptTick(float dt);
     void scriptFixedTick(float fdt);
     void scriptStop();
+    void releaseScript();
 
 protected:
     void onSerialise(pugi::xml_node& node) override;
@@ -244,4 +245,4 @@ private:
     bool onExitCalled = false;
 };
 
-#endif // SPATIAL_H
+#endif // SPATIAL_H

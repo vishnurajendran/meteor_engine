@@ -166,6 +166,27 @@ SVector3 MSpatialEntity::getRightVector() const
 SVector3 MSpatialEntity::getUpVector() const { return glm::normalize(getWorldRotation() * SVector3(0, 1, 0)); }
 
 
+MSpatialEntity::~MSpatialEntity()
+{
+    // The script instance is owned by this entity — without this it leaked on
+    // every scene close (i.e. every Play / Stop in the editor).
+    releaseScript();
+}
+
+void MSpatialEntity::releaseScript()
+{
+    if (!scriptInstance)
+        return;
+
+    // The scripting engine — and its Lua VM — may already be gone if this
+    // entity outlives subsystem cleanup at shutdown. Releasing then would
+    // touch a closed lua_State, so we skip it; the OS reclaims it on exit.
+    if (auto* engine = MEngineSubsystemRegistry::getSubsystem<IScriptingEngineSubsystem>())
+        engine->releaseScriptInstance(scriptInstance);
+
+    scriptInstance = nullptr;
+}
+
 void MSpatialEntity::ensureScript()
 {
     if (scriptInstance != nullptr)
@@ -245,9 +266,9 @@ void MSpatialEntity::scriptFixedTick(float fdt)
 
 void MSpatialEntity::scriptStop()
 {
-    if (!MApplication::getAppInstance()->isSimulating())
-        return;
-
+    // No isSimulating() check: an instance only exists if play mode created
+    // it, and when Stop is pressed the state is already "Stopped" by the time
+    // the scene closes — the check made onStop never run.
     if (scriptInstance)
     {
         SDynValue outVar;
@@ -274,10 +295,7 @@ void MSpatialEntity::setScriptAssetRef(MAsset* asset)
     if (scriptInstance)
     {
         scriptStop();
-        auto* engine = MEngineSubsystemRegistry::getSubsystem<IScriptingEngineSubsystem>();
-        if (engine)
-            engine->releaseScriptInstance(scriptInstance);
-        scriptInstance = nullptr;
+        releaseScript();
     }
 
     // TAssetRef's raw-pointer constructor captures both GUID and path.
@@ -511,4 +529,4 @@ void MSpatialEntity::propagateActiveState(bool active)
         if (child && child->enabled)
             child->propagateActiveState(active);
     }
-}
+}

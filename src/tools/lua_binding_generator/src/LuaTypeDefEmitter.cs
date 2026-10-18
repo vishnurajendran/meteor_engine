@@ -223,6 +223,7 @@ public static class LuaTypeDefEmitter
         sb.AppendLine("-- ---- Script System ----");
         sb.AppendLine();
         sb.AppendLine("---@class Behaviour");
+        sb.AppendLine("---@overload fun(obj: any): Behaviour|nil");
         sb.AppendLine("Behaviour = {}");
         sb.AppendLine();
         sb.AppendLine("function Behaviour:onStart() end");
@@ -230,13 +231,38 @@ public static class LuaTypeDefEmitter
         sb.AppendLine("function Behaviour:onFixedTick(dt) end");
         sb.AppendLine("function Behaviour:onStop() end");
         sb.AppendLine();
-        sb.AppendLine("--- Create a new class extending this one.");
+        sb.AppendLine("--- Create a new class extending this one. Scripts declare classes with CLASS instead,");
+        sb.AppendLine("--- which calls this and also makes the class importable.");
+        sb.AppendLine("---@param t table|nil");
         sb.AppendLine("---@return table");
-        sb.AppendLine("function Behaviour:extend() end");
+        sb.AppendLine("function Behaviour:extend(t) end");
+        sb.AppendLine();
+
+        // Script declaration functions. The engine gives each script its own
+        // copy while the file loads; these stubs are for LuaLS only.
+        sb.AppendLine("--- Sets the script's module (namespace). Optional, once, before CLASS.");
+        sb.AppendLine("--- Without it the module is meteor.game. Use a string literal: MODULE \"game.camera\"");
+        sb.AppendLine("---@param name string");
+        sb.AppendLine("function MODULE(name) end");
+        sb.AppendLine();
+        sb.AppendLine("--- Declares the script's class: `local X = CLASS(\"X\", Behaviour) { ... }`.");
+        sb.AppendLine("--- The full name `<module>.X` is what import() takes. Calling the class casts:");
+        sb.AppendLine("--- `X(obj)` returns obj if it is an X (or a subclass), otherwise nil.");
+        sb.AppendLine("---@generic T");
+        sb.AppendLine("---@param name `T` the class name, as a string literal");
+        sb.AppendLine("---@param base Behaviour|any Behaviour, or a class from import()");
+        sb.AppendLine("---@return fun(members: table): T");
+        sb.AppendLine("function CLASS(name, base) end");
         sb.AppendLine();
 
         // Script access methods (manually bound on MSpatialEntity)
-        sb.AppendLine("--- Get the script table from this entity for cross-script access.");
+        // import() and every script class are declared in script_index.lua,
+        // which the editor generates per project.
+        sb.AppendLine("--- Returns this entity's script instance. Cast it to its class to use it:");
+        sb.AppendLine("--- `CameraController(entt:getScript())` returns nil if the script is something else.");
+        // Deliberately `table`: LuaLS can't see members written inside the
+        // Behaviour:extend { ... } table, so a narrower type would flag every
+        // method call on an un-cast script as an undefined field.
         sb.AppendLine("---@return table|nil");
         sb.AppendLine("function MSpatialEntity:getScript() end");
         sb.AppendLine();

@@ -82,6 +82,9 @@ void MEditorApplication::run() {
     if (assetManagerRef)
         assetManagerRef->tickHotReload();
 
+    // keep VS Code's import() index in step with the project's scripts
+    projectManager.syncScriptIndex();
+
     window->update(deltaTime);
 
     endFrame();

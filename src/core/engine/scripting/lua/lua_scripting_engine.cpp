@@ -7,7 +7,10 @@
 #include "engine_lua_bindings.h"
 #include "lua_script_instance.h"
 #include "lua_script_asset.h"
+#include "lua_script_registry.h"
 #include <filesystem>
+#include <memory>
+#include <stdexcept>
 
 void MLuaScriptingEngineSubsystem::init()
 {
@@ -18,6 +21,7 @@ void MLuaScriptingEngineSubsystem::init()
 
     MLuaEngineBindings::BindEngineAPI(vm);
     loadEngineModules();
+    registerImport();
 
     MLOG("MLuaScriptingEngineSubsystem::Scripting engine initialized");
     initialized = true;
@@ -112,6 +116,8 @@ void MLuaScriptingEngineSubsystem::tick(float deltaTime)
 void MLuaScriptingEngineSubsystem::cleanup()
 {
     MLOG("MLuaScriptingEngineSubsystem::cleanup started");
+    // Release our references first so the classes can actually be collected.
+    classCache.clear();
     vm.collect_garbage();
     initialized = false;
     MLOG("MLuaScriptingEngineSubsystem::cleanup completed");
@@ -122,16 +128,25 @@ IScriptInstance* MLuaScriptingEngineSubsystem::createScriptInstance(IScriptAsset
     if (!initialized || !asset || !owner)
         return nullptr;
 
-    // Owner is passed to constructor, stored in the instance, and
-    // prepended as 'self' to every lifecycle call automatically.
-    auto instance = new MLuaScriptInstance(vm, asset->getScriptSrc(), owner);
-
-    if (!instance->isValid())
+    auto* luaAsset = dynamic_cast<MLuaScriptAsset*>(asset);
+    if (!luaAsset)
     {
-        MERROR("Failed to create script instance. Script must return a class table.");
-        delete instance;
+        MERROR("MLuaScriptingEngineSubsystem::createScriptInstance: asset is not a Lua script");
         return nullptr;
     }
+
+    SString error;
+    const SLuaClass* scriptClass = getOrLoadClass(luaAsset, error);
+    if (!scriptClass)
+    {
+        MERROR(SString::format("Script '{0}' was not started on '{1}': {2}",
+                               luaAsset->getPath(), owner->getName(), error));
+        return nullptr;
+    }
+
+    // The instance is { __entity = owner } with the class as its metatable,
+    // and is passed as 'self' to every lifecycle call.
+    auto instance = new MLuaScriptInstance(vm, scriptClass->cls, scriptClass->env, owner);
 
     MLOG("MLuaScriptingEngineSubsystem::createScriptInstance SUCCESS");
     return instance;
@@ -140,4 +155,288 @@ IScriptInstance* MLuaScriptingEngineSubsystem::createScriptInstance(IScriptAsset
 void MLuaScriptingEngineSubsystem::releaseScriptInstance(IScriptInstance* scriptInstance)
 {
     delete scriptInstance;
+}
+
+// ---------------------------------------------------------------------------
+// Class cache
+// ---------------------------------------------------------------------------
+
+SString MLuaScriptingEngineSubsystem::displayName(MLuaScriptAsset* asset)
+{
+    const auto& declaration = asset->getDeclaration();
+    return declaration.isImportable() ? declaration.fullName : asset->getPath();
+}
+
+void MLuaScriptingEngineSubsystem::syncClassCache()
+{
+    const uint64_t generation = MLuaScriptRegistry::getGeneration();
+    if (generation == classCacheGeneration)
+        return;
+
+    // Never flush in the middle of a compile — the classes on the loading
+    // stack are referenced further up the call chain. Scripts only change
+    // between frames, so this is purely defensive.
+    if (!loadingStack.empty())
+        return;
+
+    // Instances that already exist keep a reference to their old class, so
+    // they keep working until the next Play reloads the scene.
+    classCache.clear();
+    classCacheGeneration = generation;
+}
+
+const MLuaScriptingEngineSubsystem::SLuaClass* MLuaScriptingEngineSubsystem::getOrLoadClass(
+    MLuaScriptAsset* asset, SString& outError)
+{
+    syncClassCache();
+
+    const SString path = asset->getPath();
+    // A failed compile is logged once, in full, when it happens — everything
+    // that depends on the script just points back at that error.
+    const auto failedMessage = [&] {
+        return SString::format("failed to load — see the error logged for '{0}'", displayName(asset));
+    };
+
+    if (const auto it = classCache.find(path); it != classCache.end())
+    {
+        if (!it->second.error.empty())
+        {
+            outError = failedMessage();
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    // An import cycle shows up as the script already being mid-compile.
+    if (std::ranges::find(loadingStack, asset) != loadingStack.end())
+    {
+        std::string chain;
+        bool inCycle = false;
+        for (auto* loading : loadingStack)
+        {
+            inCycle = inCycle || loading == asset;
+            if (inCycle)
+                chain += displayName(loading).str() + " -> ";
+        }
+        chain += displayName(asset).str();
+        // Not cached: the cycle belongs to this call chain, not the script.
+        outError = SString("import cycle: " + chain + " (import inside a function to break it)");
+        return nullptr;
+    }
+
+    loadingStack.push_back(asset);
+    SLuaClass compiled = compileClass(asset);   // may re-enter through import()
+    loadingStack.pop_back();
+
+    if (!compiled.error.empty())
+        MERROR(SString::format("Script '{0}' failed to load: {1}", displayName(asset), compiled.error));
+
+    auto& entry = classCache[path] = std::move(compiled);
+    if (!entry.error.empty())
+    {
+        outError = failedMessage();
+        return nullptr;
+    }
+    return &entry;
+}
+
+namespace
+{
+// What MODULE / CLASS recorded while one script ran. Checked against
+// the parsed declaration afterwards, so the name import() resolves by is the
+// name the script really declared.
+struct SRuntimeDeclaration
+{
+    std::string nameSpace = MLuaScriptRegistry::DEFAULT_NAMESPACE;
+    std::string className;
+    bool        moduleCalled  = false;
+    bool        classDeclared = false;
+    sol::table  cls;          // set when the member table was supplied
+};
+
+// Gives one script environment its own MODULE and CLASS. They are
+// per-script rather than global because a script can import() another one
+// between its MODULE and CLASS lines — a shared global would pick up
+// the imported script's MODULE.
+void bindDeclarationFunctions(sol::environment& env, const std::shared_ptr<SRuntimeDeclaration>& declared)
+{
+    env.set_function("MODULE", [declared](const std::string& nameSpace)
+    {
+        if (declared->classDeclared)
+            throw std::runtime_error("MODULE must come before CLASS");
+        if (declared->moduleCalled)
+            throw std::runtime_error("MODULE can only be used once per script");
+        declared->moduleCalled = true;
+        declared->nameSpace    = nameSpace;
+    });
+
+    // CLASS("Name", Base) returns a function taking the member table,
+    // so the call reads CLASS("Name", Base) { ... }.
+    env.set_function("CLASS", [declared](sol::this_state ts, const std::string& className,
+                                                sol::object base) -> sol::object
+    {
+        if (declared->classDeclared)
+            throw std::runtime_error("CLASS can only be used once per script");
+
+        sol::protected_function extend;
+        if (base.get_type() == sol::type::table)
+            extend = base.as<sol::table>()["extend"];
+        if (!extend.valid())
+            throw std::runtime_error("CLASS(\"" + className + "\", base): base must be Behaviour or a script class");
+
+        declared->classDeclared = true;
+        declared->className     = className;
+
+        sol::table baseClass = base.as<sol::table>();
+        return sol::make_object(sol::state_view(ts), [declared, baseClass, extend](sol::object members) -> sol::table
+        {
+            if (declared->cls.valid())
+                throw std::runtime_error("CLASS: the member table was already given");
+
+            auto created = members.get_type() == sol::type::table ? extend(baseClass, members) : extend(baseClass);
+            if (!created.valid())
+            {
+                sol::error err = created;
+                throw std::runtime_error(err.what());
+            }
+
+            sol::table cls = created;
+            cls.raw_set("__className", declared->className);
+            declared->cls = cls;
+            return cls;
+        });
+    });
+}
+} // namespace
+
+MLuaScriptingEngineSubsystem::SLuaClass MLuaScriptingEngineSubsystem::compileClass(MLuaScriptAsset* asset)
+{
+    SLuaClass result;
+    result.env = sol::environment(vm, sol::create, vm.globals());
+
+    auto declared = std::make_shared<SRuntimeDeclaration>();
+    bindDeclarationFunctions(result.env, declared);
+
+    // A chunk name starting with '@' makes Lua report errors as path:line.
+    const std::string chunkName = "@" + asset->getPath().str();
+    auto loaded = vm.script(asset->getScriptSrc().str(), result.env, sol::script_pass_on_error, chunkName);
+
+    // Declaring only happens while the file loads — methods calling these
+    // later get a plain "attempt to call a nil value". Clearing them also
+    // drops `declared`'s reference to the class: class methods keep the
+    // environment alive, so a reference back through these closures would
+    // be a cycle Lua's collector can't see through.
+    result.env["MODULE"]       = sol::lua_nil;
+    result.env["CLASS"] = sol::lua_nil;
+    sol::table declaredClass = declared->cls;
+    declared->cls = sol::table();
+
+    if (!loaded.valid())
+    {
+        sol::error err = loaded;
+        result.error = err.what();
+        return result;
+    }
+
+    const auto& declaration = asset->getDeclaration();
+
+    if (declared->classDeclared && !declaredClass.valid())
+    {
+        // Plain concatenation: SString::format would read "{ ... }" as a placeholder.
+        result.error = SString("CLASS(\"" + declared->className + "\", ...) needs its member table: CLASS(\""
+                               + declared->className + "\", Base) { ... }");
+        return result;
+    }
+
+    if (loaded.get_type() != sol::type::table)
+    {
+        result.error = "the script must end with 'return ClassName'";
+        return result;
+    }
+
+    sol::table cls = loaded;
+
+    if (declared->classDeclared)
+    {
+        if (cls.pointer() != declaredClass.pointer())
+        {
+            result.error = "the script must return the class created by CLASS";
+            return result;
+        }
+
+        // The parse and the run must agree, or import() would resolve a name
+        // the script never really declared.
+        const std::string ranAs = declared->nameSpace + "." + declared->className;
+        if (!declaration.isImportable() || declaration.fullName.str() != ranAs)
+        {
+            result.error = SString::format("the script declared '{0}' when it ran, but its source reads as '{1}' — "
+                                           "keep MODULE and CLASS at the top level with literal names",
+                                           SString(ranAs),
+                                           declaration.isImportable() ? declaration.fullName : SString("no class"));
+            return result;
+        }
+    }
+
+    else if (declaration.isImportable())
+    {
+        // The source has a CLASS, but it never ran (e.g. inside an if).
+        result.error = SString::format("the source declares '{0}', but CLASS never ran — "
+                                       "keep it at the top level of the script", declaration.fullName);
+        return result;
+    }
+
+    // Behaviour:extend sets __index on the class; without it an instance
+    // could not find any method.
+    if (cls.raw_get<sol::object>("__index").get_type() != sol::type::table)
+    {
+        result.error = "the returned table is not a class — declare it with CLASS(\"Name\", Behaviour) { ... }";
+        return result;
+    }
+
+    // Identification for debugging (print(getmetatable(obj).__fullName)).
+    cls.raw_set("__scriptPath", asset->getPath().str());
+    if (declaration.isImportable())
+        cls.raw_set("__fullName", declaration.fullName.str());
+
+    result.cls = cls;
+    return result;
+}
+
+// ---------------------------------------------------------------------------
+// import()
+// ---------------------------------------------------------------------------
+
+void MLuaScriptingEngineSubsystem::registerImport()
+{
+    // Errors are thrown as C++ exceptions: sol2 turns them into Lua errors at
+    // the call boundary. luaL_error would longjmp straight over the C++
+    // destructors in this function.
+    vm.set_function("import", [this](sol::this_state ts, const std::string& fullName) -> sol::table
+    {
+        lua_State* L = ts;
+        // "path:line: " of the import() call, so the error points at it.
+        luaL_where(L, 1);
+        const std::string where = lua_tostring(L, -1);
+        lua_pop(L, 1);
+
+        const auto scripts = MLuaScriptRegistry::find(fullName);
+        if (scripts.empty())
+            throw std::runtime_error(where + "import: no script declares '" + fullName + "'");
+
+        if (scripts.size() > 1)
+        {
+            std::string paths;
+            for (const auto* script : scripts)
+                paths += "\n    " + script->getPath().str();
+            throw std::runtime_error(where + "import: '" + fullName
+                                     + "' is declared by more than one script:" + paths);
+        }
+
+        SString error;
+        const SLuaClass* scriptClass = getOrLoadClass(scripts.front(), error);
+        if (!scriptClass)
+            throw std::runtime_error(where + "import: cannot load '" + fullName + "': " + error.str());
+
+        return scriptClass->cls;
+    });
 }
