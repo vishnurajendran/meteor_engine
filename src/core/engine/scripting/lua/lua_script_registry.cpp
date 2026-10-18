@@ -16,6 +16,7 @@
 
 std::unordered_map<SString, std::vector<MLuaScriptAsset*>> MLuaScriptRegistry::scriptsByName;
 std::unordered_map<MLuaScriptAsset*, SString> MLuaScriptRegistry::nameByScript;
+std::unordered_set<MLuaScriptAsset*> MLuaScriptRegistry::allScripts;
 uint64_t MLuaScriptRegistry::generation = 0;
 
 namespace
@@ -515,6 +516,7 @@ void MLuaScriptRegistry::registerScript(MLuaScriptAsset* asset)
         return;
 
     removeEntry(asset);
+    allScripts.insert(asset);
     // Bumped even for scripts that are not importable - their compiled class
     // is cached by path and must be dropped too.
     ++generation;
@@ -543,6 +545,7 @@ void MLuaScriptRegistry::unregisterScript(MLuaScriptAsset* asset)
         return;
 
     removeEntry(asset);
+    allScripts.erase(asset);
     ++generation;
 }
 
@@ -550,6 +553,13 @@ std::vector<MLuaScriptAsset*> MLuaScriptRegistry::find(const SString& fullName)
 {
     const auto it = scriptsByName.find(fullName);
     return it == scriptsByName.end() ? std::vector<MLuaScriptAsset*>{} : it->second;
+}
+
+std::vector<MLuaScriptAsset*> MLuaScriptRegistry::getAllScripts()
+{
+    std::vector<MLuaScriptAsset*> scripts(allScripts.begin(), allScripts.end());
+    std::ranges::sort(scripts, [](const auto* a, const auto* b) { return a->getPath() < b->getPath(); });
+    return scripts;
 }
 
 std::string MLuaScriptRegistry::buildTypeIndex()

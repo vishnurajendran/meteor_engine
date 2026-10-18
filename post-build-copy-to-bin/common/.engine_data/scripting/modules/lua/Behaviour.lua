@@ -3,18 +3,18 @@
 --
 -- A script file defines a CLASS:
 --
---   MODULE "game.camera"                   (optional — default meteor.game)
+--   MODULE "game.camera"                   (optional - default meteor.game)
 --
---   local CameraController = DEFINE_CLASS("CameraController", Behaviour) {
+--   local CameraController = CLASS("CameraController", Behaviour) {
 --       speed = 5,
 --       move = function(self, x, y) ... end,
 --   }
 --
 --   return CameraController
 --
--- MODULE and DEFINE_CLASS are provided by the engine while the file loads
+-- MODULE and CLASS are provided by the engine while the file loads
 -- (one copy per script). The engine also reads them from the file text, so
--- names must be string literals. DEFINE_CLASS calls Base:extend below.
+-- names must be string literals. CLASS calls Base:extend below.
 --
 -- The engine compiles each file once and gives every entity its own
 -- INSTANCE: a small table { __entity = <owner> } whose metatable is the
@@ -67,8 +67,8 @@ function Behaviour:myEntity()
 end
 
 --- Create a new class extending this one. The table holds the class's
---- fields and methods. Calling the returned class casts — see above.
---- Scripts use DEFINE_CLASS, which calls this and makes the class importable.
+--- fields and methods. Calling the returned class casts - see above.
+--- Scripts use CLASS, which calls this and makes the class importable.
 ---@param t table|nil
 ---@return table
 function Behaviour:extend(t)

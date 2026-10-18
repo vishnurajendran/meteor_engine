@@ -47,15 +47,25 @@ static bool handleFuncResult(const sol::protected_function_result& funcResult, S
 // --- Instance Implementation ---
 
 MLuaScriptInstance::MLuaScriptInstance(sol::state& vm, const sol::table& scriptClass,
-                                       const sol::environment& classEnv, MSpatialEntity* owner)
-    : env(classEnv), classTable(scriptClass), owner(owner)
+                                       const sol::environment& classEnv, MSpatialEntity* owner,
+                                       MLuaScriptContext* context)
+    : env(classEnv), classTable(scriptClass), owner(owner), context(context)
 {
     // The script is already compiled (MLuaScriptingEngineSubsystem caches
-    // one class per file) — an instance is just a table pointing at it.
+    // one class per file) - an instance is just a table pointing at it.
     instanceTable = vm.create_table();
     instanceTable["__entity"] = owner;
     instanceTable[sol::metatable_key] = classTable;
     valid = true;
+}
+
+void MLuaScriptInstance::detach()
+{
+    instanceTable = sol::table();
+    classTable    = sol::table();
+    env           = sol::environment();
+    context       = nullptr;
+    valid         = false;
 }
 
 // Named-parameter form
@@ -120,6 +130,8 @@ bool MLuaScriptInstance::callFunc(const SString& funcName, const std::vector<SDy
 
 void MLuaScriptInstance::setEnvVar(const SString& name, const SDynValue& value)
 {
+    if (!valid)
+        return;
     sol::state_view vview = env.lua_state();
     env[name.c_str()] = DynValueToSolObject(value, vview);
 }

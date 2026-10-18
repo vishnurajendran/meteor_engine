@@ -1,14 +1,14 @@
 //
 // lua_script_registry.h
 //
-// Index of every loaded Lua script asset by its declared full name — what
+// Index of every loaded Lua script asset by its declared full name - what
 // import() resolves against.
 //
 // The full name is read from the script's header as text (see
 // lua_script_declaration.h); the script is never executed to find it. That
 // keeps the index complete before any script runs, so import() works no
 // matter what order scripts load in, and a bad declaration is reported as
-// soon as the file is saved — not when play mode reaches it.
+// soon as the file is saved - not when play mode reaches it.
 //
 // Every register / unregister bumps a generation counter:
 //   - the Lua engine compares it to its own and drops its compiled class
@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "lua_script_declaration.h"
@@ -45,9 +46,13 @@ public:
     static void registerScript(MLuaScriptAsset* asset);
     static void unregisterScript(MLuaScriptAsset* asset);
 
-    // Every script declaring fullName — empty if unknown, more than one if
+    // Every script declaring fullName - empty if unknown, more than one if
     // the name clashes. Clashes are never resolved silently.
     static std::vector<MLuaScriptAsset*> find(const SString& fullName);
+
+    // Every loaded script, importable or not, sorted by path - what the
+    // script refresh compiles.
+    static std::vector<MLuaScriptAsset*> getAllScripts();
 
     // The text of VS Code's script_index.lua: one ---@class block per
     // importable script (base, cast overload, members) and a typed import()
@@ -61,6 +66,7 @@ private:
 
     static std::unordered_map<SString, std::vector<MLuaScriptAsset*>> scriptsByName;
     static std::unordered_map<MLuaScriptAsset*, SString> nameByScript;
+    static std::unordered_set<MLuaScriptAsset*> allScripts;
     static uint64_t generation;
 };
 

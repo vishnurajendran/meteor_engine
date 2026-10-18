@@ -1,7 +1,7 @@
 //
 // spatial_class_macros.h
 //
-// ── Usage ─────────────────────────────────────────────────────────────────
+// -- Usage -----------------------------------------------------------------
 //
 //   // MyEntity.h
 //   class MCamera : public MSpatialEntity {
@@ -13,7 +13,7 @@
 //   // MyEntity.cpp  - ONE call per class, in the .cpp only, never in a header
 //   IMPLEMENT_CLASS(MCamera)
 //
-// ── Why the split matters ─────────────────────────────────────────────────
+// -- Why the split matters -------------------------------------------------
 //
 //   DEFINE_CLASS puts only a *declaration* of _classRegistered in the header.
 //   IMPLEMENT_CLASS puts the *definition* (with the factory lambda) in the .cpp.
@@ -36,7 +36,7 @@
 #include "core/object/type_info.h"
 #include "core/engine/entities/entity_type_registry.h"
 
-// ── DEFINE_CLASS ──────────────────────────────────────────────────────────
+// -- DEFINE_CLASS ----------------------------------------------------------
 // Place as the first item inside any concrete MSpatialEntity subclass body.
 // Injects typeInfo(), staticTypeInfo(), create(), and a *declaration* of
 // _classRegistered. The matching IMPLEMENT_CLASS in the .cpp provides the
@@ -60,7 +60,7 @@ private:                                                                       \
     /* Declaration only - definition is in IMPLEMENT_CLASS in the .cpp */     \
     static const bool _classRegistered;
 
-// ── IMPLEMENT_CLASS ───────────────────────────────────────────────────────
+// -- IMPLEMENT_CLASS -------------------------------------------------------
 // Place exactly once per class in its .cpp file.
 // At this point the class is complete, so ClassName* → MSpatialEntity* is
 // valid and the factory lambda compiles without the "incomplete type" error.
@@ -74,7 +74,7 @@ private:                                                                       \
         return true;                                                           \
     }();
 
-// ── DEFINE_ABSTRACT_CLASS ─────────────────────────────────────────────────
+// -- DEFINE_ABSTRACT_CLASS -------------------------------------------------
 // Use for abstract intermediate classes (MLightEntity, MDynamicLight, etc.)
 // Provides typeInfo() and staticTypeInfo() but no factory and no registry
 // entry - abstract classes cannot be directly instantiated.

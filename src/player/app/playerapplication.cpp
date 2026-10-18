@@ -8,6 +8,7 @@
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/audio/interfaces/engine_interface.h"
+#include "core/engine/domain/engine_domain_subsystem.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
@@ -34,6 +35,9 @@ void MPlayerApplication::registerSubsystems()
 
     // Init Physics engine
     physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
+
+    // Engine domains - the player's only domain, DOMAIN_0, is the game
+    MEngineSubsystemRegistry::registerSubsystem<MEngineDomainSubsystem>();
 
     // Init Scripting Engine
     MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();

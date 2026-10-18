@@ -26,11 +26,21 @@ void MEditorControlsButtons::simulationStartButton()
     auto windowSize = ImGui::GetWindowSize();
     ImGui::SetCursorPosX(windowSize.x / 2 - playTexture.getSize().x / 2);
 
+    // Disabled while scripts compile or have errors; the tooltip says which.
+    auto* editorApp = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+    SString blockedReason;
+    const bool canPlay = !editorApp || editorApp->canStartSimulation(blockedReason);
+
+    ImGui::BeginDisabled(!canPlay);
     if (ImGui::ImageButton("##MTR_SIM_START_BTTN", playTexture, ImVec2(playTexture.getSize().x, playTexture.getSize().y)))
     {
-        if (auto* editorApp = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance()))
+        if (editorApp)
             editorApp->startSimulation();
     }
+    ImGui::EndDisabled();
+
+    if (!canPlay && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        ImGui::SetTooltip("%s", blockedReason.c_str());
 }
 
 void MEditorControlsButtons::simulationStopButton()

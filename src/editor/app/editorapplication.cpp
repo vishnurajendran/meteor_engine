@@ -9,6 +9,8 @@
 
 #include "core/default_settings_paths.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
+#include "core/engine/domain/engine_domain_subsystem.h"
+#include "core/engine/scripting/lua/lua_script_context.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
@@ -85,6 +87,17 @@ void MEditorApplication::run() {
     // keep VS Code's import() index in step with the project's scripts
     projectManager.syncScriptIndex();
 
+    // Script refresh: whenever a script changes, the editor domain recompiles
+    // every script (a frame budget at a time) to report errors before Play.
+    // Only while stopped - during play the runtime domain is on top, and the
+    // refresh catches up once Stop removes it.
+    if (simulationState == EEditorSimulationState::Stopped)
+    {
+        auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>();
+        if (auto* domain = domains ? domains->getCurrentActiveDomain() : nullptr)
+            domain->getScriptContext().refreshStep(SCRIPT_REFRESH_BUDGET_MS);
+    }
+
     window->update(deltaTime);
 
     endFrame();
@@ -140,6 +153,9 @@ void MEditorApplication::registerSubsystems()
 
     // Init Physics engine
     physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
+
+    // Engine domains - creates DOMAIN_0, the editor's script sandbox
+    MEngineSubsystemRegistry::registerSubsystem<MEngineDomainSubsystem>();
 
     // Init Scripting Engine
     MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();
@@ -345,10 +361,41 @@ void MEditorApplication::loadPrerequisites()
         simulationManagerSubsystem->init();
 }
 
+bool MEditorApplication::canStartSimulation(SString& outReason) const
+{
+    auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>();
+    auto* domain  = domains ? domains->getCurrentActiveDomain() : nullptr;
+    if (!domain)
+        return true;
+
+    // Before Play the editor domain is on top.
+    const auto& scripts = domain->getScriptContext();
+    if (scripts.isRefreshing())
+    {
+        outReason = "Scripts are compiling";
+        return false;
+    }
+    if (scripts.getErrorCount() > 0)
+    {
+        outReason = SString::format("{0} script(s) failed to compile - see the console",
+                                    SString::fromInt(static_cast<int>(scripts.getErrorCount())));
+        return false;
+    }
+    return true;
+}
+
 void MEditorApplication::startSimulation()
 {
     if (isSimulating())
         return;
+
+    // Every way into Play goes through here, not just the button.
+    SString reason;
+    if (!canStartSimulation(reason))
+    {
+        MWARN(SString("Cannot start play mode: ") + reason);
+        return;
+    }
 
     simulationState = EEditorSimulationState::Simulating;
     notifySimulationStateChange();
