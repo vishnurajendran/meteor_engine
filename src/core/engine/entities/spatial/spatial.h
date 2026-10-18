@@ -201,7 +201,16 @@ public:
     // without resolving through the asset manager. Safe to call even when the
     // asset manager subsystem is unavailable.
     [[nodiscard]] SString getScriptAssetId() const;
-    ~MSpatialEntity() override = default;
+    ~MSpatialEntity() override;
+
+    // ---- behaviour tuning ----------------------------------------------------
+    // Per-entity values for a script's public fields, kept per script (by
+    // asset ID) so switching to another script and back keeps the earlier
+    // tuning. Only overrides are stored: a field without one follows the
+    // script's default. Changes apply to a running script immediately.
+    [[nodiscard]] const SDynValue* getTuningOverride(const SString& scriptId, const SString& field) const;
+    void setTuningOverride(const SString& scriptId, const SString& field, const SDynValue& value);
+    void clearTuningOverride(const SString& scriptId, const SString& field);
 
 private:
     void ensureScript();
@@ -209,6 +218,13 @@ private:
     void scriptTick(float dt);
     void scriptFixedTick(float fdt);
     void scriptStop();
+    void releaseScript();
+
+    // Pushes the current script's tuning overrides into its new instance,
+    // before onStart runs.
+    void applyBehaviourTuning();
+    void serialiseBehaviourTuning(pugi::xml_node& node) const;
+    void deserialiseBehaviourTuning(const pugi::xml_node& node);
 
 protected:
     void onSerialise(pugi::xml_node& node) override;
@@ -242,6 +258,9 @@ private:
     bool entityStarted = false;
     IScriptInstance* scriptInstance = nullptr;
     bool onExitCalled = false;
+
+    // script asset ID -> field name -> value
+    std::unordered_map<SString, std::unordered_map<SString, SDynValue>> behaviourTuning;
 };
 
-#endif // SPATIAL_H
+#endif // SPATIAL_H

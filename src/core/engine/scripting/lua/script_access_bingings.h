@@ -7,11 +7,12 @@
 // which the annotation generator cannot handle.
 // Must be registered AFTER the generated bindings.
 //
-// Lua usage:
-//   local other = MSpatialEntity(self:findByPath("./enemy"))
-//   local script = other:getScript()
-//   script.takeDamage(10)
-//   print(script.health)
+// Returns the entity's script instance. Cast it to its class to use it —
+// the cast returns nil if the script is something else:
+//
+//   local Enemy = import("game.enemies.Enemy")
+//   local enemy = Enemy(other:getScript())
+//   if enemy then enemy:takeDamage(10) end
 //
 
 #pragma once
@@ -36,7 +37,7 @@ namespace MeteorBindings {
             auto* luaInstance = dynamic_cast<MLuaScriptInstance*>(instance);
             if (!luaInstance) return sol::lua_nil;
 
-            return luaInstance->getClassTable();
+            return luaInstance->getInstanceTable();
         };
     }
 

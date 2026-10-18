@@ -34,6 +34,7 @@ private:
 
     SString activeScenePath = "";
     SString sceneSnapshotPath = "";
+    bool    runtimeDomainPushed = false;   // only remove a domain we added
 };
 
 #endif //SIMULATION_MANAGER_H

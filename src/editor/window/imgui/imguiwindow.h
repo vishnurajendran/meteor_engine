@@ -26,6 +26,7 @@ public:
     void showDockSpace();
     void drawMenuBar();
     void drawControls();
+    void drawScriptRefreshOverlay();
 
     void setGraphicsCall(std::function<void(void)> func)
     {

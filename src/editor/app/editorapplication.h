@@ -45,6 +45,10 @@ public:
 
     void startSimulation();
     void stopSimulation();
+
+    // False while scripts are compiling or any script has errors - Play is
+    // blocked then. outReason says why, for the Play button's tooltip.
+    [[nodiscard]] bool canStartSimulation(SString& outReason) const;
     void pauseSimulation();
 
     // registers a callback function callback, returns it Id handle.
@@ -52,6 +56,11 @@ public:
     void unregisterFromSimulationStateChangedCallback(const SString& callbackId);
 
 private:
+    // Time the script refresh may use per frame before yielding, so the
+    // editor keeps drawing (and the progress overlay can show) during a
+    // long recompile.
+    static constexpr double SCRIPT_REFRESH_BUDGET_MS = 8.0;
+
     void registerSubsystems();
     void notifySimulationStateChange();
     void tickPhysics(float deltaTime);

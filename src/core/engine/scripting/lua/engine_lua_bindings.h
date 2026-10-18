@@ -6,7 +6,7 @@
 
 class MLuaEngineBindings {
 public:
-    // Static method called by MLuaScriptingEngineSubsystem::init()
+    // Called by every MLuaScriptContext when it creates its VM
     static void BindEngineAPI(sol::state& vm);
 };
 

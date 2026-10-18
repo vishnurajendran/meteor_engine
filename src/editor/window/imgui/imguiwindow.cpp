@@ -19,6 +19,10 @@
 #include "imguisubwindowmanager.h"
 #include "imguiwindowconstants.h"
 
+#include "core/application/application.h"
+#include "core/engine/domain/engine_domain_subsystem.h"
+#include "core/engine/scripting/lua/lua_script_context.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "core/profiling/profiler.h"
 #include "core/utils/logger.h"
 #include "editor/profiling/editor_profile_keys.h"
@@ -122,6 +126,7 @@ void MImGuiWindow::drawGUI(const float deltaTime)
     MMenubarTreeNode::drawAllPopups();
     showDockSpace();
     drawImGuiSubWindows(deltaTime);
+    drawScriptRefreshOverlay();
 
     coreWindow.setActive(true);
     ImGui::SFML::Render(coreWindow);
@@ -180,6 +185,57 @@ void MImGuiWindow::drawMenuBar(){
 
 void MImGuiWindow::drawControls() {
     MEditorControlsButtons::runtimeControls();
+}
+
+void MImGuiWindow::drawScriptRefreshOverlay()
+{
+    static constexpr const char* POPUP_ID = "##MTR_SCRIPT_REFRESH";
+    // Only show for refreshes that take a while, so saving a script in a
+    // small project doesn't flash a popup. Play is disabled either way.
+    static constexpr float SHOW_AFTER_SECONDS = 0.2f;
+    static float busyForSeconds = 0.0f;
+
+    auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>();
+    auto* domain  = domains ? domains->getCurrentActiveDomain() : nullptr;
+
+    // During play the runtime domain is on top; the editor domain's refresh
+    // only runs while stopped (see MEditorApplication::run).
+    const auto* app = MApplication::getAppInstance();
+    const bool stopped = app && !app->isSimulating() && !app->isPaused();
+    const bool busy = stopped && domain && domain->getScriptContext().isRefreshing();
+
+    busyForSeconds = busy ? busyForSeconds + ImGui::GetIO().DeltaTime : 0.0f;
+    const bool show = busy && busyForSeconds >= SHOW_AFTER_SECONDS;
+
+    if (show && !ImGui::IsPopupOpen(POPUP_ID))
+        ImGui::OpenPopup(POPUP_ID);
+
+    // Modal: blocks the rest of the editor while it is up.
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(360.0f, 0.0f));
+    if (ImGui::BeginPopupModal(POPUP_ID, nullptr,
+                               ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+                               ImGuiWindowFlags_NoSavedSettings))
+    {
+        if (!show)
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        else
+        {
+            const auto& scripts = domain->getScriptContext();
+            const uint32_t done  = scripts.getRefreshDone();
+            const uint32_t total = scripts.getRefreshTotal();
+            const float fraction = total > 0 ? static_cast<float>(done) / static_cast<float>(total) : 0.0f;
+
+            ImGui::TextUnformatted("Compiling scripts...");
+            const SString label = SString::format("{0} / {1}", SString::fromInt(static_cast<int>(done)),
+                                                  SString::fromInt(static_cast<int>(total)));
+            ImGui::ProgressBar(fraction, ImVec2(-1.0f, 0.0f), label.c_str());
+        }
+        ImGui::EndPopup();
+    }
 }
 
 void MImGuiWindow::loadFontFile(const SString& pathToFile, float pointSize)

@@ -10,6 +10,7 @@
 
 #include "core/default_settings_paths.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/scripting/lua/lua_script_registry.h"
 #include "core/utils/logger.h"
 #include "core/utils/meteor_paths.h"
 #include "editor/editor_constants.h"
@@ -127,6 +128,10 @@ void MEditorProjectManager::syncEngineScripting() const
     const fs::path src = ENGINE_PATH(ENGINE_SCRIPTING_DIR).str();
     const fs::path dst = PROJECT_PATH(ENGINE_SCRIPTING_DIR).str();
 
+    // The script index is per project — never copy the engine folder's one
+    // (it exists there when the engine itself was opened as a project).
+    const fs::path scriptIndex = fs::path(SCRIPT_INDEX_FILE).lexically_relative(ENGINE_SCRIPTING_DIR);
+
     std::error_code ec;
     if (!fs::exists(src, ec))
     {
@@ -140,6 +145,7 @@ void MEditorProjectManager::syncEngineScripting() const
         if (!entry.is_regular_file(ec)) continue;
 
         const fs::path rel    = fs::relative(entry.path(), src, ec);
+        if (rel == scriptIndex) continue;
         const fs::path target = dst / rel;
         if (sameContent(entry.path(), target)) continue;
 
@@ -212,4 +218,38 @@ bool MEditorProjectManager::saveDescriptor() const
     if (!SMeteorPaths::hasProjectFile())
         return false;
     return descriptor.save(SMeteorPaths::projectFile());
+}
+
+// ---------------------------------------------------------------------------
+// Script index (VS Code / LuaLS)
+// ---------------------------------------------------------------------------
+
+void MEditorProjectManager::syncScriptIndex()
+{
+    const uint64_t generation = MLuaScriptRegistry::getGeneration();
+    if (generation == scriptIndexGeneration)
+        return;
+    scriptIndexGeneration = generation;
+
+    // Built by the registry from each script's parsed MODULE / CLASS.
+    const std::string text = MLuaScriptRegistry::buildTypeIndex();
+
+    const fs::path target = PROJECT_PATH(SCRIPT_INDEX_FILE).str();
+
+    // Only touch the file when it changes — every write makes LuaLS re-index.
+    {
+        std::ifstream in(target, std::ios::binary);
+        if (in)
+        {
+            const std::string existing((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+            if (existing == text)
+                return;
+        }
+    }
+
+    createDir(target.parent_path());
+    std::ofstream out(target, std::ios::binary | std::ios::trunc);
+    out << text;
+    if (!out)
+        MERROR(SString::format("ProjectManager:: cannot write {0}", SString(target.generic_string())));
 }

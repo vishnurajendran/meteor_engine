@@ -6,6 +6,8 @@
 
 #include "core/utils/fileio.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
+#include "core/engine/domain/engine_domain_subsystem.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 
 void MEditorSimulationManagerSubsystem::init()
 {
@@ -99,6 +101,13 @@ void MEditorSimulationManagerSubsystem::restoreFromSceneSnapshot()
 void MEditorSimulationManagerSubsystem::onSimulate()
 {
     createSceneSnapshot();
+
+    // Play runs in its own domain: a fresh script context, so nothing the
+    // editor's sandbox compiled or set up leaks into the game. Pushed before
+    // the snapshot loads, so every entity's script lands in it.
+    if (auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>())
+        runtimeDomainPushed = domains->addNewDomain();
+
     loadSnapShotSceneForSimulation();
 
     // disable scene Camera, so that the system uses the first available camera in the scene.
@@ -111,7 +120,16 @@ void MEditorSimulationManagerSubsystem::onSimulate()
 
 void MEditorSimulationManagerSubsystem::onSimulationStopped()
 {
+    // Closing the play scene runs onStop and releases every script instance
+    // into the runtime domain - so the domain goes only after that.
     restoreFromSceneSnapshot();
+
+    if (runtimeDomainPushed)
+    {
+        if (auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>())
+            domains->removeTopDomain();
+        runtimeDomainPushed = false;
+    }
 }
 
 void MEditorSimulationManagerSubsystem::onSimulationPaused()

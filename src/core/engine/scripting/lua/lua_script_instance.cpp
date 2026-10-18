@@ -46,56 +46,52 @@ static bool handleFuncResult(const sol::protected_function_result& funcResult, S
 
 // --- Instance Implementation ---
 
-MLuaScriptInstance::MLuaScriptInstance(sol::state& vm, const SString& scriptSrc, MSpatialEntity* owner)
-    : owner(owner)
+MLuaScriptInstance::MLuaScriptInstance(sol::state& vm, const sol::table& scriptClass,
+                                       const sol::environment& classEnv, MSpatialEntity* owner,
+                                       MLuaScriptContext* context)
+    : env(classEnv), classTable(scriptClass), owner(owner), context(context)
 {
-    env = sol::environment(vm, sol::create, vm.globals());
-
-    auto load_result = vm.script(scriptSrc.c_str(), env, sol::script_pass_on_error);
-
-    if (!load_result.valid())
-    {
-        sol::error err = load_result;
-        MERROR(err.what());
-        valid = false;
-        return;
-    }
-
-    if (load_result.get_type() != sol::type::table)
-    {
-        MERROR("Script must return a table. Ensure your script ends with 'return ClassName'");
-        valid = false;
-        return;
-    }
-
-    classTable = load_result.get<sol::table>();
-    classTable["__entity"] = owner;
+    // The script is already compiled (MLuaScriptingEngineSubsystem caches
+    // one class per file) - an instance is just a table pointing at it.
+    instanceTable = vm.create_table();
+    instanceTable["__entity"] = owner;
+    instanceTable[sol::metatable_key] = classTable;
     valid = true;
+}
+
+void MLuaScriptInstance::detach()
+{
+    instanceTable = sol::table();
+    classTable    = sol::table();
+    env           = sol::environment();
+    context       = nullptr;
+    valid         = false;
 }
 
 // Named-parameter form
 bool MLuaScriptInstance::callFunc(const SString& funcName, const std::unordered_map<SString, SDynValue>& params, SDynValue& result)
 {
-    if (!valid || !classTable.valid()) {
+    if (!valid || !instanceTable.valid()) {
         return false;
     }
 
-    sol::protected_function func = classTable[funcName.c_str()];
+    // Looked up through the instance so its metatable finds the class method.
+    sol::protected_function func = instanceTable[funcName.c_str()];
     sol::state_view vview = env.lua_state();
 
     sol::table luaParams = vview.create_table();
     for (const auto& kv : params)
         luaParams[kv.first.c_str()] = DynValueToSolObject(kv.second, vview);
 
-    // Pass the class table as first arg (becomes 'self' in Lua)
-    return handleFuncResult(func(classTable, luaParams), result);
+    // Pass the instance as first arg (becomes 'self' in Lua)
+    return handleFuncResult(func(instanceTable, luaParams), result);
 }
 
 // Positional-argument form
 bool MLuaScriptInstance::callFunc(const SString& funcName, const std::vector<SDynValue>& args, SDynValue& result)
 {
-    if (!valid || !classTable.valid()) return false;
-    sol::protected_function func = classTable[funcName.c_str()];
+    if (!valid || !instanceTable.valid()) return false;
+    sol::protected_function func = instanceTable[funcName.c_str()];
     if (!func.valid()) return false;
 
     sol::state_view view = env.lua_state();
@@ -106,34 +102,74 @@ bool MLuaScriptInstance::callFunc(const SString& funcName, const std::vector<SDy
     for (const auto& arg : args)
         solArgs.push_back(DynValueToSolObject(arg, view));
 
-    // Call with class table as self, then remaining args
+    // Call with the instance as self, then remaining args
     sol::protected_function_result funcResult;
     if (solArgs.empty())
     {
-        funcResult = func(classTable);
+        funcResult = func(instanceTable);
     }
     else if (solArgs.size() == 1)
     {
-        funcResult = func(classTable, solArgs[0]);
+        funcResult = func(instanceTable, solArgs[0]);
     }
     else if (solArgs.size() == 2)
     {
-        funcResult = func(classTable, solArgs[0], solArgs[1]);
+        funcResult = func(instanceTable, solArgs[0], solArgs[1]);
     }
     else if (solArgs.size() == 3)
     {
-        funcResult = func(classTable, solArgs[0], solArgs[1], solArgs[2]);
+        funcResult = func(instanceTable, solArgs[0], solArgs[1], solArgs[2]);
     }
     else
     {
-        funcResult = func(classTable, sol::as_args(solArgs));
+        funcResult = func(instanceTable, sol::as_args(solArgs));
     }
 
     return handleFuncResult(funcResult, result);
 }
 
+// ---- behaviour tuning -------------------------------------------------------
+
+bool MLuaScriptInstance::setField(const SString& name, const SDynValue& value)
+{
+    // Names starting with '_' are private by convention and never tunable.
+    if (!valid || name.empty() || name.str()[0] == '_')
+        return false;
+
+    // Read through the metatable: the class default (or this instance's
+    // current value) decides the field's type.
+    const sol::object current = instanceTable[name.c_str()];
+
+    bool typeMatches = false;
+    switch (value.type)
+    {
+        case EDynValueType::Bool:    typeMatches = current.get_type() == sol::type::boolean; break;
+        case EDynValueType::String:  typeMatches = current.get_type() == sol::type::string;  break;
+        // int and float are both Lua numbers - either may replace the other
+        case EDynValueType::Integer:
+        case EDynValueType::Float:   typeMatches = current.get_type() == sol::type::number;  break;
+        default: break;
+    }
+    if (!typeMatches)
+        return false;
+
+    // raw_set: write to the instance itself, never through to the class.
+    sol::state_view view = instanceTable.lua_state();
+    instanceTable.raw_set(name.c_str(), DynValueToSolObject(value, view));
+    return true;
+}
+
+void MLuaScriptInstance::clearField(const SString& name)
+{
+    if (!valid || name.empty())
+        return;
+    instanceTable.raw_set(name.c_str(), sol::lua_nil);
+}
+
 void MLuaScriptInstance::setEnvVar(const SString& name, const SDynValue& value)
 {
+    if (!valid)
+        return;
     sol::state_view vview = env.lua_state();
     env[name.c_str()] = DynValueToSolObject(value, vview);
 }
