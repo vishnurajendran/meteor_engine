@@ -1,5 +1,7 @@
 #include "spatial.h"
 
+#include <algorithm>
+
 #include "core/application/application.h"
 #include "core/engine/scene/scene.h"
 #include "core/engine/scene/scenemanager.h"
@@ -207,7 +209,10 @@ void MSpatialEntity::ensureScript()
     // A valid script needs per-frame updates so the scene loop
     // calls onUpdate, which drives scriptTick / onTick().
     if (scriptInstance != nullptr)
+    {
         canTick = true;
+        applyBehaviourTuning();   // before scriptStart() calls onStart
+    }
 }
 
 void MSpatialEntity::scriptStart()
@@ -326,6 +331,8 @@ void MSpatialEntity::onSerialise(pugi::xml_node& node)
     Field<SQuaternion> rot  (tmp, "relativeRotation", relativeRotation);
     Field<SVector3>    scale(tmp, "relativeScale",    relativeScale);
     for (auto* f : tmp) f->write(node);
+
+    serialiseBehaviourTuning(node);
 }
 
 void MSpatialEntity::onDeserialise(const pugi::xml_node& node)
@@ -347,6 +354,8 @@ void MSpatialEntity::onDeserialise(const pugi::xml_node& node)
     relativeRotation = rot.get();
     relativeScale    = scale.get();
     updateTransforms();
+
+    deserialiseBehaviourTuning(node);
 }
 
 pugi::xml_node MSpatialEntity::serialiseEntity(pugi::xml_node parent) const
@@ -528,5 +537,154 @@ void MSpatialEntity::propagateActiveState(bool active)
         // individually disabled children stay disabled regardless.
         if (child && child->enabled)
             child->propagateActiveState(active);
+    }
+}
+// ---------------------------------------------------------------------------
+// Behaviour tuning
+// ---------------------------------------------------------------------------
+
+const SDynValue* MSpatialEntity::getTuningOverride(const SString& scriptId, const SString& field) const
+{
+    const auto script = behaviourTuning.find(scriptId);
+    if (script == behaviourTuning.end())
+        return nullptr;
+    const auto value = script->second.find(field);
+    return value == script->second.end() ? nullptr : &value->second;
+}
+
+void MSpatialEntity::setTuningOverride(const SString& scriptId, const SString& field, const SDynValue& value)
+{
+    if (scriptId.empty() || field.empty())
+        return;
+    behaviourTuning[scriptId][field] = value;
+
+    // Live edit while playing: the running instance picks it up straight away.
+    if (scriptInstance && scriptId == getScriptAssetId())
+        scriptInstance->setField(field, value);
+}
+
+void MSpatialEntity::clearTuningOverride(const SString& scriptId, const SString& field)
+{
+    const auto script = behaviourTuning.find(scriptId);
+    if (script == behaviourTuning.end())
+        return;
+    script->second.erase(field);
+    if (script->second.empty())
+        behaviourTuning.erase(script);
+
+    if (scriptInstance && scriptId == getScriptAssetId())
+        scriptInstance->clearField(field);
+}
+
+void MSpatialEntity::applyBehaviourTuning()
+{
+    const auto script = behaviourTuning.find(getScriptAssetId());
+    if (!scriptInstance || script == behaviourTuning.end())
+        return;
+
+    for (const auto& [field, value] : script->second)
+    {
+        // A failure means the script changed since this was tuned: the field
+        // is gone or has a different type. The override is kept (in case the
+        // change is reverted) but not applied.
+        if (!scriptInstance->setField(field, value))
+            MWARN(SString::format("'{0}': tuned field '{1}' no longer matches the script - using the script's default",
+                                  getName(), field));
+    }
+}
+
+namespace
+{
+const char* tuningTypeName(EDynValueType type)
+{
+    switch (type)
+    {
+        case EDynValueType::Bool:    return "bool";
+        case EDynValueType::Integer: return "int";
+        case EDynValueType::Float:   return "float";
+        case EDynValueType::String:  return "string";
+        default:                     return nullptr;
+    }
+}
+} // namespace
+
+// <behaviourTuning>
+//   <script id="...">
+//     <field name="speed" type="float" value="7.5"/>
+//   </script>
+// </behaviourTuning>
+// Written sorted by script ID and field name, so scene files diff cleanly.
+void MSpatialEntity::serialiseBehaviourTuning(pugi::xml_node& node) const
+{
+    if (behaviourTuning.empty())
+        return;
+
+    std::vector<const SString*> scriptIds;
+    for (const auto& [id, fields] : behaviourTuning)
+        scriptIds.push_back(&id);
+    std::ranges::sort(scriptIds, [](const auto* a, const auto* b) { return *a < *b; });
+
+    pugi::xml_node tuningNode = node.append_child("behaviourTuning");
+    for (const auto* scriptId : scriptIds)
+    {
+        const auto& fields = behaviourTuning.at(*scriptId);
+        std::vector<const SString*> names;
+        for (const auto& [name, value] : fields)
+            names.push_back(&name);
+        std::ranges::sort(names, [](const auto* a, const auto* b) { return *a < *b; });
+
+        pugi::xml_node scriptNode = tuningNode.append_child("script");
+        scriptNode.append_attribute("id") = scriptId->c_str();
+
+        for (const auto* name : names)
+        {
+            const SDynValue& value = fields.at(*name);
+            const char* typeName = tuningTypeName(value.type);
+            if (!typeName)
+                continue;
+
+            pugi::xml_node fieldNode = scriptNode.append_child("field");
+            fieldNode.append_attribute("name") = name->c_str();
+            fieldNode.append_attribute("type") = typeName;
+            switch (value.type)
+            {
+                case EDynValueType::Bool:    fieldNode.append_attribute("value") = std::get<bool>(value.value);  break;
+                case EDynValueType::Integer: fieldNode.append_attribute("value") = std::get<int>(value.value);   break;
+                case EDynValueType::Float:   fieldNode.append_attribute("value") = std::get<float>(value.value); break;
+                case EDynValueType::String:  fieldNode.append_attribute("value") = std::get<std::string>(value.value).c_str(); break;
+                default: break;
+            }
+        }
+    }
+}
+
+void MSpatialEntity::deserialiseBehaviourTuning(const pugi::xml_node& node)
+{
+    behaviourTuning.clear();
+
+    const pugi::xml_node tuningNode = node.child("behaviourTuning");
+    for (pugi::xml_node scriptNode : tuningNode.children("script"))
+    {
+        const SString scriptId(scriptNode.attribute("id").as_string(""));
+        if (scriptId.empty())
+            continue;
+
+        for (pugi::xml_node fieldNode : scriptNode.children("field"))
+        {
+            const SString name(fieldNode.attribute("name").as_string(""));
+            const std::string type = fieldNode.attribute("type").as_string("");
+            const pugi::xml_attribute valueAttr = fieldNode.attribute("value");
+            if (name.empty() || !valueAttr)
+                continue;
+
+            SDynValue value;
+            if      (type == "bool")   value.setBool(valueAttr.as_bool());
+            else if (type == "int")    value.setInt(valueAttr.as_int());
+            else if (type == "float")  value.setFloat(valueAttr.as_float());
+            else if (type == "string") value.setString(valueAttr.as_string());
+            else continue;
+
+            behaviourTuning[scriptId][name] = value;
+        }
     }
 }

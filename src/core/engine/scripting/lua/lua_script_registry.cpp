@@ -17,6 +17,7 @@
 std::unordered_map<SString, std::vector<MLuaScriptAsset*>> MLuaScriptRegistry::scriptsByName;
 std::unordered_map<MLuaScriptAsset*, SString> MLuaScriptRegistry::nameByScript;
 std::unordered_set<MLuaScriptAsset*> MLuaScriptRegistry::allScripts;
+std::unordered_map<const MLuaScriptAsset*, SLuaScriptFieldSet> MLuaScriptRegistry::publicFields;
 uint64_t MLuaScriptRegistry::generation = 0;
 
 namespace
@@ -546,6 +547,7 @@ void MLuaScriptRegistry::unregisterScript(MLuaScriptAsset* asset)
 
     removeEntry(asset);
     allScripts.erase(asset);
+    publicFields.erase(asset);
     ++generation;
 }
 
@@ -560,6 +562,26 @@ std::vector<MLuaScriptAsset*> MLuaScriptRegistry::getAllScripts()
     std::vector<MLuaScriptAsset*> scripts(allScripts.begin(), allScripts.end());
     std::ranges::sort(scripts, [](const auto* a, const auto* b) { return a->getPath() < b->getPath(); });
     return scripts;
+}
+
+MLuaScriptAsset* MLuaScriptRegistry::findByPath(const SString& path)
+{
+    for (auto* script : allScripts)
+        if (script->getPath() == path)
+            return script;
+    return nullptr;
+}
+
+void MLuaScriptRegistry::setPublicFields(MLuaScriptAsset* asset, SLuaScriptFieldSet fields)
+{
+    if (asset)
+        publicFields[asset] = std::move(fields);
+}
+
+const SLuaScriptFieldSet* MLuaScriptRegistry::getPublicFields(const MLuaScriptAsset* asset)
+{
+    const auto it = publicFields.find(asset);
+    return it == publicFields.end() ? nullptr : &it->second;
 }
 
 std::string MLuaScriptRegistry::buildTypeIndex()

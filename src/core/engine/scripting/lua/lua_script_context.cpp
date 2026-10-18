@@ -111,7 +111,9 @@ bool MLuaScriptContext::refreshStep(double budgetMs)
     while (refreshCursor < refreshQueue.size())
     {
         SString error;
-        getOrLoadClass(refreshQueue[refreshCursor++], error);   // failures are logged and counted there
+        auto* asset = refreshQueue[refreshCursor++];
+        const SLuaClass* scriptClass = getOrLoadClass(asset, error);   // failures are logged and counted there
+        publishPublicFields(asset, scriptClass);
 
         const double elapsedMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
         if (elapsedMs >= budgetMs)
@@ -487,4 +489,122 @@ void MLuaScriptContext::registerImport()
 
         return scriptClass->cls;
     });
+}
+
+// ---------------------------------------------------------------------------
+// Public fields (behaviour tuning)
+// ---------------------------------------------------------------------------
+
+namespace
+{
+// A public field's value as an SDynValue, or false for anything that is not
+// a boolean, number or string. 5 stays an integer, 5.0 a float (Lua 5.4
+// keeps the two apart).
+bool toFieldValue(const sol::object& value, SDynValue& out)
+{
+    switch (value.get_type())
+    {
+        case sol::type::boolean:
+            out.setBool(value.as<bool>());
+            return true;
+        case sol::type::string:
+            out.setString(value.as<std::string>());
+            return true;
+        case sol::type::number:
+        {
+            lua_State* L = value.lua_state();
+            value.push();
+            const bool isInteger = lua_isinteger(L, -1);
+            lua_pop(L, 1);
+            if (isInteger)
+                out.setInt(static_cast<int>(value.as<lua_Integer>()));
+            else
+                out.setFloat(value.as<float>());
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+} // namespace
+
+void MLuaScriptContext::publishPublicFields(MLuaScriptAsset* asset, const SLuaClass* scriptClass)
+{
+    SLuaScriptFieldSet fieldSet;
+    if (!scriptClass)
+    {
+        MLuaScriptRegistry::setPublicFields(asset, std::move(fieldSet));   // compiled = false
+        return;
+    }
+    fieldSet.compiled = true;
+
+    // The class chain, derived first: CameraController -> ... up to (not
+    // including) Behaviour. Every compiled script class carries __scriptPath;
+    // Behaviour does not, which ends the walk.
+    std::vector<sol::table> chain;
+    sol::object level = scriptClass->cls;
+    while (level.get_type() == sol::type::table)
+    {
+        sol::table cls = level;
+        if (cls.raw_get<sol::object>("__scriptPath").get_type() != sol::type::string)
+            break;
+        chain.push_back(cls);
+
+        sol::object meta = cls[sol::metatable_key];
+        if (meta.get_type() != sol::type::table)
+            break;
+        level = meta.as<sol::table>().raw_get<sol::object>("__index");
+    }
+
+    // Base first, so inherited fields come before the class's own and a
+    // subclass's default replaces its parent's.
+    std::unordered_map<std::string, size_t> indexByName;
+    for (auto it = chain.rbegin(); it != chain.rend(); ++it)
+    {
+        // Source order for this level comes from its own script's parsed
+        // member list; keys the parser didn't see go last, alphabetically.
+        std::unordered_map<std::string, size_t> sourceOrder;
+        if (const auto* levelAsset = MLuaScriptRegistry::findByPath(it->raw_get<std::string>("__scriptPath")))
+        {
+            const auto& members = levelAsset->getDeclaration().members;
+            for (size_t i = 0; i < members.size(); ++i)
+                sourceOrder.emplace(members[i].name.str(), i);
+        }
+
+        std::vector<std::pair<std::string, SDynValue>> found;
+        for (const auto& [key, value] : *it)   // raw iteration - this level's own keys only
+        {
+            if (key.get_type() != sol::type::string)
+                continue;
+            std::string name = key.as<std::string>();
+            if (name.empty() || name[0] == '_')   // '_' = private, also skips __index / __className ...
+                continue;
+            SDynValue fieldValue;
+            if (toFieldValue(value, fieldValue))
+                found.emplace_back(std::move(name), std::move(fieldValue));
+        }
+
+        std::ranges::sort(found, [&](const auto& a, const auto& b)
+        {
+            const auto ia = sourceOrder.find(a.first);
+            const auto ib = sourceOrder.find(b.first);
+            if (ia != sourceOrder.end() && ib != sourceOrder.end()) return ia->second < ib->second;
+            if (ia != sourceOrder.end()) return true;
+            if (ib != sourceOrder.end()) return false;
+            return a.first < b.first;
+        });
+
+        for (auto& [name, value] : found)
+        {
+            if (const auto existing = indexByName.find(name); existing != indexByName.end())
+            {
+                fieldSet.fields[existing->second].defaultValue = value;   // subclass default wins
+                continue;
+            }
+            indexByName.emplace(name, fieldSet.fields.size());
+            fieldSet.fields.push_back({SString(name), value});
+        }
+    }
+
+    MLuaScriptRegistry::setPublicFields(asset, std::move(fieldSet));
 }

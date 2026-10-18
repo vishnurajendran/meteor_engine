@@ -27,6 +27,10 @@
 --   CameraController(entt:getScript())    -- nil if not a CameraController
 --
 -- A subclass passes the cast of every class above it.
+--
+-- Fields whose default is a boolean, number or string show in the
+-- inspector's Behaviour Tuning section, where each entity can override them.
+-- Start a name with '_' to keep it private (not shown, not tunable).
 
 ---@class Behaviour
 Behaviour = {}

@@ -5,6 +5,7 @@
 #include "spatialentityinspectordrawer.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/scripting/lua/lua_script_asset.h"
+#include "core/engine/scripting/lua/lua_script_registry.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/composition/composition_asset.h"
 #include "core/engine/composition/composition_utility.h"
@@ -397,6 +398,141 @@ void MSpatialEntityInspectorDrawer::drawScriptField(MSpatialEntity* target)
         MAsset* newAsset = scriptRefControl->getAssetReference().get();
         target->setScriptAssetRef(newAsset);
     }
+
+    drawBehaviourTuning(target);
+}
+
+// ---------------------------------------------------------------------------
+// Behaviour tuning - the script's public fields, editable per entity
+// ---------------------------------------------------------------------------
+
+void MSpatialEntityInspectorDrawer::drawBehaviourTuning(MSpatialEntity* target)
+{
+    auto* script = dynamic_cast<MLuaScriptAsset*>(target->getScriptAssetRef());
+    if (!script)
+        return;
+
+    // Published by the editor domain's script refresh.
+    const SLuaScriptFieldSet* fieldSet = MLuaScriptRegistry::getPublicFields(script);
+    if (!fieldSet)
+    {
+        ImGui::TextDisabled("Compiling script...");
+        return;
+    }
+    if (!fieldSet->compiled)
+    {
+        ImGui::TextDisabled("Script failed to compile - see the console");
+        return;
+    }
+    if (fieldSet->fields.empty())
+        return;
+
+    // A bordered box like the Camera section; AutoResizeY sizes it to its
+    // fields, since the count depends on the script.
+    ImGui::BeginChild("##BehaviourTuning", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
+    ImGui::TextUnformatted("Behaviour Tuning");
+
+    const SString scriptId = target->getScriptAssetId();
+    constexpr float labelWidth = 110.0f;
+    constexpr float resetWidth = 46.0f;
+    const ImVec4 overriddenColor(1.0f, 0.75f, 0.3f, 1.0f);
+
+    for (const auto& field : fieldSet->fields)
+    {
+        ImGui::PushID(field.name.c_str());
+
+        const EDynValueType type = field.defaultValue.type;
+
+        // An override whose type no longer matches the script (the script
+        // changed) is ignored here; editing replaces it.
+        const SDynValue* stored = target->getTuningOverride(scriptId, field.name);
+        const bool overridden = stored && (stored->type == type ||
+            ((stored->type == EDynValueType::Integer || stored->type == EDynValueType::Float) &&
+             (type == EDynValueType::Integer || type == EDynValueType::Float)));
+
+        SDynValue value = field.defaultValue;
+        if (overridden)
+        {
+            // Show a number override in the field's current form (int / float).
+            if (type == EDynValueType::Integer && stored->type == EDynValueType::Float)
+                value.setInt(static_cast<int>(std::get<float>(stored->value)));
+            else if (type == EDynValueType::Float && stored->type == EDynValueType::Integer)
+                value.setFloat(static_cast<float>(std::get<int>(stored->value)));
+            else
+                value = *stored;
+        }
+
+        if (ImGui::BeginTable("##tuning_row", 3, ImGuiTableFlags_None, ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+        {
+            ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed, labelWidth);
+            ImGui::TableSetupColumn("val", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("rst", ImGuiTableColumnFlags_WidthFixed, resetWidth);
+            ImGui::TableNextRow();
+
+            // Label - highlighted when this entity overrides the default.
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            const std::string label = formatDisplayName(field.name.str());
+            if (overridden)
+                ImGui::TextColored(overriddenColor, "%s", label.c_str());
+            else
+                ImGui::TextUnformatted(label.c_str());
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+
+            bool changed = false;
+            switch (type)
+            {
+                case EDynValueType::Bool:
+                {
+                    bool v = std::get<bool>(value.value);
+                    if ((changed = ImGui::Checkbox("##v", &v)))
+                        value.setBool(v);
+                    break;
+                }
+                case EDynValueType::Integer:
+                {
+                    int v = std::get<int>(value.value);
+                    if ((changed = ImGui::DragInt("##v", &v, 0.1f)))
+                        value.setInt(v);
+                    break;
+                }
+                case EDynValueType::Float:
+                {
+                    float v = std::get<float>(value.value);
+                    if ((changed = ImGui::DragFloat("##v", &v, 0.01f, 0.0f, 0.0f, "%.3f")))
+                        value.setFloat(v);
+                    break;
+                }
+                case EDynValueType::String:
+                {
+                    std::string v = std::get<std::string>(value.value);
+                    if ((changed = ImGui::InputText("##v", &v)))
+                        value.setString(v);
+                    break;
+                }
+                default:
+                    break;
+            }
+            if (changed)
+                target->setTuningOverride(scriptId, field.name, value);
+
+            ImGui::TableSetColumnIndex(2);
+            if (overridden)
+            {
+                if (ImGui::SmallButton("Reset"))
+                    target->clearTuningOverride(scriptId, field.name);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Back to the script's default");
+            }
+
+            ImGui::EndTable();
+        }
+        ImGui::PopID();
+    }
+
+    ImGui::EndChild();
 }
 
 // ---------------------------------------------------------------------------
@@ -647,4 +783,4 @@ bool MSpatialEntityInspectorDrawer::drawXYComponent(const SString& label, SVecto
     ImGui::EndTable();
     ImGui::PopStyleVar();
     return res1 || res2;
-}
+}

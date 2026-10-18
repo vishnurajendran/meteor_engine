@@ -128,6 +128,44 @@ bool MLuaScriptInstance::callFunc(const SString& funcName, const std::vector<SDy
     return handleFuncResult(funcResult, result);
 }
 
+// ---- behaviour tuning -------------------------------------------------------
+
+bool MLuaScriptInstance::setField(const SString& name, const SDynValue& value)
+{
+    // Names starting with '_' are private by convention and never tunable.
+    if (!valid || name.empty() || name.str()[0] == '_')
+        return false;
+
+    // Read through the metatable: the class default (or this instance's
+    // current value) decides the field's type.
+    const sol::object current = instanceTable[name.c_str()];
+
+    bool typeMatches = false;
+    switch (value.type)
+    {
+        case EDynValueType::Bool:    typeMatches = current.get_type() == sol::type::boolean; break;
+        case EDynValueType::String:  typeMatches = current.get_type() == sol::type::string;  break;
+        // int and float are both Lua numbers - either may replace the other
+        case EDynValueType::Integer:
+        case EDynValueType::Float:   typeMatches = current.get_type() == sol::type::number;  break;
+        default: break;
+    }
+    if (!typeMatches)
+        return false;
+
+    // raw_set: write to the instance itself, never through to the class.
+    sol::state_view view = instanceTable.lua_state();
+    instanceTable.raw_set(name.c_str(), DynValueToSolObject(value, view));
+    return true;
+}
+
+void MLuaScriptInstance::clearField(const SString& name)
+{
+    if (!valid || name.empty())
+        return;
+    instanceTable.raw_set(name.c_str(), sol::lua_nil);
+}
+
 void MLuaScriptInstance::setEnvVar(const SString& name, const SDynValue& value)
 {
     if (!valid)

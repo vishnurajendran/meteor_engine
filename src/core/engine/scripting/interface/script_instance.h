@@ -23,6 +23,14 @@ public:
     // Set a variable in the script's environment using a dynamic value.
     // Covers int, float, bool, string via SDynValue.
     virtual void setEnvVar(const SString& name, const SDynValue& value) = 0;
+
+    // Behaviour tuning: sets a value on this instance only, shadowing the
+    // script's default for this entity. Fails (returns false) when the script
+    // has no public field of that name or the value's type does not match it.
+    virtual bool setField(const SString& name, const SDynValue& value) = 0;
+
+    // Removes this instance's own value, so the script's default shows through.
+    virtual void clearField(const SString& name) = 0;
 };
 
 #endif //SCRIPT_H

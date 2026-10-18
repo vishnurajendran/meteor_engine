@@ -29,6 +29,9 @@ public:
 
     void setEnvVar(const SString& name, const SDynValue& value) override;
 
+    bool setField(const SString& name, const SDynValue& value) override;
+    void clearField(const SString& name) override;
+
     template<typename T>
     void setEnvVarTyped(const SString& name, T value)
     {

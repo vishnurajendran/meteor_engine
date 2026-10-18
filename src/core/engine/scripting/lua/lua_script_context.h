@@ -91,6 +91,11 @@ private:
     // Drops every cached class if any script changed since the last call.
     void syncClassCache();
 
+    // Reads the compiled class's public fields (including inherited ones)
+    // and publishes them to the registry for the inspector. A null class
+    // publishes "failed to compile".
+    void publishPublicFields(MLuaScriptAsset* asset, const SLuaClass* scriptClass);
+
     // full name if the script has one, otherwise its path - for messages
     static SString displayName(MLuaScriptAsset* asset);
 

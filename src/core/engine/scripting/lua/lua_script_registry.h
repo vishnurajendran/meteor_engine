@@ -25,9 +25,26 @@
 #include <unordered_set>
 #include <vector>
 
+#include "core/engine/scripting/bridge/dyn_value.h"
 #include "lua_script_declaration.h"
 
 class MLuaScriptAsset;
+
+// A public field of a script class, as the inspector shows it: names not
+// starting with '_' whose value is a boolean, number or string. The type is
+// the default's type (Integer for 5, Float for 5.0).
+struct SLuaScriptField
+{
+    SString   name;
+    SDynValue defaultValue;
+};
+
+// What the editor's script refresh found for one script.
+struct SLuaScriptFieldSet
+{
+    bool compiled = false;               // false: the script failed to compile
+    std::vector<SLuaScriptField> fields; // inherited fields first, then the class's own, in source order
+};
 
 class MLuaScriptRegistry
 {
@@ -53,6 +70,12 @@ public:
     // Every loaded script, importable or not, sorted by path - what the
     // script refresh compiles.
     static std::vector<MLuaScriptAsset*> getAllScripts();
+    static MLuaScriptAsset* findByPath(const SString& path);
+
+    // Public fields, published by the editor's script refresh from the
+    // compiled class. nullptr until the script has been refreshed once.
+    static void setPublicFields(MLuaScriptAsset* asset, SLuaScriptFieldSet fields);
+    [[nodiscard]] static const SLuaScriptFieldSet* getPublicFields(const MLuaScriptAsset* asset);
 
     // The text of VS Code's script_index.lua: one ---@class block per
     // importable script (base, cast overload, members) and a typed import()
@@ -67,6 +90,7 @@ private:
     static std::unordered_map<SString, std::vector<MLuaScriptAsset*>> scriptsByName;
     static std::unordered_map<MLuaScriptAsset*, SString> nameByScript;
     static std::unordered_set<MLuaScriptAsset*> allScripts;
+    static std::unordered_map<const MLuaScriptAsset*, SLuaScriptFieldSet> publicFields;
     static uint64_t generation;
 };
 

@@ -43,6 +43,7 @@ private:
     bool drawTextField(const SString& label, SString& text);
     void drawTransformField(MSpatialEntity* target);
     void drawScriptField(MSpatialEntity* target);
+    void drawBehaviourTuning(MSpatialEntity* target);
 
     // Save / Reset / Unlink for composition instances. Returns true if the
     // instance was rebuilt (target is then stale — stop drawing it this frame).
@@ -68,4 +69,4 @@ private:
     std::unordered_map<MSpatialEntity*, EulerCache> eulerCache_;
 };
 
-#endif //METEOR_ENGINE_SPATIALENTITYINSPECTORDRAWER_H
+#endif //METEOR_ENGINE_SPATIALENTITYINSPECTORDRAWER_H
