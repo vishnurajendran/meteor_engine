@@ -1,0 +1,53 @@
+--- Optional: put this script's class in a module (namespace). Without it the
+--- class is imported as "meteor.game.__CLASS_NAME__".
+--- MODULE "game.mymodule"
+
+local __CLASS_NAME__ = CLASS("__CLASS_NAME__", Behaviour) {
+    --- Use this space for variable declarations.
+    --- Booleans, numbers and strings show in the inspector's Behaviour Tuning
+    --- section, where each entity can override them. Start a name with _ to
+    --- keep it private.
+
+
+
+    --- Called once when the Behaviour starts.
+    --- Use this function for initialization
+    --- @param self __CLASS_NAME__ script instance
+    onStart = function(self)
+        --- Add initialization code here
+    end,
+
+
+
+    --- Called once every frame.
+    --- @param self __CLASS_NAME__ script instance
+    --- @param dt number (delta time) time between any two consecutive frames.
+    onTick = function(self, dt)
+
+
+    end,
+
+
+
+    --- Called at a fixed timestep.
+    --- Use this function for physics-related updates.
+    --- @param self __CLASS_NAME__ script instance
+    --- @param fdt number (fixed delta time) time between any two consecutive physics-frames.
+    onFixedTick = function(self, fdt)
+
+
+    end,
+
+
+    --- Called when the Behaviour is stopped, removed,
+    --- or its parent object is destroyed.
+    --- Use this function for cleanup
+    --- @param self __CLASS_NAME__ script instance
+    onStop = function(self)
+
+
+    end
+
+}
+
+return __CLASS_NAME__

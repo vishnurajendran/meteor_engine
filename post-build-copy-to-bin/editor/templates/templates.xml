@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!--
+  Asset templates for the editor's "Create" menu.
+
+  Location: SEditorPaths::DIR_TEMPLATES_PATH (next to the template files).
+  Loaded after the built-in templates; an entry with the same id replaces the
+  built-in one, so this file is the source of truth for the templates it lists.
+
+  Attributes
+    id           stable identifier (used by code, e.g. createAssetFromTemplate("shader.lit", ...))
+    name         label in the create dialog
+    menu         Create-menu path, '/' separates submenus
+    file         template file name inside this folder
+    extension    extension of the created asset
+    defaultName  name pre-filled in the create dialog
+
+  Tokens available in template files
+    __ASSET_NAME__   final asset name (e.g. "Rock_1" if "Rock" existed)
+    __CLASS_NAME__   name as an identifier ("My Rock" -> "My_Rock")
+    __DATE__         YYYY-MM-DD
+    __<PARAM>__      value of each <param>, key upper-cased
+
+  "material" is not listed here: it is generated in code from the chosen
+  shader's properties (builtin_asset_templates.cpp).
+-->
+<templates>
+
+    <!-- Shaders ============================================================ -->
+
+    <template id="shader.lit"
+              name="Lit Shader"
+              menu="Shader/Lit"
+              file="shader_lit.mesl"
+              extension=".mesl"
+              defaultName="New_LitShader"/>
+
+    <template id="shader.unlit_color"
+              name="Unlit Color Shader"
+              menu="Shader/Unlit Color"
+              file="shader_unlit_color.mesl"
+              extension=".mesl"
+              defaultName="New_UnlitColorShader"/>
+
+    <template id="shader.toon"
+              name="Toon Shader"
+              menu="Shader/Toon"
+              file="shader_toon.mesl"
+              extension=".mesl"
+              defaultName="New_ToonShader"/>
+
+    <!-- Environment ======================================================== -->
+
+    <template id="skybox"
+              name="Skybox"
+              menu="Skybox"
+              file="skybox.skybox"
+              extension=".skybox"
+              defaultName="New_Skybox"/>
+
+    <!-- Scripts ============================================================ -->
+
+    <template id="script.lua"
+              name="Lua Behaviour Script"
+              menu="Script/Lua"
+              file="script.lua.template"
+              extension=".lua"
+              defaultName="NewScript"/>
+
+</templates>
