@@ -181,6 +181,12 @@ public:
     virtual void onStart();
     virtual void onUpdate(float deltaTime);
     virtual void onFixedUpdate(float fixedDeltaTime);
+    // After every entity's onUpdate this frame - drives the script's onLateTick.
+    virtual void onLateUpdate(float deltaTime);
+    // Physics hooks (see MScene::postPhysicsStep / interpolatePhysics).
+    // Empty here - collision bodies use them to smooth their pose.
+    virtual void onPhysicsStepped(float fixedDeltaTime) {}
+    virtual void onPhysicsInterpolate(float alpha) {}
     virtual void onExit();
     virtual void onDrawGizmo(SVector2 renderResolution);
     virtual void onEnable() {} // no impl here
@@ -217,6 +223,7 @@ private:
     void scriptStart();
     void scriptTick(float dt);
     void scriptFixedTick(float fdt);
+    void scriptLateTick(float dt);
     void scriptStop();
     void releaseScript();
 

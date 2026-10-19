@@ -67,6 +67,48 @@ void MScene::fixedUpdate(float fixedDeltaTime)
     }
 }
 
+void MScene::lateUpdate(float deltaTime)
+{
+    for (const auto [obj, ptr] : allAliveEntities)
+    {
+        if (ptr == nullptr)
+            continue;
+
+        if (!ptr->isEnabledInHierarchy())
+            continue;
+
+        // update() starts entities - one spawned during this frame's onTick
+        // waits for the next frame rather than late-ticking before onStart.
+        if (!ptr->hasStarted())
+            continue;
+
+        if (ptr->getCanTick())
+            ptr->onLateUpdate(deltaTime);
+    }
+}
+
+void MScene::postPhysicsStep(float fixedDeltaTime)
+{
+    for (const auto [obj, ptr] : allAliveEntities)
+    {
+        if (ptr == nullptr || !ptr->hasStarted() || !ptr->isEnabledInHierarchy())
+            continue;
+
+        ptr->onPhysicsStepped(fixedDeltaTime);
+    }
+}
+
+void MScene::interpolatePhysics(float alpha)
+{
+    for (const auto [obj, ptr] : allAliveEntities)
+    {
+        if (ptr == nullptr || !ptr->hasStarted() || !ptr->isEnabledInHierarchy())
+            continue;
+
+        ptr->onPhysicsInterpolate(alpha);
+    }
+}
+
 void MScene::close()
 {
     MLOG(SString::format("Initiating scene closure...{0}", name));

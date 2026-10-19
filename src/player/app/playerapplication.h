@@ -48,7 +48,6 @@ private:
     IRenderPipelineManagerSubsystem* pipelineManager= nullptr;
     IPhysicsEngineSubsystem* physicsEngineRef = nullptr;
     float physicsAccumulator = 0.0f;
-    bool internal_tickSpatialFixedUpdateFlag   = false;
     MSceneManager* sceneManagerRef = nullptr;
 };
 #endif //METEOR_ENGINE_PLAYERAPPLICATION_H

@@ -39,6 +39,17 @@ local __CLASS_NAME__ = CLASS("__CLASS_NAME__", Behaviour) {
     end,
 
 
+
+    --- Called once every frame, after every onTick.
+    --- Use this function for things that follow other entities (cameras).
+    --- @param self __CLASS_NAME__ script instance
+    --- @param dt number (delta time) time between any two consecutive frames.
+    onLateTick = function(self, dt)
+
+
+    end,
+
+
     --- Called when the Behaviour is stopped, removed,
     --- or its parent object is destroyed.
     --- Use this function for cleanup

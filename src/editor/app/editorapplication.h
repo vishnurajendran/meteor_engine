@@ -88,8 +88,6 @@ private:
     float physicsAccumulator = 0.0f;  // seconds carried over between frames
     std::unordered_map<SString, std::function<void(EEditorSimulationState)>> simulationStateChangedCallbacks;
     EEditorSimulationState simulationState = EEditorSimulationState::Stopped;
-
-    bool internal_tickSpatialFixedUpdateFlag   = false;
 };
 
 #endif

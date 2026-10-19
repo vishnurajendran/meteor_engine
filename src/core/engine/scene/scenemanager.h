@@ -30,6 +30,9 @@ public:
     virtual bool closeActiveScene();
     virtual void update(float deltaTime);
     virtual void fixedUpdate(float fixedDeltaTime);
+    virtual void lateUpdate(float deltaTime);
+    virtual void postPhysicsStep(float fixedDeltaTime);
+    virtual void interpolatePhysics(float alpha);
 
     SString registerOnLoadCallback(std::function<void(MScene*)> callback);
     void deregisterOnLoadCallback(SString callbackId);

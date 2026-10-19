@@ -60,6 +60,8 @@ public:
     void onStart()                 override;
     void onUpdate(float deltaTime) override;
     void onExit()                  override;
+    void onPhysicsStepped(float fixedDeltaTime) override;
+    void onPhysicsInterpolate(float alpha)      override;
     void onEnable()                override;
     void onDisable()               override;
 
@@ -262,6 +264,14 @@ private:
     std::function<void(const SOverlapData&)>   onTriggerStartCb;
     std::function<void(const SOverlapData&)>   onTriggerStayCb;
     std::function<void(const SOverlapData&)>   onTriggerEndCb;
+
+    // Body pose after the last two physics steps. While simulating, the
+    // entity is drawn at a blend of the two (onPhysicsInterpolate).
+    SVector3    prevBodyPosition = SVector3(0.0f);
+    SQuaternion prevBodyRotation = glm::identity<SQuaternion>();
+    SVector3    currBodyPosition = SVector3(0.0f);
+    SQuaternion currBodyRotation = glm::identity<SQuaternion>();
+    bool        hasBodySnapshot  = false;   // false until a step has run for this body
 };
 
 #endif // COLLISION_BODY_ENTITY_H

@@ -269,6 +269,22 @@ void MSpatialEntity::scriptFixedTick(float fdt)
     }
 }
 
+void MSpatialEntity::scriptLateTick(float dt)
+{
+    if (!MApplication::getAppInstance()->isSimulating())
+        return;
+
+    // No ensureScript() here - scriptTick already ran this frame and created
+    // the instance if there is one to create.
+    if (scriptInstance)
+    {
+        SDynValue outVar;
+        SDynValue dtVar;
+        dtVar.setFloat(dt);
+        scriptInstance->callFunc(ScriptinCallSymbols::SCRIPT_FUNC_LATE_TICK, std::vector<SDynValue>{dtVar}, outVar);
+    }
+}
+
 void MSpatialEntity::scriptStop()
 {
     // No isSimulating() check: an instance only exists if play mode created
@@ -491,6 +507,11 @@ void MSpatialEntity::onUpdate(const float deltaTime)
 void MSpatialEntity::onFixedUpdate(const float fixedDeltaTime)
 {
     scriptFixedTick(fixedDeltaTime);
+}
+
+void MSpatialEntity::onLateUpdate(const float deltaTime)
+{
+    scriptLateTick(deltaTime);
 }
 
 

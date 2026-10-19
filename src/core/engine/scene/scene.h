@@ -23,6 +23,12 @@ public:
     void startScene() const;
     void update(float deltaTime);
     void fixedUpdate(float fixedDeltaTime);
+    void lateUpdate(float deltaTime);
+    // Physics hooks, driven by the application's physics loop:
+    // postPhysicsStep after every step, interpolatePhysics once a frame
+    // after the last step (alpha = how far between the last two steps).
+    void postPhysicsStep(float fixedDeltaTime);
+    void interpolatePhysics(float alpha);
     void close();
     void addToRoot(MSpatialEntity* entity);
 

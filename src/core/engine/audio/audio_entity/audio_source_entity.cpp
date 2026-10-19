@@ -44,6 +44,13 @@ void MAudioSource::onCreate()
             source->setVolume(newVal);
     });
 
+    pitch.setOnChangeCallback([this](auto newVal)
+    {
+        // miniaudio ignores pitch <= 0 - clamp like the inspector does
+        if (source)
+            source->setPitch(glm::max(newVal, 0.01f));
+    });
+
     useSpatial.setOnChangeCallback([this](auto newVal)
     {
         if (source)
