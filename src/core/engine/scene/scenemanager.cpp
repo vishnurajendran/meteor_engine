@@ -101,6 +101,30 @@ void MSceneManager::fixedUpdate(float fixedDeltaTime)
     activeScene->fixedUpdate(fixedDeltaTime);
 }
 
+void MSceneManager::lateUpdate(float deltaTime)
+{
+    if (activeScene == nullptr)
+        return;
+
+    activeScene->lateUpdate(deltaTime);
+}
+
+void MSceneManager::postPhysicsStep(float fixedDeltaTime)
+{
+    if (activeScene == nullptr)
+        return;
+
+    activeScene->postPhysicsStep(fixedDeltaTime);
+}
+
+void MSceneManager::interpolatePhysics(float alpha)
+{
+    if (activeScene == nullptr)
+        return;
+
+    activeScene->interpolatePhysics(alpha);
+}
+
 SString MSceneManager::registerOnLoadCallback(std::function<void(MScene*)> callback)
 {
     auto id = SGuid::newGUID();

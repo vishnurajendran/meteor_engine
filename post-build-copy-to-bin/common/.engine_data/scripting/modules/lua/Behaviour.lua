@@ -62,6 +62,7 @@ setmetatable(Behaviour, { __call = castTo })
 function Behaviour:onStart() end
 function Behaviour:onTick(dt) end
 function Behaviour:onFixedTick(dt) end
+function Behaviour:onLateTick(dt) end
 function Behaviour:onStop() end
 
 --- Returns the owning MSpatialEntity.

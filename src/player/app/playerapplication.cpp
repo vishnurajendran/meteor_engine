@@ -55,7 +55,6 @@ void MPlayerApplication::run() {
     startFrame();
     window->clear();
 
-    const auto fixedStep = getPhysicsStep();
     const bool canTickPhysics = physicsEngineRef && physicsEngineRef->canTick();
     // tick physics.
     START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
@@ -68,15 +67,9 @@ void MPlayerApplication::run() {
     {
         START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
         sceneManagerRef->update(deltaTime);
+        // after every onTick, so followers (cameras) see this frame's poses
+        sceneManagerRef->lateUpdate(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
-
-        if (internal_tickSpatialFixedUpdateFlag)
-        {
-            internal_tickSpatialFixedUpdateFlag = false;
-            START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_FIXED_UPDATE)
-            sceneManagerRef->fixedUpdate(fixedStep);
-            STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_FIXED_UPDATE)
-        }
     }
 
     window->update(deltaTime);
@@ -99,12 +92,30 @@ void MPlayerApplication::tickPhysics(float deltaTime)
     if (physicsAccumulator > maxAccumulation)
         physicsAccumulator = maxAccumulation;
 
+    // Each physics step runs onFixedTick first (so forces land on that step),
+    // then the step, then lets body entities record the pose it produced.
     while (physicsAccumulator >= fixedStep)
     {
+        if (sceneManagerRef)
+        {
+            // records the last step's cost when several run in one frame
+            START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_FIXED_UPDATE)
+            sceneManagerRef->fixedUpdate(fixedStep);
+            STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_FIXED_UPDATE)
+        }
+
         physicsEngineRef->tick(fixedStep);
         physicsAccumulator -= fixedStep;
-        internal_tickSpatialFixedUpdateFlag = true;
+
+        if (sceneManagerRef)
+            sceneManagerRef->postPhysicsStep(fixedStep);
     }
+
+    // The leftover time says how far this frame is between the last two
+    // steps. Body entities blend their last two poses by it, before any
+    // onTick reads them.
+    if (sceneManagerRef)
+        sceneManagerRef->interpolatePhysics(physicsAccumulator / fixedStep);
 }
 
 void MPlayerApplication::cleanup() {

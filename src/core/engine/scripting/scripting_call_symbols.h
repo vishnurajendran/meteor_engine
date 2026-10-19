@@ -12,6 +12,7 @@ namespace ScriptinCallSymbols
     const SString SCRIPT_FUNC_STOP = "onStop";
     const SString SCRIPT_FUNC_TICK = "onTick";
     const SString SCRIPT_FUNC_FIXED_TICK = "onFixedTick";
+    const SString SCRIPT_FUNC_LATE_TICK = "onLateTick";
 
 }
 

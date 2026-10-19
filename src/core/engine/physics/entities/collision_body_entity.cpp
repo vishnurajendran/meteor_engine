@@ -4,6 +4,8 @@
 
 #include "collision_body_entity.h"
 
+#include <glm/gtc/quaternion.hpp>
+
 #include "core/application/application.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 
@@ -59,17 +61,49 @@ void MCollisionBodyEntity::onUpdate(float deltaTime)
     auto* body = getBasePhysicsBody();
     if (!body) return;
 
-    body->physicsTick(deltaTime);
-
+    // While simulating, the pose comes from onPhysicsStepped /
+    // onPhysicsInterpolate, which run before any onUpdate.
     auto appInst = MApplication::getAppInstance();
     if (appInst && appInst->isSimulating())
-    {
-        setWorldPosition(body->getBodySyncPosition());
-        setWorldRotation(body->getBodySyncRotation());
         return;
-    }
 
+    body->physicsTick(deltaTime);
     body->setPositionAndRotation(getWorldPosition(), getWorldRotation());
+}
+
+void MCollisionBodyEntity::onPhysicsStepped(float fixedDeltaTime)
+{
+    MSpatialEntity::onPhysicsStepped(fixedDeltaTime);
+    if (!initialized) return;
+
+    auto* body = getBasePhysicsBody();
+    if (!body) return;
+
+    // Reads the new pose and velocities and applies axis locks - once per
+    // step now, rather than once per frame.
+    body->physicsTick(fixedDeltaTime);
+
+    prevBodyPosition = currBodyPosition;
+    prevBodyRotation = currBodyRotation;
+    currBodyPosition = body->getBodySyncPosition();
+    currBodyRotation = body->getBodySyncRotation();
+    if (!hasBodySnapshot)
+    {
+        // first step - nothing earlier to blend from
+        prevBodyPosition = currBodyPosition;
+        prevBodyRotation = currBodyRotation;
+        hasBodySnapshot  = true;
+    }
+}
+
+void MCollisionBodyEntity::onPhysicsInterpolate(float alpha)
+{
+    MSpatialEntity::onPhysicsInterpolate(alpha);
+    if (!initialized || !hasBodySnapshot) return;
+    if (!getBasePhysicsBody()) return;
+
+    setWorldPosition(glm::mix(prevBodyPosition, currBodyPosition, alpha));
+    setWorldRotation(glm::slerp(prevBodyRotation, currBodyRotation, alpha));
 }
 
 void MCollisionBodyEntity::onExit()
@@ -122,6 +156,9 @@ void MCollisionBodyEntity::onBodyCreated()
 {
     auto* body = getBasePhysicsBody();
     if (!body || !physicsEngine) return;
+
+    // a new body starts from the entity's pose - don't blend from the old one
+    hasBodySnapshot = false;
 
     physicsEngine->registerCallbackReceiver(body, this,
         static_cast<unsigned int>(glm::clamp(physicsLayer.get(), 0, 31)));

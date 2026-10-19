@@ -229,6 +229,7 @@ public static class LuaTypeDefEmitter
         sb.AppendLine("function Behaviour:onStart() end");
         sb.AppendLine("function Behaviour:onTick(dt) end");
         sb.AppendLine("function Behaviour:onFixedTick(dt) end");
+        sb.AppendLine("function Behaviour:onLateTick(dt) end");
         sb.AppendLine("function Behaviour:onStop() end");
         sb.AppendLine();
         sb.AppendLine("--- Create a new class extending this one. Scripts declare classes with CLASS instead,");

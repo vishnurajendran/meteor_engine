@@ -42,7 +42,7 @@
 - 2D and spatial (3D) audio with roll-off, distance range and Doppler controls
 
 ### Scripting — Lua 5.4 + [sol2](https://github.com/ThePhD/sol2)
-- Script behaviours attached to entities, with `onStart`, `onTick`, `onFixedTick` and `onStop` callbacks
+- Script behaviours attached to entities, with `onStart`, `onTick`, `onFixedTick`, `onLateTick` and `onStop` callbacks
 - Engine bindings **generated automatically** from C++ headers at build time
 - Generated [LuaLS](https://luals.github.io/) type definitions for IDE autocomplete
 
@@ -174,6 +174,7 @@ end
 | `onStart(self)`           | Once, when play starts                    |
 | `onTick(self, dt)`        | Every frame                               |
 | `onFixedTick(self, dt)`   | Every fixed step (physics rate)           |
+| `onLateTick(self, dt)`    | Every frame, after every `onTick`         |
 | `onStop(self)`            | Once, when play stops                     |
 
 **How the bindings are made.** Classes are exposed to Lua by annotating the C++ headers. At build time, the binding generator (`src/tools/lua_binding_generator`) parses those headers with libclang and generates the sol2 bindings. It also generates `meteor_api.lua`, the LuaLS type definitions, which are copied to `bin/.engine_data/scripting/symbols/lua/` for editor autocomplete.
@@ -185,6 +186,7 @@ end
 | `onStart()`       | Once, when play starts                    |
 | `onTick(dt)`      | Every frame                               |
 | `onFixedTick(dt)` | Every fixed step (physics rate)           |
+| `onLateTick(dt)`  | Every frame, after every `onTick`         |
 | `onStop()`        | Once, when play stops                     |
 
 **How the bindings are made.** Classes are exposed to Lua by annotating the C++ headers. At build time, the binding generator (`src/tools/lua_binding_generator`) parses those headers with libclang and generates the sol2 bindings. It also generates `meteor_api.lua`, the LuaLS type definitions, which are copied to `bin/.engine_data/scripting/symbols/lua/` for editor autocomplete.
