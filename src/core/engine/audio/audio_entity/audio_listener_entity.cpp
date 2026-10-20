@@ -51,6 +51,10 @@ void MAudioListener::onExit()
         return;
 
     engineSubsystem->releaseAudioListener(listener);
+
+    // released above - don't keep a dangling pointer around
+    listener    = nullptr;
+    initialized = false;
 }
 
 void MAudioListener::onUpdate(float deltaTime)
