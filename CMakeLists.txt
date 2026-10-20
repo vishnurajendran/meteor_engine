@@ -389,6 +389,13 @@ if (BUILD_EDITOR)
 
     target_compile_definitions(${EDITOR_NAME} PRIVATE EDITOR_APPLICATION)
 
+    # Make sol2 type-check every value a script passes to C++, in every
+    # build type. Without it, release builds skip the checks, so a wrong
+    # argument (e.g. a Lua function where an entity is expected) is
+    # reinterpreted as a C++ object and crashes the engine instead of
+    # raising a Lua error that names the bad argument.
+    target_compile_definitions(${EDITOR_NAME} PRIVATE SOL_ALL_SAFETIES_ON=1)
+
     target_link_libraries(${EDITOR_NAME} PRIVATE
             SFML::Graphics
             SFML::Window
@@ -429,6 +436,13 @@ if (BUILD_PLAYER)
     )
 
     target_compile_definitions(${PLAYER_NAME} PRIVATE PLAYER_APPLICATION)
+
+    # Make sol2 type-check every value a script passes to C++, in every
+    # build type. Without it, release builds skip the checks, so a wrong
+    # argument (e.g. a Lua function where an entity is expected) is
+    # reinterpreted as a C++ object and crashes the engine instead of
+    # raising a Lua error that names the bad argument.
+    target_compile_definitions(${PLAYER_NAME} PRIVATE SOL_ALL_SAFETIES_ON=1)
 
     target_link_libraries(${PLAYER_NAME} PRIVATE
             SFML::Graphics

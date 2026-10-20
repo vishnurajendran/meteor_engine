@@ -4,29 +4,29 @@
 // resolve callback. The handle always resolves by GUID - it does not know
 // about file paths or the asset manager.
 //
-// ── Usage ─────────────────────────────────────────────────────────────────────
+// -- Usage ---------------------------------------------------------------------
 //   TAssetHandle<MTextureAsset> tex = manager->getAsset<MTextureAsset>(path);
 //   tex->getTexture()        - operator-> resolves via callback + dynamic_cast
 //   tex.get()                - explicit resolve, may return nullptr
 //   if (tex) { ... }         - bool cast, false when asset not found
 //
-// ── Converting between types ──────────────────────────────────────────────────
+// -- Converting between types --------------------------------------------------
 //   TAssetHandle<MAsset>            base = manager->getAsset<MAsset>(path);
 //   TAssetHandle<MStaticMeshAsset>  mesh = base;   // downcast - safe at runtime
 //   TAssetHandle<MAsset>            back = mesh;    // upcast  - always valid
 //
 //   Downcasts that don't match return nullptr from get().
 //
-// ── Serialisation ─────────────────────────────────────────────────────────────
+// -- Serialisation -------------------------------------------------------------
 //   toRefString()  produces "guid:<id>".
 //   The manager also accepts a bare asset path at load time — that is
 //   converted to a GUID handle immediately. On re-save the reference is
 //   always written as "guid:<id>".
 //
-// ── Creation ──────────────────────────────────────────────────────────────────
+// -- Creation ------------------------------------------------------------------
 //   Handles should only be created through MAssetManager.
 //   Do not construct handles manually unless you supply a valid resolver.
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 #pragma once
 #ifndef ASSETHANDLE_H
@@ -35,7 +35,6 @@
 #include <cstddef>
 #include <type_traits>
 #include "core/engine/assetmanagement/asset/asset.h"
-// NOTE: No include of assetmanager.h - the handle is manager-agnostic.
 
 // Prefix used by every serialized asset reference (scenes, materials, skyboxes…).
 //   "guid:<id>"  — resolve by GUID
@@ -54,7 +53,7 @@ class TAssetHandle
     template<typename U> friend class TAssetHandle;
 
 public:
-    // ── Resolver type ─────────────────────────────────────────────────────────
+    // -- Resolver type ---------------------------------------------------------
     // Returns MAsset* (untyped) so the same function pointer works across all
     // handle types. get() applies dynamic_cast<T*> for type safety.
     using ResolveFunc = MAsset*(*)(const SString&);
@@ -70,7 +69,7 @@ public:
     TAssetHandle(const SString& id, ResolveFunc resolver)
         : assetId(id), resolveFunc(resolver) {}
 
-    // ── Converting constructor ────────────────────────────────────────────────
+    // -- Converting constructor ------------------------------------------------
     // Allows conversion between any TAssetHandle<U> and TAssetHandle<T> as
     // long as both U and T derive from MAsset.
     //
@@ -88,7 +87,7 @@ public:
         static_assert(std::is_base_of_v<MAsset, U>, "U must inherit from MAsset");
     }
 
-    // ── Resolution ────────────────────────────────────────────────────────────
+    // -- Resolution ------------------------------------------------------------
 
     // Resolves through the callback every call, then dynamic_cast<T*> for
     // type safety. Returns nullptr if the handle is null, the asset isn't
@@ -103,7 +102,7 @@ public:
     T* operator->() const { return get(); }
     T& operator*()  const { return *get(); }
 
-    // ── State queries ─────────────────────────────────────────────────────────
+    // -- State queries ---------------------------------------------------------
 
     // True if the handle has a GUID AND the asset is currently loaded
     // AND the asset is actually a T.
@@ -113,11 +112,11 @@ public:
     // True if the handle was never assigned (no GUID at all).
     bool isNull() const { return assetId.empty(); }
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
+    // -- Accessors -------------------------------------------------------------
 
     const SString& getAssetId() const { return assetId; }
 
-    // ── Serialisation ─────────────────────────────────────────────────────────
+    // -- Serialisation ---------------------------------------------------------
 
     // Always produces "guid:<id>". Returns empty string for null handles.
     SString toRefString() const
@@ -126,13 +125,13 @@ public:
         return SString(ASSET_REF_GUID_PREFIX) + assetId;
     }
 
-    // ── Comparison ────────────────────────────────────────────────────────────
+    // -- Comparison ------------------------------------------------------------
 
     bool operator==(const TAssetHandle<T>& other) const { return assetId == other.assetId; }
     bool operator!=(const TAssetHandle<T>& other) const { return assetId != other.assetId; }
 };
 
-// ── Strict cast ──────────────────────────────────────────────────────────────
+// -- Strict cast --------------------------------------------------------------
 // The converting constructor keeps the GUID even when the asset is another
 // type (get() then returns nullptr, but the handle still carries the ID, and
 // widening it back to TAssetHandle<MAsset> makes it look valid again).
@@ -150,4 +149,4 @@ TAssetHandle<To> strictAssetCast(const TAssetHandle<From>& handle)
     return TAssetHandle<To>();
 }
 
-#endif // ASSETHANDLE_H
+#endif // ASSETHANDLE_H
