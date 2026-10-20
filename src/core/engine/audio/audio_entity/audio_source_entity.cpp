@@ -131,6 +131,12 @@ void MAudioSource::onExit()
     engineSubsystem->releaseAudioSource(source);
     source = nullptr;
     engineSubsystem = nullptr;
+
+    // The entity outlives this call until the scene frees it, and other
+    // scripts' onStop can still call play()/stop() on it - those check
+    // initialized, so mark the source gone.
+    initialized   = false;
+    sourcePlaying = false;
 }
 
 void MAudioSource::onDrawGizmo(SVector2 res)
@@ -154,6 +160,8 @@ void MAudioSource::onDrawGizmo(SVector2 res)
 void MAudioSource::onEnable()
 {
     MSpatialEntity::onEnable();
+    if (!initialized)
+        return;
     if (isPlaying())
     {
         source->play();
@@ -163,6 +171,8 @@ void MAudioSource::onEnable()
 void MAudioSource::onDisable()
 {
     MSpatialEntity::onDisable();
+    if (!initialized)
+        return;
 
     // stop internal player
     if (isPlaying())

@@ -20,16 +20,32 @@ MScene::~MScene() {
     rootEntities.clear();
 }
 
-void MScene::startScene() const
+void MScene::startScene()
 {
-    //nothing here for now
+    // Every entity is built and its fields are set - give the engine parts
+    // (physics bodies...) a chance to exist before the first onStart runs.
+    awakePending();
+}
+
+void MScene::awakePending()
+{
+    // Index loop - an onAwake that spawns entities appends to the list, and
+    // those are awoken in this same call.
+    for (size_t i = 0; i < pendingAwake.size(); ++i)
+    {
+        MSpatialEntity* entity = pendingAwake[i];
+        if (entity && !entity->hasAwoken() && !markedForDestroy.contains(entity))
+            entity->onAwake();
+    }
+    pendingAwake.clear();
 }
 
 void MScene::update(float deltaTime)
 {
     destroyMarked();
+    awakePending();   // spawned since the last pass - before any onStart below
 
-    for (const auto [obj, ptr] : allAliveEntities)
+    for (auto* ptr : getEntityOrder())
     {
         if (ptr == nullptr)
             continue;
@@ -48,7 +64,8 @@ void MScene::update(float deltaTime)
 
 void MScene::fixedUpdate(float fixedDeltaTime)
 {
-    for (const auto [obj, ptr] : allAliveEntities)
+    awakePending();   // fixedUpdate can start entities too
+    for (auto* ptr : getEntityOrder())
     {
         if (ptr == nullptr)
             continue;
@@ -69,7 +86,7 @@ void MScene::fixedUpdate(float fixedDeltaTime)
 
 void MScene::lateUpdate(float deltaTime)
 {
-    for (const auto [obj, ptr] : allAliveEntities)
+    for (auto* ptr : getEntityOrder())
     {
         if (ptr == nullptr)
             continue;
@@ -89,7 +106,7 @@ void MScene::lateUpdate(float deltaTime)
 
 void MScene::postPhysicsStep(float fixedDeltaTime)
 {
-    for (const auto [obj, ptr] : allAliveEntities)
+    for (auto* ptr : getEntityOrder())
     {
         if (ptr == nullptr || !ptr->hasStarted() || !ptr->isEnabledInHierarchy())
             continue;
@@ -100,7 +117,7 @@ void MScene::postPhysicsStep(float fixedDeltaTime)
 
 void MScene::interpolatePhysics(float alpha)
 {
-    for (const auto [obj, ptr] : allAliveEntities)
+    for (auto* ptr : getEntityOrder())
     {
         if (ptr == nullptr || !ptr->hasStarted() || !ptr->isEnabledInHierarchy())
             continue;
@@ -114,12 +131,27 @@ void MScene::close()
     MLOG(SString::format("Initiating scene closure...{0}", name));
     sceneClosing = true;
 
-    for (const auto& [obj, ptr] : getAllEntities())
-        if (ptr.get())
-            ptr->destroy();
+    // Walk the roots in hierarchy order; destroy() takes each subtree
+    // children-first. Copy - a script's onStop could spawn or reparent.
+    const std::vector<MSpatialEntity*> roots = rootEntities;
+    for (auto* root : roots)
+        if (root)
+            root->destroy();
+
+    // Entities not reachable from the roots (e.g. the editor camera, which
+    // takes itself out of the root list) still need to go. destroy() skips
+    // anything already marked.
+    std::vector<MSpatialEntity*> unreached;
+    for (const auto& [obj, ptr] : allAliveEntities)
+        if (ptr.get() && !markedForDestroy.contains(ptr.get()))
+            unreached.push_back(ptr.get());
+    for (auto* entity : unreached)
+        entity->destroy();
 
     destroyMarked();
     rootEntities.clear();
+    entityOrder.clear();
+    entityOrderDirty = true;
     MLOG(STR("Scene closed"));
 }
 
@@ -134,22 +166,42 @@ void MScene::destroyMarked()
 {
     if (markedForDestroy.empty()) return;
     MLOG(SString::format("Marked for destroy {0}", std::to_string(markedForDestroy.size())));
-    for (auto entity : markedForDestroy)
+    // Two passes, so the result does not depend on the set's order. Freeing a
+    // parent before its child used to leave the child reading (and writing
+    // into) the freed parent.
+    const std::vector<MSpatialEntity*> batch(markedForDestroy.begin(), markedForDestroy.end());
+
+    // Pass 1 - unlink
+    for (auto* entity : batch)
     {
-        if (auto* myParent = entity->getParent())
-        {
-            for (auto* child : entity->getChildren())
-            {
-                entity->setParent(myParent);
-            }
+        // Top of a destroyed subtree - detach it from the parent that stays.
+        auto* myParent = entity->getParent();
+        if (myParent && !markedForDestroy.contains(myParent))
             myParent->removeChild(entity);
-        }
-        auto  it    = std::ranges::find(rootEntities, entity);
+
+        // A child that is not being destroyed (parented after destroy() ran)
+        // moves to the scene root rather than keep a freed parent.
+        // Copy - removeChild edits the list.
+        const std::vector<MSpatialEntity*> children = entity->getChildren();
+        for (auto* child : children)
+            if (child && !markedForDestroy.contains(child))
+                entity->removeChild(child);
+    }
+
+    // Pass 2 - free. Marked entities now only point at each other, and no
+    // entity destructor reads its parent or children.
+    for (auto* entity : batch)
+    {
+        auto it = std::ranges::find(rootEntities, entity);
         if (it != rootEntities.end()) rootEntities.erase(it);
+        std::erase(pendingAwake, entity);   // destroyed before it ever awoke
         allAliveEntities.erase(entity);
     }
 
     markedForDestroy.clear();
+
+    // The walk order holds raw pointers - never let it outlive a free.
+    entityOrderDirty = true;
 }
 
 void MScene::addToRoot(MSpatialEntity* entity) {
@@ -159,6 +211,7 @@ void MScene::addToRoot(MSpatialEntity* entity) {
     if (it != rootEntities.end())
         return;
     rootEntities.push_back(entity);
+    entityOrderDirty = true;
 }
 
 void MScene::insertRootEntityAt(MSpatialEntity* entity, int index)
@@ -185,6 +238,7 @@ void MScene::insertRootEntityAt(MSpatialEntity* entity, int index)
     // Clamp and insert.
     index = std::clamp(index, 0, (int)rootEntities.size());
     rootEntities.insert(rootEntities.begin() + index, entity);
+    entityOrderDirty = true;
 }
 
 MSpatialEntity* MScene::find(const SString& path)
@@ -279,6 +333,33 @@ bool MScene::registerEntity(MSpatialEntity* entity)
 
     addToRoot(entity);
     allAliveEntities[entity] = entity;
+    entityOrderDirty = true;
+    pendingAwake.push_back(entity);
     entity->onCreate();
     return true;
+}
+
+static void appendSubtree(MSpatialEntity* entity, std::vector<MSpatialEntity*>& out)
+{
+    if (entity == nullptr)
+        return;
+    out.push_back(entity);
+    for (auto* child : entity->getChildren())
+        appendSubtree(child, out);
+}
+
+const std::vector<MSpatialEntity*>& MScene::getEntityOrder()
+{
+    // Rebuilt only here, at the start of a pass - never mid-pass. Entities
+    // created during a pass join from the next one; destroyed ones are only
+    // marked until destroyMarked() frees them (and dirties this list).
+    if (entityOrderDirty)
+    {
+        entityOrder.clear();
+        entityOrder.reserve(allAliveEntities.size());
+        for (auto* root : rootEntities)
+            appendSubtree(root, entityOrder);
+        entityOrderDirty = false;
+    }
+    return entityOrder;
 }

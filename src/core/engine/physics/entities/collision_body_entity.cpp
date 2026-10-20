@@ -28,9 +28,11 @@ void MCollisionBodyEntity::onCreate()
     setCanTick(true);
 }
 
-void MCollisionBodyEntity::onStart()
+// In onAwake, not onStart, so the body exists before any script's onStart
+// looks for it - e.g. a parent's CarController finding its physics child.
+void MCollisionBodyEntity::onAwake()
 {
-    MSpatialEntity::onStart();
+    MSpatialEntity::onAwake();
     if (!initialized) return;
 
     // Always wire common field callbacks so they are ready whenever a body

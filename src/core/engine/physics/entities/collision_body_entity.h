@@ -57,7 +57,7 @@ public:
     // ---- MSpatialEntity lifecycle ------------------------------------------
 
     void onCreate()                override;
-    void onStart()                 override;
+    void onAwake()                 override;
     void onUpdate(float deltaTime) override;
     void onExit()                  override;
     void onPhysicsStepped(float fixedDeltaTime) override;
@@ -216,7 +216,7 @@ protected:
     // ---- Pure virtuals -----------------------------------------------------
 
     // Create the Jolt body and store it in the subclass typed pointer.
-    // Called from onStart and recreateBody. May complete without a body
+    // Called from onAwake and recreateBody. May complete without a body
     // (e.g. mesh/convex hull waiting for an asset) - that is valid.
     virtual void createCollisionBody() = 0;
 
@@ -225,7 +225,7 @@ protected:
 
     // ---- Virtual with empty default ----------------------------------------
 
-    // Called from onStart after common callbacks are set up. Override to wire
+    // Called from onAwake after common callbacks are set up. Override to wire
     // shape-specific field callbacks (radius onChange, halfHeight onChange, etc.)
     // and to replace the default bodyType onChange for shapes with constraints.
     virtual void setupShapeCallbacks() {}

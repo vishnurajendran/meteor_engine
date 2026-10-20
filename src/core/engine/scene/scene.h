@@ -20,7 +20,8 @@ public:
 
     MScene();
     ~MScene() override;
-    void startScene() const;
+    // End of the scene build - awakes every loaded entity (see onAwake).
+    void startScene();
     void update(float deltaTime);
     void fixedUpdate(float fixedDeltaTime);
     void lateUpdate(float deltaTime);
@@ -68,11 +69,26 @@ private:
     std::unordered_map<MObject*, MObjectPtr<MSpatialEntity>> allAliveEntities;
     std::unordered_set<MSpatialEntity*> markedForDestroy;
 
+    // Every entity reachable from the roots, parents before children, in
+    // hierarchy order. The scene passes walk this instead of the map, so
+    // update order is stable. Rebuilt lazily when the hierarchy changes.
+    std::vector<MSpatialEntity*> entityOrder;
+    bool entityOrderDirty = true;
+    const std::vector<MSpatialEntity*>& getEntityOrder();
+
+    // Registered but not yet awoken, in registration order (a scene build
+    // registers parents before children). Drained by awakePending().
+    std::vector<MSpatialEntity*> pendingAwake;
+    void awakePending();
+
     void recursivelyLoadEntity(pugi::xml_node currNode, MSpatialEntity* parent);
     bool sceneClosing = false;
 public:
     std::unordered_map<MObject*, MObjectPtr<MSpatialEntity>>& getAllEntities() { return allAliveEntities; }
     bool registerEntity(MSpatialEntity* entity);
+    // Call after changing the root list or any entity's children, so the
+    // next scene pass rebuilds its walk order.
+    void markHierarchyDirty() { entityOrderDirty = true; }
     void markForDestroy(MSpatialEntity* entity);
     void destroyMarked();
 public:

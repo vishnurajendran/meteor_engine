@@ -188,10 +188,16 @@ public:
     virtual void onPhysicsStepped(float fixedDeltaTime) {}
     virtual void onPhysicsInterpolate(float alpha) {}
     virtual void onExit();
+    // Engine-side setup (physics bodies and the like), before any script
+    // runs. Every entity awakes before any entity starts: a loaded scene
+    // awakes all its entities when the build finishes, and an entity spawned
+    // later awakes at the start of the next scene pass. Runs once.
+    virtual void onAwake();
     virtual void onDrawGizmo(SVector2 renderResolution);
     virtual void onEnable() {} // no impl here
     virtual void onDisable() {} // no impl here
 
+    [[nodiscard]] bool hasAwoken() const { return entityAwake; }
     [[nodiscard]] bool hasStarted() const { return entityStarted; }
     [[nodiscard]] bool getCanTick() const { return canTick; }
     void setCanTick(bool tick) { canTick = tick; }
@@ -262,6 +268,7 @@ private:
     SString compStateHash;
 
     bool canTick = false;
+    bool entityAwake = false;
     bool entityStarted = false;
     IScriptInstance* scriptInstance = nullptr;
     bool onExitCalled = false;
