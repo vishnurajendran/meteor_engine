@@ -29,6 +29,7 @@ void MEditorSceneCameraEntity::onCreate()
     auto it = std::find(roots.begin(), roots.end(), this);
     if (it != roots.end())
         roots.erase(it);
+    scene->markHierarchyDirty();
 
     if (settingsRef = dynamic_cast<MEditorSettings*>(MEngineStatics::getEngineSettings()))
     {

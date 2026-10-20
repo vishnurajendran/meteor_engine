@@ -17,6 +17,14 @@ static MScene* activeScene()
     return MSceneManager::getSceneManagerInstance()->getActiveScene();
 }
 
+// Tells the scene its walk order is stale. The entity's own scene if it has
+// one yet (ownerScene is set after onCreate), else the active scene.
+static void markHierarchyDirty(MScene* ownerScene)
+{
+    if (auto* scene = ownerScene ? ownerScene : activeScene())
+        scene->markHierarchyDirty();
+}
+
 static void addToSceneRoot(MSpatialEntity* entity)
 {
     if (entity->getParent() != nullptr)
@@ -32,6 +40,7 @@ static void removeFromSceneRoot(const MSpatialEntity* entity)
     auto& roots = scene->getRootEntities();
     auto  it    = std::find(roots.begin(), roots.end(), entity);
     if (it != roots.end()) roots.erase(it);
+    scene->markHierarchyDirty();
 }
 
 
@@ -95,6 +104,7 @@ void MSpatialEntity::addChild(MSpatialEntity* entity)
     children.push_back(entity);
     entity->parent = this;
     entity->updateTransforms();
+    markHierarchyDirty(ownerScene);
 }
 
 void MSpatialEntity::removeChild(MSpatialEntity* entity)
@@ -106,6 +116,7 @@ void MSpatialEntity::removeChild(MSpatialEntity* entity)
     entity->parent = nullptr;
     addToSceneRoot(entity);
     entity->updateTransforms();
+    markHierarchyDirty(ownerScene);
 }
 
 
@@ -426,15 +437,18 @@ void MSpatialEntity::destroy()
     if (ownerScene->markedForDestroy.contains(this))
         return;
 
-    // Marked first, so anything onExit triggers sees it as already going.
+    // Marked first, so anything the children's onExit triggers sees this
+    // entity as already going.
     ownerScene->markForDestroy(this);
-    onExit();
 
-    // Children go with their parent. Copy - a script's onStop could reparent.
+    // Children first (post-order): leaves exit before their parents, and the
+    // parent's onExit runs last. Copy - a script's onStop could reparent.
     const std::vector<MSpatialEntity*> childrenCopy = children;
     for (auto* child : childrenCopy)
         if (child)
             child->destroy();
+
+    onExit();
 }
 
 void MSpatialEntity::insertChildAt(MSpatialEntity* entity, int index)
@@ -462,6 +476,7 @@ void MSpatialEntity::insertChildAt(MSpatialEntity* entity, int index)
     children.insert(children.begin() + index, entity);
     entity->parent = this;
     entity->updateTransforms();
+    markHierarchyDirty(ownerScene);
 }
 
 MSpatialEntity* MSpatialEntity::find(const SString& path)
@@ -505,6 +520,11 @@ MSpatialEntity* MSpatialEntity::find(const SString& path)
 }
 
 void MSpatialEntity::onCreate()  {}
+void MSpatialEntity::onAwake()
+{
+    entityAwake = true;
+}
+
 void MSpatialEntity::onStart()
 {
     entityStarted = true;
