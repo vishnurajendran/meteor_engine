@@ -49,6 +49,7 @@ public:
      * During simulation, scripts, audio and physics are active and running
      * @return true when simulating
      */
+    SCRIPT_BIND_FUNC()
     [[nodiscard]] virtual bool isSimulating() const = 0;
 
     SCRIPT_BIND_FUNC_STATIC()

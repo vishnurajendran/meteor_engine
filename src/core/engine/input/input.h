@@ -12,7 +12,7 @@
 #include <array>
 #include <string>
 
-#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
+#include "core/engine/scripting/script_binding_macros.h"
 
 // Key codes mirroring sf::Keyboard::Key (SFML 3.0.x) value-for-value.
 // Conversion to/from sf::Keyboard::Key is a zero-cost static_cast.

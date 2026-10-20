@@ -9,6 +9,7 @@
 
 class MCubemapTexture;
 
+SCRIPT_BIND_CLASS()
 class MCubemapAsset : public MTextureAsset {
     DEFINE_OBJECT_SUBCLASS(MCubemapAsset);
 public:
@@ -28,6 +29,7 @@ public:
     void deferredAssetLoad(bool forced) override;
     bool dependsOn(const SString& assetPath) const override;
 
+    SCRIPT_BIND_FUNC()
     SString getFacePath(int index)  const;
     void    setFacePath(int index, const SString& facePath);
 

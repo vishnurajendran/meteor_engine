@@ -37,7 +37,10 @@ constexpr const char* DEFAULT_VSCODE_SETTINGS = R"({
         "EForceMode",
         "MLogger",
         "MSceneManager",
-        "Behaviour"
+        "Behaviour",
+        "MMath",
+        "MAssetManager",
+        "MAssetHandle"
     ],
     "files.associations": {
         "*.mesl": "glsl",

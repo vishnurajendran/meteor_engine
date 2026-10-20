@@ -44,6 +44,7 @@ enum class ETextureCompression
 
 // ── MTextureAsset ─────────────────────────────────────────────────────────────
 
+SCRIPT_BIND_CLASS()
 class MTextureAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MTextureAsset)
 private:
@@ -62,6 +63,7 @@ public:
     explicit MTextureAsset(const SString& path);
     MTextureAsset(const SString& path, const pugi::xml_node& importSettings);
 
+    SCRIPT_BIND_FUNC()
     virtual MTexture* getTexture();
     bool requestReload() override;
 

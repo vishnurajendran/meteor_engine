@@ -132,4 +132,22 @@ public:
     bool operator!=(const TAssetHandle<T>& other) const { return assetId != other.assetId; }
 };
 
+// ── Strict cast ──────────────────────────────────────────────────────────────
+// The converting constructor keeps the GUID even when the asset is another
+// type (get() then returns nullptr, but the handle still carries the ID, and
+// widening it back to TAssetHandle<MAsset> makes it look valid again).
+// This drops the GUID instead when the asset is loaded and is NOT a To, so a
+// texture handle never poses as an audio clip handle. A handle whose asset
+// isn't loaded right now keeps its GUID - it may resolve after a reload.
+// Used by the generated Lua bindings at the script boundary.
+template <typename To, typename From>
+TAssetHandle<To> strictAssetCast(const TAssetHandle<From>& handle)
+{
+    static_assert(std::is_base_of_v<MAsset, To>, "To must inherit from MAsset");
+    TAssetHandle<To> typed(handle);
+    if (typed.isValid() || !TAssetHandle<MAsset>(handle).isValid())
+        return typed;
+    return TAssetHandle<To>();
+}
+
 #endif // ASSETHANDLE_H

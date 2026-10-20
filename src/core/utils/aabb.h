@@ -5,7 +5,7 @@
 #ifndef AABB_H
 #define AABB_H
 #include "glmhelper.h"
-#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
+#include "core/engine/scripting/script_binding_macros.h"
 
 SCRIPT_BIND_STRUCT()
 struct AABB
@@ -19,7 +19,7 @@ struct AABB
     SVector3 getCentre() const;
     SCRIPT_BIND_FUNC()
     bool inside(const SVector3& point) const;
-    SCRIPT_BIND_FUNC()
+    SCRIPT_BIND_FUNC_STATIC()
     static bool intersect(const AABB& a, const AABB& b);
 };
 #endif //AABB_H

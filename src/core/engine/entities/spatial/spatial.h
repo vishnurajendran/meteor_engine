@@ -83,6 +83,7 @@ public:
     SCRIPT_BIND_FUNC()
     [[nodiscard]] bool getEnabled() const { return enabled; }
 
+    SCRIPT_BIND_FUNC()
     [[nodiscard]] bool isEnabledInHierarchy() const;
 
     // Transform getters
@@ -144,8 +145,13 @@ public:
     SCRIPT_BIND_FUNC()
     [[nodiscard]] SVector3 getUpVector() const;
 
+    SCRIPT_BIND_FUNC()
     [[nodiscard]] MSpatialEntity* getParent() { return parent; }
+    // Lua gets a copy as a plain table (the generator wraps vector returns).
+    SCRIPT_BIND_FUNC()
     [[nodiscard]] std::vector<MSpatialEntity*>& getChildren() { return children; }
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] int getChildCount() const { return static_cast<int>(children.size()); }
 
     void setParentScene(MScene* scene);
 

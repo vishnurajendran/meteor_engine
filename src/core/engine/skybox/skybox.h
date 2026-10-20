@@ -27,7 +27,9 @@ public:
     MSkyboxEntity();
     ~MSkyboxEntity() override;
 
+    SCRIPT_BIND_FUNC()
     TAssetHandle<MCubemapAsset> getCubemapAsset() const { return cubemapAsset; }
+    SCRIPT_BIND_FUNC()
     void setCubemapAsset(TAssetHandle<MCubemapAsset> cubemap);
 
     // ── IMeteorDrawable ───────────────────────────────────────────────────────

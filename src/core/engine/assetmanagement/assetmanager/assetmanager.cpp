@@ -12,7 +12,58 @@
 #include "core/engine/assetmanagement/source/routed_asset_source.h"
 #include "core/utils/meteor_paths.h"
 #include "core/utils/guid.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "pugixml.hpp"
+
+// ---------------------------------------------------------------------------
+// Script API
+// ---------------------------------------------------------------------------
+
+namespace
+{
+    IAssetManagerSubsystem* activeAssetManager()
+    {
+        return MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    }
+}
+
+TAssetHandle<MAsset> MAssetManager::find(const SString& path)
+{
+    auto* manager = activeAssetManager();
+    return manager ? manager->getAsset<MAsset>(path) : TAssetHandle<MAsset>();
+}
+
+TAssetHandle<MAsset> MAssetManager::findById(const SString& assetId)
+{
+    auto* manager = activeAssetManager();
+    return manager ? manager->getAssetById<MAsset>(assetId) : TAssetHandle<MAsset>();
+}
+
+TAssetHandle<MAsset> MAssetManager::findByReference(const SString& reference)
+{
+    auto* manager = activeAssetManager();
+    return manager ? manager->getAssetFromReference<MAsset>(reference) : TAssetHandle<MAsset>();
+}
+
+bool MAssetManager::exists(const SString& path)
+{
+    return find(path).isValid();
+}
+
+std::vector<SString> MAssetManager::getAssetPaths()
+{
+    std::vector<SString> paths;
+    // assetMap is a protected member of the interface: reachable through an
+    // MAssetManager (editor and player both register one), not the interface.
+    auto* manager = dynamic_cast<MAssetManager*>(activeAssetManager());
+    if (!manager)
+        return paths;
+    paths.reserve(manager->assetMap.size());
+    for (const auto& [path, asset] : manager->assetMap)
+        if (asset)
+            paths.push_back(path);
+    return paths;
+}
 
 // ---------------------------------------------------------------------------
 // Source

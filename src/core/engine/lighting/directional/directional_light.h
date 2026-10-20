@@ -53,7 +53,6 @@ public:
         shadowDistance = glm::clamp(v, MIN_SHADOW_DISTANCE, MAX_SHADOW_DISTANCE);
     }
 
-    SCRIPT_BIND_FUNC()
     void prepareLightRender() override;
 
     void onExit() override;

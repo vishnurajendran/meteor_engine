@@ -38,9 +38,15 @@ class MCollisionBodyEntity : public MSpatialEntity, public IPhysicsCallbackRecei
     // ---- Common serialisable fields ----------------------------------------
     // Every collision shape exposes these in the inspector.
     DECLARE_FIELD(bodyType,          ECollisionBodyType, ECollisionBodyType::StaticBody)
+    // Bound as Lua properties: each has an onChange callback that pushes the
+    // new value to the live body (see setupCommonCallbacks).
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(mass,              float,              10.0f)
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(affectedByGravity, bool,               false)
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(gravityScale,      float,              1.0f)
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(isSensor,          bool,               false)
     DECLARE_FIELD(linearDamping,     float,              0.0f)
     DECLARE_FIELD(angularDamping,    float,              0.0f)
@@ -48,6 +54,7 @@ class MCollisionBodyEntity : public MSpatialEntity, public IPhysicsCallbackRecei
     DECLARE_FIELD(friction,          float,              0.6f)
 
     // 0 = Default. Clamped to [0, 31] in the physicsLayer onChange callback.
+    SCRIPT_BIND_PROP()
     DECLARE_FIELD(physicsLayer,      int,                0)
 
 public:

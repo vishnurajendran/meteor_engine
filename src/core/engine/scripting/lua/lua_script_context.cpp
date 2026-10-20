@@ -134,10 +134,12 @@ void MLuaScriptContext::loadEngineModules()
         return;
     }
 
-    // Add lib to package.path so user scripts can require() modules
+    // Put the engine module folder FIRST on package.path. The default path
+    // contains "./?.lua", and the working directory is the project root, so
+    // appending let a project file with the same name shadow an engine module.
     std::string currentPath = vm["package"]["path"];
     std::string libPattern = (libDir / "?.lua").string();
-    vm["package"]["path"] = currentPath + ";" + libPattern;
+    vm["package"]["path"] = libPattern + ";" + currentPath;
 
     // Load behaviour.lua first via script_file (not require)
     // Then populate the require cache manually so user scripts
@@ -166,8 +168,12 @@ void MLuaScriptContext::loadEngineModules()
             MERROR(SString::format("Failed to load behaviour.lua: {0}", err.what()));
             return;
         }
-        // Cache it so require("behaviour") returns the loaded version
+        // Cache it so require() returns the loaded version. Register the
+        // file's own name too: require("Behaviour") missed the lowercase key,
+        // found the file through package.path (case-insensitive on Windows)
+        // and ran it again, giving scripts a second, different Behaviour.
         vm["package"]["loaded"]["behaviour"] = vm["Behaviour"];
+        vm["package"]["loaded"][behaviourPath.stem().string()] = vm["Behaviour"];
         MLOG("Loaded Lua module: behaviour");
     }
 

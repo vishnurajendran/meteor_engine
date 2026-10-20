@@ -15,6 +15,7 @@
 
 class MMaterial;
 
+SCRIPT_BIND_CLASS()
 class MMaterialAsset : public MAsset, public SerializedClassBase
 {
     DEFINE_OBJECT_SUBCLASS(MMaterialAsset)
@@ -40,6 +41,7 @@ public:
 
     MMaterial::ShadingMode getShadingMode() const { return shadingMode; }
     // Raw reference string as stored in the file ("guid:<id>" or path).
+    SCRIPT_BIND_FUNC()
     SString                getShaderPath()  const { return SString(shaderPathField.get().c_str()); }
 
     // New materials are created by the editor's "material" asset template

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MeteorBindingGenerator;
 
@@ -216,6 +217,113 @@ public static class CodeEmitter
 
     private static string EmitFunction(BoundClass cls, BoundFunction func)
     {
+        if (NeedsWrapper(func))
+            return EmitWrappedFunction(cls, func);
+
         return $"        \"{func.Name}\", &{cls.Name}::{func.Name}";
+    }
+
+    // TAssetHandle<T> / TAssetRef<T>. Group 1 = template, group 2 = T.
+    private static readonly Regex AssetTypePattern =
+        new(@"\b(TAssetHandle|TAssetRef)\s*<\s*(\w+)\s*>", RegexOptions.Compiled);
+
+    /// <summary>True for TAssetHandle&lt;T&gt; and TAssetRef&lt;T&gt; (any qualifiers).</summary>
+    public static bool IsAssetType(string cppType) => AssetTypePattern.IsMatch(cppType);
+
+    /// <summary>
+    /// Functions whose signature can't cross into Lua as-is get a lambda
+    /// wrapper that converts at the boundary:
+    ///   - std::vector returns  -> copied into a plain Lua table
+    ///   - asset handle/ref params and returns -> Lua's single MAssetHandle type
+    /// </summary>
+    private static bool NeedsWrapper(BoundFunction func) =>
+        ReturnsVector(func)
+        || IsAssetType(func.DeclaredReturnType)
+        || func.DeclaredParameters.Any(p => IsAssetType(p.Type));
+
+    /// <summary>True when the function returns a std::vector (by value or reference).</summary>
+    public static bool ReturnsVector(BoundFunction func)
+    {
+        return func.DeclaredReturnType.Contains("vector<") || func.ReturnType.Contains("vector<");
+    }
+
+    /// <summary>
+    /// Emits a lambda that calls the function and converts at the boundary.
+    ///
+    /// std::vector returns: Lua gets a COPY as a plain 1-based table. Binding
+    /// &amp;Class::func directly would hand out a returned reference as the
+    /// engine's live container (scripts could add and remove entries behind
+    /// its back), and a returned value as container userdata, which
+    /// table.insert / table.sort / type() don't treat as a table.
+    ///
+    /// Assets: Lua has one handle type, MAssetHandle = TAssetHandle&lt;MAsset&gt;
+    /// (asset_bindings.h). Parameters accept it and narrow it to the declared
+    /// TAssetHandle&lt;T&gt; / TAssetRef&lt;T&gt;; returns widen back to
+    /// MAssetHandle. Both go through strictAssetCast (asset_handle.h), so a
+    /// handle to another asset type becomes a null handle, both ways.
+    ///
+    /// Calling through a lambda also sidesteps overload ambiguity, since the
+    /// member function's address is never taken.
+    /// </summary>
+    private static string EmitWrappedFunction(BoundClass cls, BoundFunction func)
+    {
+        var signature = new List<string>();
+        if (!func.IsStatic)
+            signature.Add($"{cls.Name}& self");
+
+        // As written in the header - the AST pass may have simplified them.
+        var args = new List<string>();
+        foreach (var (type, name) in func.DeclaredParameters)
+        {
+            var asset = AssetTypePattern.Match(type);
+            if (!asset.Success)
+            {
+                signature.Add($"{type} {name}");
+                args.Add(name);
+                continue;
+            }
+
+            signature.Add($"const TAssetHandle<MAsset>& {name}");
+            var typedHandle = $"strictAssetCast<{asset.Groups[2].Value}>({name})";
+            args.Add(asset.Groups[1].Value == "TAssetRef"
+                ? $"TAssetRef<{asset.Groups[2].Value}>({typedHandle})"
+                : typedHandle);
+        }
+
+        var target = func.IsStatic ? $"{cls.Name}::{func.Name}" : $"self.{func.Name}";
+        var call = $"{target}({string.Join(", ", args)})";
+        var lambda = $"[]({string.Join(", ", signature)})";
+
+        string body;
+        var returnAsset = AssetTypePattern.Match(func.DeclaredReturnType);
+        if (ReturnsVector(func))
+        {
+            body =
+                $"            auto items = {call}; // copy - Lua never holds the engine's container\n" +
+                $"            return sol::as_table(std::move(items));\n";
+        }
+        else if (returnAsset.Success)
+        {
+            // Checked against the declared type before widening, so a wrong-type
+            // GUID stored in the engine comes back as a null handle.
+            var assetType = returnAsset.Groups[2].Value;
+            var handleExpr = returnAsset.Groups[1].Value == "TAssetRef" ? $"{call}.getHandle()" : call;
+            body = $"            return TAssetHandle<MAsset>(strictAssetCast<{assetType}>({handleExpr}));\n";
+        }
+        else if (func.DeclaredReturnType.Trim() == "void")
+        {
+            body = $"            {call};\n";
+        }
+        else
+        {
+            // Pass the result through untouched (references stay references).
+            lambda += " -> decltype(auto)";
+            body = $"            return {call};\n";
+        }
+
+        return
+            $"        \"{func.Name}\", {lambda} {{\n" +
+            body +
+            $"        }}";
     }
 }

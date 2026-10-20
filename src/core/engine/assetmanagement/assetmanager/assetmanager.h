@@ -22,10 +22,37 @@ namespace pugi {
     class xml_document;
 }
 
+SCRIPT_BIND_CLASS()
 class MAssetManager : public MObject, public IAssetManagerSubsystem
 {
     DEFINE_OBJECT_SUBCLASS(MAssetManager)
 public:
+    // -- Script API --------------------------------------------------------------
+    // Static lookups for Lua. They return handles, which resolve by GUID on
+    // every get(), never raw pointers - a script can't hold on to an asset
+    // that a refresh or reload has since deleted. An unknown path or ID gives
+    // a null handle (isValid() == false), not an error.
+    //
+    //   local clip = MAssetManager.find("assets/sfx/boom.wav")
+    //   if clip:isValid() then source:playOneShot(clip) end
+
+    SCRIPT_BIND_FUNC_STATIC()
+    static TAssetHandle<MAsset> find(const SString& path);
+
+    SCRIPT_BIND_FUNC_STATIC()
+    static TAssetHandle<MAsset> findById(const SString& assetId);
+
+    // "guid:<id>" or a plain path - the format scene files use.
+    SCRIPT_BIND_FUNC_STATIC()
+    static TAssetHandle<MAsset> findByReference(const SString& reference);
+
+    SCRIPT_BIND_FUNC_STATIC()
+    static bool exists(const SString& path);
+
+    // Every loaded asset's path, sorted.
+    SCRIPT_BIND_FUNC_STATIC()
+    static std::vector<SString> getAssetPaths();
+
     virtual void refresh();
     virtual void init() override { };
     virtual void cleanup() override;

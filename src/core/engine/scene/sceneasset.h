@@ -8,6 +8,7 @@
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "pugixml.hpp"
 
+SCRIPT_BIND_CLASS()
 class MSceneAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MSceneAsset)
 private:
