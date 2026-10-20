@@ -676,8 +676,19 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
     {
         if (target)
         {
-            if (MEditorApplication::SelectedObject == target)
-                MEditorApplication::SelectedObject = nullptr;
+            // The whole subtree goes - clear the selection if it is the target
+            // or anything under it, or the inspector keeps a freed pointer.
+            if (auto* selected = dynamic_cast<MSpatialEntity*>(MEditorApplication::SelectedObject))
+            {
+                for (auto* e = selected; e != nullptr; e = e->getParent())
+                {
+                    if (e == target)
+                    {
+                        MEditorApplication::SelectedObject = nullptr;
+                        break;
+                    }
+                }
+            }
             target->destroy();
             rightClickedEntity = nullptr;
         }

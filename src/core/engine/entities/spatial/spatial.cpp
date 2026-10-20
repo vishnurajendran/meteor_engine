@@ -421,8 +421,20 @@ void MSpatialEntity::destroy()
         MERROR(SString::format("MSpatialEntity:: Owner Scene is null for {0}.", getName()));
         return;
     }
-    onExit();
+    // A subtree destroy and a scene close both reach children more than
+    // once - onExit must only run the first time.
+    if (ownerScene->markedForDestroy.contains(this))
+        return;
+
+    // Marked first, so anything onExit triggers sees it as already going.
     ownerScene->markForDestroy(this);
+    onExit();
+
+    // Children go with their parent. Copy - a script's onStop could reparent.
+    const std::vector<MSpatialEntity*> childrenCopy = children;
+    for (auto* child : childrenCopy)
+        if (child)
+            child->destroy();
 }
 
 void MSpatialEntity::insertChildAt(MSpatialEntity* entity, int index)

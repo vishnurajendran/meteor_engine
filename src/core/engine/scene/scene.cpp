@@ -114,9 +114,16 @@ void MScene::close()
     MLOG(SString::format("Initiating scene closure...{0}", name));
     sceneClosing = true;
 
-    for (const auto& [obj, ptr] : getAllEntities())
+    // Iterate a copy - destroy() runs onExit, and a script's onStop could
+    // spawn or destroy entities, which would invalidate the map iteration.
+    std::vector<MSpatialEntity*> entities;
+    entities.reserve(allAliveEntities.size());
+    for (const auto& [obj, ptr] : allAliveEntities)
         if (ptr.get())
-            ptr->destroy();
+            entities.push_back(ptr.get());
+
+    for (auto* entity : entities)
+        entity->destroy();
 
     destroyMarked();
     rootEntities.clear();
@@ -134,17 +141,33 @@ void MScene::destroyMarked()
 {
     if (markedForDestroy.empty()) return;
     MLOG(SString::format("Marked for destroy {0}", std::to_string(markedForDestroy.size())));
-    for (auto entity : markedForDestroy)
+    // Two passes, so the result does not depend on the set's order. Freeing a
+    // parent before its child used to leave the child reading (and writing
+    // into) the freed parent.
+    const std::vector<MSpatialEntity*> batch(markedForDestroy.begin(), markedForDestroy.end());
+
+    // Pass 1 - unlink
+    for (auto* entity : batch)
     {
-        if (auto* myParent = entity->getParent())
-        {
-            for (auto* child : entity->getChildren())
-            {
-                entity->setParent(myParent);
-            }
+        // Top of a destroyed subtree - detach it from the parent that stays.
+        auto* myParent = entity->getParent();
+        if (myParent && !markedForDestroy.contains(myParent))
             myParent->removeChild(entity);
-        }
-        auto  it    = std::ranges::find(rootEntities, entity);
+
+        // A child that is not being destroyed (parented after destroy() ran)
+        // moves to the scene root rather than keep a freed parent.
+        // Copy - removeChild edits the list.
+        const std::vector<MSpatialEntity*> children = entity->getChildren();
+        for (auto* child : children)
+            if (child && !markedForDestroy.contains(child))
+                entity->removeChild(child);
+    }
+
+    // Pass 2 - free. Marked entities now only point at each other, and no
+    // entity destructor reads its parent or children.
+    for (auto* entity : batch)
+    {
+        auto it = std::ranges::find(rootEntities, entity);
         if (it != rootEntities.end()) rootEntities.erase(it);
         allAliveEntities.erase(entity);
     }
