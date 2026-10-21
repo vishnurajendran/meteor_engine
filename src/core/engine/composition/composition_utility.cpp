@@ -12,7 +12,7 @@
 #include "core/engine/scene/scenemanager.h"
 #include "core/utils/logger.h"
 
-std::function<void(MSpatialEntity*, MSpatialEntity*)> MCompositionUtility::onInstanceReplaced;
+TMulticastDelegate<MSpatialEntity*, MSpatialEntity*> MCompositionUtility::onInstanceReplaced;
 
 namespace
 {
@@ -213,8 +213,7 @@ MSpatialEntity* MCompositionUtility::resetInstance(MSpatialEntity* instanceRoot)
 
     destroySubtree(instanceRoot);
 
-    if (onInstanceReplaced)
-        onInstanceReplaced(instanceRoot, newRoot);
+    onInstanceReplaced.broadcast(instanceRoot, newRoot);
 
     return newRoot;
 }

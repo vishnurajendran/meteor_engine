@@ -6,7 +6,7 @@
 #define SCENEMANAGER_H
 
 #include "core/object/object.h"
-#include "functional"
+#include "core/utils/delegate.h"
 
 class MScene;
 /**
@@ -34,8 +34,8 @@ public:
     virtual void postPhysicsStep(float fixedDeltaTime);
     virtual void interpolatePhysics(float alpha);
 
-    SString registerOnLoadCallback(std::function<void(MScene*)> callback);
-    void deregisterOnLoadCallback(SString callbackId);
+    // Fired after a scene finishes loading, with the new active scene.
+    TMulticastDelegate<MScene*> onSceneLoaded;
 
     SCRIPT_BIND_FUNC()
     virtual MScene* getActiveScene() { return activeScene; }
@@ -50,8 +50,6 @@ public:
     static MSceneManager* getSceneManagerInstance();
 
 private:
-    std::unordered_map<SString, std::function<void(MScene*)>> sceneLoadCallbackListeners;
-    void informSceneLoadCallbackListeners(MScene* scene);
 
 protected:
     MScene* activeScene;

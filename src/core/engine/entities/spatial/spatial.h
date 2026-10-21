@@ -205,6 +205,7 @@ public:
 
     [[nodiscard]] bool hasAwoken() const { return entityAwake; }
     [[nodiscard]] bool hasStarted() const { return entityStarted; }
+    [[nodiscard]] bool hasExited() const { return onExitCalled; }
     [[nodiscard]] bool getCanTick() const { return canTick; }
     void setCanTick(bool tick) { canTick = tick; }
 

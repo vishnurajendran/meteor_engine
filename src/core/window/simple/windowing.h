@@ -9,6 +9,7 @@
 #include "SFML/Graphics.hpp"
 #include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
 #include "core/object/object.h"
+#include "core/utils/delegate.h"
 #include "core/utils/glmhelper.h"
 
 class MWindow : public MObject {
@@ -28,7 +29,6 @@ protected:
 
 private:
     SRenderBuffer* renderBuffer = nullptr;
-    std::function<void(SVector2)> windowResizeCallback;
 
 protected:
     void handleWindowEvents(const std::optional<sf::Event>& event);
@@ -43,7 +43,8 @@ public:
     virtual bool isOpen() const;
     virtual void close();
 
-    void setWindowResizeCallback(std::function<void(SVector2)> inCallback) { windowResizeCallback = inCallback; }
+    // Fired with the new size when the user resizes the window.
+    TMulticastDelegate<SVector2> onResized;
     void setVisible(bool visible);
     SRenderBuffer* getRenderBuffer() { return renderBuffer; }
 };

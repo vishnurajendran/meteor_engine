@@ -31,6 +31,9 @@ public:
 
     bool setField(const SString& name, const SDynValue& value) override;
     void clearField(const SString& name) override;
+    [[nodiscard]] bool hasFunc(const SString& funcName) const override;
+    void sendCollisionMessage(const SString& funcName, const SCollisionData& data) override;
+    void sendTriggerMessage(const SString& funcName, const SOverlapData& data) override;
 
     template<typename T>
     void setEnvVarTyped(const SString& name, T value)

@@ -8,6 +8,7 @@
 
 #include "core/application/application.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/scripting/scripting_call_symbols.h"
 
 // ---------------------------------------------------------------------------
 // Lifecycle
@@ -196,6 +197,13 @@ void MCollisionBodyEntity::syncFieldsToBody()
 
 void MCollisionBodyEntity::setupCommonCallbacks()
 {
+    // Event toggles: no body involved - the contact listener reads the
+    // atomics. Seeded from the fields (already loaded from the scene) here.
+    collisionEventsEnabled.store(receiveCollisionEvents.get());
+    triggerEventsEnabled.store(receiveTriggerEvents.get());
+    receiveCollisionEvents.setOnChangeCallback([this](auto v) { collisionEventsEnabled.store(v); });
+    receiveTriggerEvents.setOnChangeCallback([this](auto v)   { triggerEventsEnabled.store(v); });
+
     mass.setOnChangeCallback([this](auto v)
         { auto* b = getBasePhysicsBody(); if (b) b->setMass(v); });
 
@@ -239,9 +247,83 @@ void MCollisionBodyEntity::setupCommonCallbacks()
 // IPhysicsCallbackReceiver
 // ---------------------------------------------------------------------------
 
-void MCollisionBodyEntity::dispatchCollisionStart(const SCollisionData& data) { if (onCollisionStartCb) onCollisionStartCb(data); }
-void MCollisionBodyEntity::dispatchCollisionStay (const SCollisionData& data) { if (onCollisionStayCb)  onCollisionStayCb(data);  }
-void MCollisionBodyEntity::dispatchCollisionEnd  (const SCollisionData& data) { if (onCollisionEndCb)   onCollisionEndCb(data);   }
-void MCollisionBodyEntity::dispatchTriggerStart  (const SOverlapData&   data) { if (onTriggerStartCb)   onTriggerStartCb(data);   }
-void MCollisionBodyEntity::dispatchTriggerStay   (const SOverlapData&   data) { if (onTriggerStayCb)    onTriggerStayCb(data);    }
-void MCollisionBodyEntity::dispatchTriggerEnd    (const SOverlapData&   data) { if (onTriggerEndCb)     onTriggerEndCb(data);     }
+// Each contact goes to C++ listeners (the delegates), then to this entity's
+// own script as a Unity-style message, if it defines the function.
+
+void MCollisionBodyEntity::onStart()
+{
+    MSpatialEntity::onStart();   // starts the script
+    warnAboutDisabledScriptMessages();
+}
+
+void MCollisionBodyEntity::warnAboutDisabledScriptMessages() const
+{
+    const IScriptInstance* script = getScriptInstance();
+    if (!script || !script->isValid())
+        return;
+
+    using namespace ScriptinCallSymbols;
+    const auto definesAny = [script](std::initializer_list<SString> names)
+    {
+        for (const auto& name : names)
+            if (script->hasFunc(name))
+                return true;
+        return false;
+    };
+
+    if (!receiveCollisionEvents.get() && definesAny({ SCRIPT_FUNC_COLLISION_ENTER, SCRIPT_FUNC_COLLISION_STAY, SCRIPT_FUNC_COLLISION_EXIT }))
+        MWARN(SString::format("'{0}': its script handles collision messages, but 'Receive Collision Events' is off - they will not be called.", getName()));
+
+    if (!receiveTriggerEvents.get() && definesAny({ SCRIPT_FUNC_TRIGGER_ENTER, SCRIPT_FUNC_TRIGGER_STAY, SCRIPT_FUNC_TRIGGER_EXIT }))
+        MWARN(SString::format("'{0}': its script handles trigger messages, but 'Receive Trigger Events' is off - they will not be called.", getName()));
+}
+
+IScriptInstance* MCollisionBodyEntity::getScriptForMessages() const
+{
+    if (!hasStarted() || hasExited())
+        return nullptr;
+    IScriptInstance* script = getScriptInstance();
+    return script && script->isValid() ? script : nullptr;
+}
+
+void MCollisionBodyEntity::dispatchCollisionStart(const SCollisionData& data)
+{
+    onCollisionStart.broadcast(data);
+    if (auto* script = getScriptForMessages())
+        script->sendCollisionMessage(ScriptinCallSymbols::SCRIPT_FUNC_COLLISION_ENTER, data);
+}
+
+void MCollisionBodyEntity::dispatchCollisionStay(const SCollisionData& data)
+{
+    onCollisionStay.broadcast(data);
+    if (auto* script = getScriptForMessages())
+        script->sendCollisionMessage(ScriptinCallSymbols::SCRIPT_FUNC_COLLISION_STAY, data);
+}
+
+void MCollisionBodyEntity::dispatchCollisionEnd(const SCollisionData& data)
+{
+    onCollisionEnd.broadcast(data);
+    if (auto* script = getScriptForMessages())
+        script->sendCollisionMessage(ScriptinCallSymbols::SCRIPT_FUNC_COLLISION_EXIT, data);
+}
+
+void MCollisionBodyEntity::dispatchTriggerStart(const SOverlapData& data)
+{
+    onTriggerStart.broadcast(data);
+    if (auto* script = getScriptForMessages())
+        script->sendTriggerMessage(ScriptinCallSymbols::SCRIPT_FUNC_TRIGGER_ENTER, data);
+}
+
+void MCollisionBodyEntity::dispatchTriggerStay(const SOverlapData& data)
+{
+    onTriggerStay.broadcast(data);
+    if (auto* script = getScriptForMessages())
+        script->sendTriggerMessage(ScriptinCallSymbols::SCRIPT_FUNC_TRIGGER_STAY, data);
+}
+
+void MCollisionBodyEntity::dispatchTriggerEnd(const SOverlapData& data)
+{
+    onTriggerEnd.broadcast(data);
+    if (auto* script = getScriptForMessages())
+        script->sendTriggerMessage(ScriptinCallSymbols::SCRIPT_FUNC_TRIGGER_EXIT, data);
+}

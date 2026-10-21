@@ -28,6 +28,7 @@
 #include <functional>
 #include <vector>
 
+#include "core/utils/delegate.h"
 #include "core/utils/sstring.h"
 #include "pugixml.hpp"
 
@@ -101,8 +102,8 @@ public:
     // ---- Editor hook ------------------------------------------------------------
 
     // Reset replaces entities; anything holding a pointer to the old root
-    // (e.g. the editor selection) must be redirected. Set by the editor.
-    static std::function<void(MSpatialEntity* oldRoot, MSpatialEntity* newRoot)> onInstanceReplaced;
+    // (e.g. the editor selection) must be redirected. Args: old root, new root.
+    static TMulticastDelegate<MSpatialEntity*, MSpatialEntity*> onInstanceReplaced;
 
 private:
     static void destroySubtree(MSpatialEntity* entity);

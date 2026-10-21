@@ -1,0 +1,289 @@
+//
+// spatial.h
+//
+
+#pragma once
+#ifndef SPATIAL_H
+#define SPATIAL_H
+
+#include <vector>
+#include "core/engine/assetmanagement/asset/field_asset_ref_types.h"
+#include "core/engine/composition/composition_asset.h"
+#include "core/engine/entities/entity_type_registry.h"
+#include "core/engine/scene/scene.h"
+#include "core/engine/scene/scenemanager.h"
+#include "core/engine/scripting/interface/script_instance.h"
+#include "core/engine/scripting/lua/lua_script_asset.h"
+#include "core/engine/scripting/script_binding_macros.h"
+#include "core/utils/field_engine_types.h"
+#include "data/serialized_class_base.h"
+#include "entityflags.h"
+#include "spatial_class_macros.h"
+
+SCRIPT_BIND_CLASS()
+class MSpatialEntity : public MObject, public SerializedClassBase
+{
+private:
+    DEFINE_SPATIAL_CLASS(MSpatialEntity)
+    DECLARE_FIELD(scriptReference, TAssetRef<MLuaScriptAsset>, {})
+
+    // Composition (prefab) link — empty for normal entities. When set, this
+    // entity is the root of a composition instance and its subtree mirrors the
+    // .comp asset. Clearing it breaks the link (see MCompositionUtility).
+    DECLARE_FIELD(compAssetReference, TAssetRef<MCompositionAsset>, {})
+
+public:
+    static MSpatialEntity* createInstance(const SString& name = {});
+
+    template <typename T>
+    static T* createInstance(const SString& name, MScene* ownerScene = nullptr)
+    {
+        static_assert(std::is_base_of<MSpatialEntity, T>::value, "T must derive from MSpatialEntity");
+        T* entity = new T();
+        entity->setName(name);
+        if (!ownerScene)
+        {
+            ownerScene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+            if (!ownerScene)
+                MERROR("NO SCENE OPEN");
+        }
+        ownerScene->registerEntity(entity);
+        entity->ownerScene = ownerScene;
+        return entity;
+    }
+
+    // Scene serialization
+    pugi::xml_node serialiseEntity(pugi::xml_node parent) const;
+
+    // resolveCompositions — when true (scene loading), clean composition
+    // instances whose .comp has changed are rebuilt from the asset instead of
+    // the saved snapshot. Pass false for an exact copy (duplicate, instantiate).
+    static MSpatialEntity* deserialiseEntity(const pugi::xml_node& node, bool resolveCompositions = true);
+
+    // Composition change-tracking hashes — only meaningful on an instance root.
+    // Written by MCompositionUtility; see composition_utility.h for what they mean.
+    [[nodiscard]] const SString& getCompSourceHash() const { return compSourceHash; }
+    [[nodiscard]] const SString& getCompStateHash()  const { return compStateHash; }
+    void setCompositionHashes(const SString& sourceHash, const SString& stateHash)
+    {
+        compSourceHash = sourceHash;
+        compStateHash  = stateHash;
+    }
+
+    SCRIPT_BIND_FUNC()
+    void destroy();
+
+    // Flags / enable
+    [[nodiscard]] EEntityFlags getEntityFlags() const { return flags; }
+    void setEntityFlags(EEntityFlags flag) { flags = flag; }
+
+    SCRIPT_BIND_FUNC()
+    void setEnabled(bool enable);
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] bool getEnabled() const { return enabled; }
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] bool isEnabledInHierarchy() const;
+
+    // Transform getters
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getRelativePosition() const { return relativePosition; }
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getRelativeScale() const { return relativeScale; }
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SQuaternion getRelativeRotation() const { return relativeRotation; }
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getWorldPosition() const;
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SQuaternion getWorldRotation() const;
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getWorldScale() const;
+
+    [[nodiscard]] SMatrix4 getModelMatrix() const { return modelMatrix; }
+    [[nodiscard]] SMatrix4 getTransformMatrix() const { return modelMatrix; }
+
+    // Transform setters
+    SCRIPT_BIND_FUNC()
+    void setRelativePosition(const SVector3& p)
+    {
+        relativePosition = p;
+        updateTransforms();
+    }
+
+    SCRIPT_BIND_FUNC()
+    void setRelativeRotation(const SQuaternion& r)
+    {
+        relativeRotation = r;
+        updateTransforms();
+    }
+
+    SCRIPT_BIND_FUNC()
+    void setRelativeScale(const SVector3& s)
+    {
+        relativeScale = s;
+        updateTransforms();
+    }
+
+    SCRIPT_BIND_FUNC()
+    void setWorldPosition(const SVector3& worldPosition);
+
+    SCRIPT_BIND_FUNC()
+    void setWorldRotation(const SQuaternion& worldRotation);
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getForwardVector() const;
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getRightVector() const;
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] SVector3 getUpVector() const;
+
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] MSpatialEntity* getParent() { return parent; }
+    // Lua gets a copy as a plain table (the generator wraps vector returns).
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] std::vector<MSpatialEntity*>& getChildren() { return children; }
+    SCRIPT_BIND_FUNC()
+    [[nodiscard]] int getChildCount() const { return static_cast<int>(children.size()); }
+
+    void setParentScene(MScene* scene);
+
+    void setParent(MSpatialEntity* newParent);
+    void addChild(MSpatialEntity* entity);
+    void removeChild(MSpatialEntity* entity);
+
+    /// Insert entity as a child at a specific index (for hierarchy reordering).
+    /// Removes from its current parent first. Clamps index to [0, children.size()].
+    void insertChildAt(MSpatialEntity* entity, int index);
+
+    SCRIPT_BIND_FUNC()
+    MSpatialEntity* find(const SString& path);
+
+
+    template <typename T>
+    T* findT(const SString& searchName)
+    {
+        static_assert(std::is_base_of<MSpatialEntity, T>::value, "T must derive from MSpatialEntity");
+        if (name == searchName)
+            if (T* typed = dynamic_cast<T*>(this))
+                return typed;
+        for (auto* child : children)
+            if (child)
+                if (T* result = child->findT<T>(searchName))
+                    return result;
+        return nullptr;
+    }
+
+    virtual void updateTransforms();
+
+    virtual void onCreate();
+    virtual void onStart();
+    virtual void onUpdate(float deltaTime);
+    virtual void onFixedUpdate(float fixedDeltaTime);
+    // After every entity's onUpdate this frame - drives the script's onLateTick.
+    virtual void onLateUpdate(float deltaTime);
+    // Physics hooks (see MScene::postPhysicsStep / interpolatePhysics).
+    // Empty here - collision bodies use them to smooth their pose.
+    virtual void onPhysicsStepped(float fixedDeltaTime) {}
+    virtual void onPhysicsInterpolate(float alpha) {}
+    virtual void onExit();
+    // Engine-side setup (physics bodies and the like), before any script
+    // runs. Every entity awakes before any entity starts: a loaded scene
+    // awakes all its entities when the build finishes, and an entity spawned
+    // later awakes at the start of the next scene pass. Runs once.
+    virtual void onAwake();
+    virtual void onDrawGizmo(SVector2 renderResolution);
+    virtual void onEnable() {} // no impl here
+    virtual void onDisable() {} // no impl here
+
+    [[nodiscard]] bool hasAwoken() const { return entityAwake; }
+    [[nodiscard]] bool hasStarted() const { return entityStarted; }
+    // True once onExit has run (destroy() or scene close). The entity may
+    // stay allocated until the next frame, but should take no more events.
+    [[nodiscard]] bool hasExited() const { return onExitCalled; }
+    [[nodiscard]] bool getCanTick() const { return canTick; }
+    void setCanTick(bool tick) { canTick = tick; }
+
+    // Script reference -- used by the inspector to get/set the assigned script.
+    // The setter releases any running script instance so the new asset takes
+    // effect on the next tick.
+    [[nodiscard]] MAsset* getScriptAssetRef() const;
+    [[nodiscard]] IScriptInstance* getScriptInstance() const { return scriptInstance; }
+    void setScriptAssetRef(MAsset* asset);
+
+    // Returns the stored asset ID from the script reference field directly,
+    // without resolving through the asset manager. Safe to call even when the
+    // asset manager subsystem is unavailable.
+    [[nodiscard]] SString getScriptAssetId() const;
+    ~MSpatialEntity() override;
+
+    // ---- behaviour tuning ----------------------------------------------------
+    // Per-entity values for a script's public fields, kept per script (by
+    // asset ID) so switching to another script and back keeps the earlier
+    // tuning. Only overrides are stored: a field without one follows the
+    // script's default. Changes apply to a running script immediately.
+    [[nodiscard]] const SDynValue* getTuningOverride(const SString& scriptId, const SString& field) const;
+    void setTuningOverride(const SString& scriptId, const SString& field, const SDynValue& value);
+    void clearTuningOverride(const SString& scriptId, const SString& field);
+
+private:
+    void ensureScript();
+    void scriptStart();
+    void scriptTick(float dt);
+    void scriptFixedTick(float fdt);
+    void scriptLateTick(float dt);
+    void scriptStop();
+    void releaseScript();
+
+    // Pushes the current script's tuning overrides into its new instance,
+    // before onStart runs.
+    void applyBehaviourTuning();
+    void serialiseBehaviourTuning(pugi::xml_node& node) const;
+    void deserialiseBehaviourTuning(const pugi::xml_node& node);
+
+protected:
+    void onSerialise(pugi::xml_node& node) override;
+    void onDeserialise(const pugi::xml_node& node) override;
+
+    MSpatialEntity();
+    explicit MSpatialEntity(MSpatialEntity* parent);
+
+    SVector3 relativePosition = SVector3(0.0f);
+    SQuaternion relativeRotation = glm::identity<SQuaternion>();
+    SVector3 relativeScale = SVector3(1.0f);
+    SMatrix4 modelMatrix = glm::identity<SMatrix4>();
+
+    MSpatialEntity* parent = nullptr;
+    std::vector<MSpatialEntity*> children;
+    bool enabled = true;
+    EEntityFlags flags = EEntityFlags::Default;
+    MScene* ownerScene = nullptr;
+
+private:
+    [[nodiscard]] SMatrix4 computeLocalMatrix() const;
+    static SString generateName(const SString& base);
+    void propagateActiveState(bool active);
+
+    // Plain members (not DECLARE_FIELDs) so the generic inspector doesn't show
+    // them — serialised as attributes in onSerialise / onDeserialise.
+    SString compSourceHash;
+    SString compStateHash;
+
+    bool canTick = false;
+    bool entityAwake = false;
+    bool entityStarted = false;
+    IScriptInstance* scriptInstance = nullptr;
+    bool onExitCalled = false;
+
+    // script asset ID -> field name -> value
+    std::unordered_map<SString, std::unordered_map<SString, SDynValue>> behaviourTuning;
+};
+
+#endif // SPATIAL_H

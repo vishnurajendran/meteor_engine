@@ -9,7 +9,7 @@
 #include "spdlog/spdlog.h"
 #include "sstring.h"
 #include <chrono>
-#include <functional>
+#include "delegate.h"
 
 // Source location captured at the macro call site.
 // Has defaults so direct MLogger::log() calls still compile.
@@ -35,14 +35,10 @@ struct SLogMessage {
 #define MERROR(msg) MLogger::error(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
 #define MVERBOSE(msg) MLogger::verbose(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
 
-using LogEventHandler = std::function<void(const SLogMessage&)>;
-
 class MLogger {
 private:
     // Construct-on-first-use accessors to avoid static initialization order
     // issues when MObject (or any other static-init code) logs before main().
-    static std::map<int,LogEventHandler>& getListeners();
-    static int& getNextId();
     static SString& getLastMsg();
 
     static void notify(const SLogMessage& msg);
@@ -53,8 +49,10 @@ public:
     static void warn(SString warning,  SLogLocation loc = {});
     static void error(SString error,   SLogLocation loc = {});
 
-    static int subscribe(const LogEventHandler& handler);
-    static void unsubscribe(const int& id);
+    // Fired for every log/warn/error, on the thread that logged it - which
+    // may be a worker thread (asset watcher, audio decoding, splash screen).
+    // Construct-on-first-use, like the rest of this class's statics.
+    static TMulticastDelegate<const SLogMessage&>& onLog();
 
     static SString getLastMessage();
 };

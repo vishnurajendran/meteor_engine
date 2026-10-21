@@ -142,24 +142,6 @@ MSpatialEntityInspectorDrawer::MSpatialEntityInspectorDrawer() {
     scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
         return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
     };
-
-    // Resetting a composition instance replaces its entities — move the
-    // selection to the new root if it pointed anywhere inside the old one,
-    // otherwise it would dangle once the scene frees the old entities.
-    // (Set here because this drawer is the editor code that owns Reset; every
-    // drawer subclass re-assigns the same lambda, which is harmless.)
-    MCompositionUtility::onInstanceReplaced = [](MSpatialEntity* oldRoot, MSpatialEntity* newRoot)
-    {
-        auto* selected = dynamic_cast<MSpatialEntity*>(MEditorApplication::SelectedObject);
-        for (MSpatialEntity* e = selected; e; e = e->getParent())
-        {
-            if (e == oldRoot)
-            {
-                MEditorApplication::SelectedObject = newRoot;
-                return;
-            }
-        }
-    };
 }
 
 // ---------------------------------------------------------------------------

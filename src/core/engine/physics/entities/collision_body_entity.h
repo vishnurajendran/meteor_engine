@@ -5,6 +5,7 @@
 #ifndef COLLISION_BODY_ENTITY_H
 #define COLLISION_BODY_ENTITY_H
 
+#include <atomic>
 #include <functional>
 
 #include "core/engine/entities/spatial/spatial.h"
@@ -12,6 +13,7 @@
 #include "core/engine/physics/data/collision_data.h"
 #include "core/engine/physics/interface/bodies/collision_body_interface.h"
 #include "core/engine/physics/interface/physics_engine_interface.h"
+#include "core/utils/delegate.h"
 
 // MCollisionBodyEntity is the abstract base for all physics collision shapes.
 // It owns every field and behaviour that is identical across box, sphere,
@@ -57,6 +59,18 @@ class MCollisionBodyEntity : public MSpatialEntity, public IPhysicsCallbackRecei
     SCRIPT_BIND_PROP()
     DECLARE_FIELD(physicsLayer,      int,                0)
 
+    // Opt-in contact events. Off by default: most bodies (floors, walls,
+    // props) never need them, and every contact a body receives is built and
+    // queued on Jolt's worker threads, then dispatched on the main thread -
+    // every physics step for "stay" events. Covers both the C++ delegates
+    // below and the script messages (onCollisionEnter, onTriggerEnter, ...).
+    // Only this body's own events: the other body in a contact decides for
+    // itself, and is still reported as otherEntity either way.
+    SCRIPT_BIND_PROP()
+    DECLARE_FIELD(receiveCollisionEvents, bool,          false)
+    SCRIPT_BIND_PROP()
+    DECLARE_FIELD(receiveTriggerEvents,   bool,          false)
+
 public:
     MCollisionBodyEntity()           = default;
     ~MCollisionBodyEntity() override = default;
@@ -65,6 +79,7 @@ public:
 
     void onCreate()                override;
     void onAwake()                 override;
+    void onStart()                 override;
     void onUpdate(float deltaTime) override;
     void onExit()                  override;
     void onPhysicsStepped(float fixedDeltaTime) override;
@@ -75,6 +90,8 @@ public:
     // ---- IPhysicsCallbackReceiver ------------------------------------------
 
     MSpatialEntity* getEntity() override { return this; }
+    [[nodiscard]] bool wantsCollisionEvents() const override { return collisionEventsEnabled.load(std::memory_order_relaxed); }
+    [[nodiscard]] bool wantsTriggerEvents()   const override { return triggerEventsEnabled.load(std::memory_order_relaxed); }
     void dispatchCollisionStart(const SCollisionData& data) override;
     void dispatchCollisionStay (const SCollisionData& data) override;
     void dispatchCollisionEnd  (const SCollisionData& data) override;
@@ -82,14 +99,18 @@ public:
     void dispatchTriggerStay   (const SOverlapData&   data) override;
     void dispatchTriggerEnd    (const SOverlapData&   data) override;
 
-    // ---- Callback registration ---------------------------------------------
+    // ---- Events --------------------------------------------------------------
+    // Any number of listeners: body->onCollisionStart.add(...) returns a
+    // handle to unsubscribe with. Fired on the main thread - the physics
+    // engine queues contacts during the step and dispatches them after.
+    // Nothing fires unless receiveCollisionEvents / receiveTriggerEvents is on.
 
-    void setOnCollisionStart(std::function<void(const SCollisionData&)> cb) { onCollisionStartCb = std::move(cb); }
-    void setOnCollisionStay (std::function<void(const SCollisionData&)> cb) { onCollisionStayCb  = std::move(cb); }
-    void setOnCollisionEnd  (std::function<void(const SCollisionData&)> cb) { onCollisionEndCb   = std::move(cb); }
-    void setOnTriggerStart  (std::function<void(const SOverlapData&)>   cb) { onTriggerStartCb   = std::move(cb); }
-    void setOnTriggerStay   (std::function<void(const SOverlapData&)>   cb) { onTriggerStayCb    = std::move(cb); }
-    void setOnTriggerEnd    (std::function<void(const SOverlapData&)>   cb) { onTriggerEndCb     = std::move(cb); }
+    TMulticastDelegate<const SCollisionData&> onCollisionStart;
+    TMulticastDelegate<const SCollisionData&> onCollisionStay;
+    TMulticastDelegate<const SCollisionData&> onCollisionEnd;
+    TMulticastDelegate<const SOverlapData&>   onTriggerStart;
+    TMulticastDelegate<const SOverlapData&>   onTriggerStay;
+    TMulticastDelegate<const SOverlapData&>   onTriggerEnd;
 
     // ---- Body Type ----------------------------------------------------------
     SCRIPT_BIND_FUNC()
@@ -256,6 +277,21 @@ protected:
     bool                     initialized   = false;
 
 private:
+    // Mirrors of receiveCollisionEvents / receiveTriggerEvents, read by Jolt
+    // worker threads (wantsCollisionEvents) while the main thread may change
+    // the fields - an atomic, so that isn't a data race.
+    std::atomic<bool> collisionEventsEnabled{ false };
+    std::atomic<bool> triggerEventsEnabled{ false };
+
+    // Logs a warning if the script defines a physics message whose toggle
+    // is off - otherwise the handler silently never runs.
+    void warnAboutDisabledScriptMessages() const;
+
+    // The script to send physics messages to: only between onStart and
+    // onExit, so a script never hears about contacts before it has started
+    // or after it has stopped (events still queued for a destroyed body).
+    [[nodiscard]] IScriptInstance* getScriptForMessages() const;
+
     // Syncs all common ICollisionBody fields to the current body.
     // Only called when getBasePhysicsBody() != nullptr.
     void syncFieldsToBody();
@@ -264,13 +300,6 @@ private:
     // bodyType onChange (release + recreate), which shapes with constraints
     // (e.g. mesh) can override in setupShapeCallbacks().
     void setupCommonCallbacks();
-
-    std::function<void(const SCollisionData&)> onCollisionStartCb;
-    std::function<void(const SCollisionData&)> onCollisionStayCb;
-    std::function<void(const SCollisionData&)> onCollisionEndCb;
-    std::function<void(const SOverlapData&)>   onTriggerStartCb;
-    std::function<void(const SOverlapData&)>   onTriggerStayCb;
-    std::function<void(const SOverlapData&)>   onTriggerEndCb;
 
     // Body pose after the last two physics steps. While simulating, the
     // entity is drawn at a blend of the two (onPhysicsInterpolate).

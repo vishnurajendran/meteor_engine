@@ -58,14 +58,9 @@ SString MLogger::captureStackTrace() {
 
 // ---- Construct-on-first-use statics --------------------------------------
 
-std::map<int,LogEventHandler>& MLogger::getListeners() {
-    static std::map<int,LogEventHandler> listeners;
-    return listeners;
-}
-
-int& MLogger::getNextId() {
-    static int nextId = 0;
-    return nextId;
+TMulticastDelegate<const SLogMessage&>& MLogger::onLog() {
+    static TMulticastDelegate<const SLogMessage&> event;
+    return event;
 }
 
 SString& MLogger::getLastMsg() {
@@ -120,23 +115,10 @@ void MLogger::error(SString error, SLogLocation loc) {
 
 // ---- Subscription --------------------------------------------------------
 
-int MLogger::subscribe(const LogEventHandler &handler) {
-    auto id = getNextId()++;
-    getListeners()[id] = handler;
-    return id;
-}
-
-void MLogger::unsubscribe(const int& id) {
-    getListeners().erase(id);
-}
-
 SString MLogger::getLastMessage() {
     return getLastMsg();
 }
 
 void MLogger::notify(const SLogMessage& msg) {
-    for (const auto& [id, listener] : getListeners()) {
-        if (listener)
-            listener(msg);
-    }
+    onLog().broadcast(msg);
 }

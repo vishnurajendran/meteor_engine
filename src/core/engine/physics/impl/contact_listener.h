@@ -106,12 +106,12 @@ public:
 
         IPhysicsCallbackReceiver* recv1 = lookupReceiver(key1);
         IPhysicsCallbackReceiver* recv2 = lookupReceiver(key2);
-
         if (!recv1 && !recv2) return;
 
+        // Always resolve the pair, even if nobody wants the event: the set must
+        // not keep stale pairs, and it decides Trigger vs Collision End.
         const uint64_t pairKey = makePairKey(inSubShapePair.GetBody1ID(),
                                              inSubShapePair.GetBody2ID());
-
         bool wasTrigger = false;
         {
             std::lock_guard lock(stateMutex);
@@ -120,30 +120,34 @@ public:
 
         if (wasTrigger)
         {
-            if (recv1)
+            if (recv1 && recv1->wantsTriggerEvents())
             {
                 SOverlapData d;
+                d.thisEntity  = recv1->getEntity();
                 d.otherEntity = recv2 ? recv2->getEntity() : nullptr;
                 pushEvent({ SPendingContactEvent::EType::TriggerEnd, recv1, {}, d });
             }
-            if (recv2)
+            if (recv2 && recv2->wantsTriggerEvents())
             {
                 SOverlapData d;
+                d.thisEntity  = recv2->getEntity();
                 d.otherEntity = recv1 ? recv1->getEntity() : nullptr;
                 pushEvent({ SPendingContactEvent::EType::TriggerEnd, recv2, {}, d });
             }
         }
         else
         {
-            if (recv1)
+            if (recv1 && recv1->wantsCollisionEvents())
             {
                 SCollisionData d;
+                d.thisEntity  = recv1->getEntity();
                 d.otherEntity = recv2 ? recv2->getEntity() : nullptr;
                 pushEvent({ SPendingContactEvent::EType::CollisionEnd, recv1, d, {} });
             }
-            if (recv2)
+            if (recv2 && recv2->wantsCollisionEvents())
             {
                 SCollisionData d;
+                d.thisEntity  = recv2->getEntity();
                 d.otherEntity = recv1 ? recv1->getEntity() : nullptr;
                 pushEvent({ SPendingContactEvent::EType::CollisionEnd, recv2, d, {} });
             }
@@ -191,17 +195,22 @@ private:
         IPhysicsCallbackReceiver* recv1 = lookupReceiver(body1.GetID().GetIndex());
         IPhysicsCallbackReceiver* recv2 = lookupReceiver(body2.GetID().GetIndex());
 
-        if (!recv1 && !recv2) return;
+        // Only receivers that opted in get an event. Checked first, so a
+        // contact nobody listens to is never built or queued.
+        const bool send1 = recv1 && recv1->wantsCollisionEvents();
+        const bool send2 = recv2 && recv2->wantsCollisionEvents();
+        if (!send1 && !send2) return;
 
         // mWorldSpaceNormal points from body2 toward body1 in Jolt.
         const JPH::Vec3 n = manifold.mWorldSpaceNormal;
 
         const bool hasContacts = manifold.mRelativeContactPointsOn1.size() > 0;
 
-        if (recv1)
+        if (send1)
         {
             SCollisionData d;
-            d.otherEntity  = recv2 ? recv2->getEntity() : nullptr;
+            d.thisEntity    = recv1->getEntity();
+            d.otherEntity   = recv2 ? recv2->getEntity() : nullptr;
             d.contactNormal = { n.GetX(), n.GetY(), n.GetZ() };
             d.penetration   = manifold.mPenetrationDepth;
             if (hasContacts)
@@ -212,9 +221,10 @@ private:
             pushEvent({ type, recv1, d, {} });
         }
 
-        if (recv2)
+        if (send2)
         {
             SCollisionData d;
+            d.thisEntity    = recv2->getEntity();
             d.otherEntity   = recv1 ? recv1->getEntity() : nullptr;
             d.contactNormal = { -n.GetX(), -n.GetY(), -n.GetZ() }; // flipped for body2
             d.penetration   = manifold.mPenetrationDepth;
@@ -234,13 +244,16 @@ private:
         IPhysicsCallbackReceiver* recv1 = lookupReceiver(body1.GetID().GetIndex());
         IPhysicsCallbackReceiver* recv2 = lookupReceiver(body2.GetID().GetIndex());
 
-        if (!recv1 && !recv2) return;
+        const bool send1 = recv1 && recv1->wantsTriggerEvents();
+        const bool send2 = recv2 && recv2->wantsTriggerEvents();
+        if (!send1 && !send2) return;
 
         const bool hasContacts = manifold.mRelativeContactPointsOn1.size() > 0;
 
-        if (recv1)
+        if (send1)
         {
             SOverlapData d;
+            d.thisEntity  = recv1->getEntity();
             d.otherEntity = recv2 ? recv2->getEntity() : nullptr;
             if (hasContacts)
             {
@@ -250,9 +263,10 @@ private:
             pushEvent({ type, recv1, {}, d });
         }
 
-        if (recv2)
+        if (send2)
         {
             SOverlapData d;
+            d.thisEntity  = recv2->getEntity();
             d.otherEntity = recv1 ? recv1->getEntity() : nullptr;
             if (hasContacts)
             {
