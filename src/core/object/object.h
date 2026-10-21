@@ -7,7 +7,7 @@
 
 #include "core/utils/sstring.h"
 #include "object_class_macros.h" // DEFINE_MOBJECT_CLASS
-#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
+#include "core/engine/scripting/script_binding_macros.h"
 
 SCRIPT_BIND_CLASS()
 class MObject

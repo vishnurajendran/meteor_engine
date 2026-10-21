@@ -36,6 +36,12 @@ public static class LuaTypeDefEmitter
         ["bool"]           = "boolean",
         ["std::string"]    = "string",
         ["SString"]        = "string",
+        ["size_t"]         = "integer",
+        ["std::size_t"]    = "integer",
+        ["uint32_t"]       = "integer",
+        ["uint64_t"]       = "integer",
+        ["int32_t"]        = "integer",
+        ["int64_t"]        = "integer",
     };
 
     /// <summary>
@@ -79,128 +85,11 @@ public static class LuaTypeDefEmitter
         sb.AppendLine("-- ============================================================");
         sb.AppendLine();
 
-        // SVector2
-        sb.AppendLine("---@class SVector2");
-        sb.AppendLine("---@field x number");
-        sb.AppendLine("---@field y number");
-        sb.AppendLine("---@operator add(SVector2): SVector2");
-        sb.AppendLine("---@operator sub(SVector2): SVector2");
-        sb.AppendLine("---@operator mul(number): SVector2");
-        sb.AppendLine("SVector2 = {}");
-        sb.AppendLine();
-        sb.AppendLine("---@param x number");
-        sb.AppendLine("---@param y number");
-        sb.AppendLine("---@return SVector2");
-        sb.AppendLine("function SVector2.new(x, y) end");
-        sb.AppendLine();
+        // Kept in MathTypesStub below - hand-written to match math_bindings.h.
+        sb.Append(MathTypesStub);
 
-        // SVector3
-        sb.AppendLine("---@class SVector3");
-        sb.AppendLine("---@field x number");
-        sb.AppendLine("---@field y number");
-        sb.AppendLine("---@field z number");
-        sb.AppendLine("---@operator add(SVector3): SVector3");
-        sb.AppendLine("---@operator sub(SVector3): SVector3");
-        sb.AppendLine("---@operator mul(number): SVector3");
-        sb.AppendLine("---@operator unm: SVector3");
-        sb.AppendLine("SVector3 = {}");
-        sb.AppendLine();
-        sb.AppendLine("---@param x number");
-        sb.AppendLine("---@param y number");
-        sb.AppendLine("---@param z number");
-        sb.AppendLine("---@return SVector3");
-        sb.AppendLine("function SVector3.new(x, y, z) end");
-        sb.AppendLine();
-        sb.AppendLine("---@return number");
-        sb.AppendLine("function SVector3:length() end");
-        sb.AppendLine();
-        sb.AppendLine("---@return SVector3");
-        sb.AppendLine("function SVector3:normalized() end");
-        sb.AppendLine();
-        sb.AppendLine("---@param a SVector3");
-        sb.AppendLine("---@param b SVector3");
-        sb.AppendLine("---@return number");
-        sb.AppendLine("function SVector3.dot(a, b) end");
-        sb.AppendLine();
-        sb.AppendLine("---@param a SVector3");
-        sb.AppendLine("---@param b SVector3");
-        sb.AppendLine("---@return SVector3");
-        sb.AppendLine("function SVector3.cross(a, b) end");
-        sb.AppendLine();
-        sb.AppendLine("---@param a SVector3");
-        sb.AppendLine("---@param b SVector3");
-        sb.AppendLine("---@param t number");
-        sb.AppendLine("---@return SVector3");
-        sb.AppendLine("function SVector3.lerp(a, b, t) end");
-        sb.AppendLine();
-
-        // SVector4
-        sb.AppendLine("---@class SVector4");
-        sb.AppendLine("---@field x number");
-        sb.AppendLine("---@field y number");
-        sb.AppendLine("---@field z number");
-        sb.AppendLine("---@field w number");
-        sb.AppendLine("---@operator add(SVector4): SVector4");
-        sb.AppendLine("---@operator sub(SVector4): SVector4");
-        sb.AppendLine("---@operator mul(number): SVector4");
-        sb.AppendLine("SVector4 = {}");
-        sb.AppendLine();
-        sb.AppendLine("---@param x number");
-        sb.AppendLine("---@param y number");
-        sb.AppendLine("---@param z number");
-        sb.AppendLine("---@param w number");
-        sb.AppendLine("---@return SVector4");
-        sb.AppendLine("function SVector4.new(x, y, z, w) end");
-        sb.AppendLine();
-
-        // SQuaternion
-        sb.AppendLine("---@class SQuaternion");
-        sb.AppendLine("---@field x number");
-        sb.AppendLine("---@field y number");
-        sb.AppendLine("---@field z number");
-        sb.AppendLine("---@field w number");
-        sb.AppendLine("---@operator mul(SQuaternion): SQuaternion");
-        sb.AppendLine("SQuaternion = {}");
-        sb.AppendLine();
-        sb.AppendLine("---@param x number");
-        sb.AppendLine("---@param y number");
-        sb.AppendLine("---@param z number");
-        sb.AppendLine("---@param w number");
-        sb.AppendLine("---@return SQuaternion");
-        sb.AppendLine("function SQuaternion.new(x, y, z, w) end");
-        sb.AppendLine();
-        sb.AppendLine("---@return SVector3");
-        sb.AppendLine("function SQuaternion:toEuler() end");
-        sb.AppendLine();
-        sb.AppendLine("---@return SQuaternion");
-        sb.AppendLine("function SQuaternion:normalized() end");
-        sb.AppendLine();
-        sb.AppendLine("---@return SQuaternion");
-        sb.AppendLine("function SQuaternion:inverse() end");
-        sb.AppendLine();
-        sb.AppendLine("---@param a SQuaternion");
-        sb.AppendLine("---@param b SQuaternion");
-        sb.AppendLine("---@param t number");
-        sb.AppendLine("---@return SQuaternion");
-        sb.AppendLine("function SQuaternion.slerp(a, b, t) end");
-        sb.AppendLine();
-
-        // SColor (if bound manually)
-        sb.AppendLine("---@class SColor");
-        sb.AppendLine("---@field r number");
-        sb.AppendLine("---@field g number");
-        sb.AppendLine("---@field b number");
-        sb.AppendLine("---@field a number");
-        sb.AppendLine("SColor = {}");
-        sb.AppendLine();
-
-        // Free functions
-        sb.AppendLine("---@param x number");
-        sb.AppendLine("---@param y number");
-        sb.AppendLine("---@param z number");
-        sb.AppendLine("---@return SQuaternion");
-        sb.AppendLine("function eulerToQuaternion(x, y, z) end");
-        sb.AppendLine();
+        // Asset handle (manually bound in asset_bindings.h)
+        sb.Append(AssetHandleStub);
 
         // MLogger (static utility, manually bound)
         sb.AppendLine("---@class MLogger");
@@ -267,6 +156,7 @@ public static class LuaTypeDefEmitter
         sb.AppendLine("---@return table|nil");
         sb.AppendLine("function MSpatialEntity:getScript() end");
         sb.AppendLine();
+
     }
 
     // ---- Enums --------------------------------------------------------------
@@ -287,7 +177,12 @@ public static class LuaTypeDefEmitter
             for (int i = 0; i < e.Values.Count; i++)
             {
                 var comma = (i < e.Values.Count - 1) ? "," : "";
-                sb.AppendLine($"    {e.Values[i]} = {i}{comma}");
+                // The real value (e.g. EKeyCode.Unknown = -1 shifts every
+                // later key). Falls back to the index when it is not a literal.
+                long value = i < e.NumericValues.Count && e.NumericValues[i].HasValue
+                    ? e.NumericValues[i]!.Value
+                    : i;
+                sb.AppendLine($"    {e.Values[i]} = {value}{comma}");
             }
             sb.AppendLine("}");
             sb.AppendLine();
@@ -339,18 +234,21 @@ public static class LuaTypeDefEmitter
 
     private static void EmitFunction(StringBuilder sb, string className, BoundFunction func)
     {
-        // Parameter annotations
-        foreach (var (type, name) in func.Parameters)
+        // Parameter annotations. Template types (vectors, asset handles) are
+        // read from the header text: the AST pass can drop template arguments.
+        for (int i = 0; i < func.Parameters.Count; i++)
         {
-            var luaType = MapType(type);
-            sb.AppendLine($"---@param {name} {luaType}");
+            var (type, name) = func.Parameters[i];
+            if (i < func.DeclaredParameters.Count && func.DeclaredParameters[i].Type.Contains('<'))
+                type = func.DeclaredParameters[i].Type;
+            sb.AppendLine($"---@param {name} {MapType(type)}");
         }
 
         // Return annotation (skip for void)
         if (func.ReturnType != "void")
         {
-            var luaReturn = MapType(func.ReturnType);
-            sb.AppendLine($"---@return {luaReturn}");
+            var returnType = func.DeclaredReturnType.Contains('<') ? func.DeclaredReturnType : func.ReturnType;
+            sb.AppendLine($"---@return {MapType(returnType)}");
         }
 
         // Function signature: static uses dot, instance uses colon
@@ -387,6 +285,26 @@ public static class LuaTypeDefEmitter
     /// </summary>
     private static string MapType(string cppType)
     {
+        var compact = System.Text.RegularExpressions.Regex.Replace(
+            cppType.Replace("const ", "").Replace("&", ""), @"\s*([<>*,])\s*", "$1").Trim();
+
+        // C strings are pushed to Lua as strings, not as char.
+        if (compact == "char*")
+            return "string";
+
+        // std::vector<T> crosses the boundary as an indexable container.
+        if (compact.StartsWith("std::vector<") && compact.EndsWith(">"))
+            return MapType(compact["std::vector<".Length..^1]) + "[]";
+
+        // Asset handles and refs all cross as MAssetHandle (CodeEmitter converts).
+        if (compact.StartsWith("TAssetHandle") || compact.StartsWith("TAssetRef"))
+            return "MAssetHandle";
+
+        // Any other template has no Lua-side binding and reaches scripts as
+        // opaque userdata.
+        if (compact.Contains('<'))
+            return "userdata";
+
         // Strip const, &, * qualifiers for lookup
         var cleaned = cppType
             .Replace("const ", "")
@@ -401,4 +319,473 @@ public static class LuaTypeDefEmitter
         // Otherwise return as-is too (it might be a class the user hasn't bound yet)
         return cleaned;
     }
+    // ---- Asset handle stub text --------------------------------------------
+    // Keep in sync with asset_bindings.h.
+    private const string AssetHandleStub = """
+        --- Reference to an asset by GUID, looked up on every get(), so it stays
+        --- valid across asset reloads. Get one from MAssetManager.find(path) or
+        --- any function that returns an asset. Functions that take an asset
+        --- accept it; a handle to the wrong asset type counts as null there.
+        ---
+        ---   local handle = MAssetManager.find("assets/ui/logo.png")
+        ---   local texture = MTextureAsset(handle:get())   -- nil if not a texture
+        ---@class MAssetHandle
+        MAssetHandle = {}
+
+        --- The asset now, or nil if the handle is null or the asset isn't
+        --- loaded. Use it right away - fetch again instead of storing it.
+        ---@return MAsset|nil
+        function MAssetHandle:get() end
+
+        --- True when the handle points at a loaded asset.
+        ---@return boolean
+        function MAssetHandle:isValid() end
+
+        --- True when the handle was never assigned.
+        ---@return boolean
+        function MAssetHandle:isNull() end
+
+        ---@return string
+        function MAssetHandle:getAssetId() end
+
+        --- The asset's path, or "" when it isn't loaded.
+        ---@return string
+        function MAssetHandle:getPath() end
+
+        --- "guid:<id>", the form scene files store.
+        ---@return string
+        function MAssetHandle:toRefString() end
+
+        --- Handle for an asset object you already have.
+        ---@param asset MAsset
+        ---@return MAssetHandle
+        function MAssetHandle.fromAsset(asset) end
+
+        --- A null handle - pass it to clear an asset slot.
+        ---@return MAssetHandle
+        function MAssetHandle.none() end
+
+        """;
+
+    // ---- Math stub text ----------------------------------------------------
+    // LuaLS declarations for the hand-bound types in math_bindings.h.
+    // Keep in sync with that file when adding or changing a binding.
+    private const string MathTypesStub = """
+        -- Conventions: angles are in DEGREES; right-handed, Y up, forward is -Z.
+        -- Vector/quaternion functions never return NaN for zero-length input.
+        -- Scalar helpers (clamp, lerp, damp, smoothDamp, ...) are in MMath.
+
+        ---@class SVector2
+        ---@field x number
+        ---@field y number
+        ---@operator add(SVector2): SVector2
+        ---@operator sub(SVector2): SVector2
+        ---@operator mul(number): SVector2
+        ---@operator mul(SVector2): SVector2
+        ---@operator div(number): SVector2
+        ---@operator div(SVector2): SVector2
+        ---@operator unm: SVector2
+        SVector2 = {}
+
+        ---@overload fun(): SVector2
+        ---@overload fun(xy: number): SVector2
+        ---@param x number
+        ---@param y number
+        ---@return SVector2
+        function SVector2.new(x, y) end
+
+        ---@return number
+        function SVector2:length() end
+
+        ---@return number
+        function SVector2:lengthSquared() end
+
+        --- Unit vector, or zero for a zero vector.
+        ---@return SVector2
+        function SVector2:normalized() end
+
+        ---@param a SVector2
+        ---@param b SVector2
+        ---@return number
+        function SVector2.dot(a, b) end
+
+        ---@param a SVector2
+        ---@param b SVector2
+        ---@return number
+        function SVector2.distance(a, b) end
+
+        --- Unclamped linear interpolation.
+        ---@param a SVector2
+        ---@param b SVector2
+        ---@param t number
+        ---@return SVector2
+        function SVector2.lerp(a, b, t) end
+
+        ---@param a SVector2
+        ---@param b SVector2
+        ---@return SVector2
+        function SVector2.min(a, b) end
+
+        ---@param a SVector2
+        ---@param b SVector2
+        ---@return SVector2
+        function SVector2.max(a, b) end
+
+        ---@param a SVector2
+        ---@param b SVector2
+        ---@param epsilon number|nil default 1e-4
+        ---@return boolean
+        function SVector2.approxEquals(a, b, epsilon) end
+
+        ---@return SVector2
+        function SVector2.zero() end
+
+        ---@return SVector2
+        function SVector2.one() end
+
+        ---@class SVector3
+        ---@field x number
+        ---@field y number
+        ---@field z number
+        ---@operator add(SVector3): SVector3
+        ---@operator sub(SVector3): SVector3
+        ---@operator mul(number): SVector3
+        ---@operator mul(SVector3): SVector3
+        ---@operator div(number): SVector3
+        ---@operator div(SVector3): SVector3
+        ---@operator unm: SVector3
+        SVector3 = {}
+
+        ---@overload fun(): SVector3
+        ---@overload fun(xyz: number): SVector3
+        ---@param x number
+        ---@param y number
+        ---@param z number
+        ---@return SVector3
+        function SVector3.new(x, y, z) end
+
+        ---@return number
+        function SVector3:length() end
+
+        ---@return number
+        function SVector3:lengthSquared() end
+
+        --- Unit vector, or zero for a zero vector.
+        ---@return SVector3
+        function SVector3:normalized() end
+
+        --- Shortened to maxLength if longer.
+        ---@param maxLength number
+        ---@return SVector3
+        function SVector3:clampLength(maxLength) end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return number
+        function SVector3.dot(a, b) end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return SVector3
+        function SVector3.cross(a, b) end
+
+        --- Component-wise product (same as a * b).
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return SVector3
+        function SVector3.scale(a, b) end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return number
+        function SVector3.distance(a, b) end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return number
+        function SVector3.distanceSquared(a, b) end
+
+        --- Unsigned angle between two directions, degrees [0, 180].
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return number
+        function SVector3.angle(a, b) end
+
+        --- Angle from a to b in degrees [-180, 180], positive when counter-clockwise
+        --- looking down axis (right-hand rule).
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@param axis SVector3
+        ---@return number
+        function SVector3.signedAngle(a, b, axis) end
+
+        ---@param v SVector3
+        ---@param onNormal SVector3
+        ---@return SVector3
+        function SVector3.project(v, onNormal) end
+
+        --- v with its component along planeNormal removed.
+        ---@param v SVector3
+        ---@param planeNormal SVector3
+        ---@return SVector3
+        function SVector3.projectOnPlane(v, planeNormal) end
+
+        ---@param v SVector3
+        ---@param normal SVector3
+        ---@return SVector3
+        function SVector3.reflect(v, normal) end
+
+        --- Unclamped linear interpolation.
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@param t number
+        ---@return SVector3
+        function SVector3.lerp(a, b, t) end
+
+        --- Moves current toward target by at most maxDelta, never overshooting.
+        ---@param current SVector3
+        ---@param target SVector3
+        ---@param maxDelta number
+        ---@return SVector3
+        function SVector3.moveTowards(current, target, maxDelta) end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return SVector3
+        function SVector3.min(a, b) end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@return SVector3
+        function SVector3.max(a, b) end
+
+        ---@return SVector3
+        function SVector3:abs() end
+
+        ---@param a SVector3
+        ---@param b SVector3
+        ---@param epsilon number|nil default 1e-4
+        ---@return boolean
+        function SVector3.approxEquals(a, b, epsilon) end
+
+        ---@return SVector3
+        function SVector3.zero() end
+
+        ---@return SVector3
+        function SVector3.one() end
+
+        ---@return SVector3 (0, 1, 0)
+        function SVector3.up() end
+
+        ---@return SVector3 (0, -1, 0)
+        function SVector3.down() end
+
+        ---@return SVector3 (1, 0, 0)
+        function SVector3.right() end
+
+        ---@return SVector3 (-1, 0, 0)
+        function SVector3.left() end
+
+        ---@return SVector3 (0, 0, -1)
+        function SVector3.forward() end
+
+        ---@return SVector3 (0, 0, 1)
+        function SVector3.back() end
+
+        ---@class SVector4
+        ---@field x number
+        ---@field y number
+        ---@field z number
+        ---@field w number
+        ---@operator add(SVector4): SVector4
+        ---@operator sub(SVector4): SVector4
+        ---@operator mul(number): SVector4
+        ---@operator mul(SVector4): SVector4
+        ---@operator div(number): SVector4
+        ---@operator div(SVector4): SVector4
+        ---@operator unm: SVector4
+        SVector4 = {}
+
+        ---@overload fun(): SVector4
+        ---@overload fun(xyzw: number): SVector4
+        ---@param x number
+        ---@param y number
+        ---@param z number
+        ---@param w number
+        ---@return SVector4
+        function SVector4.new(x, y, z, w) end
+
+        ---@return number
+        function SVector4:length() end
+
+        ---@return number
+        function SVector4:lengthSquared() end
+
+        ---@return SVector4
+        function SVector4:normalized() end
+
+        ---@param a SVector4
+        ---@param b SVector4
+        ---@return number
+        function SVector4.dot(a, b) end
+
+        ---@param a SVector4
+        ---@param b SVector4
+        ---@param t number
+        ---@return SVector4
+        function SVector4.lerp(a, b, t) end
+
+        ---@return SVector4
+        function SVector4.zero() end
+
+        ---@return SVector4
+        function SVector4.one() end
+
+        --- Rotation. q1 * q2 applies q2 first, then q1; q * v rotates a vector.
+        ---@class SQuaternion
+        ---@field x number
+        ---@field y number
+        ---@field z number
+        ---@field w number
+        ---@operator mul(SQuaternion): SQuaternion
+        ---@operator mul(SVector3): SVector3
+        SQuaternion = {}
+
+        --- Raw components. NOTE the order: w comes FIRST.
+        --- Prefer identity / fromEuler / fromAxisAngle / lookRotation.
+        ---@overload fun(): SQuaternion
+        ---@param w number
+        ---@param x number
+        ---@param y number
+        ---@param z number
+        ---@return SQuaternion
+        function SQuaternion.new(w, x, y, z) end
+
+        ---@return SQuaternion
+        function SQuaternion.identity() end
+
+        --- From Euler angles in degrees (pitch x, yaw y, roll z).
+        ---@overload fun(euler: SVector3): SQuaternion
+        ---@param x number
+        ---@param y number
+        ---@param z number
+        ---@return SQuaternion
+        function SQuaternion.fromEuler(x, y, z) end
+
+        ---@param axis SVector3
+        ---@param degrees number
+        ---@return SQuaternion
+        function SQuaternion.fromAxisAngle(axis, degrees) end
+
+        --- Rotation whose forward (-Z) points along `forward`, keeping `up`
+        --- (default world up) as close to up as possible.
+        ---@param forward SVector3
+        ---@param up SVector3|nil
+        ---@return SQuaternion
+        function SQuaternion.lookRotation(forward, up) end
+
+        --- Shortest rotation that turns direction `from` into `to`.
+        ---@param from SVector3
+        ---@param to SVector3
+        ---@return SQuaternion
+        function SQuaternion.fromToRotation(from, to) end
+
+        --- Euler angles in degrees.
+        ---@return SVector3
+        function SQuaternion:toEuler() end
+
+        --- Same as q * v.
+        ---@param v SVector3
+        ---@return SVector3
+        function SQuaternion:rotate(v) end
+
+        --- This rotation's forward (-Z) direction.
+        ---@return SVector3
+        function SQuaternion:forward() end
+
+        ---@return SVector3
+        function SQuaternion:right() end
+
+        ---@return SVector3
+        function SQuaternion:up() end
+
+        ---@return SQuaternion
+        function SQuaternion:normalized() end
+
+        ---@return SQuaternion
+        function SQuaternion:inverse() end
+
+        ---@param a SQuaternion
+        ---@param b SQuaternion
+        ---@return number
+        function SQuaternion.dot(a, b) end
+
+        --- Angle between two rotations, degrees [0, 180].
+        ---@param a SQuaternion
+        ---@param b SQuaternion
+        ---@return number
+        function SQuaternion.angle(a, b) end
+
+        --- Spherical interpolation, t clamped to [0, 1].
+        ---@param a SQuaternion
+        ---@param b SQuaternion
+        ---@param t number
+        ---@return SQuaternion
+        function SQuaternion.slerp(a, b, t) end
+
+        --- Turns from toward to by at most maxDegrees, never overshooting.
+        ---@param from SQuaternion
+        ---@param to SQuaternion
+        ---@param maxDegrees number
+        ---@return SQuaternion
+        function SQuaternion.rotateTowards(from, to, maxDegrees) end
+
+        ---@class SColor
+        ---@field r number
+        ---@field g number
+        ---@field b number
+        ---@field a number
+        SColor = {}
+
+        ---@param r number
+        ---@param g number
+        ---@param b number
+        ---@param a number
+        ---@return SColor
+        function SColor.new(r, g, b, a) end
+
+        ---@param a SColor
+        ---@param b SColor
+        ---@param t number
+        ---@return SColor
+        function SColor.lerp(a, b, t) end
+
+        ---@return SColor
+        function SColor.red() end
+
+        ---@return SColor
+        function SColor.green() end
+
+        ---@return SColor
+        function SColor.blue() end
+
+        ---@return SColor
+        function SColor.yellow() end
+
+        ---@return SColor
+        function SColor.skyBlue() end
+
+        -- SMatrix4 is pushed to Lua as an opaque value (no fields or operators are
+        -- bound) - declared so signatures that use it resolve.
+        ---@class SMatrix4
+        SMatrix4 = {}
+
+        --- Same as SQuaternion.fromEuler. Degrees.
+        ---@param x number
+        ---@param y number
+        ---@param z number
+        ---@return SQuaternion
+        function eulerToQuaternion(x, y, z) end
+
+        """;
 }

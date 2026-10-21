@@ -14,6 +14,7 @@ namespace pugi {
 
 class MShader;
 
+SCRIPT_BIND_CLASS()
 class MShaderAsset : public MAsset {
     DEFINE_OBJECT_SUBCLASS(MShaderAsset)
 private:

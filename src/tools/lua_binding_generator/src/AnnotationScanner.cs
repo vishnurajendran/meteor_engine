@@ -367,6 +367,8 @@ public static class AnnotationScanner
             }
         }
 
+        func.DeclaredReturnType = func.ReturnType;
+        func.DeclaredParameters = new List<(string Type, string Name)>(func.Parameters);
         return func;
     }
 
@@ -416,8 +418,11 @@ public static class AnnotationScanner
 
         var bodyText = enumText[(openBrace + 1)..closeBrace];
 
-        // Parse individual enumerators
+        // Parse individual enumerators, tracking their values the way C++
+        // does: an explicit "= N" sets it, otherwise previous + 1.
         var values = new List<string>();
+        var numericValues = new List<long?>();
+        long? nextValue = 0;
         foreach (var entry in bodyText.Split(','))
         {
             var trimmed = entry.Trim();
@@ -428,16 +433,25 @@ public static class AnnotationScanner
             if (commentIdx >= 0)
                 trimmed = trimmed[..commentIdx].Trim();
 
-            // Remove assigned value: "Force = 0" -> "Force"
+            // Split off the assigned value: "Force = 0" -> "Force" and "0"
+            long? value = nextValue;
             int eqIdx = trimmed.IndexOf('=');
             if (eqIdx >= 0)
+            {
+                var initialiser = trimmed[(eqIdx + 1)..].Trim();
+                value = long.TryParse(initialiser, out var parsed) ? parsed : null;
                 trimmed = trimmed[..eqIdx].Trim();
+            }
 
             // Remove any remaining whitespace artifacts
             trimmed = trimmed.Trim();
 
             if (!string.IsNullOrEmpty(trimmed) && Regex.IsMatch(trimmed, @"^\w+$"))
+            {
                 values.Add(trimmed);
+                numericValues.Add(value);
+                nextValue = value + 1;
+            }
         }
 
         if (values.Count == 0)
@@ -448,6 +462,7 @@ public static class AnnotationScanner
             Name = enumName,
             IsEnumClass = isEnumClass,
             Values = values,
+            NumericValues = numericValues,
             SourceFile = file,
             Line = annotationLine
         };

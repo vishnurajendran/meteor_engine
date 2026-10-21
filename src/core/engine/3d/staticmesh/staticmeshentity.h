@@ -30,13 +30,17 @@ public:
     void onExit()           override;
     void onUpdate(float dt) override;
 
+    SCRIPT_BIND_FUNC()
     void setStaticMeshAsset(TAssetRef<MStaticMeshAsset> asset);
+    SCRIPT_BIND_FUNC()
     void setMaterialAsset(TAssetRef<MMaterialAsset> asset, int slotId = 0);
     void swapMaterialSlots(int a, int b);
     void calculateBounds();
 
     // Returns a TAssetHandle for API compatibility with existing callers.
+    SCRIPT_BIND_FUNC()
     TAssetHandle<MStaticMeshAsset> getStaticMeshAsset()        const { return meshAsset.get().getHandle(); }
+    SCRIPT_BIND_FUNC()
     TAssetHandle<MMaterialAsset>   getMaterialAsset(int slotId = 0) const;
     MMaterial*        getMaterialInstance(int slotId = 0) const;
 

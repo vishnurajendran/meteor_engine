@@ -48,8 +48,10 @@ public:
 // Public API
 public:
     /// Set clip to play -- accepts a handle; TAssetRef converts implicitly
+    SCRIPT_BIND_FUNC()
     void setClip(TAssetHandle<MAudioClipAsset> clip);
     /// Get current clip reference (carries both GUID and path)
+    SCRIPT_BIND_FUNC()
     TAssetRef<MAudioClipAsset> getClip() const { return clipRef.get(); }
 
     /// Play this source
@@ -104,6 +106,7 @@ public:
     SCRIPT_BIND_FUNC()
     void  setRollOff(float v)     { rollOff.set(v); }
 
+    SCRIPT_BIND_FUNC()
     float getMinDist()      const { return minDist.get(); }
 
     SCRIPT_BIND_FUNC()

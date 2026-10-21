@@ -77,6 +77,9 @@ void MMeshCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
             bool sensor = body->isSensor.get();
             if (ImGui::Checkbox("##sensor", &sensor)) body->isSensor.set(sensor);
 
+            // Contact events
+            drawContactEventRows(body);
+
             // Damping
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();

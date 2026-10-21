@@ -8,6 +8,7 @@
 #include <windows.h>
 
 #include "core/default_settings_paths.h"
+#include "core/engine/composition/composition_utility.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/domain/engine_domain_subsystem.h"
 #include "core/engine/scripting/lua/lua_script_context.h"
@@ -161,11 +162,7 @@ void MEditorApplication::registerSubsystems()
 
 void MEditorApplication::notifySimulationStateChange()
 {
-    for (auto [id, callback] : simulationStateChangedCallbacks)
-    {
-        if (callback)
-            callback(simulationState);
-    }
+    onSimulationStateChanged.broadcast(simulationState);
 }
 
 void MEditorApplication::tickPhysics(float deltaTime)
@@ -229,7 +226,7 @@ void MEditorApplication::initialise() {
     const auto winY = MEngineStatics::getEngineSettings()->resY.get();
     const auto fps= MEngineStatics::getEngineSettings()->fps.get();
     window->initialiseWindow(STR("Meteorite Editor - ") + projectManager.getDescriptor().name, SVector2(winX, winY), fps);
-    window->setWindowResizeCallback([this](const SVector2& size)
+    windowResizedSubscription = window->onResized.add([](const SVector2& size)
     {
         MVERBOSE(STR("Meteorite:: Resized Window"));
         MEngineStatics::getEngineSettings()->resX.set(size.x);
@@ -366,7 +363,26 @@ void MEditorApplication::loadPrerequisites()
     // setup scene manager
     sceneManagerRef = new MEditorSceneManager();
     MSceneManager::registerSceneManager(sceneManagerRef);
-    sceneManagerRef->registerOnLoadCallback([this](MScene* scene) { SelectedObject = nullptr; });
+    sceneLoadedSubscription = sceneManagerRef->onSceneLoaded.add([](MScene*) { SelectedObject = nullptr; });
+
+    // Resetting a composition instance replaces its entities - move the
+    // selection to the new root if it pointed anywhere inside the old one,
+    // otherwise it would dangle once the scene frees the old entities.
+    // (Was assigned in every inspector drawer's constructor; subscribing
+    // there would now add a duplicate listener per drawer.)
+    instanceReplacedSubscription = MCompositionUtility::onInstanceReplaced.add(
+        [](MSpatialEntity* oldRoot, MSpatialEntity* newRoot)
+        {
+            auto* selected = dynamic_cast<MSpatialEntity*>(SelectedObject);
+            for (MSpatialEntity* e = selected; e; e = e->getParent())
+            {
+                if (e == oldRoot)
+                {
+                    SelectedObject = newRoot;
+                    return;
+                }
+            }
+        });
 
     if (simulationManagerSubsystem)
         simulationManagerSubsystem->init();
@@ -426,21 +442,6 @@ void MEditorApplication::pauseSimulation()
         return;
     simulationState = EEditorSimulationState::SimulationPaused;
     notifySimulationStateChange();
-}
-
-SString MEditorApplication::registerToSimulationStateChangedCallback(std::function<void(const EEditorSimulationState&)> callback)
-{
-    const auto& id = SGuid::newGUID();
-    simulationStateChangedCallbacks[id] = callback;
-    return id;
-}
-
-void MEditorApplication::unregisterFromSimulationStateChangedCallback(const SString& callbackId)
-{
-    if (simulationStateChangedCallbacks.contains(callbackId))
-    {
-        simulationStateChangedCallbacks.erase(callbackId);
-    }
 }
 
 void MEditorApplication::exit()

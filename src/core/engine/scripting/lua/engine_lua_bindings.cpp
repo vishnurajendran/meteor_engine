@@ -2,12 +2,16 @@
 #include "binding_registry.generated.h"
 #include "core/engine/scripting/bindings/log_bindings.h"
 #include "core/engine/scripting/bindings/math_bindings.h"
+#include "core/engine/scripting/bindings/asset_bindings.h"
 #include "script_access_bingings.h"
 
 void MLuaEngineBindings::BindEngineAPI(sol::state& vm)
 {
     // Math types first (SVector3, SQuaternion, etc.)
     MeteorBindings::registerMathBindings(vm);
+
+    // Asset handles (MAssetHandle) - generated bindings pass assets as these
+    MeteorBindings::registerAssetBindings(vm);
 
     // Logger (static utility)
     MeteorBindings::registerLoggerModule(vm);

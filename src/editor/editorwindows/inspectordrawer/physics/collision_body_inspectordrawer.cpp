@@ -87,6 +87,9 @@ void MCollisionBodyEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target
     if (ImGui::Checkbox("##sensor", &sensor))
         body->isSensor.set(sensor);
 
+    // ---- Contact events ----------------------------------------------------
+    drawContactEventRows(body);
+
     // ---- Damping -----------------------------------------------------------
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
@@ -116,6 +119,33 @@ void MCollisionBodyEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target
     }
 
     ImGui::EndTable();
+}
+
+void MCollisionBodyEntityInspectorDrawer::drawContactEventRows(MCollisionBodyEntity* body)
+{
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Collision Events:");
+    ImGui::TableSetColumnIndex(1);
+    bool collisionEvents = body->receiveCollisionEvents.get();
+    if (ImGui::Checkbox("##recvcollision", &collisionEvents))
+        body->receiveCollisionEvents.set(collisionEvents);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Send onCollisionEnter / Stay / Exit to this entity's script\n"
+                          "and fire its C++ collision events.\n"
+                          "Off by default - each contact costs work every physics step.");
+
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("Trigger Events:");
+    ImGui::TableSetColumnIndex(1);
+    bool triggerEvents = body->receiveTriggerEvents.get();
+    if (ImGui::Checkbox("##recvtrigger", &triggerEvents))
+        body->receiveTriggerEvents.set(triggerEvents);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Send onTriggerEnter / Stay / Exit to this entity's script\n"
+                          "and fire its C++ trigger events.\n"
+                          "Off by default - each overlap costs work every physics step.");
 }
 
 void MCollisionBodyEntityInspectorDrawer::drawPhysicsLayerRow(MCollisionBodyEntity* body)

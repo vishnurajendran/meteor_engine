@@ -46,7 +46,7 @@ bool MSceneManager::loadEmptyScene() {
         closeActiveScene();
     activeScene = new MScene();
     currentScenePath = SString();
-    informSceneLoadCallbackListeners(activeScene);
+    onSceneLoaded.broadcast(activeScene);
     return true;
 }
 
@@ -125,17 +125,6 @@ void MSceneManager::interpolatePhysics(float alpha)
     activeScene->interpolatePhysics(alpha);
 }
 
-SString MSceneManager::registerOnLoadCallback(std::function<void(MScene*)> callback)
-{
-    auto id = SGuid::newGUID();
-    sceneLoadCallbackListeners[id] = callback;
-    return id;
-}
-void MSceneManager::deregisterOnLoadCallback(SString callbackId)
-{
-    if (sceneLoadCallbackListeners.contains(callbackId))
-        sceneLoadCallbackListeners.erase(callbackId);
-}
 
 void MSceneManager::registerSceneManager(MSceneManager* instance)
 {
@@ -151,11 +140,3 @@ void MSceneManager::registerSceneManager(MSceneManager* instance)
 }
 
 MSceneManager* MSceneManager::getSceneManagerInstance() { return sceneManagerInstance; }
-
-void MSceneManager::informSceneLoadCallbackListeners(MScene* scene)
-{
-    for (auto listener : sceneLoadCallbackListeners)
-    {
-        listener.second(scene);
-    }
-}

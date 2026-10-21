@@ -128,6 +128,50 @@ bool MLuaScriptInstance::callFunc(const SString& funcName, const std::vector<SDy
     return handleFuncResult(funcResult, result);
 }
 
+// ---- physics messages ---------------------------------------------------------
+
+// Calls instance:funcName(data) if the script defines it. The data goes in by
+// value, so a script that keeps it (e.g. remembers the last hit) holds its own
+// copy, not a reference into the physics engine's event queue.
+template <typename TData>
+static void sendMessage(const sol::table& instanceTable, MSpatialEntity* owner,
+                        const SString& funcName, const TData& data)
+{
+    const sol::object member = instanceTable[funcName.c_str()];
+    if (member.get_type() != sol::type::function)
+        return;   // the script doesn't handle this message - that's fine
+
+    const sol::protected_function func = member;
+    const sol::protected_function_result result = func(instanceTable, TData(data));
+    if (!result.valid())
+    {
+        const sol::error err = result;
+        MERROR(SString::format("{0} on '{1}': {2}", funcName,
+                               owner ? owner->getName() : SString("?"), SString(err.what())));
+    }
+}
+
+bool MLuaScriptInstance::hasFunc(const SString& funcName) const
+{
+    if (!valid || !instanceTable.valid())
+        return false;
+    // Through the instance, so the class and its bases are searched too.
+    const sol::object member = instanceTable[funcName.c_str()];
+    return member.get_type() == sol::type::function;
+}
+
+void MLuaScriptInstance::sendCollisionMessage(const SString& funcName, const SCollisionData& data)
+{
+    if (valid && instanceTable.valid())
+        sendMessage(instanceTable, owner, funcName, data);
+}
+
+void MLuaScriptInstance::sendTriggerMessage(const SString& funcName, const SOverlapData& data)
+{
+    if (valid && instanceTable.valid())
+        sendMessage(instanceTable, owner, funcName, data);
+}
+
 // ---- behaviour tuning -------------------------------------------------------
 
 bool MLuaScriptInstance::setField(const SString& name, const SDynValue& value)

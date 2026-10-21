@@ -4,6 +4,7 @@
 
 #ifndef SCRIPT_H
 #define SCRIPT_H
+#include "core/engine/physics/data/collision_data.h"
 #include "core/engine/scripting/bridge/dyn_value.h"
 #include "core/utils/sstring.h"
 
@@ -31,6 +32,15 @@ public:
 
     // Removes this instance's own value, so the script's default shows through.
     virtual void clearField(const SString& name) = 0;
+
+    // True if the script defines a function of that name (its own or inherited).
+    [[nodiscard]] virtual bool hasFunc(const SString& funcName) const = 0;
+
+    // Physics messages: calls the script's function of that name with a copy
+    // of the contact data, if the script defines one - not defining it is
+    // normal and does nothing. Errors in the script are logged, not thrown.
+    virtual void sendCollisionMessage(const SString& funcName, const SCollisionData& data) = 0;
+    virtual void sendTriggerMessage(const SString& funcName, const SOverlapData& data) = 0;
 };
 
 #endif //SCRIPT_H

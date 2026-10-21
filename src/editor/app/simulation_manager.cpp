@@ -20,8 +20,8 @@ void MEditorSimulationManagerSubsystem::init()
         return;
     }
 
-    callbackId = appInst->registerToSimulationStateChangedCallback([this](const EEditorSimulationState& state)
-                                                                   { onSimulationStateChanged(state); });
+    simulationStateSubscription = appInst->onSimulationStateChanged.add(
+        [this](EEditorSimulationState state) { onSimulationStateChanged(state); });
 
     MLOG("Simulation manager initialized");
 }
@@ -29,11 +29,7 @@ void MEditorSimulationManagerSubsystem::init()
 void MEditorSimulationManagerSubsystem::cleanup()
 {
     MLOG("MEditorSimulationManagerSubsystem:: cleanup");
-    if (!appInst)
-        return;
-    if (callbackId.empty())
-        return;
-    appInst->unregisterFromSimulationStateChangedCallback(callbackId);
+    simulationStateSubscription.invalidate();
     MLOG("MEditorSimulationManagerSubsystem:: cleanup complete");
 }
 

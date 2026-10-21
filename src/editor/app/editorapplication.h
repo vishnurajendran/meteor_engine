@@ -5,6 +5,7 @@
 #include "editor/window/imgui/imguisubwindow.h"
 #include "editor/window/imgui/imguiwindow.h"
 #include "editor/project/editor_project_manager.h"
+#include "core/utils/delegate.h"
 
 #ifndef METEOR_ENGINE_EDITORAPPLICATION_H
 #define METEOR_ENGINE_EDITORAPPLICATION_H
@@ -51,9 +52,8 @@ public:
     [[nodiscard]] bool canStartSimulation(SString& outReason) const;
     void pauseSimulation();
 
-    // registers a callback function callback, returns it Id handle.
-    SString registerToSimulationStateChangedCallback(std::function<void(const EEditorSimulationState&)> callback);
-    void unregisterFromSimulationStateChangedCallback(const SString& callbackId);
+    // Fired whenever Play / Pause / Stop changes the simulation state.
+    TMulticastDelegate<EEditorSimulationState> onSimulationStateChanged;
 
 private:
     // Time the script refresh may use per frame before yielding, so the
@@ -86,8 +86,12 @@ private:
     std::atomic<bool> splashShowing = true;
 
     float physicsAccumulator = 0.0f;  // seconds carried over between frames
-    std::unordered_map<SString, std::function<void(EEditorSimulationState)>> simulationStateChangedCallbacks;
     EEditorSimulationState simulationState = EEditorSimulationState::Stopped;
+
+    // The editor's own subscriptions to engine events.
+    SScopedCallbackDelegateHandle windowResizedSubscription;
+    SScopedCallbackDelegateHandle sceneLoadedSubscription;
+    SScopedCallbackDelegateHandle instanceReplacedSubscription;
 };
 
 #endif

@@ -30,7 +30,7 @@ private:
 private:
     MEditorApplication* appInst;
     MEditorSceneManager* sceneManagerInst;
-    SString callbackId = "";
+    SScopedCallbackDelegateHandle simulationStateSubscription;
 
     SString activeScenePath = "";
     SString sceneSnapshotPath = "";

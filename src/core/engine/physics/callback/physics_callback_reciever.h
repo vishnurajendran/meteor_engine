@@ -20,6 +20,14 @@ public:
     // Spatial physics entities return 'this'; returns nullptr by default.
     [[nodiscard]] virtual MSpatialEntity* getEntity() { return nullptr; }
 
+    // Whether this receiver wants collision / trigger events at all. Checked
+    // by the contact listener BEFORE an event is built and queued, so a body
+    // that opts out costs nothing per contact. Called from Jolt worker
+    // threads during the step: implementations must be cheap and thread-safe
+    // (e.g. read an atomic).
+    [[nodiscard]] virtual bool wantsCollisionEvents() const { return true; }
+    [[nodiscard]] virtual bool wantsTriggerEvents()   const { return true; }
+
     virtual void dispatchCollisionStart(const SCollisionData& data) {}
     virtual void dispatchCollisionStay (const SCollisionData& data) {}
     virtual void dispatchCollisionEnd  (const SCollisionData& data) {}

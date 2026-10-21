@@ -15,6 +15,7 @@ class MLightEntity : public MSpatialEntity
 public:
     virtual void prepareLightRender() = 0;
 
+    SCRIPT_BIND_FUNC()
     ELightType getLightType() const { return lightType; }
 
     SCRIPT_BIND_FUNC()

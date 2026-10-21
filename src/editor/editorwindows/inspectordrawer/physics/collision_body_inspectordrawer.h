@@ -29,6 +29,10 @@ protected:
     // currently open ImGui table. Extracted so subclasses can call it if they
     // ever need to redraw the layer row independently.
     static void drawPhysicsLayerRow(class MCollisionBodyEntity* body);
+
+    // Draws the "Collision Events" / "Trigger Events" rows (two rows, each
+    // label + checkbox) into the currently open two-column ImGui table.
+    static void drawContactEventRows(class MCollisionBodyEntity* body);
 };
 
 #endif // COLLISION_BODY_ENTITY_INSPECTORDRAWER_H

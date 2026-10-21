@@ -21,13 +21,10 @@ MEditorConsoleWindow::MEditorConsoleWindow() : MEditorConsoleWindow(700, 300) {}
 
 MEditorConsoleWindow::MEditorConsoleWindow(int x, int y) : MImGuiSubWindow(x, y) {
     title = "Console";
-    subscriptionId = MLogger::subscribe(
-        std::bind(&MEditorConsoleWindow::onLogReceived, this, std::placeholders::_1));
+    logSubscription = MLogger::onLog().add([this](const SLogMessage& msg) { onLogReceived(msg); });
 }
 
-MEditorConsoleWindow::~MEditorConsoleWindow() {
-    MLogger::unsubscribe(subscriptionId);
-}
+MEditorConsoleWindow::~MEditorConsoleWindow() = default;
 
 // -- Utility ---------------------------------------------------------------
 

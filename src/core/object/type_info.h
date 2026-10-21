@@ -14,7 +14,7 @@
 #include <functional>
 #include <string>
 
-#include "tools/lua_binding_generator/stubs/script_binding_macros.h"
+#include "core/engine/scripting/script_binding_macros.h"
 
 // Deterministic across platforms - same string always produces the same hash.
 // Evaluated entirely at compile time when fed a string literal.

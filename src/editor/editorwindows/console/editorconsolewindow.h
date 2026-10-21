@@ -43,7 +43,7 @@ private:
     std::array<int, 3>     levelCounts   = {};   // [Log, Warn, Err] for badge counts
 
     void onLogReceived(const SLogMessage& msg);
-    int  subscriptionId = -1;
+    SScopedCallbackDelegateHandle logSubscription;   // unsubscribes with the window
 
     // -- Filters -----------------------------------------------------------
     int  activeFilter = -1;       // -1 = All; 0/1/2 = ELogLevel cast to int

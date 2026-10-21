@@ -32,7 +32,28 @@
 -- inspector's Behaviour Tuning section, where each entity can override them.
 -- Start a name with '_' to keep it private (not shown, not tunable).
 
+-- Physics messages: a script on an entity with a collision body may define
+-- any of these, and the engine calls them on contact. They are deliberately
+-- NOT defined here - the engine only calls the ones a script defines.
+-- `data.otherEntity` is what was hit (cast it, e.g. MCollisionBodyEntity(...)).
+--
+--   onCollisionEnter = function(self, data) ... end,   -- SCollisionData
+--   onTriggerEnter   = function(self, data) ... end,   -- SOverlapData
+--
+-- Stay variants run every physics step while touching; Exit when it ends
+-- (for onCollisionExit only data.otherEntity is filled in).
+--
+-- They only run when the collision body has 'Receive Collision Events' /
+-- 'Receive Trigger Events' turned on (off by default, for performance) - in
+-- the inspector, or from a script: MCollisionBodyEntity(e).receiveTriggerEvents = true
+
 ---@class Behaviour
+---@field onCollisionEnter? fun(self: Behaviour, data: SCollisionData)
+---@field onCollisionStay? fun(self: Behaviour, data: SCollisionData)
+---@field onCollisionExit? fun(self: Behaviour, data: SCollisionData)
+---@field onTriggerEnter? fun(self: Behaviour, data: SOverlapData)
+---@field onTriggerStay? fun(self: Behaviour, data: SOverlapData)
+---@field onTriggerExit? fun(self: Behaviour, data: SOverlapData)
 Behaviour = {}
 Behaviour.__index = Behaviour
 

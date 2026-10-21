@@ -157,7 +157,9 @@ void MWindow::handleWindowEvents(const std::optional<sf::Event>& event)
         if (event->is<sf::Event::Resized>())
         {
             const auto size = coreWindow.getSize();
-            windowResizeCallback(SVector2(size.x, size.y));
+            // (Was a plain std::function called unchecked - resizing a window
+            // nobody had set a callback on, e.g. the player's, crashed.)
+            onResized.broadcast(SVector2(size.x, size.y));
             return;
         }
     }
