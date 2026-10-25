@@ -4,24 +4,18 @@
 
 #include "core/engine/assetmanagement/source/asset_sources.h"
 
-#include <mutex>
-
+#include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
 #include "core/engine/assetmanagement/source/directory_asset_source.h"
-#include "core/utils/logger.h"
-
-namespace
-{
-std::mutex&                    sourceMutex() { static std::mutex m; return m; }
-std::shared_ptr<IAssetSource>& sourceSlot()  { static std::shared_ptr<IAssetSource> s; return s; }
-} // namespace
+#include "core/engine/subsystem/subsystem_registry.h"
 
 std::shared_ptr<IAssetSource> MAssetSources::getActive()
 {
-    std::lock_guard lock(sourceMutex());
-    auto& slot = sourceSlot();
-    if (!slot)
-        slot = std::make_shared<MDirectoryAssetSource>(SString(""), std::vector<SString>{});
-    return slot;
+    if (auto* manager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>())
+        return manager->getActiveAssetSource();
+
+    // No asset manager (yet): plain files relative to the working directory.
+    static const auto fallback = std::make_shared<MDirectoryAssetSource>(SString(""), std::vector<SString>{});
+    return fallback;
 }
 
 std::shared_ptr<IWritableAssetSource> MAssetSources::getWritable()
@@ -30,13 +24,4 @@ std::shared_ptr<IWritableAssetSource> MAssetSources::getWritable()
     if (auto* writable = active->asWritable())
         return std::shared_ptr<IWritableAssetSource>(active, writable);   // aliasing ctor
     return nullptr;
-}
-
-void MAssetSources::setActive(std::shared_ptr<IAssetSource> source)
-{
-    if (source)
-        MLOG(SString("MAssetSources:: active source -> ") + source->getDebugName());
-
-    std::lock_guard lock(sourceMutex());
-    sourceSlot() = std::move(source);
 }

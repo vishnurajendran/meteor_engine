@@ -37,7 +37,7 @@ public:
     // Silently ignores duplicates (same item pointer already present).
     static void registerShortcut(MMenubarItem* item, const MShortcutBinding& binding);
 
-    // Call once per frame after SInput::poll().
+    // Call once per frame, after the input subsystem has polled.
     // Checks all registered bindings against current input state.
     // Fires item->onSelect() on the first match found.
     static void poll();

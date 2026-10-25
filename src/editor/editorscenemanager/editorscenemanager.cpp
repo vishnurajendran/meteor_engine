@@ -114,7 +114,8 @@ void MEditorSceneManager::createEditorSceneCamera()
 {
     if (editorSceneCamera)
     {
-        MViewManagement::removeCamera(editorSceneCamera);
+        if (auto* views = MEngineSubsystemRegistry::getSubsystem<MViewManagement>())
+            views->removeCamera(editorSceneCamera);
         editorSceneCamera->destroy();
         editorSceneCamera = nullptr;
     }

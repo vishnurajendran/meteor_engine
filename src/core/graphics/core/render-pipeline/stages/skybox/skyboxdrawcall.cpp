@@ -93,7 +93,7 @@ void MSkyboxDrawCall::draw()
         MERROR("MSkyboxDrawCall::draw: Missing shader, cubemap texture, or VAO");
         return;
     }
-    auto* renderCamera = MViewManagement::getFirstActiveCamera();
+    auto* renderCamera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
     if (!renderCamera)
     {
         MWARN("MSkyboxDrawCall::draw: No cameras specified");

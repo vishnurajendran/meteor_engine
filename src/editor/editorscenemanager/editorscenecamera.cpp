@@ -19,7 +19,8 @@ void MEditorSceneCameraEntity::onCreate()
     // Explicitly register with the view system.  Do NOT rely on onStart() since
     // HideInEditor is already set by the time onStart() would auto-register,
     // and some implementations skip registration for hidden entities.
-    MViewManagement::addCamera(this);
+    if (auto* views = MEngineSubsystemRegistry::getSubsystem<MViewManagement>())
+        views->addCamera(this);
 
     // Remove from scene root list - editor camera is not a scene entity.
     auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
@@ -60,5 +61,6 @@ void MEditorSceneCameraEntity::onUpdate(float deltaTime)
 
 MEditorSceneCameraEntity::~MEditorSceneCameraEntity()
 {
-    MViewManagement::removeCamera(this);
+    if (auto* views = MEngineSubsystemRegistry::getSubsystem<MViewManagement>())
+        views->removeCamera(this);
 }

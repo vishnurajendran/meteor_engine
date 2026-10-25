@@ -5,8 +5,6 @@
 #include "procedural_skybox_queue.h"
 #include <algorithm>
 
-std::vector<MProceduralSkyboxDrawCall*> MProceduralSkyboxQueue::drawCalls;
-
 void MProceduralSkyboxQueue::add(MProceduralSkyboxDrawCall* drawCall)
 {
     auto it = std::find(drawCalls.begin(), drawCalls.end(), drawCall);

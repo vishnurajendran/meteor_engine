@@ -12,6 +12,7 @@
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/frustum.h"
@@ -152,7 +153,9 @@ void MShadowStage::render(IRenderPipeline* const pipeline)
 {
     if (!shadowBuffer || !shadowShader) return;
 
-    auto* mgr = MLightSystemManager::getInstance();
+    auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
+    if (!renderer) return;
+    auto* mgr = &renderer->getLightSystem();
 
     auto* dirLight = mgr->getDirectionalLight();
     if (dirLight && dirLight->getEnabled() && mgr->isDirectionalShadowEnabled())
@@ -171,7 +174,7 @@ void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
 {
     const glm::vec3 towardLight = glm::normalize(dirLight->getForwardVector());
 
-    MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
+    MCameraEntity* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
 
     // Shadow distance comes from the light (inspector: "Shadow Distance").
     const auto* dir      = dynamic_cast<MDirectionalLight*>(dirLight);
@@ -242,7 +245,9 @@ void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
 
 void MShadowStage::renderSpotShadows(IRenderPipeline* const pipeline)
 {
-    const auto& dynLights = MLightSystemManager::getInstance()->getDynamicLights();
+    auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
+    if (!renderer) return;
+    const auto& dynLights = renderer->getLightSystem().getDynamicLights();
     int slot = 0;
 
     // Count spot lights for diagnostics.
@@ -333,7 +338,9 @@ void MShadowStage::renderPointShadows(IRenderPipeline* const pipeline)
 {
     if (!pointShadowProgram) return;
 
-    const auto& dynLights = MLightSystemManager::getInstance()->getDynamicLights();
+    auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
+    if (!renderer) return;
+    const auto& dynLights = renderer->getLightSystem().getDynamicLights();
     int slot = 0;
 
     static const glm::vec3 dirs[6] = {

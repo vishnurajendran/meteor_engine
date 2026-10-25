@@ -15,18 +15,25 @@ IMPLEMENT_SPATIAL_CLASS(MCameraEntity)
 MCameraEntity::MCameraEntity()
 {
     name = "camera";
-    MViewManagement::addCamera(this);
+    if (auto* views = MEngineSubsystemRegistry::getSubsystem<MViewManagement>())
+        views->addCamera(this);
 }
 
 MCameraEntity::~MCameraEntity()
 {
-    MViewManagement::removeCamera(this);
+    if (auto* views = MEngineSubsystemRegistry::getSubsystem<MViewManagement>())
+        views->removeCamera(this);
 }
 
 // Setters / getters delegate to DECLARE_FIELD members
 // The fields themselves are the source of truth; no separate private members.
 
-void MCameraEntity::setPriority(const int& p)    { priority = p; MViewManagement::updateCameraOrder(); }
+void MCameraEntity::setPriority(const int& p)
+{
+    priority = p;
+    if (auto* views = MEngineSubsystemRegistry::getSubsystem<MViewManagement>())
+        views->updateCameraOrder();
+}
 int  MCameraEntity::getPriority() const           { return priority.get(); }
 
 void MCameraEntity::setOrthographic(const bool& o) { isOrthographic = o; }

@@ -15,7 +15,9 @@
 
 class MLightEntity;
 
-class MLightSystemManager : MObject {
+// Every light in the world. Owned by the render pipeline manager:
+//   MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>()->getLightSystem()
+class MLightSystemManager : public MObject {
 public:
     void registerLight(MLightEntity* light);
     void unregisterLight(MLightEntity* light);
@@ -40,8 +42,6 @@ public:
 
     MLightEntity* getDirectionalLight() const { return directionalLightInstance; }
     const std::vector<MDynamicLight*>& getDynamicLights() const { return dynamicLights; }
-public:
-    static MLightSystemManager* getInstance();
 private:
     MLightEntity* ambientLightInstance = nullptr;
     MLightEntity* directionalLightInstance = nullptr;
@@ -55,8 +55,6 @@ private:
 
     void addLightToDynamicLights(MLightEntity* light);
     void removeLightFromDynamicLights(MLightEntity* light);
-
-    static MLightSystemManager* lightingManagerInstance ;
 };
 
 #endif //LIGHTING_MANAGER_H

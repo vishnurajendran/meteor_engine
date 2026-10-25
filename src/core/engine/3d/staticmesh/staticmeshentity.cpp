@@ -2,6 +2,7 @@
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/render_queue.h"
@@ -16,12 +17,14 @@ MStaticMeshEntity::MStaticMeshEntity()
     name                = "StaticMeshEntity";
     prevTransformMatrix = SMatrix4(0.f);
     materialSlots.resize(1);
-    MRenderQueue::addToSubmitables(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getRenderQueue().addToSubmitables(this);
 }
 
 MStaticMeshEntity::~MStaticMeshEntity()
 {
-    MRenderQueue::removeFromSubmitables(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getRenderQueue().removeFromSubmitables(this);
     errorMaterialInstance = nullptr;
 }
 
@@ -192,7 +195,8 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
 void MStaticMeshEntity::onExit()
 {
     MSpatialEntity::onExit();
-    MRenderQueue::removeFromSubmitables(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getRenderQueue().removeFromSubmitables(this);
 }
 
 void MStaticMeshEntity::onUpdate(float dt)

@@ -13,6 +13,7 @@
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/logger.h"
@@ -97,7 +98,9 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     const bool hasShadow = sb && sb->getFBOHandle() != 0 &&
                            (pipeline->getCompositeFlags() & ECF_Shadow);
 
-    auto* mgr = MLightSystemManager::getInstance();
+    auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
+    if (!renderer) return;
+    auto* mgr = &renderer->getLightSystem();
     const bool dirShadowEnabled = mgr->isDirectionalShadowEnabled();
     const bool dirSmoothShadow  = mgr->isDirectionalSmoothShadow();
 
@@ -113,7 +116,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         lightingShader->setPropertyValue("view",       viewVal);
         lightingShader->setPropertyValue("projection", projVal);
     }
-    else if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
+    else if (MCameraEntity* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera())
     {
         SShaderPropertyValue viewVal, projVal;
         viewVal.setMat4Val(camera->getViewMatrix());

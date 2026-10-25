@@ -8,10 +8,11 @@
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/audio/interfaces/engine_interface.h"
+#include "core/engine/camera/viewmanagement.h"
 #include "core/engine/domain/engine_domain_subsystem.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
-#include "core/engine/input/input.h"
+#include "core/engine/input/impl_sfml/sfml_input.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/physics/interface/physics_engine_interface.h"
 #include "core/engine/scripting/lua/lua_scripting_engine.h"
@@ -32,6 +33,9 @@ void MPlayerApplication::pause(const bool& pause)
 
 void MPlayerApplication::registerSubsystems(const std::shared_ptr<MPackagedAssetManager>& package)
 {
+    // Input - depends on nothing; scripts and shortcuts read it every frame
+    MEngineSubsystemRegistry::registerSubsystem<IInputSubsystem, MSfmlInputSubsystem>();
+
     // Asset Manager
     // Lazy-loads from the package in published builds; imports everything
     // when run from a project folder.
@@ -43,6 +47,8 @@ void MPlayerApplication::registerSubsystems(const std::shared_ptr<MPackagedAsset
         assetManager->setPackage(package);
     // Render
     pipelineManager = MEngineSubsystemRegistry::registerSubsystem<IRenderPipelineManagerSubsystem, MRenderPipelineManager>(false);
+    // Cameras
+    MEngineSubsystemRegistry::registerSubsystem<MViewManagement>();
     // Audio
     MEngineSubsystemRegistry::registerSubsystem<IAudioEngineSubsystem, MMiniAudioEngineSubsystem>();
 
@@ -74,10 +80,13 @@ void MPlayerApplication::run() {
 
     // Keyboard state for this frame, before physics and scene updates so
     // scripts see it. (The editor polls from its ImGui window instead.)
-    if (window->hasFocus())
-        SInput::poll();
-    else
-        SInput::releaseAll();
+    if (auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>())
+    {
+        if (window->hasFocus())
+            input->poll();
+        else
+            input->releaseAll();
+    }
 
     const bool canTickPhysics = physicsEngineRef && physicsEngineRef->canTick();
     // tick physics.
@@ -97,7 +106,6 @@ void MPlayerApplication::run() {
     }
 
     window->update(deltaTime);
-    endFrame();
 }
 
 float MPlayerApplication::getPhysicsStep() const

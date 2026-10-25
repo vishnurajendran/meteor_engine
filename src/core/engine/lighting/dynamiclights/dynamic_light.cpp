@@ -5,6 +5,8 @@
 #include "dynamic_light.h"
 
 #include "../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 
 // Setters write through to both the serialized field and lightData — the field
 // is what gets saved, lightData is what the renderer / shadow stage read.
@@ -48,7 +50,8 @@ void MDynamicLight::onDeserialise(const pugi::xml_node& node)
 
     // Range feeds the light BVH bounds — rebuild so culling uses the loaded value
     // instead of the default 10 the light was constructed with.
-    MLightSystemManager::getInstance()->requestLightSceneRebuild();
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().requestLightSceneRebuild();
 }
 
 void MDynamicLight::prepareLightRender()
@@ -76,11 +79,13 @@ void MDynamicLight::onUpdate(float deltaTime)
     if (dist >= EpsilonDist)
     {
         prevPosition = getWorldPosition();
-        MLightSystemManager::getInstance()->requestLightSceneRebuild();
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getLightSystem().requestLightSceneRebuild();
     }
     else if (angle >= EpsilonAngle)
     {
         prevOrientation = getWorldRotation();
-        MLightSystemManager::getInstance()->requestLightSceneRebuild();
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getLightSystem().requestLightSceneRebuild();
     }
 }

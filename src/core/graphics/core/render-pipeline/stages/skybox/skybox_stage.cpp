@@ -12,6 +12,8 @@
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
 #include "core/utils/logger.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 
 void MSkyboxStage::init(IRenderPipeline* const pipeline)
 {
@@ -38,7 +40,8 @@ void MSkyboxStage::preRender(IRenderPipeline* const pipeline)
 void MSkyboxStage::render(IRenderPipeline* const pipeline)
 {
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
-    if (MSkyboxQueue::getDrawCalls().empty()) return;
+    auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
+    if (!renderer || renderer->getSkyboxQueue().getDrawCalls().empty()) return;
 
     opaqueBuffer->bindAsActive();
 
@@ -47,7 +50,7 @@ void MSkyboxStage::render(IRenderPipeline* const pipeline)
 
     glDepthMask(GL_FALSE);  // don't corrupt the clean depth from clear stage
 
-    for (auto* drawCall : MSkyboxQueue::getDrawCalls())
+    for (auto* drawCall : renderer->getSkyboxQueue().getDrawCalls())
     {
         if (!drawCall) continue;
         drawCall->setTargetResolution(res);

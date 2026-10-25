@@ -4,8 +4,6 @@
 
 #include "viewmanagement.h"
 
-std::vector<MCameraEntity*> MViewManagement::cameras;
-
 void MViewManagement::addCamera(MCameraEntity *camera) {
     if(const auto it = std::ranges::find(cameras, camera); it == cameras.end()) {
         cameras.push_back(camera);

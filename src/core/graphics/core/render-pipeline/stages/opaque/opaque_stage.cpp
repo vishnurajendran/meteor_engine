@@ -16,6 +16,8 @@
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/utils/logger.h"
 
@@ -38,8 +40,8 @@ void MOpaqueStage::preRender(IRenderPipeline* const pipeline)
     const auto& lo = pipeline->getLightOverride();
     if (lo.active)
         applyLightOverride(lo);
-    else
-        MLightSystemManager::getInstance()->prepareLights();
+    else if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().prepareLights();
 }
 
 void MOpaqueStage::render(IRenderPipeline* const pipeline)
@@ -66,7 +68,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     }
     else
     {
-        const MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
+        const MCameraEntity* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
         viewMat = camera ? camera->getViewMatrix()          : glm::mat4(1.f);
         projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
     }
@@ -107,7 +109,8 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
             AABB queryBounds  = item.bounds;
             queryBounds.min  -= SVector3(5.0f);
             queryBounds.max  += SVector3(5.0f);
-            MLightSystemManager::getInstance()->prepareDynamicLights(queryBounds);
+            if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+                renderer->getLightSystem().prepareDynamicLights(queryBounds);
         }
 
         glBindVertexArray(item.vao);

@@ -8,7 +8,9 @@
 #include <windows.h>
 
 #include "core/default_settings_paths.h"
+#include "core/engine/camera/viewmanagement.h"
 #include "core/engine/composition/composition_utility.h"
+#include "core/engine/input/impl_sfml/sfml_input.h"
 #include "core/engine/audio/impl_miniaudio/audio_engine.h"
 #include "core/engine/domain/engine_domain_subsystem.h"
 #include "core/engine/scripting/lua/lua_script_context.h"
@@ -101,8 +103,6 @@ void MEditorApplication::run() {
 
     window->update(deltaTime);
 
-    endFrame();
-
     STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_RUN)
 }
 
@@ -140,6 +140,9 @@ void MEditorApplication::cleanup() {
 
 void MEditorApplication::registerSubsystems()
 {
+    // Input - depends on nothing; scripts and shortcuts read it every frame
+    MEngineSubsystemRegistry::registerSubsystem<IInputSubsystem, MSfmlInputSubsystem>();
+
     // Asset Manager
     assetManagerRef = dynamic_cast<MEditorAssetManager*>(
         MEngineSubsystemRegistry::registerSubsystem<IAssetManagerSubsystem, MEditorAssetManager>());
@@ -147,6 +150,9 @@ void MEditorApplication::registerSubsystems()
     // Render pipeline, does not autoInit - we need to delay this.
     pipelineManager =
         MEngineSubsystemRegistry::registerSubsystem<IRenderPipelineManagerSubsystem, MRenderPipelineManager>(false);
+
+    // Cameras - before the scene manager, whose empty scene creates the editor camera
+    MEngineSubsystemRegistry::registerSubsystem<MViewManagement>();
 
     // Audio System
     audioEngineRef = MEngineSubsystemRegistry::registerSubsystem<IAudioEngineSubsystem, MMiniAudioEngineSubsystem>();

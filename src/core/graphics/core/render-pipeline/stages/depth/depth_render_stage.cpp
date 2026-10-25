@@ -79,7 +79,7 @@ void MDepthRenderStage::render(IRenderPipeline* const pipeline)
     // ---- Upload camera matrices via the shader property system -------------
     depthShader->bind();
 
-    if (MCameraEntity* camera = MViewManagement::getFirstActiveCamera())
+    if (MCameraEntity* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera())
     {
         SShaderPropertyValue viewVal, projVal;
         viewVal.setMat4Val(camera->getViewMatrix());

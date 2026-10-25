@@ -77,8 +77,27 @@ std::vector<SString> MAssetManager::listAssetPaths() const
 
 void MAssetManager::setAssetSource(std::shared_ptr<IAssetSource> newSource)
 {
+    if (newSource)
+        MLOG(SString("MAssetManager:: asset source -> ") + newSource->getDebugName());
+
+    std::lock_guard lock(assetSourceMutex);
     assetSource = std::move(newSource);
-    MAssetSources::setActive(assetSource);
+}
+
+std::shared_ptr<IAssetSource> MAssetManager::getAssetSource() const
+{
+    std::lock_guard lock(assetSourceMutex);
+    return assetSource;
+}
+
+std::shared_ptr<IAssetSource> MAssetManager::getActiveAssetSource()
+{
+    if (auto current = getAssetSource())
+        return current;
+
+    // First use before anything set a source.
+    setAssetSource(createDefaultSource());
+    return getAssetSource();
 }
 
 std::shared_ptr<IAssetSource> MAssetManager::createProjectSource(const std::vector<SString>& projectAssetFolders)
@@ -106,9 +125,7 @@ std::shared_ptr<IAssetSource> MAssetManager::createDefaultSource()
 
 IAssetSource& MAssetManager::source()
 {
-    if (!assetSource)
-        setAssetSource(createDefaultSource());
-    return *assetSource;
+    return *getActiveAssetSource();
 }
 
 // ---------------------------------------------------------------------------

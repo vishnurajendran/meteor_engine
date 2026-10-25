@@ -11,6 +11,8 @@
 
 #include "ImGuizmo.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/input/input_subsystem_interface.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "editor/app/shortcut_listener.h"
 #include "editor/themes/editor_themes.h"
 #include "editor/window/menubar/menubartree.h"
@@ -119,7 +121,8 @@ void MImGuiWindow::drawGUI(const float deltaTime)
     // Poll raw input state for the frame, then dispatch shortcuts.
     // Skip shortcut dispatch when ImGui has a text field focused so
     // that typing "S" into a rename box doesn't trigger Ctrl-less bindings.
-    SInput::poll();
+    if (auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>())
+        input->poll();
     // Shortcuts (Ctrl+S, ...) are off while a publish runs: nothing may
     // change the project until it is done.
     if (!ImGui::GetIO().WantTextInput && !MGamePublisher::isPublishing())

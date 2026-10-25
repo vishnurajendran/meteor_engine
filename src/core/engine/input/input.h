@@ -1,9 +1,10 @@
 //
 // sinput.h
 //
-// Core input abstraction. Wraps SFML keyboard state with double-buffered
-// per-frame edge detection. Call poll() once at the start of each frame
-// before any input queries.
+// Input facade for gameplay code and scripts. Every query reads the input
+// subsystem (IInputSubsystem, input_subsystem_interface.h), which the
+// application updates once per frame; with no input subsystem registered,
+// every key reads as up.
 //
 #pragma once
 #ifndef SINPUT_H
@@ -67,16 +68,6 @@ SCRIPT_BIND_STRUCT()
 struct SInput
 {
 public:
-    // Snapshot the current keyboard state from the OS. Call exactly once per
-    // frame, before any pressedThisFrame / pressedAndReleased / isDown queries.
-    static void poll();
-
-    // Call instead of poll() on frames where the game window does not have
-    // focus: every key reads as released (keys held at the moment focus was
-    // lost report a release), so typing in another window does not reach
-    // the game.
-    static void releaseAll();
-
     // Rising edge -- the key transitioned from up to down this frame.
     SCRIPT_BIND_FUNC_STATIC()
     static bool pressedThisFrame(EKeyCode key);
@@ -103,13 +94,6 @@ public:
     // Human-readable name for a key code (e.g. EKeyCode::S -> "S").
     SCRIPT_BIND_FUNC_STATIC()
     static const char* getKeyName(EKeyCode key);
-
-private:
-    static constexpr int KEY_COUNT = static_cast<int>(EKeyCode::KeyCount);
-
-    static std::array<bool, KEY_COUNT> currentState;
-    static std::array<bool, KEY_COUNT> previousState;
-    static bool initialized;
 };
 
 #endif // SINPUT_H
