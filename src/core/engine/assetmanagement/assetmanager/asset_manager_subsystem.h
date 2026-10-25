@@ -5,16 +5,25 @@
 #ifndef ASSET_MANAGER_SUBSYSTEM_H
 #define ASSET_MANAGER_SUBSYSTEM_H
 #include <map>
+#include <memory>
 #include <vector>
 
 #include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/subsystem/subsystem_interface.h"
+
+class IAssetSource;
 
 class IAssetManagerSubsystem : public IEngineSubSystem {
 public:
     IAssetManagerSubsystem() { instanceRef = this; }
     ~IAssetManagerSubsystem() override = default;
     virtual void refresh() = 0;
+
+    // Where asset bytes come from: the project folder(s) in the editor, the
+    // package in a published game. Safe to call from any thread - the
+    // shared_ptr keeps the source alive even if the main thread swaps it
+    // mid-call. Never nullptr. Most code goes through MAssetSources::getActive().
+    [[nodiscard]] virtual std::shared_ptr<IAssetSource> getActiveAssetSource() = 0;
 
 public:
     // Every handle returned resolves by GUID. The path is only used to

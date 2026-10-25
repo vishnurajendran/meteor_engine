@@ -7,6 +7,7 @@
 #include "GL/glew.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
@@ -26,7 +27,8 @@ MAmbientLightEntity::MAmbientLightEntity()
     }
     lightType = ELightType::Ambient;
     ambientLightInstance = this;
-    MLightSystemManager::getInstance()->registerLight(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().registerLight(this);
 }
 
 // -- Color / intensity - fields are source of truth ---------------------------
@@ -76,7 +78,8 @@ void MAmbientLightEntity::onExit()
     MSpatialEntity::onExit();
     if (ambientLightInstance != this) return;
 
-    MLightSystemManager::getInstance()->unregisterLight(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().unregisterLight(this);
 
     // Zero out GPU buffer before release
     ambientLightData.color     = SVector3(0);

@@ -7,6 +7,7 @@
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/utils/guid.h"
 #include "functional"
@@ -25,9 +26,12 @@ bool MSceneManager::closeActiveScene() {
 
     // Belt-and-braces: explicitly reset the light manager in case any
     // light forgot to call unregisterLight in its onExit.
-    auto* lightMgr = MLightSystemManager::getInstance();
-    for (auto* dl : std::vector<MDynamicLight*>(lightMgr->getDynamicLights()))
-        lightMgr->unregisterLight(dl);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+    {
+        auto& lights = renderer->getLightSystem();
+        for (auto* dl : std::vector<MDynamicLight*>(lights.getDynamicLights()))
+            lights.unregisterLight(dl);
+    }
 
     activeScene = nullptr;
     return true;

@@ -7,6 +7,7 @@
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "default_engine_icon_paths.h"
@@ -27,7 +28,8 @@ MDirectionalLight::MDirectionalLight()
     }
     lightType = ELightType::Directional;
     lightInstance = this;
-    MLightSystemManager::getInstance()->registerLight(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().registerLight(this);
 }
 
 // -- Color / intensity ---------------------------------------------------------
@@ -73,7 +75,8 @@ void MDirectionalLight::onExit()
     MLightEntity::onExit();
     if (lightInstance != this) return;
 
-    MLightSystemManager::getInstance()->unregisterLight(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().unregisterLight(this);
     lightData.lightColor     = SVector3(0);
     lightData.lightIntensity = 0.0f;
     glBindBuffer(GL_UNIFORM_BUFFER, bufferId);

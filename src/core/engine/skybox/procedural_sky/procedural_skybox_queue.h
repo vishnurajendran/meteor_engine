@@ -1,7 +1,8 @@
 //
 // MProceduralSkyboxQueue
-// Static registry of procedural sky draw calls, polled once per frame by
-// MProceduralSkyboxStage - identical pattern to MSkyboxQueue.
+// Procedural sky draw calls, polled once per frame by MProceduralSkyboxStage -
+// identical pattern to MSkyboxQueue. Owned by the render pipeline manager
+// (getProceduralSkyboxQueue()).
 //
 
 #pragma once
@@ -16,15 +17,15 @@ class MProceduralSkyboxDrawCall;
 
 class MProceduralSkyboxQueue : public MObject
 {
-    DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxDrawCall)
+    DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxQueue)
 public:
-    static void add   (MProceduralSkyboxDrawCall* drawCall);
-    static void remove(MProceduralSkyboxDrawCall* drawCall);
+    void add   (MProceduralSkyboxDrawCall* drawCall);
+    void remove(MProceduralSkyboxDrawCall* drawCall);
 
-    static const std::vector<MProceduralSkyboxDrawCall*>& getAll() { return drawCalls; }
+    const std::vector<MProceduralSkyboxDrawCall*>& getAll() const { return drawCalls; }
 
 private:
-    static std::vector<MProceduralSkyboxDrawCall*> drawCalls;
+    std::vector<MProceduralSkyboxDrawCall*> drawCalls;
 };
 
 #endif // PROCEDURAL_SKYBOX_QUEUE_H

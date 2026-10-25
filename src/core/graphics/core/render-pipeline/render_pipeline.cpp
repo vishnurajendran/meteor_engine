@@ -9,6 +9,8 @@
 #include "core/profiling/simple_profiler/simple_profiler.h"
 #include "core/utils/frustum.h"
 #include "core/utils/logger.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "render_queue.h"
 #include "stages/clear/clear_stage.h"
 #include "stages/composite/composite_stage.h"
@@ -122,7 +124,8 @@ void MRenderPipeline::preRender()
     {
         renderItems.clear();
         clearCompositeFlags();
-        MRenderQueue::collectAll(this);
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getRenderQueue().collectAll(this);
     }
 
     if (!bufferRegistry.getRenderBuffer())
@@ -134,7 +137,7 @@ void MRenderPipeline::preRender()
     // registered with MViewManagement.
     if (!manualItemMode)
     {
-        MCameraEntity* camera = MViewManagement::getFirstActiveCamera();
+        MCameraEntity* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
         if (camera)
         {
             const SVector2 res = bufferRegistry.getRenderBuffer()->getResolution();

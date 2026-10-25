@@ -8,8 +8,6 @@
 #include "dynamic_light_datatype.h"
 #include "light_shader_constants.h"
 
-MLightSystemManager* MLightSystemManager::lightingManagerInstance = nullptr;
-
 void MLightSystemManager::registerLight(MLightEntity* light)
 {
     if (light == nullptr)
@@ -73,16 +71,6 @@ void MLightSystemManager::prepareLights()
         if (light != nullptr)
             light->prepareLightRender();
     }
-}
-
-MLightSystemManager* MLightSystemManager::getInstance()
-{
-    if (lightingManagerInstance == nullptr)
-    {
-        lightingManagerInstance = new MLightSystemManager();
-    }
-
-    return lightingManagerInstance;
 }
 
 void MLightSystemManager::addLightToDynamicLights(MLightEntity* light)

@@ -7,6 +7,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "asset_manager_subsystem.h"
@@ -58,11 +59,13 @@ public:
     virtual void cleanup() override;
 
     // -- Asset source ------------------------------------------------------------
-    // Sets where assets are loaded from and makes it the process-wide active
-    // source (MAssetSources). Call refresh() afterwards to reload everything.
-    // If no source is set, refresh() creates createDefaultSource().
+    // Sets where assets are loaded from; MAssetSources::getActive() returns it
+    // from then on. Call refresh() afterwards to reload everything. If no
+    // source is set, the first use creates createDefaultSource().
+    // Thread-safe, like getActiveAssetSource().
     void setAssetSource(std::shared_ptr<IAssetSource> source);
-    [[nodiscard]] std::shared_ptr<IAssetSource> getAssetSource() const { return assetSource; }
+    [[nodiscard]] std::shared_ptr<IAssetSource> getAssetSource() const;   // nullptr until set
+    [[nodiscard]] std::shared_ptr<IAssetSource> getActiveAssetSource() override;
 
     // Builds the standard source for a project:
     //   - project folder (PROJECT_PATH) scanning `projectAssetFolders`
@@ -109,6 +112,7 @@ protected:
     bool hasMetaData(const SString& path);
 
 private:
+    mutable std::mutex            assetSourceMutex;   // asset loads on other threads (audio streaming) read it
     std::shared_ptr<IAssetSource> assetSource;
 };
 

@@ -4,6 +4,8 @@
 
 #ifndef RENERER_H
 #define RENERER_H
+#include <memory>
+
 #include "core/object/object.h"
 #include "render_pipeline.h"
 #include "render_pipeline_manager_interface.h"
@@ -26,7 +28,17 @@ public:
 
     IRenderPipeline* getPipeline() override { return pipeline; }
 
+    MRenderQueue&           getRenderQueue() override           { return *renderQueue; }
+    MSkyboxQueue&           getSkyboxQueue() override           { return *skyboxQueue; }
+    MProceduralSkyboxQueue& getProceduralSkyboxQueue() override { return *proceduralSkyboxQueue; }
+    MLightSystemManager&    getLightSystem() override           { return *lightSystem; }
+
 private:
     IRenderPipeline* pipeline;
+
+    std::unique_ptr<MRenderQueue>           renderQueue;
+    std::unique_ptr<MSkyboxQueue>           skyboxQueue;
+    std::unique_ptr<MProceduralSkyboxQueue> proceduralSkyboxQueue;
+    std::unique_ptr<MLightSystemManager>    lightSystem;
 };
 #endif //RENERER_H

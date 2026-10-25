@@ -89,7 +89,7 @@ void MProceduralSkyboxDrawCall::draw()
         return;
     }
 
-    MCameraEntity* cam  = MViewManagement::getFirstActiveCamera();
+    MCameraEntity* cam  = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
     if (!cam)
     {
         MERROR("MProceduralSkyboxDrawCall::draw - no camera");

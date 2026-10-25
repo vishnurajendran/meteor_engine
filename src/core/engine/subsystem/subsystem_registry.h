@@ -1,13 +1,17 @@
 #ifndef SUBSYSTEM_REGISTRY_H
 #define SUBSYSTEM_REGISTRY_H
 
-#include <unordered_map>
 #include <typeindex>
+#include <unordered_map>
+#include <vector>
 
 #include "core/object/object.h"
 #include "core/utils/logger.h"
 #include "subsystem_interface.h"
 
+// One instance per interface type. Subsystems are cleaned up and deleted in
+// reverse registration order, so register a subsystem after the ones it
+// uses (the scene manager last: its entities use physics, audio, scripting).
 SCRIPT_BIND_CLASS()
 class MEngineSubsystemRegistry : public MObject
 {
@@ -46,6 +50,7 @@ public:
         // own init (the scene manager's empty scene creates entities, which
         // find the active scene through the registry).
         subSystems[type] = inst;
+        registrationOrder.push_back(type);
 
         if (autoInit)
             inst->init();
@@ -69,6 +74,7 @@ public:
 
 private:
     static std::unordered_map<std::type_index, IEngineSubSystem*> subSystems;
+    static std::vector<std::type_index> registrationOrder;   // cleanup walks this backwards
 };
 
 #endif

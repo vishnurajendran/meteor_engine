@@ -2,57 +2,33 @@
 // sinput.cpp
 //
 #include "input.h"
-#include "SFML/Window/Keyboard.hpp"
 
-// -- Static storage ----------------------------------------------------------
+#include "core/engine/input/input_subsystem_interface.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 
-std::array<bool, SInput::KEY_COUNT> SInput::currentState  = {};
-std::array<bool, SInput::KEY_COUNT> SInput::previousState = {};
-bool SInput::initialized = false;
+// -- Queries: forwarded to the input subsystem --------------------------------
 
-// -- poll --------------------------------------------------------------------
-
-void SInput::poll()
+static const IInputSubsystem* inputSubsystem()
 {
-    previousState = currentState;
-
-    for (int i = 0; i < KEY_COUNT; ++i)
-    {
-        auto sfKey = static_cast<sf::Keyboard::Key>(i);
-        currentState[i] = sf::Keyboard::isKeyPressed(sfKey);
-    }
-
-    initialized = true;
+    return MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>();
 }
-
-void SInput::releaseAll()
-{
-    previousState = currentState;
-    currentState.fill(false);
-    initialized = true;
-}
-
-// -- Edge detection ----------------------------------------------------------
 
 bool SInput::pressedThisFrame(EKeyCode key)
 {
-    const int i = static_cast<int>(key);
-    if (i < 0 || i >= KEY_COUNT) return false;
-    return currentState[i] && !previousState[i];
+    const auto* input = inputSubsystem();
+    return input && input->pressedThisFrame(key);
 }
 
 bool SInput::pressedAndReleased(EKeyCode key)
 {
-    const int i = static_cast<int>(key);
-    if (i < 0 || i >= KEY_COUNT) return false;
-    return !currentState[i] && previousState[i];
+    const auto* input = inputSubsystem();
+    return input && input->pressedAndReleased(key);
 }
 
 bool SInput::isDown(EKeyCode key)
 {
-    const int i = static_cast<int>(key);
-    if (i < 0 || i >= KEY_COUNT) return false;
-    return currentState[i];
+    const auto* input = inputSubsystem();
+    return input && input->isDown(key);
 }
 
 // -- Modifier helpers --------------------------------------------------------

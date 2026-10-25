@@ -5,8 +5,6 @@
 #include "skybox_queue.h"
 #include "skyboxdrawcall.h"
 
-std::vector<MSkyboxDrawCall*> MSkyboxQueue::drawCalls;
-
 void MSkyboxQueue::add(MSkyboxDrawCall* drawCall)
 {
     auto it = std::find(drawCalls.begin(), drawCalls.end(), drawCall);

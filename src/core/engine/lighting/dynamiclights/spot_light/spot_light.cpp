@@ -7,6 +7,7 @@
 #include "../../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
 #include "default_engine_icon_paths.h"
@@ -17,13 +18,15 @@ MSpotLight::MSpotLight()
 {
     lightType      = ELightType::Spot;
     lightData.type = EDynamicLightDataType::Spot;
-    MLightSystemManager::getInstance()->registerLight(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().registerLight(this);
 }
 
 void MSpotLight::onExit()
 {
     MDynamicLight::onExit();
-    MLightSystemManager::getInstance()->unregisterLight(this);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().unregisterLight(this);
 }
 
 float MSpotLight::getSpotAngle() const { return glm::degrees(spotAngle.get()); }

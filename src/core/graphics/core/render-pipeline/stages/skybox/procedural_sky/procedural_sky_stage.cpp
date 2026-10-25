@@ -9,6 +9,8 @@
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/utils/logger.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 
 void MProceduralSkyboxStage::init(IRenderPipeline* const pipeline)
 {
@@ -33,14 +35,15 @@ void MProceduralSkyboxStage::preRender(IRenderPipeline* const pipeline)
 void MProceduralSkyboxStage::render(IRenderPipeline* const pipeline)
 {
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
-    if (MProceduralSkyboxQueue::getAll().empty()) return;
+    auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
+    if (!renderer || renderer->getProceduralSkyboxQueue().getAll().empty()) return;
 
     opaqueBuffer->bindAsActive();
 
     const SVector2 res = pipeline->getRenderResolution();
     glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
 
-    for (auto* drawCall : MProceduralSkyboxQueue::getAll())
+    for (auto* drawCall : renderer->getProceduralSkyboxQueue().getAll())
     {
         if (!drawCall) continue;
         drawCall->setTargetResolution(res);

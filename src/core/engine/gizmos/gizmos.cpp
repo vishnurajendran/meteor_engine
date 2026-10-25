@@ -38,7 +38,7 @@ std::vector<MGizmos::SGizmoBatchEntry> MGizmos::pendingBatches;
 
 MCameraEntity* MGizmos::getActiveCamera()
 {
-    return MViewManagement::getFirstActiveCamera();
+    return MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
 }
 
 SVector2 MGizmos::getResolution()

@@ -5,6 +5,7 @@
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/lighting/ambient/ambient_light.h"
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/subsystem/subsystem_registry.h"
@@ -31,7 +32,8 @@ MProceduralSkyboxEntity::MProceduralSkyboxEntity()
     drawCall = new MProceduralSkyboxDrawCall(shaderAsset->getShader());
     pushFieldsToDrawCall();     // apply default field values to the draw call
     rebuildSunDirection();
-    MProceduralSkyboxQueue::add(drawCall);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getProceduralSkyboxQueue().add(drawCall);
     setCanTick(true);
 }
 
@@ -39,7 +41,8 @@ MProceduralSkyboxEntity::~MProceduralSkyboxEntity()
 {
     if (drawCall)
     {
-        MProceduralSkyboxQueue::remove(drawCall);
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getProceduralSkyboxQueue().remove(drawCall);
         delete drawCall;
         drawCall = nullptr;
     }
@@ -80,7 +83,8 @@ void MProceduralSkyboxEntity::onExit()
 {
     MSpatialEntity::onExit();
     if (drawCall)
-        MProceduralSkyboxQueue::remove(drawCall);
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getProceduralSkyboxQueue().remove(drawCall);
 }
 
 void MProceduralSkyboxEntity::onUpdate(float deltaTime)

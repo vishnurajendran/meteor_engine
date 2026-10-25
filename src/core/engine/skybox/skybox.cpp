@@ -5,6 +5,7 @@
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
 #include "core/graphics/core/shader/shaderasset.h"
@@ -25,14 +26,16 @@ MSkyboxEntity::MSkyboxEntity()
     }
 
     skyboxDrawCall = new MSkyboxDrawCall(TAssetHandle<MCubemapAsset>(), shaderAsset->getShader());
-    MSkyboxQueue::add(skyboxDrawCall);
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getSkyboxQueue().add(skyboxDrawCall);
 }
 
 MSkyboxEntity::~MSkyboxEntity()
 {
     if (skyboxDrawCall)
     {
-        MSkyboxQueue::remove(skyboxDrawCall);
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getSkyboxQueue().remove(skyboxDrawCall);
         delete skyboxDrawCall;
         skyboxDrawCall = nullptr;
     }
@@ -71,7 +74,8 @@ void MSkyboxEntity::onExit()
 {
     MSpatialEntity::onExit();
     if (skyboxDrawCall)
-        MSkyboxQueue::remove(skyboxDrawCall);
+        if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+            renderer->getSkyboxQueue().remove(skyboxDrawCall);
 }
 
 void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)

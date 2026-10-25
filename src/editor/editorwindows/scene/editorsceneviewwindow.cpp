@@ -219,7 +219,7 @@ void MEditorSceneViewWindow::handleDragDropBehaviour()
             const SString droppedId(static_cast<const char*>(payload->Data));
 
             // Raycast BEFORE spawning so the new entity can't be hit by its own ray.
-            auto* camera = MViewManagement::getFirstActiveCamera();
+            auto* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
             auto* scene  = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
             SVector3 rayOrigin, rayDir;
 
@@ -259,7 +259,7 @@ void MEditorSceneViewWindow::handleInput(float dt)
                               ImGui::IsMouseDown(ImGuiMouseButton_Middle);
 
     if (!viewportHovered && !rmbOrMmbHeld) return;
-    auto* camera = MViewManagement::getFirstActiveCamera();
+    auto* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
 
     ImGui::GetIO().WantCaptureKeyboard = false;
 
@@ -456,7 +456,7 @@ void MEditorSceneViewWindow::drawTransformHandles()
     if (!MEditorApplication::SelectedObject)
         return;
 
-    auto* primaryCamera = MViewManagement::getFirstActiveCamera();
+    auto* primaryCamera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
     if (!primaryCamera)
         return;
 
@@ -710,7 +710,7 @@ void MEditorSceneViewWindow::drawSceneInfoOverlay()
 
 void MEditorSceneViewWindow::drawAxisLegend()
 {
-    auto* camera = MViewManagement::getFirstActiveCamera();
+    auto* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
     if (!camera) return;
 
     const float axisLen = 28.0f;

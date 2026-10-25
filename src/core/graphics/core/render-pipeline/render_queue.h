@@ -13,19 +13,21 @@
 class IRenderItemCollector;
 class IMeteorDrawable;
 
+// Every drawable in the world. Owned by the render pipeline manager:
+//   MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>()->getRenderQueue()
 class MRenderQueue : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MRenderQueue)
 public:
-    static void addToSubmitables     (IMeteorDrawable* instance);
-    static void removeFromSubmitables(IMeteorDrawable* instance);
+    void addToSubmitables     (IMeteorDrawable* instance);
+    void removeFromSubmitables(IMeteorDrawable* instance);
 
     // Called once per frame by MRenderPipeline::preRender().
     // Every drawable that canDraw() submits its SRenderItem(s) to the collector.
-    static void collectAll(IRenderItemCollector* collector);
+    void collectAll(IRenderItemCollector* collector);
 
 private:
-    static std::vector<IMeteorDrawable*> drawables;
+    std::vector<IMeteorDrawable*> drawables;
 };
 
 #endif // RENDERQUEUE_H
