@@ -130,6 +130,9 @@ private:
     }
 
 public:
+    // Returned by the find functions when nothing is found.
+    static constexpr size_t npos = std::string::npos;
+
     // ── Constructors / assignment ─────────────────────────────────────────────
 
     SString()                            : coreStr() {}
@@ -138,6 +141,7 @@ public:
     SString(const SString& o)            : coreStr(o.coreStr) {}
     SString(SString&& o) noexcept        : coreStr(std::move(o.coreStr)) {}
     SString(char c, size_t count = 1)    : coreStr(count, c) {}  // NEW: fill with char
+    SString(const char* s, size_t len)   : coreStr(s ? s : "", s ? len : 0) {}  // NEW: from raw bytes (need not be null-terminated)
 
     SString& operator=(const SString& o)   { if (this != &o) coreStr = o.coreStr; return *this; }
     SString& operator=(SString&& o) noexcept { coreStr = std::move(o.coreStr); return *this; }

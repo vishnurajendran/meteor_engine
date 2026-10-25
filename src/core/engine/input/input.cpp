@@ -25,6 +25,13 @@ void SInput::poll()
     initialized = true;
 }
 
+void SInput::releaseAll()
+{
+    previousState = currentState;
+    currentState.fill(false);
+    initialized = true;
+}
+
 // -- Edge detection ----------------------------------------------------------
 
 bool SInput::pressedThisFrame(EKeyCode key)

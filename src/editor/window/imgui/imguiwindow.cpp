@@ -3,6 +3,7 @@
 //
 
 #include <GL/glew.h>
+#include "editor/publishing/game_publisher.h"
 #include "core/utils/meteor_paths.h"
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -119,7 +120,9 @@ void MImGuiWindow::drawGUI(const float deltaTime)
     // Skip shortcut dispatch when ImGui has a text field focused so
     // that typing "S" into a rename box doesn't trigger Ctrl-less bindings.
     SInput::poll();
-    if (!ImGui::GetIO().WantTextInput)
+    // Shortcuts (Ctrl+S, ...) are off while a publish runs: nothing may
+    // change the project until it is done.
+    if (!ImGui::GetIO().WantTextInput && !MGamePublisher::isPublishing())
         MShortcutListener::poll();
 
     drawMenuBar();

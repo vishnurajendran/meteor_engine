@@ -32,6 +32,7 @@
 #include "core/utils/sstring.h"
 #include "sol/sol.hpp"
 
+class IAssetManagerSubsystem;
 class IScriptInstance;
 class MLuaScriptAsset;
 class MLuaScriptInstance;
@@ -78,6 +79,8 @@ private:
     // Sets up package.path and loads the engine Lua modules (Behaviour
     // first, then everything else alphabetically).
     void loadEngineModules();
+    // Published game: the modules are core assets, served by the asset manager.
+    void loadEngineModulesFromCoreAssets(const IAssetManagerSubsystem& assetManager);
 
     // Registers the global import(fullName) function.
     void registerImport();

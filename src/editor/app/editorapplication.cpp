@@ -35,6 +35,7 @@
 #include "editor/editorwindows/hierarchy/editorhierarchywindow.h"
 #include "editor/editorwindows/inspector/editorinspectorwindow.h"
 #include "editor/editorwindows/scene/editorsceneviewwindow.h"
+#include "editor/publishing/game_publisher.h"
 
 MObject* MEditorApplication::SelectedObject = nullptr;
 
@@ -74,18 +75,24 @@ void MEditorApplication::run() {
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
     }
 
+    // While a publish runs, nothing may change the project: file watcher
+    // events wait (they are handled once it finishes), and so do script
+    // index syncing and script recompiles below.
+    const bool publishing = MGamePublisher::isPublishing();
+
     // tick asset manager
-    if (assetManagerRef)
+    if (assetManagerRef && !publishing)
         assetManagerRef->tickHotReload();
 
     // keep VS Code's import() index in step with the project's scripts
-    projectManager.syncScriptIndex();
+    if (!publishing)
+        projectManager.syncScriptIndex();
 
     // Script refresh: whenever a script changes, the editor domain recompiles
     // every script (a frame budget at a time) to report errors before Play.
     // Only while stopped - during play the runtime domain is on top, and the
     // refresh catches up once Stop removes it.
-    if (simulationState == EEditorSimulationState::Stopped)
+    if (simulationState == EEditorSimulationState::Stopped && !publishing)
     {
         auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>();
         if (auto* domain = domains ? domains->getCurrentActiveDomain() : nullptr)
@@ -390,6 +397,12 @@ void MEditorApplication::loadPrerequisites()
 
 bool MEditorApplication::canStartSimulation(SString& outReason) const
 {
+    if (MGamePublisher::isPublishing())
+    {
+        outReason = "A publish is in progress";
+        return false;
+    }
+
     auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>();
     auto* domain  = domains ? domains->getCurrentActiveDomain() : nullptr;
     if (!domain)

@@ -520,13 +520,27 @@ set(COMMON_SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin/common")
 set(EDITOR_SOURCE_COPY_DIR "${CMAKE_SOURCE_DIR}/post-build-copy-to-bin/editor")
 
 
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.26)
+    set(COMMON_COPY_MODE copy_directory_if_different)
+else()
+    set(COMMON_COPY_MODE copy_directory)
+endif()
+
+add_custom_target(CopyCommonAssets ALL
+        COMMAND ${CMAKE_COMMAND} -E ${COMMON_COPY_MODE}
+        "${COMMON_SOURCE_COPY_DIR}"
+        "${DEST_COPY_DIR}"
+        COMMENT "Copying common assets to ${DEST_COPY_DIR}"
+        VERBATIM
+)
+
 if (BUILD_EDITOR)
-    add_copy_post_build(${EDITOR_NAME} ${COMMON_SOURCE_COPY_DIR})
+    add_dependencies(${EDITOR_NAME} CopyCommonAssets)
     add_copy_post_build(${EDITOR_NAME} ${EDITOR_SOURCE_COPY_DIR})
 endif()
 
 if (BUILD_PLAYER)
-    add_copy_post_build(${PLAYER_NAME} ${COMMON_SOURCE_COPY_DIR})
+    add_dependencies(${PLAYER_NAME} CopyCommonAssets)
 endif()
 
 # ---------------------------------------------------------------------------

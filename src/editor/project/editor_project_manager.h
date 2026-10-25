@@ -50,6 +50,8 @@ public:
     void applyToAssetManager(MEditorAssetManager& assetManager) const;
 
     [[nodiscard]] const SProjectDescriptor& getDescriptor() const { return descriptor; }
+    // For settings the editor changes and saves back (e.g. publish settings).
+    [[nodiscard]] SProjectDescriptor& getMutableDescriptor() { return descriptor; }
     [[nodiscard]] bool isPrepared() const { return prepared; }
 
     // Writes the current descriptor back to the .mtproj (no-op without one).

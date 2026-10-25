@@ -46,6 +46,14 @@ bool SProjectDescriptor::load(const std::filesystem::path& file)
 
     startupScene = root.child("startupScene").attribute("path").as_string();
 
+    if (const auto publish = root.child("publish"))
+    {
+        version                = publish.attribute("version").as_string(version.c_str());
+        publisher              = publish.attribute("publisher").as_string();
+        publishOutputDirectory = publish.attribute("outputDirectory").as_string();
+        maxPakSizeMB           = publish.attribute("maxPakSizeMB").as_int(maxPakSizeMB);
+    }
+
     if (formatVersion > CURRENT_FORMAT_VERSION)
         MWARN(SString::format("ProjectDescriptor:: {0} uses format {1}, newer than this editor ({2})",
                               SString(file.filename().string()), SString::fromInt(formatVersion),
@@ -68,6 +76,12 @@ bool SProjectDescriptor::save(const std::filesystem::path& file) const
 
     if (!startupScene.empty())
         root.append_child("startupScene").append_attribute("path").set_value(startupScene.c_str());
+
+    auto publish = root.append_child("publish");
+    publish.append_attribute("version").set_value(version.c_str());
+    publish.append_attribute("publisher").set_value(publisher.c_str());
+    publish.append_attribute("outputDirectory").set_value(publishOutputDirectory.c_str());
+    publish.append_attribute("maxPakSizeMB").set_value(maxPakSizeMB);
 
     if (!doc.save_file(file.c_str()))
     {

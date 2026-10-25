@@ -47,7 +47,15 @@ bool MWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFp
 
     const auto& size = sf::Vector2u(inSize.x, inSize.y);
     auto videoMode = sf::VideoMode(size, 32);
-    coreWindow.create(videoMode, this->title.str(),  sf::State::Windowed, this->settings);
+    if (fullscreen && !videoMode.isValid())
+    {
+        MWARN(SString::format("{0}x{1} is not a fullscreen mode on this display; using the desktop resolution",
+                              static_cast<int>(inSize.x), static_cast<int>(inSize.y)));
+        videoMode = sf::VideoMode::getDesktopMode();
+        this->windowSize = SVector2(videoMode.size.x, videoMode.size.y);
+    }
+    coreWindow.create(videoMode, this->title.str(),
+                      fullscreen ? sf::State::Fullscreen : sf::State::Windowed, this->settings);
     coreWindow.setFramerateLimit(this->targetFPS);
 
     auto apiVersion = SString::format("OpenGL v{0}.{1}", settings.majorVersion, settings.minorVersion);

@@ -5,7 +5,7 @@
 #ifndef ASSET_MANAGER_SUBSYSTEM_H
 #define ASSET_MANAGER_SUBSYSTEM_H
 #include <map>
-
+#include <vector>
 
 #include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/subsystem/subsystem_interface.h"
@@ -23,6 +23,9 @@ public:
     TAssetHandle<T> getAsset(SString path) {
         static_assert(std::is_base_of_v<MAsset, T>, "T must inherit from MAsset");
 
+        if (!assetMap.contains(path))
+            loadOnDemand(path);
+
         if (assetMap.contains(path)) {
             auto* raw = dynamic_cast<T*>(assetMap[path]);
             if (raw && !raw->getAssetId().empty())
@@ -34,6 +37,9 @@ public:
     template <typename T>
     TAssetHandle<T> getAssetById(const SString& assetId) {
         static_assert(std::is_base_of_v<MAsset, T>, "T must inherit from MAsset");
+
+        if (!assetMapByAssetId.contains(assetId))
+            loadOnDemandById(assetId);
 
         if (assetMapByAssetId.contains(assetId))
             return TAssetHandle<T>(assetId, &resolveByGuid);
@@ -66,6 +72,23 @@ public:
         return getAsset<T>(refString);
     }
 
+    // -- Core assets -------------------------------------------------------------
+    // Engine files looked up by name instead of GUID, with no meta and no
+    // MAsset: shader include files and the Lua engine modules. Names are
+    // "<prefix><file>", e.g. "shader_utils/meteor_vertex_utils.glsl".
+    //
+    // Only a published game provides them (from the package). Otherwise
+    // providesCoreAssets() is false and the systems that need these files
+    // read them from the engine install instead.
+    static constexpr const char* CORE_SHADER_UTILS = "shader_utils/";   // shader #include files
+    static constexpr const char* CORE_LUA_MODULES  = "lua_modules/";    // Behaviour, MMath, ...
+
+    [[nodiscard]] virtual bool providesCoreAssets() const { return false; }
+    // Every core asset name starting with `prefix`, sorted.
+    [[nodiscard]] virtual std::vector<SString> listCoreAssets(const SString& /*prefix*/) const { return {}; }
+    // False if there is no core asset with that name.
+    virtual bool loadCoreAsset(const SString& /*name*/, SString& /*outData*/) const { return false; }
+
     // True if the string uses the "guid:<id>" form.
     static bool isGuidReference(const SString& refString)
     {
@@ -95,6 +118,9 @@ protected:
     T* internal_unsafe_getAsset(SString path) {
         static_assert(std::is_base_of_v<MAsset, T>, "T must inherit from MAsset");
 
+        if (!assetMap.contains(path))
+            loadOnDemand(path);
+
         if (assetMap.contains(path))
             return dynamic_cast<T*>(assetMap[path]);
         return nullptr;
@@ -103,6 +129,9 @@ protected:
     template <typename T>
     T* internal_unsafe_getAssetById(const SString& assetId) {
         static_assert(std::is_base_of_v<MAsset, T>, "T must inherit from MAsset");
+
+        if (!assetMapByAssetId.contains(assetId))
+            loadOnDemandById(assetId);
 
         if (assetMapByAssetId.contains(assetId))
             return dynamic_cast<T*>(assetMapByAssetId[assetId]);
@@ -118,8 +147,15 @@ protected:
         auto* mgr = instanceRef;
         if (mgr->assetMapByAssetId.contains(assetId))
             return mgr->assetMapByAssetId[assetId];
-        return nullptr;
+        return mgr->loadOnDemandById(assetId);
     }
+
+    // Lazy-loading hooks, called when a lookup misses. The editor imports
+    // every asset up front and keeps these as no-ops; the player imports the
+    // asset from the package on first use (see MPlayerAssetManager). Return
+    // the asset, or nullptr if it does not exist.
+    virtual MAsset* loadOnDemand(const SString& /*path*/)        { return nullptr; }
+    virtual MAsset* loadOnDemandById(const SString& /*assetId*/) { return nullptr; }
 
 protected:
     const SString META_FILE_EXTENSION = "meta";

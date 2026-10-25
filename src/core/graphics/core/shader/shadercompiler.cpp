@@ -5,6 +5,8 @@
 #include "shadercompiler.h"
 #include "core/utils/meteor_paths.h"
 #include "core/utils/logger.h"
+#include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include <filesystem>
 #include <fstream>
 
@@ -107,7 +109,35 @@ bool MShaderCompiler::initialiseEngine()
         return false;
 
     MLOG(STR("MShaderCompiler::Initialising Shader Compiler."));
-    // Engine-owned include files, always read from the engine install.
+
+    // Published game: the include files are core assets, served by the
+    // asset manager.
+    const auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    if (assetManager && assetManager->providesCoreAssets())
+    {
+        int count = 0;
+        for (const SString& name : assetManager->listCoreAssets(IAssetManagerSubsystem::CORE_SHADER_UTILS))
+        {
+            if (!name.endsWith(".glsl"))
+                continue;
+            SString source;
+            if (!assetManager->loadCoreAsset(name, source))
+            {
+                MERROR(STR("ShaderCompiler:: cannot read core asset ") + name);
+                continue;
+            }
+            registerGLNamedStringData(name.substring(name.findLast('/') + 1), source);
+            ++count;
+        }
+        if (count == 0)
+            MERROR(STR("ShaderCompiler:: the package has no shader include files"));
+
+        MLOG(STR("MShaderCompiler::Initialisation Complete."));
+        initialised = true;
+        return true;
+    }
+
+    // Engine-owned include files, read from the engine install.
     const std::string directoryPath = ENGINE_PATH("meteor_assets/shader_utils").str();
     try {
         for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
@@ -132,13 +162,16 @@ bool MShaderCompiler::initialiseEngine()
 void MShaderCompiler::registerGLNamedString(const SString& filePath, const SString& fileName)
 {
     SString fileData;
-    const SString fileNamePath = STR("/") + fileName;
     if (FileIO::readFile(filePath, fileData))
-    {
-        glNamedStringARB(GL_SHADER_INCLUDE_ARB, -1, fileNamePath.c_str(),-1, fileData.c_str());
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR) {
-            MERROR(STR("ShadeCompiler:: Error registering named string: ") + std::to_string(err));
-        }
+        registerGLNamedStringData(fileName, fileData);
+}
+
+void MShaderCompiler::registerGLNamedStringData(const SString& fileName, const SString& fileData)
+{
+    const SString fileNamePath = STR("/") + fileName;
+    glNamedStringARB(GL_SHADER_INCLUDE_ARB, -1, fileNamePath.c_str(), -1, fileData.c_str());
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        MERROR(STR("ShadeCompiler:: Error registering named string: ") + SString::fromUInt(err));
     }
 }

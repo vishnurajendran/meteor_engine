@@ -5,12 +5,15 @@
 
 #ifndef METEOR_ENGINE_PLAYERAPPLICATION_H
 #define METEOR_ENGINE_PLAYERAPPLICATION_H
+#include <memory>
+
 #include "core/application/application.h"
 #include "core/object/objectpointer.h"
 #include "core/window/simple/windowing.h"
 
 
 class IPhysicsEngineSubsystem;
+class MPackagedAssetManager;
 enum EPlayerApplicationState
 {
     Playing,
@@ -31,7 +34,11 @@ private:
     DEFINE_OBJECT_SUBCLASS(MPlayerApplication)
 
 private:
-    void registerSubsystems();
+    // `package` is null when running from a project folder.
+    void registerSubsystems(const std::shared_ptr<MPackagedAssetManager>& package);
+    // Published game: the manifest's startup scene. Development: the
+    // project's .mtproj startup scene.
+    void loadStartupScene(const MPackagedAssetManager* package);
 
 public:
     MPlayerApplication();
