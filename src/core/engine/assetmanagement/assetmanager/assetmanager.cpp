@@ -58,8 +58,14 @@ std::vector<SString> MAssetManager::getAssetPaths()
     auto* manager = dynamic_cast<MAssetManager*>(activeAssetManager());
     if (!manager)
         return paths;
-    paths.reserve(manager->assetMap.size());
-    for (const auto& [path, asset] : manager->assetMap)
+    return manager->listAssetPaths();
+}
+
+std::vector<SString> MAssetManager::listAssetPaths() const
+{
+    std::vector<SString> paths;
+    paths.reserve(assetMap.size());
+    for (const auto& [path, asset] : assetMap)
         if (asset)
             paths.push_back(path);
     return paths;

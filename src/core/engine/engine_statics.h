@@ -10,6 +10,7 @@
 #include "core/utils/logger.h"
 #include "settings/engine_settings.h"
 #include "settings/physics_layers_settings.h"
+#include "settings/player_settings.h"
 
 struct SSettingsPaths
 {
@@ -34,6 +35,10 @@ private:
 
         engineSettingsPath = path;
         engineSettings     = new T();
+        // No path: defaults only, never saved (the player fills these from
+        // the project's settings instead).
+        if (path.empty())
+            return;
         if (FileIO::hasFile(path))
             engineSettings->deserialiseFromFile(path);
         else
@@ -66,8 +71,37 @@ public:
     static void loadSettings(const SSettingsPaths& paths)
     {
         loadEngineSettings<T>(paths.engineSettingsPath);
-        loadPhysicsLayers(paths.physicsLayerSettingsPath);
+        // Packaged builds pass no physics path and use the embedded copy
+        // instead (loadPhysicsLayersFromXml).
+        if (!paths.physicsLayerSettingsPath.empty())
+            loadPhysicsLayers(paths.physicsLayerSettingsPath);
     }
+
+    // ---- Packaged builds ---------------------------------------------------
+    // Physics settings are baked into the .manifest at publish time. They are
+    // loaded from memory and never written back to disk, so players cannot
+    // change them.
+
+    // Replaces the physics layers with the embedded document.
+    static bool loadPhysicsLayersFromXml(const SString& xml);
+
+    // Applies the project's engine settings (rendering, physics) from an
+    // engine settings document onto the active engine settings. Window
+    // settings (resolution, fps) in it are ignored; those come from the
+    // player settings.
+    static bool applyProjectSettingsFromXml(const SString& xml);
+
+    // ---- Player settings -----------------------------------------------------
+    // Loads PlayerSettings.xml (writing it with defaults if missing) and
+    // applies its window settings to the engine settings. Call after the
+    // engine settings are loaded.
+    static void loadPlayerSettings(const SString& path);
+    static MPlayerSettings* getPlayerSettings() { return playerSettings; }
+
+    // ---- Publishing (editor) -------------------------------------------------
+    // The active settings as XML documents, for embedding in a build.
+    static SString physicsLayersToXml();
+    static SString engineSettingsToXml();
 
 
     static void saveAll();
@@ -85,6 +119,9 @@ private:
 
     static MPhysicsLayersSettings* physicsLayersAsset;
     static SString              physicsLayersAssetPath;
+
+    static MPlayerSettings*     playerSettings;
+    static SString              playerSettingsPath;
 };
 
 #endif // ENGINE_STATICS_H

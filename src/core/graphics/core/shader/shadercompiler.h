@@ -21,6 +21,8 @@ private:
     static SString getShaderInfoLog(const GLuint& shaderId);
     static SString getShaderProgramInfoLog(const GLuint& shaderId);
     static void registerGLNamedString(const SString& filePath, const SString& fileName);
+    // Registers include source already in memory as "/<fileName>".
+    static void registerGLNamedStringData(const SString& fileName, const SString& fileData);
 };
 
 

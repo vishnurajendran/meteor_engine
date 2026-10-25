@@ -132,7 +132,7 @@ static ImU32 getEntityStripColor(MSpatialEntity* entity)
 
 void MEditorHierarchyWindow::onGui(float deltaTime)
 {
-    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
 
     drawToolbar();
 
@@ -446,7 +446,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
                 {
                     // Insert before or after entity among its siblings.
                     auto* targetParent = entity->getParent();
-                    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+                    auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
 
                     if (targetParent)
                     {
@@ -509,7 +509,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
                         const auto it  = std::find(siblings.begin(), siblings.end(), entity);
                         targetParent->insertChildAt(spawned, (int)(it - siblings.begin()) + offset);
                     }
-                    else if (auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene())
+                    else if (auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene())
                     {
                         auto& roots   = scene->getRootEntities();
                         const auto it = std::find(roots.begin(), roots.end(), entity);
@@ -663,7 +663,7 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
     ImGui::Separator();
     if (ImGui::MenuItem("Create Empty Child"))
     {
-        auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+        auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
         if (scene && target)
         {
             auto* child = MSpatialEntity::createInstance("New Entity");

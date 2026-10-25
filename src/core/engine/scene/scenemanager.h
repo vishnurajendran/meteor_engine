@@ -5,21 +5,37 @@
 #ifndef SCENEMANAGER_H
 #define SCENEMANAGER_H
 
+#include "core/engine/subsystem/subsystem_interface.h"
+#include "core/engine/subsystem/subsystem_registry.h"   // so users can reach the manager
 #include "core/object/object.h"
 #include "core/utils/delegate.h"
 
 class MScene;
 /**
  * @brief Manages Scene loads and unloads.
+ *
+ * An engine subsystem, registered under its own type by each application
+ * (MEditorSceneManager in the editor, MSceneManager in the player):
+ *
+ *   auto* scenes = MEngineSubsystemRegistry::getSubsystem<MSceneManager>();
+ *
+ * The application drives update / fixedUpdate / lateUpdate itself, in its
+ * frame order, so canTick() stays false.
 */
 
 SCRIPT_BIND_CLASS()
-class MSceneManager : public MObject {
+class MSceneManager : public MObject, public IEngineSubSystem {
     DEFINE_OBJECT_SUBCLASS(MSceneManager)
 public:
     MSceneManager() = default;
     ~MSceneManager() override;
-    virtual void init() { loadEmptyScene(); }
+
+    // -- IEngineSubSystem ----------------------------------------------------
+    // init() starts with an empty scene. cleanup() closes the active scene;
+    // applications close it themselves before the registry cleans up, while
+    // every other subsystem (physics, audio, scripting) is still alive.
+    void init() override { loadEmptyScene(); }
+    void cleanup() override { closeActiveScene(); }
 
     SCRIPT_BIND_FUNC()
     virtual bool loadEmptyScene();
@@ -44,19 +60,14 @@ public:
     virtual SString getActiveScenePath() { return currentScenePath; }
 
 public:
-    static void registerSceneManager(MSceneManager* sceneManagerInstance);
-
+    // Script entry point (MSceneManager.getSceneManagerInstance() in Lua).
+    // C++ code uses MEngineSubsystemRegistry::getSubsystem<MSceneManager>().
     SCRIPT_BIND_FUNC_STATIC()
     static MSceneManager* getSceneManagerInstance();
 
-private:
-
 protected:
-    MScene* activeScene;
+    MScene* activeScene = nullptr;
     SString currentScenePath;
-
-private:
-    static MSceneManager* sceneManagerInstance;
 };
 
 #endif //SCENEMANAGER_H

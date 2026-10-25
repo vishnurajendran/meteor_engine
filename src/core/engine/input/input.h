@@ -64,12 +64,18 @@ enum class EKeyCode : int
 };
 
 SCRIPT_BIND_STRUCT()
-class SInput
+struct SInput
 {
 public:
     // Snapshot the current keyboard state from the OS. Call exactly once per
     // frame, before any pressedThisFrame / pressedAndReleased / isDown queries.
     static void poll();
+
+    // Call instead of poll() on frames where the game window does not have
+    // focus: every key reads as released (keys held at the moment focus was
+    // lost report a release), so typing in another window does not reach
+    // the game.
+    static void releaseAll();
 
     // Rising edge -- the key transitioned from up to down this frame.
     SCRIPT_BIND_FUNC_STATIC()

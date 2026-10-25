@@ -517,7 +517,7 @@ void MGizmos::requestGizmoDraws()
     if (!gizmosEnabled) return;
 
 #if METEOR_EDITOR
-    auto sceneManager = MSceneManager::getSceneManagerInstance();
+    auto sceneManager = MEngineSubsystemRegistry::getSubsystem<MSceneManager>();
     if (!sceneManager) return;
 
     auto scene = sceneManager->getActiveScene();

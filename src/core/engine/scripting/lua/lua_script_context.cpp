@@ -10,6 +10,8 @@
 
 #include "core/utils/logger.h"
 #include "core/utils/meteor_paths.h"
+#include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
+#include "core/engine/subsystem/subsystem_registry.h"
 #include "engine_lua_bindings.h"
 #include "lua_script_asset.h"
 #include "lua_script_instance.h"
@@ -124,8 +126,15 @@ bool MLuaScriptContext::refreshStep(double budgetMs)
 
 void MLuaScriptContext::loadEngineModules()
 {
-    // Engine-owned modules are always loaded from the engine install. The
-    // project keeps a synced copy only so VS Code can resolve them.
+    const auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    if (assetManager && assetManager->providesCoreAssets())
+    {
+        loadEngineModulesFromCoreAssets(*assetManager);
+        return;
+    }
+
+    // Engine-owned modules are loaded from the engine install. The project
+    // keeps a synced copy only so VS Code can resolve them.
     const std::filesystem::path libDir = ENGINE_PATH(".engine_data/scripting/modules/lua").str();
 
     if (!std::filesystem::exists(libDir))
@@ -206,6 +215,98 @@ void MLuaScriptContext::loadEngineModules()
                 vm["package"]["loaded"][stem] = result;
             MLOG(SString::format("Loaded Lua module: {0}", stem));
         }
+    }
+}
+
+void MLuaScriptContext::loadEngineModulesFromCoreAssets(const IAssetManagerSubsystem& assetManager)
+{
+    struct SModule
+    {
+        SString stem;     // module name, e.g. "Behaviour"
+        SString source;
+        SString chunk;    // shown in Lua error messages
+    };
+    std::vector<SModule> modules;
+
+    for (const SString& name : assetManager.listCoreAssets(IAssetManagerSubsystem::CORE_LUA_MODULES))
+    {
+        if (!name.endsWith(".lua"))
+            continue;
+
+        SString source;
+        if (!assetManager.loadCoreAsset(name, source))
+        {
+            MERROR(SString("Failed to read Lua module ") + name);
+            continue;
+        }
+        const SString file = name.substring(name.findLast('/') + 1);
+        modules.push_back({ file.substring(0, file.size() - 4), source, "@" + file });
+    }
+
+    if (modules.empty())
+    {
+        MLOG("No Lua modules in the package, skipping module loading");
+        return;
+    }
+
+    // There is no engine folder on package.path here, so let require() find
+    // any engine module by name - also one that has not run yet.
+    for (const auto& m : modules)
+    {
+        const SString source = m.source;
+        const SString chunk  = m.chunk;
+        vm["package"]["preload"][m.stem.str()] = [this, source, chunk](sol::this_state) -> sol::object
+        {
+            auto result = vm.script(source.str(), sol::script_pass_on_error, chunk.str());
+            if (!result.valid())
+            {
+                sol::error err = result;
+                MERROR(SString::format("Failed to load module {0}: {1}", chunk, SString(err.what())));
+                return sol::make_object(vm, sol::lua_nil);
+            }
+            return result.get<sol::object>();
+        };
+    }
+
+    // Behaviour first, as from disk. Cached under both spellings so
+    // require("behaviour") and require("Behaviour") return the same class.
+    for (const auto& m : modules)
+    {
+        if (m.stem.toLower() != "behaviour")
+            continue;
+
+        auto result = vm.script(m.source.str(), sol::script_pass_on_error, m.chunk.str());
+        if (!result.valid())
+        {
+            sol::error err = result;
+            MERROR(SString::format("Failed to load behaviour.lua: {0}", err.what()));
+            return;
+        }
+        vm["package"]["loaded"]["behaviour"] = vm["Behaviour"];
+        vm["package"]["loaded"][m.stem.str()] = vm["Behaviour"];
+        MLOG("Loaded Lua module: behaviour");
+    }
+
+    // The rest in name order, unless a module already require()d it.
+    std::sort(modules.begin(), modules.end(), [](const SModule& a, const SModule& b) { return a.stem < b.stem; });
+    for (const auto& m : modules)
+    {
+        if (m.stem.toLower() == "behaviour")
+            continue;
+        sol::object loaded = vm["package"]["loaded"][m.stem.str()];
+        if (loaded.valid() && loaded.get_type() != sol::type::lua_nil)
+            continue;
+
+        auto result = vm.script(m.source.str(), sol::script_pass_on_error, m.chunk.str());
+        if (!result.valid())
+        {
+            sol::error err = result;
+            MERROR(SString::format("Failed to load module {0}: {1}", m.stem, err.what()));
+            continue;
+        }
+        if (result.get_type() == sol::type::table)
+            vm["package"]["loaded"][m.stem.str()] = result;
+        MLOG(SString::format("Loaded Lua module: {0}", m.stem));
     }
 }
 

@@ -26,6 +26,7 @@ protected:
     sf::RenderWindow coreWindow;
     sf::Clock deltaClock;
     SVector2 windowSize;
+    bool fullscreen = false;
 
 private:
     SRenderBuffer* renderBuffer = nullptr;
@@ -37,10 +38,15 @@ public:
     MWindow() = default;
     virtual ~MWindow() { delete renderBuffer; }
 
+    // Call before initialiseWindow(). Fullscreen uses the requested size if
+    // the display supports it as a fullscreen mode, else the desktop mode.
+    void setFullscreen(bool inFullscreen) { fullscreen = inFullscreen; }
+
     virtual bool initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps);
     virtual void clear();
     virtual void update(float deltaTime);
     virtual bool isOpen() const;
+    [[nodiscard]] bool hasFocus() const { return coreWindow.hasFocus(); }
     virtual void close();
 
     // Fired with the new size when the user resizes the window.

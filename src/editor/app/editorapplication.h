@@ -68,6 +68,7 @@ private:
 public:
     static void exit();
     static MCameraEntity* getSceneCamera();
+    MEditorProjectManager& getProjectManager() { return projectManager; }
     static MObject* SelectedObject;
 
 private:

@@ -43,7 +43,7 @@ public:
         entity->setName(name);
         if (!ownerScene)
         {
-            ownerScene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+            ownerScene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
             if (!ownerScene)
                 MERROR("NO SCENE OPEN");
         }

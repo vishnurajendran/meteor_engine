@@ -12,6 +12,7 @@
 //       <folder path="assets/"/>
 //     </assetFolders>
 //     <startupScene path="assets/scenes/main.scml"/>
+//     <publish version="1.0.0" publisher="" outputDirectory="" maxPakSizeMB="512"/>
 //   </project>
 //
 // Only `name` is required. Missing values fall back to the defaults below,
@@ -37,6 +38,12 @@ struct SProjectDescriptor
     SString              engineVersion;  // informational for now
     std::vector<SString> assetFolders = { "assets/" };   // relative to the project root
     SString              startupScene;   // asset path, optional
+
+    // Publish settings, remembered by the editor's Publish Game dialog.
+    SString              version = "1.0.0";
+    SString              publisher;
+    SString              publishOutputDirectory;
+    int                  maxPakSizeMB = 512;
 
     // Load from / save to a .mtproj file. load() leaves defaults for anything
     // missing and returns false only if the file is unreadable or not a

@@ -220,7 +220,7 @@ void MEditorSceneViewWindow::handleDragDropBehaviour()
 
             // Raycast BEFORE spawning so the new entity can't be hit by its own ray.
             auto* camera = MViewManagement::getFirstActiveCamera();
-            auto* scene  = MSceneManager::getSceneManagerInstance()->getActiveScene();
+            auto* scene  = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
             SVector3 rayOrigin, rayDir;
 
             if (camera && scene && MAssetDropSpawner::canSpawn(droppedId) &&
@@ -394,7 +394,7 @@ MSpatialEntity* MEditorSceneViewWindow::pickEntity(MCameraEntity*  camera,
                                                     const SVector3& rayDir,
                                                     float           pickRadiusPx) const
 {
-    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
     if (!scene) return nullptr;
 
     // proj[1][1] = (1 / tan(fovY/2)).  At depth d from the camera,

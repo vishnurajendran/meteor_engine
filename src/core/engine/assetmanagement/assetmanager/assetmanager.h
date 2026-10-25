@@ -80,6 +80,10 @@ public:
     // (MAsset::dependsOn), e.g. materials using a reloaded shader.
     virtual bool reloadAsset(MAsset* asset);
 
+    // Every asset path this manager can provide. The editor lists what is
+    // loaded (everything); the player lists the whole package, loaded or not.
+    [[nodiscard]] virtual std::vector<SString> listAssetPaths() const;
+
 protected:
     // Default: createProjectSource({"assets/"}). The player will override
     // this to return the package source.

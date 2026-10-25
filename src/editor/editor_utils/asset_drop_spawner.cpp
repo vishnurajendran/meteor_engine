@@ -27,7 +27,7 @@ IAssetManagerSubsystem* assetManager()
 
 bool hasActiveScene()
 {
-    auto* sm = MSceneManager::getSceneManagerInstance();
+    auto* sm = MEngineSubsystemRegistry::getSubsystem<MSceneManager>();
     return sm && sm->getActiveScene();
 }
 

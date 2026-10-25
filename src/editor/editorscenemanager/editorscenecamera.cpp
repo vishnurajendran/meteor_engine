@@ -22,7 +22,7 @@ void MEditorSceneCameraEntity::onCreate()
     MViewManagement::addCamera(this);
 
     // Remove from scene root list - editor camera is not a scene entity.
-    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
     if (!scene)
         return;
     auto& roots = scene->getRootEntities();

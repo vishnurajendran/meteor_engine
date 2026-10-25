@@ -7,7 +7,7 @@ SString MSceneIO::s_currentPath = "";
 bool MSceneIO::saveCurrentScene()
 {
     auto* editorSceneManager = dynamic_cast<MEditorSceneManager*>(
-        MSceneManager::getSceneManagerInstance());
+        MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
     if (!editorSceneManager) return false;
 
     // Pass s_currentPath so the manager has a path even on the first save
@@ -24,7 +24,7 @@ bool MSceneIO::loadScene(const SString& filePath)
     }
 
     auto* editorSceneManager = dynamic_cast<MEditorSceneManager*>(
-        MSceneManager::getSceneManagerInstance());
+        MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
     if (!editorSceneManager)
     {
         MERROR("MSceneIO::loadScene - not running in editor context");
@@ -40,7 +40,7 @@ bool MSceneIO::loadScene(const SString& filePath)
 
 bool MSceneIO::newScene()
 {
-    MSceneManager::getSceneManagerInstance()->loadEmptyScene();
+    MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->loadEmptyScene();
     s_currentPath = "";
     MLOG("MSceneIO: new scene.");
     return true;

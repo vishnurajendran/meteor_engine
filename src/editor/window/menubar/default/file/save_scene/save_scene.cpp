@@ -21,7 +21,7 @@
 static SString resolveCurrentScenePath()
 {
     auto* mgr = dynamic_cast<MEditorSceneManager*>(
-        MSceneManager::getSceneManagerInstance());
+        MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
     if (mgr && !mgr->getActiveScenePath().empty())
         return mgr->getActiveScenePath();
     return MSceneIO::getCurrentPath();   // fallback: MSceneIO-set path
@@ -70,7 +70,7 @@ static bool drawSaveDialog(const char* dialogKey)
             if (!path.empty())
             {
                 auto* mgr = dynamic_cast<MEditorSceneManager*>(
-                    MSceneManager::getSceneManagerInstance());
+                    MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
                 if (mgr)
                 {
                     mgr->saveCurrentScene(path.c_str());
@@ -112,7 +112,7 @@ void MSaveSceneMenubarItem::onSelect()
     {
         // Known path - save immediately, no dialog needed.
         auto* mgr = dynamic_cast<MEditorSceneManager*>(
-            MSceneManager::getSceneManagerInstance());
+            MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
         if (mgr) mgr->saveCurrentScene(path);
     }
     else

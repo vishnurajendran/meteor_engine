@@ -12,7 +12,7 @@
 void MEditorSimulationManagerSubsystem::init()
 {
     appInst = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
-    sceneManagerInst = dynamic_cast<MEditorSceneManager*>(MSceneManager::getSceneManagerInstance());
+    sceneManagerInst = dynamic_cast<MEditorSceneManager*>(MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
 
     if (!appInst || !sceneManagerInst)
     {
