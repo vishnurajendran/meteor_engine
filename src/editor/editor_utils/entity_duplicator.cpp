@@ -84,7 +84,7 @@ MSpatialEntity* MEntityDuplicator::duplicate(MSpatialEntity* source)
     if (!canDuplicate(source))
         return nullptr;
 
-    auto* sceneManager = MSceneManager::getSceneManagerInstance();
+    auto* sceneManager = MEngineSubsystemRegistry::getSubsystem<MSceneManager>();
     MScene* scene = sceneManager ? sceneManager->getActiveScene() : nullptr;
     if (!scene)
     {

@@ -54,6 +54,10 @@ void MPlayerApplication::registerSubsystems(const std::shared_ptr<MPackagedAsset
 
     // Init Scripting Engine
     MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();
+
+    // Scenes - last, since entities use the subsystems above. Registering
+    // runs init(), which opens an empty scene.
+    sceneManagerRef = MEngineSubsystemRegistry::registerSubsystem<MSceneManager>();
 }
 
 
@@ -141,13 +145,12 @@ void MPlayerApplication::tickPhysics(float deltaTime)
 void MPlayerApplication::cleanup() {
     MLOG(STR("[Cleanup] Begin"));
 
+    // Close the scene while every subsystem its entities use is still alive.
+    // The scene manager itself is deleted by the subsystem registry.
     if (sceneManagerRef)
         sceneManagerRef->closeActiveScene();
-
-    MLOG(STR("[Cleanup] Deleting SceneManager"));
-    delete sceneManagerRef;
     sceneManagerRef = nullptr;
-    MLOG(STR("[Cleanup] SceneManager deleted"));
+    MLOG(STR("[Cleanup] Scene closed"));
 
     MLOG(STR("[Cleanup] Asset manager cleaned"));
 
@@ -216,9 +219,6 @@ void MPlayerApplication::initialise() {
         MERROR(STR("Failed to open window"));
 
     registerSubsystems(package);
-
-    sceneManagerRef = new MSceneManager();
-    MSceneManager::registerSceneManager(sceneManagerRef);
 
     MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->refresh();
 

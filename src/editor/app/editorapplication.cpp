@@ -109,13 +109,12 @@ void MEditorApplication::run() {
 void MEditorApplication::cleanup() {
     MLOG(STR("[Cleanup] Begin"));
 
+    // Close the scene while every subsystem its entities use is still alive.
+    // The scene manager itself is deleted by the subsystem registry.
     if (sceneManagerRef)
         sceneManagerRef->closeActiveScene();
-
-    MLOG(STR("[Cleanup] Deleting SceneManager"));
-    delete sceneManagerRef;
     sceneManagerRef = nullptr;
-    MLOG(STR("[Cleanup] SceneManager deleted"));
+    MLOG(STR("[Cleanup] Scene closed"));
 
     MLOG(STR("[Cleanup] Cleaning render pipeline"));
     if (pipelineManager)
@@ -368,8 +367,9 @@ void MEditorApplication::loadPrerequisites()
     pipelineManager->getPipeline()->addStage<MGizmoStage>();
 
     // setup scene manager
-    sceneManagerRef = new MEditorSceneManager();
-    MSceneManager::registerSceneManager(sceneManagerRef);
+    // Registering runs init(), which opens an empty scene.
+    sceneManagerRef = static_cast<MEditorSceneManager*>(
+        MEngineSubsystemRegistry::registerSubsystem<MSceneManager, MEditorSceneManager>());
     sceneLoadedSubscription = sceneManagerRef->onSceneLoaded.add([](MScene*) { SelectedObject = nullptr; });
 
     // Resetting a composition instance replaces its entities - move the

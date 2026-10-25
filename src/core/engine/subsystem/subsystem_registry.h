@@ -42,10 +42,13 @@ public:
             MERROR("Failed to create subsystem instance");
         }
 
+        // Stored before init(), so a subsystem can be looked up during its
+        // own init (the scene manager's empty scene creates entities, which
+        // find the active scene through the registry).
+        subSystems[type] = inst;
+
         if (autoInit)
             inst->init();
-
-        subSystems[type] = inst;
 
         return inst;
     }

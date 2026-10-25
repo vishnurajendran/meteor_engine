@@ -283,7 +283,7 @@ bool MPublishGameMenubarItem::startPublish()
     // Otherwise the build would contain the scene as last saved on disk.
     if (saveSceneFirst)
     {
-        auto* scenes = dynamic_cast<MEditorSceneManager*>(MSceneManager::getSceneManagerInstance());
+        auto* scenes = dynamic_cast<MEditorSceneManager*>(MEngineSubsystemRegistry::getSubsystem<MSceneManager>());
         if (scenes && !scenes->getActiveScenePath().empty())
             scenes->saveCurrentScene(scenes->getActiveScenePath());
         else

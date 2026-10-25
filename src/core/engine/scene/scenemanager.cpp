@@ -14,8 +14,6 @@
 #include "sceneasset.h"
 #include "serialisation/scene_serialiser.h"
 
-MSceneManager* MSceneManager::sceneManagerInstance = nullptr;
-
 bool MSceneManager::closeActiveScene() {
     if (activeScene == nullptr)
         return false;
@@ -126,17 +124,7 @@ void MSceneManager::interpolatePhysics(float alpha)
 }
 
 
-void MSceneManager::registerSceneManager(MSceneManager* instance)
+MSceneManager* MSceneManager::getSceneManagerInstance()
 {
-    if (instance == nullptr)
-        return;
-
-    //close previous manager
-    if (sceneManagerInstance != nullptr)
-        delete sceneManagerInstance;
-
-    sceneManagerInstance = instance;
-    instance->init();
+    return MEngineSubsystemRegistry::getSubsystem<MSceneManager>();
 }
-
-MSceneManager* MSceneManager::getSceneManagerInstance() { return sceneManagerInstance; }

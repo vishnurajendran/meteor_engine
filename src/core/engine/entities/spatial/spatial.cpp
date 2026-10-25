@@ -14,7 +14,7 @@ IMPLEMENT_SPATIAL_CLASS(MSpatialEntity)
 
 static MScene* activeScene()
 {
-    return MSceneManager::getSceneManagerInstance()->getActiveScene();
+    return MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
 }
 
 // Tells the scene its walk order is stale. The entity's own scene if it has
@@ -48,7 +48,7 @@ MSpatialEntity* MSpatialEntity::createInstance(const SString& name)
 {
     auto* entity = new MSpatialEntity(nullptr);
     entity->setName(name.empty() ? generateName(STR("MSpatialEntity")) : name);
-    auto* scene  = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    auto* scene  = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
     entity->ownerScene = scene;
     scene->registerEntity(entity);
     return entity;
@@ -56,7 +56,7 @@ MSpatialEntity* MSpatialEntity::createInstance(const SString& name)
 
 SString MSpatialEntity::generateName(const SString& base)
 {
-    auto* scene = MSceneManager::getSceneManagerInstance()->getActiveScene();
+    auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
     auto taken  = [&](const SString& candidate) -> bool {
         for (const auto& [ptr, mop] : scene->getAllEntities())
             if (mop->getName() == candidate) return true;
