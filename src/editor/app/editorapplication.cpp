@@ -103,8 +103,6 @@ void MEditorApplication::run() {
 
     window->update(deltaTime);
 
-    endFrame();
-
     STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_RUN)
 }
 

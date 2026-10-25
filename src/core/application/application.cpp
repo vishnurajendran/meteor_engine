@@ -4,14 +4,16 @@
 
 #include "application.h"
 
+#include <algorithm>
+
 MApplication* MApplication::appInst = nullptr;
 
 void MApplication::startFrame()
 {
-    startTime = std::clock();
-}
-
-void MApplication::endFrame()
-{
-    deltaTime = (std::clock() - startTime)/static_cast<float>(CLOCKS_PER_SEC);
+    const auto now = std::chrono::steady_clock::now();
+    deltaTime = hasLastFrame
+        ? std::min(std::chrono::duration<float>(now - lastFrameStart).count(), MAX_DELTA_TIME)
+        : 0.0f;
+    lastFrameStart = now;
+    hasLastFrame   = true;
 }

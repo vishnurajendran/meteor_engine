@@ -106,7 +106,6 @@ void MPlayerApplication::run() {
     }
 
     window->update(deltaTime);
-    endFrame();
 }
 
 float MPlayerApplication::getPhysicsStep() const

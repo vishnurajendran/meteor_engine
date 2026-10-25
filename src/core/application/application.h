@@ -5,6 +5,8 @@
 #pragma once
 #ifndef METEOR_ENGINE_APPLICATION_H
 #define METEOR_ENGINE_APPLICATION_H
+#include <chrono>
+
 #include "core/default_settings_paths.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/graphics/core/render-pipeline/render_pipeline_manager.h"
@@ -56,14 +58,22 @@ public:
     static MApplication* getAppInstance() { return appInst; };
 
 private:
-    float startTime = 0;
+    std::chrono::steady_clock::time_point lastFrameStart;
+    bool hasLastFrame = false;
 
 protected:
+    // Call first thing every frame. Sets deltaTime to the wall-clock time
+    // since the previous frame started - work, frame-limit sleep and vsync
+    // included - capped at MAX_DELTA_TIME. 0 on the first frame.
     void startFrame();
-    void endFrame();
+
+    // A frame longer than this (a breakpoint, dragging the window) counts as
+    // this long, so the fixed-step physics loop doesn't try to catch up on
+    // seconds of simulation at once.
+    static constexpr float MAX_DELTA_TIME = 0.25f;
 
 protected:
-    float deltaTime = 0.0f;
+    float deltaTime = 0.0f;   // seconds
     static MApplication* appInst;
 };
 #endif //METEOR_ENGINE_APPLICATION_H
