@@ -2,17 +2,18 @@
 #include "core/engine/audio/asset/audioclip_asset.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "core/memory/mnew.h"
 
 // Self-registration -- runs at static-init time, before any inspector lookup.
 bool MAudioSourceInspectorDrawer::registered = []()
 {
-    registerDrawer(new MAudioSourceInspectorDrawer());
+    registerDrawer(mnew<MAudioSourceInspectorDrawer>());
     return true;
 }();
 
 MAudioSourceInspectorDrawer::MAudioSourceInspectorDrawer()
 {
-    clipAssetControl = new MAssetReferenceControl();
+    clipAssetControl = mnew<MAssetReferenceControl>();
     clipAssetControl->canAcceptAssetFuncCallback = [](const TAssetHandle<MAsset>& asset)
     { return dynamic_cast<MAudioClipAsset*>(asset.get()) != nullptr; };
 }

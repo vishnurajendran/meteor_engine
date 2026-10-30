@@ -2,9 +2,10 @@
 
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 #include "spatial.h"
+#include "core/memory/mnew.h"
 
 const bool MSpatialDeserializer::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("spatial", new MSpatialDeserializer());
+    MSceneEntityTypeMap::registerDeserializer("spatial", mnew<MSpatialDeserializer>());
     return true;
 }();
 

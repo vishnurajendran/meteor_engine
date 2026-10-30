@@ -33,6 +33,8 @@
 #ifndef SPATIAL_CLASS_MACROS_H
 #define SPATIAL_CLASS_MACROS_H
 
+#include "core/memory/mnew_friend.h"
+
 #include "core/object/type_info.h"
 #include "core/engine/entities/entity_type_registry.h"
 
@@ -44,6 +46,7 @@
 //
 #define DEFINE_SPATIAL_CLASS(ClassName)                                                \
 public:                                                                        \
+    MNEW_FRIEND                                                                \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \
         return MAKE_TYPE_INFO(ClassName);                                      \
@@ -81,6 +84,7 @@ private:                                                                       \
 //
 #define DEFINE_ABSTRACT_SPATIAL_CLASS(ClassName)                                       \
 public:                                                                        \
+    MNEW_FRIEND                                                                \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \
         return MAKE_TYPE_INFO(ClassName);                                      \

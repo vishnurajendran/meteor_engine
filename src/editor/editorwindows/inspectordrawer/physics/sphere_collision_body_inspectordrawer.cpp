@@ -6,10 +6,11 @@
 
 #include "imgui.h"
 #include "core/engine/physics/entities/sphere_collision_body_entity.h"
+#include "core/memory/mnew.h"
 
 bool MSphereCollisionBodyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MSphereCollisionBodyInspectorDrawer());
+    registerDrawer(mnew<MSphereCollisionBodyInspectorDrawer>());
     return true;
 }();
 

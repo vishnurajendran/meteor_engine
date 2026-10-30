@@ -2,9 +2,10 @@
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "directional_light.h"
+#include "core/memory/mnew.h"
 
 bool MDirectionalLightEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("directional_light", new MDirectionalLightEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("directional_light", mnew<MDirectionalLightEntityDeserialiser>());
     return true;
 }();
 

@@ -12,6 +12,7 @@
 #include "core/engine/assetmanagement/source/asset_sources.h"
 #include "core/engine/assetmanagement/source/assimp_asset_io.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 MStaticMeshAsset::MStaticMeshAsset(const SString& path) : MAsset(path) {
     loadMesh();
@@ -47,7 +48,7 @@ MStaticMesh* MStaticMeshAsset::processMesh(aiMesh *mesh) {
         }
     }
 
-    return new MStaticMesh(vertices, indices);
+    return mnew<MStaticMesh>(vertices, indices);
 }
 
 void MStaticMeshAsset::processNode(aiNode *node, const aiScene *scene, std::vector<MStaticMesh*>& meshes) {

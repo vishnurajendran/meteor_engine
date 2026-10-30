@@ -3,10 +3,13 @@
 //
 
 #include "editorconsolewindow.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 #include "editor/window/imgui/imguisubwindow.h"
 #include <cstring>
 #include <cstdio>
 #include <ctime>
+
+EDITOR_REGISTER_SUBWINDOW("Console", "Window/Console", MEditorConsoleWindow)
 
 // -- Style constants -------------------------------------------------------
 static constexpr ImU32 ROW_SELECTED_BG  = IM_COL32(60,  90,  160, 80);

@@ -27,8 +27,19 @@ void MImGuiSubWindow::setWindowConstraints(float minx, float miny, float maxx, f
 
 void MImGuiSubWindow::draw(float deltaTime)
 {
+    if (!open)
+        return;
+
+    if (focusNext)
+    {
+        ImGui::SetNextWindowFocus();
+        focusNext = false;
+    }
+
+    // The part after ### is the window's ImGui ID: its type name, which stays
+    // the same if the title changes, so saved layouts keep finding it.
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, minSize);
-    ImGui::Begin(SString::format("{0}###{1}", title.c_str(), getWindowId()).c_str());
+    ImGui::Begin(SString::format("{0}###{1}", title.c_str(), typeInfo().name).c_str(), &open);
 
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
         handleInput(deltaTime);

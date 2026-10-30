@@ -24,6 +24,7 @@
 #include "core/project/project_descriptor.h"
 #include "core/utils/meteor_paths.h"
 #include "player/assets/player_asset_manager.h"
+#include "core/memory/mnew.h"
 
 void MPlayerApplication::pause(const bool& pause)
 {
@@ -211,7 +212,7 @@ void MPlayerApplication::initialise() {
 
     //appRunning = true;
     MVERBOSE(STR("Initialising Player"));
-    window = new MWindow();
+    window = mnew<MWindow>();
 
 
     const auto winX = MEngineStatics::getEngineSettings()->resX.get();
@@ -276,6 +277,6 @@ bool MPlayerApplication::isRunning() const {
 #if PLAYER_APPLICATION
 MApplication* getAppInstance(){
     MLOG("Creating Player Application instance");
-    return new MPlayerApplication();
+    return mnew<MPlayerApplication>();
 }
 #endif

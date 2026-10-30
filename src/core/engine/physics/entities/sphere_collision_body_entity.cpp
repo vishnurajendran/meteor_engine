@@ -5,12 +5,13 @@
 #include "sphere_collision_body_entity.h"
 
 #include "core/engine/gizmos/gizmos.h"
+#include "core/memory/mnew.h"
 
 IMPLEMENT_SPATIAL_CLASS(MSphereCollisionBody)
 
 MSphereCollisionBody* MSphereCollisionBody::create(ECollisionBodyType type, float r, float m)
 {
-    auto* e = new MSphereCollisionBody();
+    auto* e = mnew<MSphereCollisionBody>();
     e->bodyType.set(type); e->radius.set(r); e->mass.set(m);
     return e;
 }

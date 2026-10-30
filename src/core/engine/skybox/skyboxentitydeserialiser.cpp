@@ -4,9 +4,10 @@
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "cubemapasset.h"
 #include "skybox.h"
+#include "core/memory/mnew.h"
 
 bool MSkyboxEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("skybox", new MSkyboxEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("skybox", mnew<MSkyboxEntityDeserialiser>());
     return true;
 }();
 

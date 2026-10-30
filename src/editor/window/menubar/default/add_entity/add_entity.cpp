@@ -9,6 +9,7 @@
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 // Mesh asset paths
 static constexpr const char* MAT_DEFAULT     = "meteor_assets/engine_assets/materials/lit_default.material";
@@ -40,46 +41,46 @@ static void spawnPrimitive(const char* meshAssetPath, const char* name)
 
 bool MAddCubeItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MAddCubeItem());
+    MMenubarTreeNode::registerItem(mnew<MAddCubeItem>());
     return true;
 }();
 void MAddCubeItem::onSelect() { spawnPrimitive(MESH_CUBE, "Cube"); }
 
 bool MAddSphereItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MAddSphereItem());
+    MMenubarTreeNode::registerItem(mnew<MAddSphereItem>());
     return true;
 }();
 void MAddSphereItem::onSelect() { spawnPrimitive(MESH_SPHERE, "Sphere"); }
 
 bool MAddCylinderItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MAddCylinderItem());
+    MMenubarTreeNode::registerItem(mnew<MAddCylinderItem>());
     return true;
 }();
 void MAddCylinderItem::onSelect() { spawnPrimitive(MESH_CYLINDER, "Cylinder"); }
 
 bool MAddPlaneItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MAddPlaneItem());
+    MMenubarTreeNode::registerItem(mnew<MAddPlaneItem>());
     return true;
 }();
 
 void MAddPlaneItem::onSelect() { spawnPrimitive(MESH_PLANE, "Plane"); }
 
 bool MAddConeItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MAddConeItem());
+    MMenubarTreeNode::registerItem(mnew<MAddConeItem>());
     return true;
 }();
 
 void MAddConeItem::onSelect() { spawnPrimitive(MESH_CONE, "Cone"); }
 
 bool MAddCapsuleItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MAddCapsuleItem());
+    MMenubarTreeNode::registerItem(mnew<MAddCapsuleItem>());
     return true;
 }();
 void MAddCapsuleItem::onSelect() { spawnPrimitive(MESH_CAPSULE, "Capsule"); }
 
 // Static Mesh
 bool MAddStaticMeshItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MAddStaticMeshItem());
+    MMenubarTreeNode::registerItem(mnew<MAddStaticMeshItem>());
     return true;
 }();
 void MAddStaticMeshItem::onSelect() {  MSpatialEntity::createInstance<MStaticMeshEntity>("StaticMesh"); }
@@ -87,6 +88,6 @@ void MAddStaticMeshItem::onSelect() {  MSpatialEntity::createInstance<MStaticMes
 void MAddEmptySpatialItem::onSelect() { MSpatialEntity::createInstance("Spatial Entity"); }
 bool MAddEmptySpatialItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MAddEmptySpatialItem());
+    MMenubarTreeNode::registerItem(mnew<MAddEmptySpatialItem>());
     return true;
 }();

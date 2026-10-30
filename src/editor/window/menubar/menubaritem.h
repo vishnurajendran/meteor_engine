@@ -23,6 +23,9 @@ public:
     // indicate that no shortcut is assigned.
     [[nodiscard]] virtual MShortcutBinding getShortcut() const { return {}; }
 
+    // Override to show a check mark next to the item (e.g. an open window).
+    [[nodiscard]] virtual bool isChecked() const { return false; }
+
 public:
     static constexpr int PRIORITY_HIGHEST = -999;
     static constexpr int PRIORITY_REGULAR = 0;
@@ -30,6 +33,7 @@ public:
 
     static constexpr int MENU_PRIORITY_BASE_FILE = -5000;
     static constexpr int MENU_PRIORITY_BASE_EDIT = -3000;
+    static constexpr int MENU_PRIORITY_BASE_WINDOW = 3000;
     static constexpr int MENU_PRIORITY_BASE_HELP = 5000;
 };
 

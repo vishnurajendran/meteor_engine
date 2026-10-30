@@ -1,5 +1,6 @@
 #include "subsystem_registry.h"
 
+#include "core/memory/memory_management_subsystem.h"
 #include "core/utils/logger.h"
 
 std::unordered_map<std::type_index, IEngineSubSystem*> MEngineSubsystemRegistry::subSystems;
@@ -8,6 +9,11 @@ std::vector<std::type_index> MEngineSubsystemRegistry::registrationOrder;
 void MEngineSubsystemRegistry::init()
 {
     MLOG("MEngineSubsystemRegistry:: Initialising registry");
+
+    // Memory first: every MObject created through mnew<T>() after this point
+    // comes from its pool, and since cleanup runs newest-first, memory is
+    // cleaned up last.
+    registerSubsystem<IMemoryManagementSubsystem, MMemoryManagementSubsystem>();
 }
 
 void MEngineSubsystemRegistry::cleanup()

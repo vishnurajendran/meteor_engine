@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "core/graphics/core/shader/shader.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 MMaterial::MMaterial(MShader* shader, ShadingMode mode) : MObject()
 {
@@ -54,7 +55,7 @@ const std::unordered_map<SString, SShaderPropertyValue>& MMaterial::getPropertie
 
 MMaterial* MMaterial::clone() const
 {
-    auto* inst = new MMaterial(shader, shadingMode);
+    auto* inst = mnew<MMaterial>(shader, shadingMode);
     inst->properties    = properties;
     inst->propertyOrder = propertyOrder;
     return inst;

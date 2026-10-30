@@ -8,6 +8,7 @@
 #include "imgui.h"
 
 #include "editor/helper/scene_io.h"
+#include "core/memory/mnew.h"
 
 static constexpr const char* DIALOG_KEY = "OpenSceneDlg";
 
@@ -18,7 +19,7 @@ static bool s_wantOpen = false;
 
 bool MOpenSceneMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MOpenSceneMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MOpenSceneMenubarItem>());
     return true;
 }();
 

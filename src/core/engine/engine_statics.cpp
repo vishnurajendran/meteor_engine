@@ -9,6 +9,7 @@
 #include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 #include "pugixml.hpp"
+#include "core/memory/mnew.h"
 
 // Static member definitions
 MEngineSettings*    MEngineStatics::engineSettings        = nullptr;
@@ -68,7 +69,7 @@ bool MEngineStatics::loadPhysicsLayersFromXml(const SString& xml)
     }
 
     delete physicsLayersAsset;
-    physicsLayersAsset     = new MPhysicsLayersSettings();
+    physicsLayersAsset     = mnew<MPhysicsLayersSettings>();
     physicsLayersAssetPath = SString();   // never saved back to disk
     physicsLayersAsset->deserialiseFromNode(doc.child("root"));
     return true;
@@ -98,7 +99,7 @@ bool MEngineStatics::applyProjectSettingsFromXml(const SString& xml)
 void MEngineStatics::loadPlayerSettings(const SString& path)
 {
     delete playerSettings;
-    playerSettings     = new MPlayerSettings();
+    playerSettings     = mnew<MPlayerSettings>();
     playerSettingsPath = path;
 
     if (FileIO::hasFile(path))

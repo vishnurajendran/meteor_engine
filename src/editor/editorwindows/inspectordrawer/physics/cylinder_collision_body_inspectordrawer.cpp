@@ -6,10 +6,11 @@
 
 #include "imgui.h"
 #include "core/engine/physics/entities/cylinder_collision_body_entity.h"
+#include "core/memory/mnew.h"
 
 bool MCylinderCollisionBodyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MCylinderCollisionBodyInspectorDrawer());
+    registerDrawer(mnew<MCylinderCollisionBodyInspectorDrawer>());
     return true;
 }();
 

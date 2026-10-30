@@ -1,9 +1,10 @@
 #include "ambient_light_entity_deserialiser.h"
 #include "ambient_light.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
+#include "core/memory/mnew.h"
 
 bool MAmbientLightEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("ambient_light", new MAmbientLightEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("ambient_light", mnew<MAmbientLightEntityDeserialiser>());
     return true;
 }();
 

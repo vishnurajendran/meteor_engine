@@ -15,6 +15,7 @@
 #include "core/utils/logger.h"
 #include "material.h"
 #include "pugixml.hpp"
+#include "core/memory/mnew.h"
 
 MMaterialAsset::MMaterialAsset(const SString& path) : MAsset(path)
 {
@@ -70,7 +71,7 @@ void MMaterialAsset::buildMaterialAsset()
     }
     else
     {
-        original = new MMaterial(shader, shadingMode);
+        original = mnew<MMaterial>(shader, shadingMode);
         for (auto& [k, v] : properties)
             original->setProperty(k, v);
     }

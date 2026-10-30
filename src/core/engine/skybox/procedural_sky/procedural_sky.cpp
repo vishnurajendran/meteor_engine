@@ -14,6 +14,7 @@
 #include "default_engine_icon_paths.h"
 #include "procedural_skybox_drawcall.h"
 #include "procedural_skybox_queue.h"
+#include "core/memory/mnew.h"
 
 IMPLEMENT_SPATIAL_CLASS(MProceduralSkyboxEntity)
 
@@ -29,7 +30,7 @@ MProceduralSkyboxEntity::MProceduralSkyboxEntity()
         return;
     }
 
-    drawCall = new MProceduralSkyboxDrawCall(shaderAsset->getShader());
+    drawCall = mnew<MProceduralSkyboxDrawCall>(shaderAsset->getShader());
     pushFieldsToDrawCall();     // apply default field values to the draw call
     rebuildSunDirection();
     if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())

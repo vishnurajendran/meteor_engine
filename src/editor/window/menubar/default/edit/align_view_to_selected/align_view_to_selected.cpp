@@ -7,10 +7,11 @@
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "editor/app/editorapplication.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 bool MAlignViewToSelectedMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MAlignViewToSelectedMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MAlignViewToSelectedMenubarItem>());
     return true;
 }();
 

@@ -11,6 +11,7 @@
 
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "render_stage_interface.h"
+#include "core/memory/mnew.h"
 
 class MBufferRegistery;
 
@@ -37,7 +38,7 @@ public:
     {
         static_assert(std::is_base_of_v<IRenderStage, T>,
                       "T must derive from IRenderStage");
-        IRenderStage* stage = new T();
+        IRenderStage* stage = mnew<T>();
         stage->init(this);
         renderStages.push_back(stage);
         std::sort(renderStages.begin(), renderStages.end(),

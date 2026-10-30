@@ -6,10 +6,11 @@
 
 #include "imgui.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
+#include "core/memory/mnew.h"
 
 bool MBoxCollisionBodyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MBoxCollisionBodyInspectorDrawer());
+    registerDrawer(mnew<MBoxCollisionBodyInspectorDrawer>());
     return true;
 }();
 

@@ -16,6 +16,7 @@
 #include "lua_script_asset.h"
 #include "lua_script_instance.h"
 #include "lua_script_registry.h"
+#include "core/memory/mnew.h"
 
 // ---------------------------------------------------------------------------
 // Lifetime
@@ -71,7 +72,7 @@ IScriptInstance* MLuaScriptContext::createInstance(MLuaScriptAsset* asset, MSpat
 
     // The instance is { __entity = owner } with the class as its metatable,
     // and is passed as 'self' to every lifecycle call.
-    auto* instance = new MLuaScriptInstance(vm, scriptClass->cls, scriptClass->env, owner, this);
+    auto* instance = mnew<MLuaScriptInstance>(vm, scriptClass->cls, scriptClass->env, owner, this);
     liveInstances.insert(instance);
     return instance;
 }

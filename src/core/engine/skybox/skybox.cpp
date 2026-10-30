@@ -10,6 +10,7 @@
 #include "core/graphics/core/render-pipeline/stages/skybox/skybox_queue.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "default_engine_icon_paths.h"
+#include "core/memory/mnew.h"
 
 IMPLEMENT_SPATIAL_CLASS(MSkyboxEntity)
 
@@ -25,7 +26,7 @@ MSkyboxEntity::MSkyboxEntity()
         return;
     }
 
-    skyboxDrawCall = new MSkyboxDrawCall(TAssetHandle<MCubemapAsset>(), shaderAsset->getShader());
+    skyboxDrawCall = mnew<MSkyboxDrawCall>(TAssetHandle<MCubemapAsset>(), shaderAsset->getShader());
     if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
         renderer->getSkyboxQueue().add(skyboxDrawCall);
 }
@@ -84,4 +85,4 @@ void MSkyboxEntity::onDrawGizmo(SVector2 renderResolution)
         ->getAsset<MTextureAsset>(SEngineAssetIconPaths::HIGHRES_TEX_GIZMOS_SKYBOX);
     if (texture)
         MGizmos::drawTextureRect(getWorldPosition(), SVector2(0.5f, 0.5f), texture->getTexture());
-}
+}

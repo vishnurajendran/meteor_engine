@@ -8,6 +8,7 @@
 #include "core/engine/scripting/interface/scripting_engine_interface.h"
 #include "core/engine/scripting/scripting_call_symbols.h"
 #include "core/engine/composition/composition_utility.h"
+#include "core/memory/mnew.h"
 
 
 IMPLEMENT_SPATIAL_CLASS(MSpatialEntity)
@@ -46,7 +47,7 @@ static void removeFromSceneRoot(const MSpatialEntity* entity)
 
 MSpatialEntity* MSpatialEntity::createInstance(const SString& name)
 {
-    auto* entity = new MSpatialEntity(nullptr);
+    auto* entity = mnew<MSpatialEntity>(nullptr);
     entity->setName(name.empty() ? generateName(STR("MSpatialEntity")) : name);
     auto* scene  = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
     entity->ownerScene = scene;

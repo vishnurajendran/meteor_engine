@@ -11,6 +11,7 @@
 #include "settings/engine_settings.h"
 #include "settings/physics_layers_settings.h"
 #include "settings/player_settings.h"
+#include "core/memory/mnew.h"
 
 struct SSettingsPaths
 {
@@ -34,7 +35,7 @@ private:
             delete engineSettings;
 
         engineSettingsPath = path;
-        engineSettings     = new T();
+        engineSettings     = mnew<T>();
         // No path: defaults only, never saved (the player fills these from
         // the project's settings instead).
         if (path.empty())
@@ -54,7 +55,7 @@ private:
             delete physicsLayersAsset;
 
         physicsLayersAssetPath = path;
-        physicsLayersAsset     = new MPhysicsLayersSettings();
+        physicsLayersAsset     = mnew<MPhysicsLayersSettings>();
 
         if (FileIO::hasFile(path))
             physicsLayersAsset->deserialiseFromFile(path);

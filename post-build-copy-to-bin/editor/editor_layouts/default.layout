@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<layout version="1">
+  <window type="MEditorAssetWindow" />
+  <window type="MEditorConsoleWindow" />
+  <window type="MEditorHierarchyWindow" />
+  <window type="MEditorInspectorWindow" />
+  <window type="MEditorSceneViewWindow" />
+  <imgui><![CDATA[[Window][MainDockSpace]
+Pos=0,10
+Size=2560,1341
+Collapsed=0
+
+
+[Window][###MEditorConsoleWindow]
+Pos=0,940
+Size=2061,391
+Collapsed=0
+DockId=0x00000008,1
+
+
+[Window][###MEditorHierarchyWindow]
+Pos=0,30
+Size=345,908
+Collapsed=0
+DockId=0x0000000B,0
+
+
+[Window][###MEditorInspectorWindow]
+Pos=2063,30
+Size=497,1301
+Collapsed=0
+DockId=0x0000000A,0
+
+
+[Window][###MEditorSceneViewWindow]
+Pos=347,30
+Size=1714,908
+Collapsed=0
+DockId=0x0000000C,0
+
+
+[Window][###MEditorAssetWindow]
+Pos=0,940
+Size=2061,391
+Collapsed=0
+DockId=0x00000008,0
+
+
+[Docking][Data]
+DockSpace       ID=0xAFC85805 Window=0x079D3A04 Pos=0,30 Size=2560,1301 Split=X
+  DockNode      ID=0x00000009 Parent=0xAFC85805 SizeRef=1713,1301 Split=Y
+    DockNode    ID=0x00000007 Parent=0x00000009 SizeRef=2560,908 Split=X
+      DockNode  ID=0x0000000B Parent=0x00000007 SizeRef=345,877
+      DockNode  ID=0x0000000C Parent=0x00000007 SizeRef=1714,877 CentralNode=1
+    DockNode    ID=0x00000008 Parent=0x00000009 SizeRef=2560,391
+  DockNode      ID=0x0000000A Parent=0xAFC85805 SizeRef=497,1301
+]]></imgui>
+</layout>

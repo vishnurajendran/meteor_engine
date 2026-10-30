@@ -4,16 +4,17 @@
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "core/memory/mnew.h"
 
 bool MStaticMeshInspectorDrawer::registered = []()
 {
-    registerDrawer(new MStaticMeshInspectorDrawer());
+    registerDrawer(mnew<MStaticMeshInspectorDrawer>());
     return true;
 }();
 
 MStaticMeshInspectorDrawer::MStaticMeshInspectorDrawer()
 {
-    meshAssetControl = new MAssetReferenceControl();
+    meshAssetControl = mnew<MAssetReferenceControl>();
     meshAssetControl->canAcceptAssetFuncCallback = [](const TAssetHandle<MAsset>& asset)
     { return dynamic_cast<MStaticMeshAsset*>(asset.get()) != nullptr; };
 }
@@ -28,7 +29,7 @@ void MStaticMeshInspectorDrawer::ensureSlotControls(int count)
     while ((int)slotControls.size() < count)
     {
         SSlotControls sc;
-        sc.assetRef = new MAssetReferenceControl();
+        sc.assetRef = mnew<MAssetReferenceControl>();
         sc.assetRef->canAcceptAssetFuncCallback = [](const TAssetHandle<MAsset>& asset)
         { return dynamic_cast<MMaterialAsset*>(asset.get()) != nullptr; };
         slotControls.push_back(std::move(sc));

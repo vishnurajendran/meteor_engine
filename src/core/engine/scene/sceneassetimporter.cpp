@@ -5,9 +5,10 @@
 #include "sceneassetimporter.h"
 #include "sceneasset.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 bool MSceneAssetImporter::registered = []() {
-    addImporter(new MSceneAssetImporter());
+    addImporter(mnew<MSceneAssetImporter>());
     return true;
 }();
 
@@ -16,7 +17,7 @@ bool MSceneAssetImporter::canImport(SString fileExtension) {
 }
 
 MAsset * MSceneAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
-    auto asset = new MSceneAsset(path);
+    auto asset = mnew<MSceneAsset>(path);
     if(!asset->isValid()) {
         MERROR(STR("MSceneAssetImporter::importAsset(): invalid asset"));
         delete asset;

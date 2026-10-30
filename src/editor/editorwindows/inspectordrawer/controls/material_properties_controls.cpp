@@ -14,6 +14,7 @@
 #include "core/graphics/core/material/material.h"
 #include "core/utils/logger.h"
 #include "imgui.h"
+#include "core/memory/mnew.h"
 
 // ── Key prettifier ───────────────────────────────────────────────────────────
 // Strips leading underscores, inserts spaces before camelCase transitions,
@@ -260,7 +261,7 @@ void MMaterialPropertyControl::drawTextureParameter(const SString& label, SShade
     }
     else
     {
-        texRefControl = new MAssetReferenceControl();
+        texRefControl = mnew<MAssetReferenceControl>();
         textureReferences[controlRefId] = texRefControl;
         texRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset)
         { return dynamic_cast<MTextureAsset*>(asset.get()) != nullptr; };
@@ -290,4 +291,4 @@ void MMaterialPropertyControl::clearTextureReferences()
         delete ctrl;
     textureReferences.clear();
     lastPropertyCount = -1;
-}
+}

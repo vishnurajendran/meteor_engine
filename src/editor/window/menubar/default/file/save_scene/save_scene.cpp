@@ -12,6 +12,7 @@
 #include "imgui.h"
 
 #include "editor/helper/scene_io.h"
+#include "core/memory/mnew.h"
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -93,7 +94,7 @@ static bool s_saveWantOpen = false;
 
 bool MSaveSceneMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MSaveSceneMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MSaveSceneMenubarItem>());
     return true;
 }();
 
@@ -139,7 +140,7 @@ static bool s_saveAsWantOpen = false;
 
 bool MSaveSceneAsMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MSaveSceneAsMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MSaveSceneAsMenubarItem>());
     return true;
 }();
 

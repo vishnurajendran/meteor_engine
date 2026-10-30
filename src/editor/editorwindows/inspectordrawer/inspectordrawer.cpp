@@ -4,12 +4,13 @@
 
 #include "inspectordrawer.h"
 #include "spatialentityinspectordrawer.h"
+#include "core/memory/mnew.h"
 
 std::vector<MInspectorDrawer*> MInspectorDrawer::drawers;
 MInspectorDrawer*              MInspectorDrawer::defaultDrawer = nullptr;
 
 void MInspectorDrawer::initialise() {
-    defaultDrawer = new MSpatialEntityInspectorDrawer();
+    defaultDrawer = mnew<MSpatialEntityInspectorDrawer>();
 }
 
 void MInspectorDrawer::registerDrawer(MInspectorDrawer* drawer) {

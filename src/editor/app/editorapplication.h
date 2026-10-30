@@ -83,7 +83,6 @@ private:
     IRenderPipelineManagerSubsystem* pipelineManager= nullptr;
 
     MObjectPtr<MImGuiWindow> window = nullptr;
-    std::vector<MObjectPtr<MImGuiSubWindow>> subWindows;
     std::atomic<bool> splashShowing = true;
 
     float physicsAccumulator = 0.0f;  // seconds carried over between frames

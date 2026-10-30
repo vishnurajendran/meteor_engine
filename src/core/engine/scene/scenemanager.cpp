@@ -14,6 +14,7 @@
 #include "scene.h"
 #include "sceneasset.h"
 #include "serialisation/scene_serialiser.h"
+#include "core/memory/mnew.h"
 
 bool MSceneManager::closeActiveScene() {
     if (activeScene == nullptr)
@@ -46,7 +47,7 @@ MSceneManager::~MSceneManager()
 bool MSceneManager::loadEmptyScene() {
     if (activeScene != nullptr)
         closeActiveScene();
-    activeScene = new MScene();
+    activeScene = mnew<MScene>();
     currentScenePath = SString();
     onSceneLoaded.broadcast(activeScene);
     return true;

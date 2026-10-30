@@ -25,6 +25,12 @@
 #include "core/engine/physics/impl/bodies/jolt_capsule_collision.h"
 #include "core/engine/physics/impl/bodies/jolt_mesh_collision.h"
 #include "core/engine/physics/impl/bodies/jolt_convexhull_collision.h"
+#include "core/memory/mnew.h"
+#include "core/memory/memory_subsystem_interface.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "jolt_memory_tracker.h"
+
+static constexpr const char* JOLT_MEMORY_REPORTER = "Jolt Physics";
 
 static JPH::Quat shapeAxisRotation(EShapeAxis axis)
 {
@@ -43,7 +49,11 @@ static JPH::Quat shapeAxisRotation(EShapeAxis axis)
 void MJoltPhysicsEngine::init()
 {
     MLOG("MJoltPhysicsEngine:: Initializing Physics engine");
-    RegisterDefaultAllocator();
+    // Jolt keeps its own allocator; the tracker counts what it holds so the
+    // memory subsystem can report it next to the object pools.
+    MJoltMemoryTracker::install();
+    if (auto* memory = MEngineSubsystemRegistry::getSubsystem<IMemoryManagementSubsystem>())
+        memory->registerExternalReporter(JOLT_MEMORY_REPORTER, &MJoltMemoryTracker::getUsage);
     Factory::sInstance = new Factory();
     RegisterTypes();
 
@@ -102,6 +112,14 @@ void MJoltPhysicsEngine::cleanup()
 
     delete jobSystem; jobSystem = nullptr;
     delete tempAlloc; tempAlloc = nullptr;
+
+    if (auto* memory = MEngineSubsystemRegistry::getSubsystem<IMemoryManagementSubsystem>())
+    {
+        const auto usage = MJoltMemoryTracker::getUsage();
+        MLOG(SString::format("MJoltPhysicsEngine:: Jolt still holds {0} bytes in {1} blocks after cleanup",
+                             usage.liveBytes, usage.liveAllocations));
+        memory->unregisterExternalReporter(JOLT_MEMORY_REPORTER);
+    }
     MLOG("MJoltPhysicsEngine:: Cleanup completed");
 }
 
@@ -315,7 +333,7 @@ IBoxCollisionBody* MJoltPhysicsEngine::createBoxCollider(const SBoxPhysicsBodySe
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
-        return new MJoltBoxCollision(bodyId, *bodyInterface, physicsSystem);
+        return mnew<MJoltBoxCollision>(bodyId, *bodyInterface, physicsSystem);
 
     return nullptr;
 }
@@ -360,7 +378,7 @@ ISphereCollisionBody* MJoltPhysicsEngine::createSphereCollisionBody(const SSpher
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
-        return new MJoltSphereCollision(bodyId, *bodyInterface, physicsSystem);
+        return mnew<MJoltSphereCollision>(bodyId, *bodyInterface, physicsSystem);
 
     return nullptr;
 }
@@ -414,7 +432,7 @@ ICylinderCollisionBody* MJoltPhysicsEngine::createCylinderCollisionBody(const SC
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
-        return new MJoltCylinderCollision(bodyId, *bodyInterface, physicsSystem,
+        return mnew<MJoltCylinderCollision>(bodyId, *bodyInterface, physicsSystem,
                                           settings.halfHeight, settings.radius, settings.axis);
 
     return nullptr;
@@ -469,7 +487,7 @@ ICapsuleCollisionBody* MJoltPhysicsEngine::createCapsuleCollisionBody(const SCap
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
-        return new MJoltCapsuleCollision(bodyId, *bodyInterface, physicsSystem,
+        return mnew<MJoltCapsuleCollision>(bodyId, *bodyInterface, physicsSystem,
                                          settings.halfHeight, settings.radius, settings.axis);
 
     return nullptr;
@@ -527,7 +545,7 @@ IMeshCollisionBody* MJoltPhysicsEngine::createMeshCollisionBody(const SMeshBodyS
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
-        return new MJoltMeshCollision(bodyId, *bodyInterface, physicsSystem);
+        return mnew<MJoltMeshCollision>(bodyId, *bodyInterface, physicsSystem);
 
     return nullptr;
 }
@@ -581,7 +599,7 @@ IConvexHullCollisionBody* MJoltPhysicsEngine::createConvexHullCollisionBody(cons
 
     BodyID bodyId;
     if (createPhysicsBody(bodySettings, EActivation::Activate, bodyId))
-        return new MJoltConvexHullCollision(bodyId, *bodyInterface, physicsSystem);
+        return mnew<MJoltConvexHullCollision>(bodyId, *bodyInterface, physicsSystem);
 
     return nullptr;
 }

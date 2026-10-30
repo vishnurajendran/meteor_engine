@@ -5,9 +5,10 @@
 #include "MStaticMeshAssetImporter.h"
 
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 bool MStaticMeshAssetImporter::registered = []() {
-    addImporter(new MStaticMeshAssetImporter());
+    addImporter(mnew<MStaticMeshAssetImporter>());
     return true;
 }();
 
@@ -18,7 +19,7 @@ bool MStaticMeshAssetImporter::canImport(SString fileExtension) {
 }
 
 MAsset * MStaticMeshAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
-    auto asset = new MStaticMeshAsset(path);
+    auto asset = mnew<MStaticMeshAsset>(path);
     if(!asset->isValid()) {
         MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));
         delete asset;

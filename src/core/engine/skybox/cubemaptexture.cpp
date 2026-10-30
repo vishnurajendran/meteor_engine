@@ -7,6 +7,7 @@
 #include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 
 bool MCubemapTexture::loadFromMemory(const void* data, size_t size)
@@ -93,7 +94,7 @@ createCubeMap(std::vector<TAssetHandle<MTextureAsset>> textureAssets)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    MCubemapTexture* cubemap = new MCubemapTexture();
+    MCubemapTexture* cubemap = mnew<MCubemapTexture>();
     cubemap->textureId = cubemapId;
     return cubemap;
 }

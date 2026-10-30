@@ -15,16 +15,22 @@ protected:
     SString title;
     ImVec2 minSize = ImVec2(0, 0);
     ImVec2 maxSize = ImVec2(FLT_MAX, FLT_MAX);
+    bool open      = true;  // false: draw() does nothing; the X button sets this
+    bool focusNext = false; // bring to front on the next draw (set when reopened)
 public:
     MImGuiSubWindow(int x, int y);
     SString getTitle() const;
+    void setTitle(const SString& newTitle) { title = newTitle; }
+    bool isOpen() const { return open; }
+    // focus: bring the window to the front when it opens (menu toggles). Layout
+    // restores pass false so they do not change which docked tab is selected.
+    void setOpen(bool shouldOpen, bool focus = true) { focusNext = focus && shouldOpen && !open; open = shouldOpen; }
     MImGuiSubWindow(const SString& title, int x, int y);
     ~MImGuiSubWindow();
     void setWindowConstraints(float minx, float miny, float maxx, float maxy);
     void draw(float deltaTime);
     virtual void handleInput(float deltaTime);
     virtual void onGui(float deltaTime)=0;
-    virtual unsigned int getWindowId()=0;
 };
 
 

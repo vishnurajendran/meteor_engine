@@ -7,10 +7,11 @@
 #include "core/engine/lighting/ambient/ambient_light.h"
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
+#include "core/memory/mnew.h"
 
 bool MProceduralSkyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MProceduralSkyInspectorDrawer());
+    registerDrawer(mnew<MProceduralSkyInspectorDrawer>());
     return true;
 }();
 

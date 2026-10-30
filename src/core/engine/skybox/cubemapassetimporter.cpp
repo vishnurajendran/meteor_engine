@@ -5,9 +5,10 @@
 #include "cubemapassetimporter.h"
 #include "core/utils/logger.h"
 #include "cubemapasset.h"
+#include "core/memory/mnew.h"
 
 const bool MCubemapAssetImporter::registered = []() {
-    addImporter(new MCubemapAssetImporter());
+    addImporter(mnew<MCubemapAssetImporter>());
     return true;
 }();
 
@@ -16,7 +17,7 @@ bool MCubemapAssetImporter::canImport(SString fileExtension) {
 }
 
 MAsset * MCubemapAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
-    MCubemapAsset* asset = new MCubemapAsset(path);
+    MCubemapAsset* asset = mnew<MCubemapAsset>(path);
     if(!asset->isValid()) {
         delete asset;
         return nullptr;

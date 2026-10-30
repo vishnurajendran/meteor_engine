@@ -1,9 +1,10 @@
 #include "spot_light_inspector_drawer.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/memory/mnew.h"
 
 bool MSpotLightInspectorDrawer::registered = []() {
-    registerDrawer(new MSpotLightInspectorDrawer());
+    registerDrawer(mnew<MSpotLightInspectorDrawer>());
     return true;
 }();
 

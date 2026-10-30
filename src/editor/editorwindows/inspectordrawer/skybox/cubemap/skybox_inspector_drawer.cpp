@@ -7,15 +7,16 @@
 #include "core/engine/skybox/skybox.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "imgui.h"
+#include "core/memory/mnew.h"
 
 bool MSkyboxInspectorDrawer::registered = []() {
-    registerDrawer(new MSkyboxInspectorDrawer());
+    registerDrawer(mnew<MSkyboxInspectorDrawer>());
     return true;
 }();
 
 MSkyboxInspectorDrawer::MSkyboxInspectorDrawer()
 {
-    cubemapAssetControl = new MAssetReferenceControl();
+    cubemapAssetControl = mnew<MAssetReferenceControl>();
     cubemapAssetControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
         return dynamic_cast<MCubemapAsset*>(asset.get()) != nullptr;
     };

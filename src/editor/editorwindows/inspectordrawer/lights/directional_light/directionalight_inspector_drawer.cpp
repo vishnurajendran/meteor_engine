@@ -1,9 +1,10 @@
 #include "directionalight_inspector_drawer.h"
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/memory/mnew.h"
 
 const bool MDirecionalLightInspectorDrawer::registered = []() {
-    registerDrawer(new MDirecionalLightInspectorDrawer());
+    registerDrawer(mnew<MDirecionalLightInspectorDrawer>());
     return true;
 }();
 

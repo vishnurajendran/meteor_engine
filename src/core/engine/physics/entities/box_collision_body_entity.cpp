@@ -5,12 +5,13 @@
 #include "box_collision_body_entity.h"
 
 #include "core/engine/gizmos/gizmos.h"
+#include "core/memory/mnew.h"
 
 IMPLEMENT_SPATIAL_CLASS(MBoxCollisionBody)
 
 MBoxCollisionBody* MBoxCollisionBody::create(ECollisionBodyType type, SVector3 halfExtents, float mass)
 {
-    auto* e = new MBoxCollisionBody();
+    auto* e = mnew<MBoxCollisionBody>();
     e->bodyType.set(type);
     e->halfExtentX.set(halfExtents.x);
     e->halfExtentY.set(halfExtents.y);
