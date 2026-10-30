@@ -9,10 +9,11 @@
 #include "editor/app/editorapplication.h"
 #include "editor/editor_utils/entity_duplicator.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 bool MDuplicateSelectedMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MDuplicateSelectedMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MDuplicateSelectedMenubarItem>());
     return true;
 }();
 

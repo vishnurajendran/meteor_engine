@@ -6,10 +6,11 @@
 
 #include "textasset.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 //registration pattern
 bool MTextAssetImporter::registered = []() {
-    addImporter(new MTextAssetImporter());
+    addImporter(mnew<MTextAssetImporter>());
     return true;
 }();
 
@@ -18,7 +19,7 @@ bool MTextAssetImporter::canImport(SString fileExtension) {
 }
 
 MAsset * MTextAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
-    auto asset = new MTextAsset(path);
+    auto asset = mnew<MTextAsset>(path);
     if(!asset->isValid()) {
         MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));
         delete asset;

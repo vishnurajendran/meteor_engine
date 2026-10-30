@@ -1,15 +1,16 @@
 #include "spot_light_entitydeserializer.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 #include "spot_light.h"
+#include "core/memory/mnew.h"
 
 bool MSpotLightDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("spot_light", new MSpotLightDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("spot_light", mnew<MSpotLightDeserialiser>());
     return true;
 }();
 
 MSpatialEntity* MSpotLightDeserialiser::deserialize(pugi::xml_node node)
 {
-    auto* entity = new MSpotLight();
+    auto* entity = mnew<MSpotLight>();
     parseSpatialData(node, entity);
 
     const auto attrib = node.child(ATTRIB_NODE.c_str());

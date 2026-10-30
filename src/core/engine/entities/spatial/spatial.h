@@ -19,6 +19,7 @@
 #include "data/serialized_class_base.h"
 #include "entityflags.h"
 #include "spatial_class_macros.h"
+#include "core/memory/mnew.h"
 
 SCRIPT_BIND_CLASS()
 class MSpatialEntity : public MObject, public SerializedClassBase
@@ -39,7 +40,7 @@ public:
     static T* createInstance(const SString& name, MScene* ownerScene = nullptr)
     {
         static_assert(std::is_base_of<MSpatialEntity, T>::value, "T must derive from MSpatialEntity");
-        T* entity = new T();
+        T* entity = mnew<T>();
         entity->setName(name);
         if (!ownerScene)
         {

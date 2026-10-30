@@ -1,9 +1,10 @@
 #include "point_light_entity_deserialiser.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
 #include "point_light.h"
+#include "core/memory/mnew.h"
 
 bool MPointLightDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("point_light", new MPointLightDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("point_light", mnew<MPointLightDeserialiser>());
     return true;
 }();
 

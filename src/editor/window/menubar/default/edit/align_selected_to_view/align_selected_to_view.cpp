@@ -6,10 +6,11 @@
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "editor/app/editorapplication.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 bool MAlignObjectToViewMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MAlignObjectToViewMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MAlignObjectToViewMenubarItem>());
     return true;
 }();
 

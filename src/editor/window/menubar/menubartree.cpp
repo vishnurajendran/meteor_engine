@@ -5,6 +5,7 @@
 #include "ImGui.h"
 #include "menubaritem.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 MMenubarTreeNode* MMenubarTreeNode::root = nullptr;
 std::vector<MMenubarItem*> MMenubarTreeNode::registeredMenuItems;
@@ -40,7 +41,8 @@ void MMenubarTreeNode::renderMenubar() const
         // Pass the shortcut display text so ImGui right-aligns it in the menu.
         const std::string hint = itemInstance->getShortcut().getDisplayText();
         if (ImGui::MenuItem(menuTreeNodeTitle.c_str(),
-                            hint.empty() ? nullptr : hint.c_str()))
+                            hint.empty() ? nullptr : hint.c_str(),
+                            itemInstance->isChecked()))
         {
             itemInstance->onSelect();
         }
@@ -68,7 +70,7 @@ void MMenubarTreeNode::registerItemInternal(MMenubarItem* itemInstance, const in
     const auto nameSplit = itemInstance->getPath().split("/");
     if (depth >= nameSplit.size() - 1)
     {
-        const auto childTreeLeaf = new MMenubarTreeNode();
+        const auto childTreeLeaf = mnew<MMenubarTreeNode>();
         const auto& leafTitle = nameSplit.back();
         childTreeLeaf->itemInstance = itemInstance;
         childTreeLeaf->menuTreeNodeTitle = leafTitle;
@@ -85,7 +87,7 @@ void MMenubarTreeNode::registerItemInternal(MMenubarItem* itemInstance, const in
             return;
         }
 
-        const auto childTreeNode = new MMenubarTreeNode();
+        const auto childTreeNode = mnew<MMenubarTreeNode>();
         childTreeNode->menuTreeNodeTitle = nodeTitle;
         children[nodeTitle] = childTreeNode;
         orderedChildrenKeys.push_back(nodeTitle);
@@ -96,7 +98,7 @@ void MMenubarTreeNode::registerItemInternal(MMenubarItem* itemInstance, const in
 MMenubarTreeNode* MMenubarTreeNode::getRoot()
 {
     if (root == nullptr)
-        root = new MMenubarTreeNode(EMenubarTreeNodeType::Root);
+        root = mnew<MMenubarTreeNode>(EMenubarTreeNodeType::Root);
     return root;
 }
 

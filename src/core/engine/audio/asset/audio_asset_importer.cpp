@@ -4,10 +4,11 @@
 
 #include "audio_asset_importer.h"
 #include "audioclip_asset.h"
+#include "core/memory/mnew.h"
 
 bool MAudioAssetImporter::registeredAssetImporter = []()
 {
-    addImporter(new MAudioAssetImporter());
+    addImporter(mnew<MAudioAssetImporter>());
     return true;
 }();
 
@@ -18,7 +19,7 @@ bool MAudioAssetImporter::canImport(SString fileExtension)
 
 MAsset* MAudioAssetImporter::importAsset(SString path, const pugi::xml_document& metaData)
 {
-    auto* asset = new MAudioClipAsset(path);
+    auto* asset = mnew<MAudioClipAsset>(path);
     asset->loadSettings(metaData);
     return asset;
 }

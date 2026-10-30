@@ -12,6 +12,7 @@ namespace EditorWindowIds
     static constexpr const unsigned int ID_HIERARCHY_WINDOW = 002;
     static constexpr const unsigned int ID_INSPECTOR_WINDOW = 003;
     static constexpr const unsigned int ID_SCENE_WINDOW     = 004;
+    static constexpr const unsigned int ID_MEMORY_WINDOW    = 005;
 }
 
 

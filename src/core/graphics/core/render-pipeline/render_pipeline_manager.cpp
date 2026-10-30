@@ -8,6 +8,7 @@
 #include "render_queue.h"
 #include "stages/lighting/lighting_system_manager.h"
 #include "stages/skybox/skybox_queue.h"
+#include "core/memory/mnew.h"
 
 MRenderPipelineManager::MRenderPipelineManager()
     : renderQueue(std::make_unique<MRenderQueue>()),
@@ -15,7 +16,7 @@ MRenderPipelineManager::MRenderPipelineManager()
       proceduralSkyboxQueue(std::make_unique<MProceduralSkyboxQueue>()),
       lightSystem(std::make_unique<MLightSystemManager>())
 {
-    pipeline = new MRenderPipeline();
+    pipeline = mnew<MRenderPipeline>();
     MLOG("MRenderPipelineManager:: Created render pipeline manager");
 }
 

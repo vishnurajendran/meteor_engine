@@ -6,10 +6,11 @@
 
 #include "imgui.h"
 #include "core/engine/physics/entities/capsule_collision_body_entity.h"
+#include "core/memory/mnew.h"
 
 bool MCapsuleCollisionBodyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MCapsuleCollisionBodyInspectorDrawer());
+    registerDrawer(mnew<MCapsuleCollisionBodyInspectorDrawer>());
     return true;
 }();
 

@@ -22,7 +22,7 @@
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorrenderstages/gizmos/gizmo_stage.h"
 #include "editor/editorscenemanager/editorscenemanager.h"
-#include "editor/editorwindows/assetwindow/editorassetwindow.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 #include "editor/helper/scene_io.h"
 #include "editor/settings/editor_settings.h"
 #include "editor/window/imgui/imguiwindow.h"
@@ -33,11 +33,8 @@
 #include "core/engine/scripting/lua/lua_scripting_engine.h"
 #include "core/engine/scripting/interface/scripting_engine_interface.h"
 #include "core/utils/guid.h"
-#include "editor/editorwindows/console/editorconsolewindow.h"
-#include "editor/editorwindows/hierarchy/editorhierarchywindow.h"
-#include "editor/editorwindows/inspector/editorinspectorwindow.h"
-#include "editor/editorwindows/scene/editorsceneviewwindow.h"
 #include "editor/publishing/game_publisher.h"
+#include "core/memory/mnew.h"
 
 MObject* MEditorApplication::SelectedObject = nullptr;
 
@@ -130,6 +127,10 @@ void MEditorApplication::cleanup() {
     if (window != nullptr)
         window->close();
     MLOG(STR("[Cleanup] Window closed"));
+
+    // The layout was saved when the window closed; now drop the windows.
+    MEditorSubWindowRegistry::shutdown();
+    MLOG(STR("[Cleanup] Editor windows released"));
 
     window = nullptr;
     MLOG(STR("[Cleanup] Window released"));
@@ -233,7 +234,7 @@ void MEditorApplication::initialise() {
 
     //appRunning = true;
     MVERBOSE(STR("Initialising Editor"));
-    window = new MImGuiWindow();
+    window = mnew<MImGuiWindow>();
     const auto winX = MEngineStatics::getEngineSettings()->resX.get();
     const auto winY = MEngineStatics::getEngineSettings()->resY.get();
     const auto fps= MEngineStatics::getEngineSettings()->fps.get();
@@ -268,11 +269,9 @@ void MEditorApplication::initialise() {
     loadPrerequisites();
 
     // Load first, so that it can log everything from here on out.
-    subWindows.push_back(new MEditorConsoleWindow());
-    subWindows.push_back(new MEditorHierarchyWindow());
-    subWindows.push_back(new MEditorInspectorWindow());
-    subWindows.push_back(new MEditorSceneViewWindow());
-    subWindows.push_back(new MEditorAssetWindow());
+    // Every window registered with EDITOR_REGISTER_SUBWINDOW, plus their
+    // Window menu entries; restores the last layout. Before buildTree().
+    MEditorSubWindowRegistry::init();
     MVERBOSE(STR("Loaded Editor Windows"));
 
     MMenubarTreeNode::buildTree();
@@ -485,6 +484,6 @@ MCameraEntity* MEditorApplication::getSceneCamera()
 #if EDITOR_APPLICATION
 MApplication* getAppInstance(){
     MVERBOSE("Creating Editor Application instance");
-    return new MEditorApplication();
+    return mnew<MEditorApplication>();
 }
 #endif

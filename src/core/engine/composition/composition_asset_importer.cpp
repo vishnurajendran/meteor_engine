@@ -6,10 +6,11 @@
 
 #include "composition_asset.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 bool MCompositionAssetImporter::registered = []()
 {
-    addImporter(new MCompositionAssetImporter());
+    addImporter(mnew<MCompositionAssetImporter>());
     return true;
 }();
 
@@ -20,7 +21,7 @@ bool MCompositionAssetImporter::canImport(SString fileExtension)
 
 MAsset* MCompositionAssetImporter::importAsset(SString path, const pugi::xml_document& /*metaData*/)
 {
-    auto* asset = new MCompositionAsset(path);
+    auto* asset = mnew<MCompositionAsset>(path);
     if (!asset->isValid())
     {
         MERROR(SString("MCompositionAssetImporter:: invalid composition ") + path);

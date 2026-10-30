@@ -6,10 +6,11 @@
 
 #include "imgui.h"
 #include "core/engine/physics/entities/convexhull_collision_body_entity.h"
+#include "core/memory/mnew.h"
 
 bool MConvexHullCollisionBodyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MConvexHullCollisionBodyInspectorDrawer());
+    registerDrawer(mnew<MConvexHullCollisionBodyInspectorDrawer>());
     return true;
 }();
 

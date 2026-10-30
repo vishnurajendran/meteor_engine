@@ -17,6 +17,7 @@
 
 #include <typeindex>
 #include <cctype>
+#include "core/memory/mnew.h"
 
 // ---------------------------------------------------------------------------
 // Display-name formatting helpers
@@ -138,7 +139,7 @@ MSpatialEntityInspectorDrawer::fieldDrawerMap =
 MSpatialEntityInspectorDrawer::MSpatialEntityInspectorDrawer() {
     // Set up the persistent script-reference control.
     // The accept callback filters drag-drop to only allow .lua script assets.
-    scriptRefControl = new MAssetReferenceControl();
+    scriptRefControl = mnew<MAssetReferenceControl>();
     scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
         return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
     };
@@ -368,7 +369,7 @@ void MSpatialEntityInspectorDrawer::drawScriptField(MSpatialEntity* target)
         else
         {
             delete scriptRefControl;
-            scriptRefControl = new MAssetReferenceControl();
+            scriptRefControl = mnew<MAssetReferenceControl>();
             scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
                 return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
             };

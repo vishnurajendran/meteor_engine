@@ -1,15 +1,16 @@
 #include "cameradeserialiser.h"
 #include "camera_spatial_entity.h"
 #include "core/engine/scene/serialisation/sceneentitytypemap.h"
+#include "core/memory/mnew.h"
 
 bool MCameraEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("camera", new MCameraEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("camera", mnew<MCameraEntityDeserialiser>());
     return true;
 }();
 
 MSpatialEntity* MCameraEntityDeserialiser::deserialize(pugi::xml_node node)
 {
-    auto* entity = new MCameraEntity();
+    auto* entity = mnew<MCameraEntity>();
     parseSpatialData(node, entity);
 
     const auto attrib = node.child(ATTRIB_NODE.c_str());

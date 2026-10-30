@@ -4,9 +4,10 @@
 
 #include "ambientlight_inspector_drawer.h"
 #include "core/engine/lighting/ambient/ambient_light.h"
+#include "core/memory/mnew.h"
 
 const bool MAmbientLightInspectorDrawer::registered = []() {
-    registerDrawer(new MAmbientLightInspectorDrawer());
+    registerDrawer(mnew<MAmbientLightInspectorDrawer>());
     return true;
 }();
 

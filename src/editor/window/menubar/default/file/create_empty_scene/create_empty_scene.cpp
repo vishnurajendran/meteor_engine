@@ -9,10 +9,11 @@
 #include "core/utils/logger.h"
 #include "editor/helper/scene_io.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 bool MCreateEmptySceneMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MCreateEmptySceneMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MCreateEmptySceneMenubarItem>());
     return true;
 }();
 

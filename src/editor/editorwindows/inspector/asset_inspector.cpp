@@ -25,6 +25,7 @@
 
 #include "editor/audio_helpers/audio_waveform.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
+#include "core/memory/mnew.h"
 
 std::map<SString, MMaterialPropertyControl*> MAssetInspector::propControlCache;
 std::map<SString, MAssetInspector::SCubemapFaceControls> MAssetInspector::cubemapFaceCache;
@@ -440,7 +441,7 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
 
     const SString& id = asset->getAssetId();
     if (!propControlCache.contains(id))
-        propControlCache[id] = new MMaterialPropertyControl();
+        propControlCache[id] = mnew<MMaterialPropertyControl>();
 
     auto* ctrl = propControlCache[id];
 
@@ -752,7 +753,7 @@ void MAssetInspector::drawCubemapAsset(MCubemapAsset* asset)
         SCubemapFaceControls ctrls;
         for (int i = 0; i < MCubemapAsset::FACE_COUNT; ++i)
         {
-            ctrls.faces[i] = new MAssetReferenceControl();
+            ctrls.faces[i] = mnew<MAssetReferenceControl>();
             ctrls.faces[i]->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> a)
             { return dynamic_cast<MTextureAsset*>(a.get()) != nullptr; };
         }
@@ -1001,4 +1002,4 @@ void MAssetInspector::drawGenericAsset(MAsset* asset)
     ImGui::Text("Name: %s", asset->getName().c_str());
     ImGui::Text("Path: %s", asset->getPath().c_str());
     ImGui::Text("ID:   %s", asset->getAssetId().c_str());
-}
+}

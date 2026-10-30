@@ -1,4 +1,5 @@
 #include "editorassetwindow.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
 #include "core/engine/texture/textureasset.h"
@@ -24,6 +25,8 @@
 #include "core/engine/composition/composition_utility.h"
 #include "core/engine/entities/spatial/spatial.h"
 #include "core/utils/logger.h"
+
+EDITOR_REGISTER_SUBWINDOW("Asset Browser", "Window/Asset Browser", MEditorAssetWindow)
 
 namespace
 {

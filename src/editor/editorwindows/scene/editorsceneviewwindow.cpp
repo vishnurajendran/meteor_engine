@@ -1,4 +1,5 @@
 #include "imgui.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 #include "editor/editor_utils/engine_textures.h"
 #include "imgui-SFML.h"
 
@@ -19,6 +20,8 @@
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/settings/editor_settings.h"
 #include "scene_raycast.h"
+
+EDITOR_REGISTER_SUBWINDOW("Scene", "Window/Scene", MEditorSceneViewWindow)
 
 // --- Style constants ----------------------------------------------------------
 static constexpr ImU32  OVL_BG          = IM_COL32(22,  22,  22,  210);

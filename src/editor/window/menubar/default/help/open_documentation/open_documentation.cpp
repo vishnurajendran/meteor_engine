@@ -5,9 +5,10 @@
 #include "open_documentation.h"
 
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 bool MOpenDocumentation::registerd = []()
 {
-    MMenubarTreeNode::registerItem(new MOpenDocumentation());
+    MMenubarTreeNode::registerItem(mnew<MOpenDocumentation>());
     return true;
 }();

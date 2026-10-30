@@ -19,6 +19,7 @@
 #include "editor/editorscenemanager/editorscenemanager.h"
 #include "editor/publishing/game_publisher.h"
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 namespace
 {
@@ -70,7 +71,7 @@ namespace
 
 bool MPublishGameMenubarItem::registered = []()
 {
-    MMenubarTreeNode::registerItem(new MPublishGameMenubarItem());
+    MMenubarTreeNode::registerItem(mnew<MPublishGameMenubarItem>());
     return true;
 }();
 

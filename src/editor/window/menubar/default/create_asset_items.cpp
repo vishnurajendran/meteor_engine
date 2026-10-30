@@ -15,6 +15,7 @@
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/window/menubar/menubartree.h"
 #include "imgui.h"
+#include "core/memory/mnew.h"
 
 // -------------------------------------------------------------------------------
 //  Shared helpers
@@ -61,7 +62,7 @@ static void drawError(const std::string& error)
 // -------------------------------------------------------------------------------
 
 bool MCreateMaterialItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MCreateMaterialItem());
+    MMenubarTreeNode::registerItem(mnew<MCreateMaterialItem>());
     return true;
 }();
 
@@ -244,7 +245,7 @@ void MCreateMaterialItem::drawPopup()
 // -------------------------------------------------------------------------------
 
 bool MCreateShaderItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MCreateShaderItem());
+    MMenubarTreeNode::registerItem(mnew<MCreateShaderItem>());
     return true;
 }();
 
@@ -382,7 +383,7 @@ void MCreateShaderItem::drawPopup()
 // -------------------------------------------------------------------------------
 
 bool MCreateSkyboxItem::registered = []() {
-    MMenubarTreeNode::registerItem(new MCreateSkyboxItem());
+    MMenubarTreeNode::registerItem(mnew<MCreateSkyboxItem>());
     return true;
 }();
 

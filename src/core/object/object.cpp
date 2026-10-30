@@ -1,5 +1,6 @@
 #include "object.h"
 #include "core/object/gc.h"
+#include "core/memory/mnew.h"
 #include "core/utils/guid.h"
 #include "core/utils/logger.h"
 
@@ -27,12 +28,10 @@ bool MObject::equals(const MObject* obj) const
 
 void MObject::operator delete(void* ptr)
 {
-    // Record object delete operation.
-    auto inst = static_cast<MObject*>(ptr);
-    if (inst != nullptr)
-    {
-        MVERBOSE(SString::format("Deleting MObject {0} ({1})", inst->getName(), inst->getGUID()));
-    }
-
-    ::operator delete(ptr);
+    // The destructor has already run, so the object's members (name, guid)
+    // must not be read here.
+    // Objects from mnew<T>() go back to their type pool; anything else
+    // (plain `new`, or mnew before the memory subsystem started) goes back to
+    // the global heap.
+    MMemory::releaseObject(ptr);
 }

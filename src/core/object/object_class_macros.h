@@ -22,6 +22,7 @@
 #define OBJECT_CLASS_MACROS_H
 
 #include "type_info.h"
+#include "core/memory/mnew_friend.h"
 
 // ── DEFINE_OBJECT_CLASS ───────────────────────────────────────────────────
 // ROOT ONLY - used by MObject to *introduce* the virtual typeInfo() slot.
@@ -29,6 +30,7 @@
 //
 #define DEFINE_OBJECT_CLASS(ClassName)                                         \
 public:                                                                        \
+    MNEW_FRIEND                                                                \
     /** Compile-time type descriptor - usable without an instance */           \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \
@@ -53,6 +55,7 @@ private:
 //
 #define DEFINE_OBJECT_SUBCLASS(ClassName)                                      \
 public:                                                                        \
+    MNEW_FRIEND                                                                \
     static constexpr MTypeInfo staticTypeInfo()                                \
     {                                                                          \
         return MAKE_TYPE_INFO(ClassName);                                      \

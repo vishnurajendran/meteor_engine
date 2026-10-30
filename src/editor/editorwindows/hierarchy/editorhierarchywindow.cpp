@@ -1,4 +1,5 @@
 #include "editorhierarchywindow.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 #include "imgui.h" // must precede ImGuizmo.h and any header that pulls it in
 #include "imgui-SFML.h"
 #include <algorithm>
@@ -28,6 +29,8 @@
 #include "editor/editor_utils/asset_drop_spawner.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/window/menubar/menubartree.h"
+
+EDITOR_REGISTER_SUBWINDOW("Hierarchy", "Window/Hierarchy", MEditorHierarchyWindow)
 
 // --- Palette ------------------------------------------------------------------
 static constexpr ImVec4 COL_SELECTED     = {0.172f, 0.365f, 0.808f, 0.70f};

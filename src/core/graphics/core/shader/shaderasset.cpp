@@ -9,6 +9,7 @@
 #include "pugixml.hpp"
 #include "shader.h"
 #include "shader_utils.h"
+#include "core/memory/mnew.h"
 
 const SString MShaderAsset::SHDR_ROOTNODE = "shader";
 const SString MShaderAsset::SHDR_ATTRIB_BASE_SOURCE = "base";
@@ -137,7 +138,7 @@ MShader* MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SSt
 
     std::vector<SString> propOrder;
     const auto properties = getShaderProperties(rootNode, propOrder);
-    auto* built = new MShader(vertexSource, fragmentSource, properties);
+    auto* built = mnew<MShader>(vertexSource, fragmentSource, properties);
     built->setName(name);
     built->setPropertyOrder(propOrder);
     return built;
@@ -170,7 +171,7 @@ MShader* MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, c
 
     std::vector<SString> propOrder;
     const auto properties = getShaderProperties(rootNode, propOrder);
-    auto* built = new MShader(vertexSource, fragmentSource, properties);
+    auto* built = mnew<MShader>(vertexSource, fragmentSource, properties);
     built->setName(name);
     built->setPropertyOrder(propOrder);
     return built;

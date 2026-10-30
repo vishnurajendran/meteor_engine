@@ -1,5 +1,6 @@
 #pragma once
 #include "editor/window/menubar/menubartree.h"
+#include "core/memory/mnew.h"
 
 #if METEOR_EDITOR
 
@@ -18,7 +19,7 @@ static bool registered;                                                         
 };                                                                                                      \
                                                                                                         \
 bool ClassName::registered = []() {                                                                     \
-MMenubarTreeNode::registerItem(new ClassName());                                                        \
+MMenubarTreeNode::registerItem(mnew<ClassName>());                                                        \
 return true;                                                                                            \
 }();
 #endif

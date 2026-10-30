@@ -8,6 +8,7 @@
 #include "audio_listener.h"
 #include "audio_source.h"
 #include "core/utils/logger.h"
+#include "core/memory/mnew.h"
 
 void MMiniAudioEngineSubsystem::init()
 {
@@ -67,7 +68,7 @@ IAudioSource* MMiniAudioEngineSubsystem::createAudioSource()
     if (!initialized)
         return nullptr;
 
-    auto* inst = new MMiniAudioSource();
+    auto* inst = mnew<MMiniAudioSource>();
     inst->internal_setEngineHandle(&engine);
     inst->init();
     audioSources.push_back(inst);
@@ -92,7 +93,7 @@ IAudioListener* MMiniAudioEngineSubsystem::createAudioListener()
     if (!initialized)
         return nullptr;
 
-    auto* inst = new MMiniAudioListener();
+    auto* inst = mnew<MMiniAudioListener>();
     inst->internal_setEngineHandle(&engine);
     inst->internal_setListenerIndex(audioListeners.size());
     inst->init();
@@ -118,7 +119,7 @@ IAudioClip* MMiniAudioEngineSubsystem::createAudioClip(const SString& filePath)
     if (!initialized)
         return nullptr;
 
-    auto* inst = new MMiniAudioClip();
+    auto* inst = mnew<MMiniAudioClip>();
     inst->internal_setEngineHandle(&engine);
     inst->internal_setVFS(assetVFS.get());
     inst->internal_setFilePath(filePath);

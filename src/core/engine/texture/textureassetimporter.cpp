@@ -4,9 +4,10 @@
 
 #include "textureassetimporter.h"
 #include "textureasset.h"
+#include "core/memory/mnew.h"
 
 const bool MTextureAssetImporter::registered = []() {
-    addImporter(new MTextureAssetImporter());
+    addImporter(mnew<MTextureAssetImporter>());
     return true;
 }();
 
@@ -26,8 +27,8 @@ MAsset* MTextureAssetImporter::importAsset(SString path, const pugi::xml_documen
     auto settingsNode = metaData.child("asset_id").child("textureImport");
 
     MTextureAsset* asset = settingsNode
-        ? new MTextureAsset(path, settingsNode)
-        : new MTextureAsset(path);
+        ? mnew<MTextureAsset>(path, settingsNode)
+        : mnew<MTextureAsset>(path);
 
     if (!asset->isValid())
     {

@@ -6,12 +6,13 @@
 
 #include <algorithm>
 #include "core/engine/gizmos/gizmos.h"
+#include "core/memory/mnew.h"
 
 IMPLEMENT_SPATIAL_CLASS(MCapsuleCollisionBody)
 
 MCapsuleCollisionBody* MCapsuleCollisionBody::create(ECollisionBodyType type, float hh, float r, float m)
 {
-    auto* e = new MCapsuleCollisionBody();
+    auto* e = mnew<MCapsuleCollisionBody>();
     e->bodyType.set(type); e->halfHeight.set(hh); e->radius.set(r); e->mass.set(m);
     return e;
 }

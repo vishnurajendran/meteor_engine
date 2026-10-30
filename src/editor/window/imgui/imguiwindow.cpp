@@ -14,6 +14,7 @@
 #include "core/engine/input/input_subsystem_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "editor/app/shortcut_listener.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 #include "editor/themes/editor_themes.h"
 #include "editor/window/menubar/menubartree.h"
 #include "editorcontrolsbuttons.h"
@@ -115,6 +116,8 @@ void MImGuiWindow::update(float deltaTime) {
 
 void MImGuiWindow::drawGUI(const float deltaTime)
 {
+    // Layout changes must land between frames, before NewFrame.
+    MEditorSubWindowRegistry::beginFrame();
     ImGui::SFML::Update(coreWindow, deltaClock.restart());
     ImGuizmo::BeginFrame();
 
@@ -139,6 +142,8 @@ void MImGuiWindow::drawGUI(const float deltaTime)
 }
 
 void MImGuiWindow::close() {
+    // Last chance to save the layout: ImGui's state goes away below.
+    MEditorSubWindowRegistry::saveSession();
     ImGui::SFML::Shutdown();
     MWindow::close();
 }

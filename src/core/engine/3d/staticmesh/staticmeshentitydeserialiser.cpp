@@ -5,9 +5,10 @@
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "staticmeshentity.h"
+#include "core/memory/mnew.h"
 
 bool MStaticMeshEntityDeserialiser::registered = []() {
-    MSceneEntityTypeMap::registerDeserializer("static_mesh", new MStaticMeshEntityDeserialiser());
+    MSceneEntityTypeMap::registerDeserializer("static_mesh", mnew<MStaticMeshEntityDeserialiser>());
     return true;
 }();
 

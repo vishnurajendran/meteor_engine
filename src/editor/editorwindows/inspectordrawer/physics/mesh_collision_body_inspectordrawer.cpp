@@ -6,10 +6,11 @@
 
 #include "imgui.h"
 #include "core/engine/physics/entities/mesh_collision_body_entity.h"
+#include "core/memory/mnew.h"
 
 bool MMeshCollisionBodyInspectorDrawer::registered = []()
 {
-    registerDrawer(new MMeshCollisionBodyInspectorDrawer());
+    registerDrawer(mnew<MMeshCollisionBodyInspectorDrawer>());
     return true;
 }();
 

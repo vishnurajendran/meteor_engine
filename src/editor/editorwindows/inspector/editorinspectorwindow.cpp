@@ -1,4 +1,5 @@
 #include "editorinspectorwindow.h"
+#include "editor/editorwindows/registry/editor_subwindow_registry.h"
 
 #include "asset_inspector.h"
 #include "core/engine/assetmanagement/asset/asset.h"
@@ -6,6 +7,8 @@
 #include "core/engine/entities/spatial/spatial.h"
 #include "editor/app/editorapplication.h"
 #include "editor/editorwindows/inspectordrawer/inspectordrawer.h"
+
+EDITOR_REGISTER_SUBWINDOW("Inspector", "Window/Inspector", MEditorInspectorWindow)
 
 MEditorInspectorWindow::MEditorInspectorWindow()
     : MEditorInspectorWindow(700, 300) {}

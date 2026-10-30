@@ -12,7 +12,6 @@
 #include "SFML/Graphics.hpp"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "editor/editorassetmanager/editor_asset_directory_node.h"
-#include "editor/editorwindows/editor_window_ids.h"
 #include "editor/window/imgui/imguisubwindow.h"
 
 enum class EAssetViewMode
@@ -31,7 +30,6 @@ enum class EAssetSortMode
 class MEditorAssetWindow : public MImGuiSubWindow
 {
 public:
-    unsigned int getWindowId() override { return EditorWindowIds::ID_ASSET_WINDOW; }
 
 private:
     // -- Left panel ------------------------------------------------------------
