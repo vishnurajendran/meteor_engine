@@ -47,7 +47,14 @@ in  vec2 vUV;
 out vec4 FragColor;
 
 uniform sampler2D uTex;
-uniform int       uMode;       // 0 = color, 1 = depth, 2 = alpha-as-grey
+uniform int       uMode;       // 0 = color, 1 = depth, 2 = alpha-as-grey, 3 = linear color
+
+vec3 linearToSrgb(vec3 c)
+{
+    c = clamp(c, 0.0, 1.0);
+    return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92,
+               vec3(lessThanEqual(c, vec3(0.0031308))));
+}
 
 void main()
 {
@@ -66,8 +73,8 @@ void main()
     }
     else
     {
-        // Passthrough color
-        FragColor = vec4(texture(uTex, vUV).rgb, 1.0);
+        // Buffers hold linear values - encode for display.
+        FragColor = vec4(linearToSrgb(texture(uTex, vUV).rgb), 1.0);
     }
 }
 )GLSL";
@@ -123,10 +130,10 @@ void MCompositeStage::render(IRenderPipeline* const pipeline)
     const bool hasOpaque = flags & ECF_Opaque;
     const bool hasLights = flags & ECF_Lights;
 
-    if (hasOpaque && hasLights)
-        compositeOpaqueWithLights(pipeline, sfmlFBO, w, h);
-    else if (hasOpaque)
-        compositeOpaqueOnly(pipeline, sfmlFBO, w, h);
+    // Both paths go through the composite shader so the sRGB encode happens
+    // in exactly one place.
+    if (hasOpaque)
+        compositeOpaqueWithLights(pipeline, hasLights, sfmlFBO, w, h);
 
     if (flags & ECF_Depth)
         compositeDepth(pipeline, sfmlFBO, w, h);
@@ -203,7 +210,7 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
 
 // ── Normal composite helpers ──────────────────────────────────────────────────
 
-void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
+void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights,
                                                 int sfmlFBO, int w, int h) const
 {
     auto compositeHandle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
@@ -235,16 +242,18 @@ void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, opaque->getColorTextureHandle());
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, lights && lights->getFBOHandle() != 0
-                                  ? lights->getColorTextureHandle()
-                                  : opaque->getColorTextureHandle());
+    const bool lightsValid = useLights && lights && lights->getFBOHandle() != 0;
+    glBindTexture(GL_TEXTURE_2D, lightsValid ? lights->getColorTextureHandle()
+                                             : opaque->getColorTextureHandle());
 
     GLint prog = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
     GLint albLoc = glGetUniformLocation(prog, "_albedoTex");
     GLint litLoc = glGetUniformLocation(prog, "_lightsTex");
+    GLint useLoc = glGetUniformLocation(prog, "_useLights");
     if (albLoc >= 0) glUniform1i(albLoc, 0);
     if (litLoc >= 0) glUniform1i(litLoc, 1);
+    if (useLoc >= 0) glUniform1i(useLoc, lightsValid ? 1 : 0);
 
     glBindVertexArray(quadVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

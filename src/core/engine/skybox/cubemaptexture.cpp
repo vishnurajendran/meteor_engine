@@ -71,11 +71,20 @@ createCubeMap(std::vector<TAssetHandle<MTextureAsset>> textureAssets)
         }
     }
 
-    // Allocate cubemap with immutable storage (SFML uses RGBA8 internally)
+    // Allocate cubemap with the same internal format as the faces, so sRGB
+    // faces stay sRGB (decoded to linear on sample) and the GPU copy below
+    // stays format-compatible.
+    GLint faceFormat = GL_RGBA8;
+    glBindTexture(GL_TEXTURE_2D, textureAssets[0]->getTexture()->getTextureID());
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &faceFormat);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    if (faceFormat != GL_SRGB8_ALPHA8 && faceFormat != GL_RGBA8)
+        faceFormat = GL_RGBA8;
+
     unsigned int cubemapId = 0;
     glGenTextures(1, &cubemapId);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapId);
-    glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, width, height);
+    glTexStorage2D(GL_TEXTURE_CUBE_MAP, 1, static_cast<GLenum>(faceFormat), width, height);
 
     // Copy each face from its source 2D texture directly on the GPU
     for (unsigned int i = 0; i < 6; i++)
@@ -93,6 +102,10 @@ createCubeMap(std::vector<TAssetHandle<MTextureAsset>> textureAssets)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    // Faces skip decoding so the UI shows them raw; the cubemap is only ever
+    // sampled by the skybox, which wants linear values.
+    if (faceFormat == GL_SRGB8_ALPHA8)
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
 
     MCubemapTexture* cubemap = mnew<MCubemapTexture>();
     cubemap->textureId = cubemapId;

@@ -30,7 +30,7 @@ public:
     static EBufferDebugView debugView;
 
 private:
-    void compositeOpaqueWithLights(IRenderPipeline* const pipeline,
+    void compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights,
                                    int sfmlFBO, int w, int h) const;
     void compositeOpaqueOnly      (IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;

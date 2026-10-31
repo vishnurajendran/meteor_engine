@@ -49,15 +49,28 @@ in  vec3 vNormal;
 in  vec3 vFragPos;
 out vec4 FragColor;
 
-uniform vec3      baseColor;
-uniform sampler2D albedoTex;
+uniform vec3      baseColor;   // sRGB
+uniform sampler2D albedoTex;   // sRGB texture, decoded to linear on sample
 uniform int       useAlbedoTex;
+
+vec3 srgbToLinear(vec3 c)
+{
+    return mix(pow((c + 0.055) / 1.055, vec3(2.4)), c / 12.92,
+               vec3(lessThanEqual(c, vec3(0.04045))));
+}
+
+vec3 linearToSrgb(vec3 c)
+{
+    c = clamp(c, 0.0, 1.0);
+    return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92,
+               vec3(lessThanEqual(c, vec3(0.0031308))));
+}
 
 void main()
 {
     vec3 N = normalize(vNormal);
 
-    vec3 color = baseColor;
+    vec3 color = srgbToLinear(baseColor);
     if (useAlbedoTex == 1)
     {
         vec2 uv = vec2(
@@ -77,7 +90,7 @@ void main()
     float rd  = pow(max(dot(N, rim), 0.0), 4.0) * 0.3;
 
     vec3 col  = color * (0.18 + kd + fd) + vec3(0.3) * rd;
-    FragColor = vec4(col, 1.0);
+    FragColor = vec4(linearToSrgb(col), 1.0);
 }
 )GLSL";
 
@@ -105,6 +118,13 @@ out vec4 FragColor;
 uniform sampler2D albedoTex;
 uniform sampler2D lightsTex;
 
+vec3 linearToSrgb(vec3 c)
+{
+    c = clamp(c, 0.0, 1.0);
+    return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92,
+               vec3(lessThanEqual(c, vec3(0.0031308))));
+}
+
 void main()
 {
     vec4 opaque = texture(albedoTex, vUV);
@@ -113,7 +133,7 @@ void main()
     // alpha > 0 means the pixel was rendered by the lighting stage (lit).
     // alpha == 0 means unlit -- pass through the opaque value as-is.
     vec3 result = mix(opaque.rgb, opaque.rgb * lights.rgb, lights.a);
-    FragColor   = vec4(result, 1.0);
+    FragColor   = vec4(linearToSrgb(result), 1.0);
 }
 )GLSL";
 

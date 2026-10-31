@@ -3,6 +3,7 @@
 //
 
 #include "dynamic_light.h"
+#include "core/graphics/core/color_space.h"
 
 #include "../../../graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/engine/subsystem/subsystem_registry.h"
@@ -13,7 +14,7 @@
 void MDynamicLight::setColor(const SColor& c)
 {
     color           = SVector3(c.r, c.g, c.b);
-    lightData.color = color.get();
+    lightData.color = MColorSpace::srgbToLinear(color.get());
 }
 
 SColor MDynamicLight::getColor() const
@@ -43,7 +44,7 @@ void MDynamicLight::onDeserialise(const pugi::xml_node& node)
 {
     MLightEntity::onDeserialise(node);
 
-    lightData.color        = color.get();
+    lightData.color        = MColorSpace::srgbToLinear(color.get());
     lightData.intensity    = intensity.get();
     lightData.range        = range.get();
     lightData.smoothShadow = smoothShadow.get() ? 1 : 0;

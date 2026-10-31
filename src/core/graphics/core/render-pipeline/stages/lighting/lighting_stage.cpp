@@ -241,9 +241,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
                         ->getAssetFromReference<MTextureAsset>(val.getTexAssetReference());
                     if (!texAsset || !texAsset->getTexture()) continue;
 
-                    glActiveTexture(GL_TEXTURE0 + matTexUnit);
-                    glBindTexture(GL_TEXTURE_2D,
-                                  texAsset->getTexture()->getTextureID());
+                    texAsset->bindForRendering(matTexUnit);
 
                     GLint loc = glGetUniformLocation(prog, key.c_str());
                     if (loc >= 0)
@@ -298,4 +296,4 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     pipeline->addCompositeFlag(ECF_Lights);
 }
 
-void MLightingStage::postRender(IRenderPipeline* const pipeline) {}
+void MLightingStage::postRender(IRenderPipeline* const pipeline) {}

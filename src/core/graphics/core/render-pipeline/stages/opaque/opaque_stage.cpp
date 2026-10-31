@@ -27,6 +27,10 @@ void MOpaqueStage::init(IRenderPipeline* const pipeline)
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer)
         MERROR("MOpaqueStage::init failed to create opaque buffer");
+    else
+        // Linear scene colour. 8 bits per channel bands badly in the darks
+        // once values are linear, and the sky can exceed 1.0.
+        opaqueBuffer->setColorFormat(0x881A); // GL_RGBA16F
 }
 
 void MOpaqueStage::cleanup(IRenderPipeline* const pipeline)

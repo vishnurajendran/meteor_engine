@@ -57,6 +57,10 @@ private:
     ETextureWrap        wrapT       = ETextureWrap::Repeat;
     int                 maxImportSize = 0; // 0 = no limit
     ETextureCompression compression = ETextureCompression::None;
+    // Colour textures (albedo, UI, skybox faces) hold sRGB-encoded values and
+    // are decoded to linear by the GPU on sample. Turn off for data textures
+    // (normal maps, masks, roughness) so their values are read as-is.
+    bool                srgb        = true;
 
 public:
     MTextureAsset();
@@ -74,6 +78,7 @@ public:
     ETextureWrap        getWrapT()         const { return wrapT; }
     int                 getMaxImportSize() const { return maxImportSize; }
     ETextureCompression getCompression()   const { return compression; }
+    bool                isSrgb()           const { return srgb; }
 
     void setFilterMin(ETextureFilterMin f)     { filterMin = f; }
     void setFilterMag(ETextureFilterMag f)     { filterMag = f; }
@@ -81,6 +86,17 @@ public:
     void setWrapT(ETextureWrap w)              { wrapT = w; }
     void setMaxImportSize(int s)               { maxImportSize = s; }
     void setCompression(ETextureCompression c) { compression = c; }
+    void setSrgb(bool s)                       { srgb = s; }
+
+    // ── Colour-space aware binding ────────────────────────────────────────
+    // sRGB textures are stored as SRGB8_ALPHA8 with decoding switched OFF, so
+    // ImGui, gizmos and anything else that draws them straight to the screen
+    // sees the raw sRGB values, exactly as before.  The render pipeline binds
+    // material textures through bindForRendering(), which switches decoding
+    // ON so shaders read linear values.  endRenderingDecode() switches it back
+    // off; the pipeline calls it once all of its stages have run.
+    void bindForRendering(unsigned int textureUnit);
+    static void endRenderingDecode();
 
     // ── Persistence ───────────────────────────────────────────────────────
     void loadImportSettings(const pugi::xml_node& node);
@@ -89,6 +105,7 @@ public:
 private:
     bool loadWithSettings();
     void applyGLParams();
+    bool usesSrgbStorage() const;
 };
 
 #endif //TEXTUREASSET_H

@@ -5,6 +5,7 @@
 #include <GL/glew.h>
 #include <utility>
 #include "shader.h"
+#include "core/graphics/core/color_space.h"
 
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/subsystem/subsystem_registry.h"
@@ -119,6 +120,9 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
             setUniform3f(name, value.getVec3Val());
             break;
         case Color:
+            // Colours are picked in sRGB; shaders work in linear.
+            setUniform4f(name, MColorSpace::srgbToLinear(value.getColor()));
+            break;
         case UniformVec4:
             setUniform4f(name, value.getVec4Val());
             break;
@@ -190,7 +194,7 @@ void MShader::setTexture(const SString &name, const SString& textureAssetPath, c
     }
     auto location = getUniformLocation(name);
     if (location != -1) {
-        texture->bind(location, index);
+        asset->bindForRendering(index);
         glUniform1i(location, static_cast<GLint>(index));
     }
-}
+}

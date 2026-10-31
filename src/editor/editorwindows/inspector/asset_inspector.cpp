@@ -682,6 +682,23 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
                     asset->setCompression(static_cast<ETextureCompression>(cur));
             }
 
+            // sRGB -- colour textures are decoded to linear on sample
+            {
+                bool srgb = asset->isSrgb();
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("sRGB:");
+                ImGui::TableSetColumnIndex(1);
+                if (ImGui::Checkbox("##srgb", &srgb))
+                    asset->setSrgb(srgb);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip(
+                        "On for colour textures (albedo, UI, skybox faces).\n"
+                        "Off for data textures (normal maps, masks, roughness).");
+            }
+
             ImGui::EndTable();
         }
     }

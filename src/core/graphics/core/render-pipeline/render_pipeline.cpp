@@ -3,6 +3,7 @@
 //
 #include <GL/glew.h>
 #include "render_pipeline.h"
+#include "core/engine/texture/textureasset.h"
 #include "buffers/render/renderbuffer.h"
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/camera/viewmanagement.h"
@@ -174,6 +175,9 @@ void MRenderPipeline::render()
 
     for (auto* stage : renderStages)
         stage->render(this);
+
+    // Hand sRGB textures back to the UI with decoding off.
+    MTextureAsset::endRenderingDecode();
     STOP_PROFILING_SAMPLE("RenderPipeline.Render")
 }
 
