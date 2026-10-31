@@ -3,6 +3,7 @@
 //
 
 #include "asset_reference_controls.h"
+#include "inspector_field.h"
 #include "SFML/Graphics/Texture.hpp"
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/engine/assetmanagement/assetmanager/assetimporter.h"
@@ -32,7 +33,7 @@ TAssetHandle<MAsset> MAssetReferenceControl::getAssetReference() const
 
 void MAssetReferenceControl::setAssetReference(TAssetHandle<MAsset> asset)
 {
-    if (asset) assetIdReference = asset->getAssetId();
+    assetIdReference = asset.getAssetId();
 }
 
 sf::Texture* MAssetReferenceControl::getFileIcon(IAssetManagerSubsystem* am, TAssetHandle<MAsset> asset) const
@@ -93,7 +94,6 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
 {
     static constexpr float THUMB_SIZE   = 28.0f;
     static constexpr float ROW_H        = THUMB_SIZE + 8.0f;   // 36 px
-    static constexpr float CLEAR_BTN_W  = 20.0f;
     static constexpr float GAP          = 4.0f;
 
     bool modified = false;
@@ -101,10 +101,45 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
     const auto current   = assetIdReference.empty() ? TAssetHandle<MAsset>() : getAssetReference();
     sf::Texture* icon = getFileIcon(am, current);
 
+    // Reference status, shown as an icon before the clear button.
+    EInspectorStatus status        = EInspectorStatus::Info;
+    std::string      statusTooltip;
+    bool             showStatus    = true;
+    if (assetIdReference.empty())
+    {
+        status        = EInspectorStatus::Info;
+        statusTooltip = "Nothing assigned. Drag an asset here.";
+    }
+    else if (!current)
+    {
+        status        = EInspectorStatus::Error;
+        statusTooltip = "Missing asset - nothing found with ID\n" + assetIdReference.str();
+    }
+    else if (canAcceptAssetFuncCallback && !canAcceptAssetFuncCallback(current))
+    {
+        status        = EInspectorStatus::Warning;
+        statusTooltip = "Wrong asset type for this field:\n" + current->getPath().str();
+    }
+    else if (!current->isValid())
+    {
+        status        = EInspectorStatus::Warning;
+        statusTooltip = "Asset failed to load:\n" + current->getPath().str();
+    }
+    else
+    {
+        showStatus = false;
+    }
+
     ImDrawList* dl    = ImGui::GetWindowDrawList();
     ImVec2      p     = ImGui::GetCursorScreenPos();
     float       avail = ImGui::GetContentRegionAvail().x;
-    const float dropW = std::max(avail - CLEAR_BTN_W - GAP, 10.f);
+    // Right-hand strip: [status] [remove], two frame-height squares centred
+    // on the row. The status square is always reserved so names line up.
+    const float squareW = ImGui::GetFrameHeight();
+    const float squareY = p.y + (ROW_H - squareW) * 0.5f;
+    const float removeX = p.x + avail - squareW;
+    const float statusX = removeX - GAP - squareW;
+    const float dropW   = std::max(statusX - GAP - p.x, 10.f);
 
     ImGui::PushID(getGUID().c_str());
 
@@ -160,11 +195,11 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
     if (dragHovering)
     {
         ImU32 tint = dragValid ? IM_COL32(50, 180, 80, 100) : IM_COL32(180, 50, 50, 100);
-        dl->AddRectFilled(p, {p.x + dropW, p.y + ROW_H}, tint, 4.f);
+        dl->AddRectFilled(p, {p.x + dropW, p.y + ROW_H}, tint, 0.0f);
     }
     else if (hovered)
     {
-        dl->AddRectFilled(p, {p.x + avail, p.y + ROW_H}, IM_COL32(255, 255, 255, 12), 4.f);
+        dl->AddRectFilled(p, {p.x + avail, p.y + ROW_H}, IM_COL32(255, 255, 255, 12), 0.0f);
     }
 
     ImGui::SetCursorScreenPos({p.x + 2.f, p.y + 4.f});
@@ -177,7 +212,11 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
     const float nameX = p.x + THUMB_SIZE + 8.f;
     ImGui::SetCursorScreenPos({nameX, p.y + (ROW_H - ImGui::GetTextLineHeight()) * 0.5f});
 
-    if (current)
+    if (!current && !assetIdReference.empty() && !dragHovering)
+    {
+        ImGui::TextColored(MInspectorField::getStatusColor(EInspectorStatus::Error), "(missing)");
+    }
+    else if (current)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.9f, 0.9f, 1.f));
         ImGui::PushTextWrapPos(p.x + dropW - 2.f);
@@ -197,20 +236,22 @@ bool MAssetReferenceControl::drawCompactControl(const SString& label)
         ImGui::PopStyleColor();
     }
 
-    ImGui::SetCursorScreenPos({p.x + avail - CLEAR_BTN_W - 2.f,
-                               p.y + (ROW_H - ImGui::GetFrameHeight()) * 0.5f});
-    ImGui::BeginDisabled(!current);
-    ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.55f, 0.10f, 0.10f, 0.80f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.80f, 0.20f, 0.20f, 1.00f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.40f, 0.05f, 0.05f, 1.00f));
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.f, 2.f));
-    if (ImGui::Button("x", {CLEAR_BTN_W, ImGui::GetFrameHeight()}))
+    if (showStatus)
+    {
+        // statusIcon centres vertically on a frame-height line; centre it
+        // horizontally in its square too.
+        ImGui::SetCursorScreenPos({statusX + (squareW - MInspectorField::STATUS_ICON_SIZE) * 0.5f, squareY});
+        MInspectorField::statusIcon(status, statusTooltip.c_str());
+    }
+
+    // Clearing is allowed for a missing reference too.
+    ImGui::SetCursorScreenPos({removeX, squareY});
+    ImGui::BeginDisabled(assetIdReference.empty());
+    if (MInspectorField::RemoveButton("##clear", "Clear reference"))
     {
         assetIdReference.clear();
         modified = true;
     }
-    ImGui::PopStyleVar();
-    ImGui::PopStyleColor(3);
     ImGui::EndDisabled();
 
     ImGui::PopID();

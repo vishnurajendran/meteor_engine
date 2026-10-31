@@ -29,7 +29,7 @@ static constexpr ImU32  OVL_BORDER      = IM_COL32(70,  70,  70,  200);
 static constexpr ImU32  OVL_BTN_ACTIVE  = IM_COL32(44,  93,  206, 230);
 static constexpr ImU32  OVL_BTN_HOVER   = IM_COL32(255, 255, 255, 30);
 static constexpr ImU32  OVL_DIVIDER     = IM_COL32(80,  80,  80,  200);
-static constexpr float  OVL_ROUNDING    = 5.0f;
+static constexpr float  OVL_ROUNDING    = 0.0f;
 static constexpr float  OVL_PAD         = 6.0f;
 
 // Fixed icon render size - never derived from tex.getSize() so a failed

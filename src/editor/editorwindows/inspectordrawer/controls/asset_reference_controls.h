@@ -25,7 +25,11 @@ public:
     MAssetReferenceControl() = default;
     explicit MAssetReferenceControl(TAssetHandle<MAsset> asset);
     TAssetHandle<MAsset> getAssetReference() const;
+    // Stores the handle's ID even when the asset can't be resolved, so a
+    // missing reference stays visible (as an error) instead of looking empty.
     void setAssetReference(TAssetHandle<MAsset> asset);
+    void setAssetId(const SString& assetId) { assetIdReference = assetId; }
+    const SString& getAssetId() const { return assetIdReference; }
     bool drawControl(const SString& label);
 
     // Single-row compact version - fits inside inspector table cells.

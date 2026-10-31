@@ -10,6 +10,7 @@
 #include "core/engine/composition/composition_asset.h"
 #include "core/engine/composition/composition_utility.h"
 #include "editor/app/editorapplication.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 
 #include "imgui.h"
 #include "imgui-SFML.h"
@@ -17,6 +18,7 @@
 
 #include <typeindex>
 #include <cctype>
+#include <algorithm>
 #include "core/memory/mnew.h"
 
 // ---------------------------------------------------------------------------
@@ -74,7 +76,7 @@ MSpatialEntityInspectorDrawer::fieldDrawerMap =
     { std::type_index(typeid(Field<float>)), [](MSpatialEntityInspectorDrawer*, FieldBase* f) -> bool {
         auto* tf = static_cast<Field<float>*>(f);
         float val = tf->get();
-        if (ImGui::DragFloat("##v", &val, 0.01f, 0.0f, 0.0f, "%.3f")) {
+        if (MInspectorField::DragFloat("##v", &val, 0.01f, 0.0f, 0.0f, "%.3f")) {
             tf->set(val);
             return true;
         }
@@ -84,7 +86,7 @@ MSpatialEntityInspectorDrawer::fieldDrawerMap =
     { std::type_index(typeid(Field<int>)), [](MSpatialEntityInspectorDrawer*, FieldBase* f) -> bool {
         auto* tf = static_cast<Field<int>*>(f);
         int val = tf->get();
-        if (ImGui::DragInt("##v", &val)) {
+        if (MInspectorField::DragInt("##v", &val)) {
             tf->set(val);
             return true;
         }
@@ -158,9 +160,11 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target) {
         return;
 
     if (ImGui::CollapsingHeader("Basic Properties", ImGuiTreeNodeFlags_DefaultOpen)) {
-        bool enabled = target->getEnabled();
-        if (ImGui::Checkbox("Enabled", &enabled))
-            target->setEnabled(enabled);
+        START_FIELD_DRAW("Enabled")
+            bool enabled = target->getEnabled();
+            if (ImGui::Checkbox("##v", &enabled))
+                target->setEnabled(enabled);
+        END_FIELD_DRAW()
 
         auto name = target->getName();
         if (drawTextField("Entity Name", name))
@@ -195,30 +199,54 @@ bool MSpatialEntityInspectorDrawer::drawCompositionField(MSpatialEntity* target)
     // selected entity, so it's one subtree per frame.
     const ECompositionInstanceState state = MCompositionUtility::getState(root);
 
-    ImGui::TextDisabled("Asset:");
-    ImGui::SameLine();
-    ImGui::TextUnformatted(asset ? asset->getPath().c_str() : "(missing)");
+    START_FIELD_DRAW("Asset")
+        if (asset)
+            ImGui::TextUnformatted(asset->getPath().c_str());
+        else
+            MInspectorField::statusText(EInspectorStatus::Error, "(missing)",
+                                        "The .comp this instance came from can't be found.");
+    END_FIELD_DRAW()
 
     if (root != target)
     {
-        ImGui::TextDisabled("Instance root:");
-        ImGui::SameLine();
-        ImGui::TextUnformatted(root->getName().c_str());
+        START_FIELD_DRAW("Instance Root")
+            ImGui::TextUnformatted(root->getName().c_str());
+        END_FIELD_DRAW()
     }
 
-    const char* stateLabel = "";
-    ImVec4      stateColor = ImVec4(0.6f, 0.6f, 0.6f, 1.0f);
+    const char*      stateLabel   = "";
+    const char*      stateTooltip = nullptr;
+    EInspectorStatus stateStatus  = EInspectorStatus::Info;
     switch (state)
     {
-    case ECompositionInstanceState::Synced:       stateLabel = "Synced";                  stateColor = ImVec4(0.45f, 0.80f, 0.45f, 1.0f); break;
-    case ECompositionInstanceState::Modified:     stateLabel = "Modified (unsaved)";      stateColor = ImVec4(0.95f, 0.80f, 0.30f, 1.0f); break;
-    case ECompositionInstanceState::OutOfDate:    stateLabel = "Out of date";             stateColor = ImVec4(0.95f, 0.55f, 0.25f, 1.0f); break;
-    case ECompositionInstanceState::MissingAsset: stateLabel = "Asset missing";           stateColor = ImVec4(0.95f, 0.35f, 0.35f, 1.0f); break;
+    case ECompositionInstanceState::Synced:
+        stateLabel   = "Synced";
+        stateStatus  = EInspectorStatus::Info;
+        stateTooltip = "This instance matches its .comp.";
+        break;
+    case ECompositionInstanceState::Modified:
+        stateLabel   = "Modified (unsaved)";
+        stateStatus  = EInspectorStatus::Warning;
+        stateTooltip = "This instance has changes that aren't saved to the .comp.\n"
+                       "Save to write them, or Reset to discard them.";
+        break;
+    case ECompositionInstanceState::OutOfDate:
+        stateLabel   = "Out of date";
+        stateStatus  = EInspectorStatus::Warning;
+        stateTooltip = "The .comp changed since this instance was built.\n"
+                       "Reset to rebuild it from the .comp.";
+        break;
+    case ECompositionInstanceState::MissingAsset:
+        stateLabel   = "Asset missing";
+        stateStatus  = EInspectorStatus::Error;
+        stateTooltip = "The .comp this instance came from can't be found.\n"
+                       "Unlink to keep the entities as plain entities.";
+        break;
     default: break;
     }
-    ImGui::TextDisabled("State:");
-    ImGui::SameLine();
-    ImGui::TextColored(stateColor, "%s", stateLabel);
+    START_FIELD_DRAW("State")
+        MInspectorField::statusText(stateStatus, stateLabel, stateTooltip);
+    END_FIELD_DRAW()
 
     // Saving / resetting during play would bake runtime values into the asset
     // (or rebuild entities mid-simulation), so both are editor-time only.
@@ -269,17 +297,19 @@ void MSpatialEntityInspectorDrawer::drawDefaultFields(MSpatialEntity* target) {
 void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
 {
     const auto& fields = target->getFields();
-    if (fields.empty())
+
+    // Skip the section entirely when none of the fields have a drawer (e.g.
+    // only internal/unsupported types), so it doesn't show an empty header.
+    const bool anyDrawable = std::any_of(fields.begin(), fields.end(), [](FieldBase* f) {
+        return fieldDrawerMap.count(std::type_index(typeid(*f))) > 0;
+    });
+    if (!anyDrawable)
         return;
 
     // Strip the "M" prefix and space out PascalCase words for the header.
     const std::string headerName = formatTypeName(target->typeInfo().name);
     if (!ImGui::CollapsingHeader(headerName.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
         return;
-
-    // Label column width -- wide enough for most two-word formatted names.
-    // Very long names will clip, which is acceptable.
-    const float labelWidth = 110.0f;
 
     for (auto* f : fields)
     {
@@ -290,9 +320,7 @@ void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
 
         if (it != fieldDrawerMap.end())
         {
-            // Vector types produce their own multi-column table layout,
-            // so they are called standalone. Scalar types get wrapped in
-            // a shared two-column label | widget table.
+            // Vector drawers lay out their own field row (label + axes).
             const bool isVector =
                 tid == std::type_index(typeid(Field<SVector3>)) ||
                 tid == std::type_index(typeid(Field<SVector2>));
@@ -303,27 +331,9 @@ void MSpatialEntityInspectorDrawer::drawFields(MSpatialEntity* target)
             }
             else
             {
-                const std::string displayName = formatDisplayName(f->name);
-
-                if (ImGui::BeginTable("##field_row", 2, ImGuiTableFlags_None,
-                                      ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-                {
-                    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,
-                                            labelWidth);
-                    ImGui::TableSetupColumn("val", ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableNextRow();
-
-                    ImGui::TableSetColumnIndex(0);
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::TextUnformatted(displayName.c_str());
-
-                    ImGui::TableSetColumnIndex(1);
-                    ImGui::SetNextItemWidth(-FLT_MIN);
-
+                START_FIELD_DRAW(formatDisplayName(f->name))
                     it->second(this, f);
-
-                    ImGui::EndTable();
-                }
+                END_FIELD_DRAW()
             }
         }
         // Unsupported types are silently skipped. Add an else branch here
@@ -342,45 +352,20 @@ void MSpatialEntityInspectorDrawer::drawScriptField(MSpatialEntity* target)
     if (!ImGui::CollapsingHeader("Script", ImGuiTreeNodeFlags_DefaultOpen))
         return;
 
-    // Read the asset ID directly from the field, no resolution needed.
-    // This is stable regardless of which asset manager path resolves.
-    SString entityScriptId = target->getScriptAssetId();
+    // Keep the control on the entity's stored asset ID (after scene load,
+    // undo, or any external change). The raw ID is used rather than a resolved
+    // asset so a missing script still shows as an error in the field.
+    const SString entityScriptId = target->getScriptAssetId();
+    if (scriptRefControl->getAssetId() != entityScriptId)
+        scriptRefControl->setAssetId(entityScriptId);
 
-    // Read what the control currently references
-    auto controlHandle = scriptRefControl->getAssetReference();
-    SString controlId  = controlHandle.isNull() ? SString() : controlHandle.getAssetId();
-
-    // Sync the control to match the entity's stored reference.
-    // This runs after scene load, undo, or any external change to the field.
-    if (entityScriptId != controlId)
-    {
-        if (!entityScriptId.empty())
+    START_FIELD_DRAW("Script Asset")
+        if (scriptRefControl->drawCompactControl(""))
         {
-            // Resolve the entity's stored asset ID through the asset manager
-            // and push the result into the control so it displays correctly.
-            auto* am = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
-            if (am)
-            {
-                auto handle = am->getAssetById<MAsset>(entityScriptId);
-                if (!handle.isNull())
-                    scriptRefControl->setAssetReference(handle);
-            }
+            MAsset* newAsset = scriptRefControl->getAssetReference().get();
+            target->setScriptAssetRef(newAsset);
         }
-        else
-        {
-            delete scriptRefControl;
-            scriptRefControl = mnew<MAssetReferenceControl>();
-            scriptRefControl->canAcceptAssetFuncCallback = [](TAssetHandle<MAsset> asset) {
-                return dynamic_cast<MLuaScriptAsset*>(asset.get()) != nullptr;
-            };
-        }
-    }
-
-    if (scriptRefControl->drawCompactControl("Script Asset"))
-    {
-        MAsset* newAsset = scriptRefControl->getAssetReference().get();
-        target->setScriptAssetRef(newAsset);
-    }
+    END_FIELD_DRAW()
 
     drawBehaviourTuning(target);
 }
@@ -410,15 +395,13 @@ void MSpatialEntityInspectorDrawer::drawBehaviourTuning(MSpatialEntity* target)
     if (fieldSet->fields.empty())
         return;
 
-    // A bordered box like the Camera section; AutoResizeY sizes it to its
-    // fields, since the count depends on the script.
-    ImGui::BeginChild("##BehaviourTuning", ImVec2(0.0f, 0.0f), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY);
-    ImGui::TextUnformatted("Behaviour Tuning");
+    if (!ImGui::CollapsingHeader("Behaviour Tuning", ImGuiTreeNodeFlags_DefaultOpen))
+        return;
 
     const SString scriptId = target->getScriptAssetId();
-    constexpr float labelWidth = 110.0f;
-    constexpr float resetWidth = 46.0f;
-    const ImVec4 overriddenColor(1.0f, 0.75f, 0.3f, 1.0f);
+    const ImVec4  overriddenColor(0, 1, 1, 1.0f);
+    const ImVec4  normalColor = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+    const float   resetWidth  = MInspectorField::getResetButtonWidth();
 
     for (const auto& field : fieldSet->fields)
     {
@@ -445,24 +428,12 @@ void MSpatialEntityInspectorDrawer::drawBehaviourTuning(MSpatialEntity* target)
                 value = *stored;
         }
 
-        if (ImGui::BeginTable("##tuning_row", 3, ImGuiTableFlags_None, ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-        {
-            ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed, labelWidth);
-            ImGui::TableSetupColumn("val", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("rst", ImGuiTableColumnFlags_WidthFixed, resetWidth);
-            ImGui::TableNextRow();
-
-            // Label - highlighted when this entity overrides the default.
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            const std::string label = formatDisplayName(field.name.str());
-            if (overridden)
-                ImGui::TextColored(overriddenColor, "%s", label.c_str());
-            else
-                ImGui::TextUnformatted(label.c_str());
-
-            ImGui::TableSetColumnIndex(1);
-            ImGui::SetNextItemWidth(-FLT_MIN);
+        // Label is highlighted when this entity overrides the script default.
+        const std::string label = formatDisplayName(field.name.str());
+        // Every row reserves the reset cell so the columns stay even.
+        MInspectorField::setNextFieldTrailingCell(resetWidth);
+        START_FIELD_DRAW(label, overridden ? overriddenColor : normalColor,
+                         overridden ? "Overridden on this entity" : nullptr)
 
             bool changed = false;
             switch (type)
@@ -477,14 +448,14 @@ void MSpatialEntityInspectorDrawer::drawBehaviourTuning(MSpatialEntity* target)
                 case EDynValueType::Integer:
                 {
                     int v = std::get<int>(value.value);
-                    if ((changed = ImGui::DragInt("##v", &v, 0.1f)))
+                    if ((changed = MInspectorField::DragInt("##v", &v, 0.1f)))
                         value.setInt(v);
                     break;
                 }
                 case EDynValueType::Float:
                 {
                     float v = std::get<float>(value.value);
-                    if ((changed = ImGui::DragFloat("##v", &v, 0.01f, 0.0f, 0.0f, "%.3f")))
+                    if ((changed = MInspectorField::DragFloat("##v", &v, 0.01f, 0.0f, 0.0f, "%.3f")))
                         value.setFloat(v);
                     break;
                 }
@@ -501,21 +472,15 @@ void MSpatialEntityInspectorDrawer::drawBehaviourTuning(MSpatialEntity* target)
             if (changed)
                 target->setTuningOverride(scriptId, field.name, value);
 
-            ImGui::TableSetColumnIndex(2);
             if (overridden)
             {
-                if (ImGui::SmallButton("Reset"))
+                MInspectorField::trailingCell();
+                if (MInspectorField::ResetButton("##reset", "Back to the script's default"))
                     target->clearTuningOverride(scriptId, field.name);
-                if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("Back to the script's default");
             }
-
-            ImGui::EndTable();
-        }
+        END_FIELD_DRAW()
         ImGui::PopID();
     }
-
-    ImGui::EndChild();
 }
 
 // ---------------------------------------------------------------------------
@@ -524,62 +489,39 @@ void MSpatialEntityInspectorDrawer::drawBehaviourTuning(MSpatialEntity* target)
 
 bool MSpatialEntityInspectorDrawer::drawLightIntensityAndColor(float& intensity, SColor& color) {
     bool changed = false;
-    // Two-column table: left col = label, right col = widget.
-    // This keeps Intensity and Color labels pixel-aligned regardless of text length.
-    constexpr float LABEL_COL_WIDTH = 80.0f;
-    if (!ImGui::BeginTable("##LightProps", 2,
-                           ImGuiTableFlags_None,
-                           ImVec2(ImGui::GetContentRegionAvail().x, 0)))
-        return false;
 
-    ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed,
-                            LABEL_COL_WIDTH);
-    ImGui::TableSetupColumn("widget", ImGuiTableColumnFlags_WidthStretch);
-
-    // --- Intensity row ---
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Intensity");
-
-    ImGui::TableSetColumnIndex(1);
-    ImGui::SetNextItemWidth(-FLT_MIN);
-    if (ImGui::DragFloat("##Intensity", &intensity, 0.01f, 0.0f, FLT_MAX, "%.2f"))
-        changed = true;
-
-    // --- Color row ---
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Color");
-
-    ImGui::TableSetColumnIndex(1);
-    // Show a compact swatch. Clicking it opens a popup with the full picker --
-    // this keeps the panel compact when the user doesn't need to edit color.
-    float cols[4] = { color.r, color.g, color.b, color.a };
-    const ImVec2 swatchSize = { ImGui::GetContentRegionAvail().x, 20.0f };
-    if (ImGui::ColorButton("##ColorSwatch",
-                           ImVec4(cols[0], cols[1], cols[2], cols[3]),
-                           ImGuiColorEditFlags_Float | ImGuiColorEditFlags_AlphaPreview,
-                           swatchSize))
-    {
-        ImGui::OpenPopup("##ColorPickerPopup");
-    }
-
-    if (ImGui::BeginPopup("##ColorPickerPopup")) {
-        ImGui::TextDisabled("Light Color");
-        ImGui::Separator();
-        if (ImGui::ColorPicker4("##LightColorPicker", cols,
-                                ImGuiColorEditFlags_Float |
-                                ImGuiColorEditFlags_DisplayRGB |
-                                ImGuiColorEditFlags_DisplayHex)) {
-            color   = SColor(cols[0], cols[1], cols[2], cols[3]);
+    START_FIELD_DRAW("Intensity")
+        if (MInspectorField::DragFloat("##v", &intensity, 0.01f, 0.0f, FLT_MAX, "%.2f"))
             changed = true;
-        }
-        ImGui::EndPopup();
-    }
+    END_FIELD_DRAW()
 
-    ImGui::EndTable();
+    START_FIELD_DRAW("Color")
+        // Show a compact swatch. Clicking it opens a popup with the full picker --
+        // this keeps the panel compact when the user doesn't need to edit color.
+        float cols[4] = { color.r, color.g, color.b, color.a };
+        const ImVec2 swatchSize = { ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight() };
+        if (ImGui::ColorButton("##ColorSwatch",
+                               ImVec4(cols[0], cols[1], cols[2], cols[3]),
+                               ImGuiColorEditFlags_Float | ImGuiColorEditFlags_AlphaPreview,
+                               swatchSize))
+        {
+            ImGui::OpenPopup("##ColorPickerPopup");
+        }
+
+        if (ImGui::BeginPopup("##ColorPickerPopup")) {
+            ImGui::TextDisabled("Light Color");
+            ImGui::Separator();
+            if (ImGui::ColorPicker4("##LightColorPicker", cols,
+                                    ImGuiColorEditFlags_Float |
+                                    ImGuiColorEditFlags_DisplayRGB |
+                                    ImGuiColorEditFlags_DisplayHex)) {
+                color   = SColor(cols[0], cols[1], cols[2], cols[3]);
+                changed = true;
+            }
+            ImGui::EndPopup();
+        }
+    END_FIELD_DRAW()
+
     return changed;
 }
 
@@ -598,7 +540,7 @@ void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char* label,
     dl->AddRectFilled(pos,
                       ImVec2(pos.x + boxWidth, pos.y + frameH),
                       col32,
-                      3.0f);
+                      0.0f);
 
     ImVec2 textSize = ImGui::CalcTextSize(label);
     ImVec2 textPos  = ImVec2(pos.x + (boxWidth  - textSize.x) * 0.5f,
@@ -609,22 +551,13 @@ void MSpatialEntityInspectorDrawer::drawColoredBoxOverLabel(const char* label,
 }
 
 bool MSpatialEntityInspectorDrawer::drawTextField(const SString& label, SString& text) {
-    ImGui::PushID(&label);
-    auto size = ImGui::GetContentRegionAvail();
-
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
-    ImGui::Text("%s", label.c_str());
-    ImGui::SameLine();
-
-    std::string name = text;
-    ImGui::SetNextItemWidth(size.x - 20.0f);
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
-    const bool res = ImGui::InputText("##EntityNameField", &name,
-                                      ImGuiInputTextFlags_EnterReturnsTrue);
-    if (res)
-        text = name;
-
-    ImGui::PopID();
+    bool res = false;
+    START_FIELD_DRAW(label.c_str())
+        std::string value = text;
+        res = ImGui::InputText("##v", &value, ImGuiInputTextFlags_EnterReturnsTrue);
+        if (res)
+            text = value;
+    END_FIELD_DRAW()
     return res;
 }
 
@@ -688,82 +621,41 @@ void MSpatialEntityInspectorDrawer::drawTransformField(MSpatialEntity* target)
         target->setRelativeScale(scale);
 }
 
-bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVector3& value) {
-    const float badgeW   = ImGui::GetFrameHeight();
-
-    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f, 5.0f));
-
-    const ImGuiTableFlags flags = ImGuiTableFlags_None;
-    if (!ImGui::BeginTable(STR("##xyz_" + label.str()).c_str(), 4, flags)) {
-        ImGui::PopStyleVar();
-        return false;
-    }
-
-    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f);
-    ImGui::TableSetupColumn("x",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
-    ImGui::TableSetupColumn("y",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
-    ImGui::TableSetupColumn("z",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
-    ImGui::TableNextRow();
-
-    ImGui::TableSetColumnIndex(0);
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(label.c_str());
-
-    auto drawAxis = [&](int col, const char* badge, ImVec4 badgeColor,
-                        float& component, const char* id) -> bool {
-        ImGui::TableSetColumnIndex(col);
-        drawColoredBoxOverLabel(badge, badgeColor, badgeW);
-        ImGui::SameLine(0.0f, 2.0f);
-        ImGui::SetNextItemWidth(-FLT_MIN);
-        return ImGui::DragFloat(id, &component, 0.1f, 0.0f, 0.0f, "%.2f");
+bool MSpatialEntityInspectorDrawer::drawAxisRow(const SString& label, float* components, int count) {
+    static constexpr const char* kBadges[] = { "X", "Y", "Z" };
+    static const ImVec4 kColors[] = {
+        ImVec4(0.75f, 0.12f, 0.12f, 1.0f),
+        ImVec4(0.12f, 0.65f, 0.12f, 1.0f),
+        ImVec4(0.12f, 0.25f, 0.75f, 1.0f),
     };
 
-    const bool res1 = drawAxis(1, "X", ImVec4(0.75f, 0.12f, 0.12f, 1.0f), value.x,
-                               STR("##" + label.str() + "X").c_str());
-    const bool res2 = drawAxis(2, "Y", ImVec4(0.12f, 0.65f, 0.12f, 1.0f), value.y,
-                               STR("##" + label.str() + "Y").c_str());
-    const bool res3 = drawAxis(3, "Z", ImVec4(0.12f, 0.25f, 0.75f, 1.0f), value.z,
-                               STR("##" + label.str() + "Z").c_str());
+    bool changed = false;
+    START_FIELD_DRAW(label.c_str())
+        // Split the value column evenly between the axes.
+        const float gap    = ImGui::GetStyle().ItemInnerSpacing.x;
+        const float badgeW = ImGui::GetFrameHeight();
+        const float cellW  = (ImGui::GetContentRegionAvail().x - gap * (count - 1)) / count;
 
-    ImGui::EndTable();
-    ImGui::PopStyleVar();
-    return res1 || res2 || res3;
+        for (int i = 0; i < count; ++i)
+        {
+            if (i > 0)
+                ImGui::SameLine(0.0f, gap);
+            ImGui::PushID(i);
+            drawColoredBoxOverLabel(kBadges[i], kColors[i], badgeW);
+            ImGui::SameLine(0.0f, 2.0f);
+            ImGui::SetNextItemWidth(std::max(cellW - badgeW - 2.0f, 1.0f));
+            if (MInspectorField::DragFloat("##v", &components[i], 0.1f, 0.0f, 0.0f, "%.2f"))
+                changed = true;
+            ImGui::PopID();
+        }
+    END_FIELD_DRAW()
+    return changed;
+}
+
+bool MSpatialEntityInspectorDrawer::drawXYZComponent(const SString& label, SVector3& value) {
+    return drawAxisRow(label, &value.x, 3);
 }
 
 bool MSpatialEntityInspectorDrawer::drawXYComponent(const SString& label, SVector2& value) {
-    const float badgeW = ImGui::GetFrameHeight();
-
-    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(4.0f, 5.0f));
-
-    if (!ImGui::BeginTable(STR("##xy_" + label.str()).c_str(), 3, ImGuiTableFlags_None)) {
-        ImGui::PopStyleVar();
-        return false;
-    }
-
-    ImGui::TableSetupColumn("lbl", ImGuiTableColumnFlags_WidthFixed,   72.0f);
-    ImGui::TableSetupColumn("x",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
-    ImGui::TableSetupColumn("y",   ImGuiTableColumnFlags_WidthStretch, 1.0f);
-    ImGui::TableNextRow();
-
-    ImGui::TableSetColumnIndex(0);
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(label.c_str());
-
-    auto drawAxis = [&](int col, const char* badge, ImVec4 badgeColor,
-                        float& component, const char* id) -> bool {
-        ImGui::TableSetColumnIndex(col);
-        drawColoredBoxOverLabel(badge, badgeColor, badgeW);
-        ImGui::SameLine(0.0f, 2.0f);
-        ImGui::SetNextItemWidth(-FLT_MIN);
-        return ImGui::DragFloat(id, &component, 0.1f, 0.0f, 0.0f, "%.2f");
-    };
-
-    const bool res1 = drawAxis(1, "X", ImVec4(0.75f, 0.12f, 0.12f, 1.0f), value.x,
-                               STR("##" + label.str() + "X").c_str());
-    const bool res2 = drawAxis(2, "Y", ImVec4(0.12f, 0.65f, 0.12f, 1.0f), value.y,
-                               STR("##" + label.str() + "Y").c_str());
-
-    ImGui::EndTable();
-    ImGui::PopStyleVar();
-    return res1 || res2;
+    return drawAxisRow(label, &value.x, 2);
 }

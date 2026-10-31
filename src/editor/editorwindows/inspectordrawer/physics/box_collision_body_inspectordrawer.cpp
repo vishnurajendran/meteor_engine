@@ -4,7 +4,10 @@
 
 #include "box_collision_body_inspectordrawer.h"
 
+#include <cstdio>
+
 #include "imgui.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
 #include "core/memory/mnew.h"
 
@@ -31,30 +34,19 @@ void MBoxCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
     if (!ImGui::CollapsingHeader("Box Shape", ImGuiTreeNodeFlags_DefaultOpen))
         return;
 
-    constexpr float LW = 140.0f;
-    if (!ImGui::BeginTable("##box_shape", 2, ImGuiTableFlags_None))
-        return;
-
-    ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
-    ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
-
     // Half extents with tooltip showing the full dimension
-    auto dragHalf = [&](const char* label, const char* id, Field<float>& field)
+    auto dragHalf = [&](const char* label, Field<float>& field)
     {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(label);
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Full size: %.3f", field.get() * 2.0f);
-        ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-        float v = field.get();
-        if (ImGui::DragFloat(id, &v, 0.005f, 0.001f, FLT_MAX, "%.3f"))
-            field.set(glm::max(v, 0.001f));
+        char tip[48];
+        std::snprintf(tip, sizeof(tip), "Full size: %.3f", field.get() * 2.0f);
+        START_FIELD_DRAW(label, tip)
+            float v = field.get();
+            if (MInspectorField::DragFloat("##v", &v, 0.005f, 0.001f, FLT_MAX, "%.3f"))
+                field.set(glm::max(v, 0.001f));
+        END_FIELD_DRAW()
     };
 
-    dragHalf("Half Extent X:", "##hx", body->halfExtentX);
-    dragHalf("Half Extent Y:", "##hy", body->halfExtentY);
-    dragHalf("Half Extent Z:", "##hz", body->halfExtentZ);
-
-    ImGui::EndTable();
+    dragHalf("Half Extent X", body->halfExtentX);
+    dragHalf("Half Extent Y", body->halfExtentY);
+    dragHalf("Half Extent Z", body->halfExtentZ);
 }

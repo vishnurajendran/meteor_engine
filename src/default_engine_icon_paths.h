@@ -39,6 +39,13 @@ struct SEngineAssetIconPaths
     static constexpr const char* LOWRES_TEX_BTTN_GIZMO_WORLDSPACE = "meteor_assets/engine_assets/icons/lowres/gizmo_world.png";
     static constexpr const char* LOWRES_TEX_BTTN_GIZMO_ENABLED    = "meteor_assets/engine_assets/icons/lowres/gizmo_visible.png";
     static constexpr const char* LOWRES_TEX_BTTN_GIZMO_DISABLED   = "meteor_assets/engine_assets/icons/lowres/gizmo_hidden.png";
+    static constexpr const char* LOWRES_TEX_BTTN_UNDO             = "meteor_assets/engine_assets/icons/lowres/undo.png";
+    static constexpr const char* LOWRES_TEX_BTTN_REMOVE           = "meteor_assets/engine_assets/icons/lowres/remove.png";
+
+    // Status Icons (16x16)
+    static constexpr const char* LOWRES_TEX_STATUS_INFO           = "meteor_assets/engine_assets/icons/lowres/info.png";
+    static constexpr const char* LOWRES_TEX_STATUS_WARNING        = "meteor_assets/engine_assets/icons/lowres/warning.png";
+    static constexpr const char* LOWRES_TEX_STATUS_ERROR          = "meteor_assets/engine_assets/icons/lowres/error.png";
 
 
     // Asset Icons

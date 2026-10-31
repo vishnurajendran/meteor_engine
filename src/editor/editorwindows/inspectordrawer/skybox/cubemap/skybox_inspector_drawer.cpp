@@ -6,6 +6,7 @@
 #include "core/engine/skybox/cubemapasset.h"
 #include "core/engine/skybox/skybox.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "imgui.h"
 #include "core/memory/mnew.h"
 
@@ -37,31 +38,15 @@ void MSkyboxInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
     if (ImGui::CollapsingHeader("Skybox", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        constexpr float LABEL_W = 120.f;
-        if (ImGui::BeginTable("##skybox_props", 2, ImGuiTableFlags_None))
-        {
-            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LABEL_W);
-            ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
+        // Sync the control with the entity's current cubemap asset.
+        // This handles external changes (e.g. scene load, undo).
+        const auto currentCubemap = skybox->getCubemapAsset();
+        if (cubemapAssetControl->getAssetReference().get() != currentCubemap.get())
+            cubemapAssetControl->setAssetReference(currentCubemap);
 
-            // Sync the control with the entity's current cubemap asset.
-            // This handles external changes (e.g. scene load, undo).
-            const auto currentCubemap = skybox->getCubemapAsset();
-            if (cubemapAssetControl->getAssetReference().get() != currentCubemap.get())
-                cubemapAssetControl->setAssetReference(currentCubemap);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Cubemap:");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::SetNextItemWidth(-FLT_MIN);
-
+        START_FIELD_DRAW("Cubemap")
             if (cubemapAssetControl->drawControl(""))
-            {
                 skybox->setCubemapAsset(cubemapAssetControl->getAssetReference());
-            }
-
-            ImGui::EndTable();
-        }
+        END_FIELD_DRAW()
     }
 }

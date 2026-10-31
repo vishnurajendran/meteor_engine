@@ -11,7 +11,7 @@
 static constexpr ImU32  OVL_BG_PROF      = IM_COL32(22,  22,  22,  210);
 static constexpr ImU32  OVL_BORDER_PROF  = IM_COL32(70,  70,  70,  200);
 static constexpr ImU32  OVL_DIVIDER_PROF = IM_COL32(80,  80,  80,  200);
-static constexpr float  OVL_ROUNDING_P   = 5.0f;
+static constexpr float  OVL_ROUNDING_P   = 0.0f;
 static constexpr float  OVL_PAD_P        = 6.0f;
 static constexpr float  GRAPH_RIGHT_PAD  = 12.0f; // <-- Extra breathing room on the right side
 
@@ -192,8 +192,8 @@ void MProfilerStatsDisplayer::drawLineGraph(const SProfilerHistory& history,
     ImVec2 pos = ImGui::GetCursorScreenPos();
     ImDrawList* dl = ImGui::GetWindowDrawList();
 
-    dl->AddRectFilled(pos, {pos.x + graphWidth, pos.y + graphHeight}, IM_COL32(14, 14, 14, 200), 3.0f);
-    dl->AddRect(pos, {pos.x + graphWidth, pos.y + graphHeight}, IM_COL32(45, 45, 45, 120), 3.0f);
+    dl->AddRectFilled(pos, {pos.x + graphWidth, pos.y + graphHeight}, IM_COL32(14, 14, 14, 200), 0.0f);
+    dl->AddRect(pos, {pos.x + graphWidth, pos.y + graphHeight}, IM_COL32(45, 45, 45, 120), 0.0f);
 
     float rangeMin = history.minVal;
     float rangeMax = history.maxVal;
