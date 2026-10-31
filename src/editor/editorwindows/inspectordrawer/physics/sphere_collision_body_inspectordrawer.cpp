@@ -5,6 +5,7 @@
 #include "sphere_collision_body_inspectordrawer.h"
 
 #include "imgui.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "core/engine/physics/entities/sphere_collision_body_entity.h"
 #include "core/memory/mnew.h"
 
@@ -30,20 +31,9 @@ void MSphereCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* target
     if (!ImGui::CollapsingHeader("Sphere Shape", ImGuiTreeNodeFlags_DefaultOpen))
         return;
 
-    constexpr float LW = 140.0f;
-    if (!ImGui::BeginTable("##sph_shape", 2, ImGuiTableFlags_None))
-        return;
-
-    ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
-    ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Radius:");
-    ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
-    float r = body->radius.get();
-    if (ImGui::DragFloat("##radius", &r, 0.005f, 0.001f, FLT_MAX, "%.3f"))
-        body->radius.set(glm::max(r, 0.001f));
-
-    ImGui::EndTable();
+    START_FIELD_DRAW("Radius")
+        float r = body->radius.get();
+        if (MInspectorField::DragFloat("##v", &r, 0.005f, 0.001f, FLT_MAX, "%.3f"))
+            body->radius.set(glm::max(r, 0.001f));
+    END_FIELD_DRAW()
 }

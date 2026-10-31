@@ -5,6 +5,7 @@
 #include "convexhull_collision_body_inspectordrawer.h"
 
 #include "imgui.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "core/engine/physics/entities/convexhull_collision_body_entity.h"
 #include "core/memory/mnew.h"
 
@@ -30,29 +31,14 @@ void MConvexHullCollisionBodyInspectorDrawer::onDrawInspector(MSpatialEntity* ta
     if (!ImGui::CollapsingHeader("Convex Hull Shape", ImGuiTreeNodeFlags_DefaultOpen))
         return;
 
-    constexpr float LW = 140.0f;
-    if (!ImGui::BeginTable("##cvx_shape", 2, ImGuiTableFlags_None))
-        return;
+    START_FIELD_DRAW("Mesh Asset")
+        const auto& assetRef = body->meshAsset.get();
+        if (assetRef.isEmpty())
+            ImGui::TextDisabled("(auto from child)");
+        else
+            ImGui::TextDisabled("%s", assetRef.getPath().c_str());
 
-    ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
-    ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
-
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted("Mesh Asset:");
-    ImGui::TableSetColumnIndex(1);
-    const auto& assetRef = body->meshAsset.get();
-    if (assetRef.isEmpty())
-        ImGui::TextDisabled("(auto from child)");
-    else
-        ImGui::TextDisabled("%s", assetRef.getPath().c_str());
-
-    if (!body->getPhysicsBody())
-    {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(1);
-        ImGui::TextDisabled("(waiting for mesh data...)");
-    }
-
-    ImGui::EndTable();
+        if (!body->getPhysicsBody())
+            ImGui::TextDisabled("(waiting for mesh data...)");
+    END_FIELD_DRAW()
 }

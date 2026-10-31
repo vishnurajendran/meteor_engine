@@ -17,6 +17,9 @@ protected:
     ImVec2 maxSize = ImVec2(FLT_MAX, FLT_MAX);
     bool open      = true;  // false: draw() does nothing; the X button sets this
     bool focusNext = false; // bring to front on the next draw (set when reopened)
+    // Window padding for this window. Negative = use the theme's padding.
+    // Set to {0, 0} for windows that lay out edge-to-edge bands themselves.
+    ImVec2 windowPadding = ImVec2(-1.0f, -1.0f);
 public:
     MImGuiSubWindow(int x, int y);
     SString getTitle() const;

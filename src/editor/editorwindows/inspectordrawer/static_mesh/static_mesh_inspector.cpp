@@ -4,6 +4,7 @@
 #include "core/graphics/core/material/MMaterialAsset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "core/memory/mnew.h"
 
 bool MStaticMeshInspectorDrawer::registered = []()
@@ -43,44 +44,29 @@ void MStaticMeshInspectorDrawer::onDrawInspector(MSpatialEntity* target)
 
     if (ImGui::CollapsingHeader("Static Mesh", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        constexpr float LW = 120.f;
-        if (ImGui::BeginTable("##sm", 2, ImGuiTableFlags_None))
-        {
-            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthFixed,   LW);
-            ImGui::TableSetupColumn("w", ImGuiTableColumnFlags_WidthStretch);
+        const auto cur        = sme->getStaticMeshAsset();
+        const auto controlRef = meshAssetControl->getAssetReference();
 
-            const auto cur        = sme->getStaticMeshAsset();
-            const auto controlRef = meshAssetControl->getAssetReference();
+        if (controlRef.getAssetId() != cur.getAssetId())
+            meshAssetControl->setAssetReference(cur);
 
-            if (controlRef.getAssetId() != cur.getAssetId())
-                meshAssetControl->setAssetReference(cur);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Mesh:");
-            ImGui::TableSetColumnIndex(1); ImGui::SetNextItemWidth(-FLT_MIN);
+        START_FIELD_DRAW("Mesh")
             if (meshAssetControl->drawControl(""))
             {
                 TAssetHandle<MStaticMeshAsset> meshRef = meshAssetControl->getAssetReference();
                 sme->setStaticMeshAsset(meshRef);
             }
+        END_FIELD_DRAW()
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Cast Shadow:");
-            ImGui::TableSetColumnIndex(1);
+        START_FIELD_DRAW("Cast Shadow")
             bool cs = sme->getCastsShadow();
-            if (ImGui::Checkbox("##cs", &cs)) sme->setCastsShadow(cs);
+            if (ImGui::Checkbox("##v", &cs)) sme->setCastsShadow(cs);
+        END_FIELD_DRAW()
 
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0); ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Show Mesh Bounds:");
-            ImGui::TableSetColumnIndex(1);
+        START_FIELD_DRAW("Show Mesh Bounds")
             bool gizmosEnabled = sme->getDrawGizmo();
-            if (ImGui::Checkbox("##dmb", &gizmosEnabled)) sme->setDrawGizmo(gizmosEnabled);
-
-            ImGui::EndTable();
-        }
+            if (ImGui::Checkbox("##v", &gizmosEnabled)) sme->setDrawGizmo(gizmosEnabled);
+        END_FIELD_DRAW()
     }
 
     const int slotCount = sme->getMaterialSlotCount();

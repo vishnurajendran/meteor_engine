@@ -61,14 +61,14 @@ void MEditorThemes::applyCommonStyle()
     style.PopupBorderSize    = 1;
     style.FrameBorderSize    = 1;
     style.TabBorderSize      = 1;
-    style.WindowRounding     = 7;
-    style.ChildRounding      = 4;
-    style.FrameRounding      = 3;
-    style.PopupRounding      = 4;
-    style.ScrollbarRounding  = 9;
-    style.GrabRounding       = 3;
+    style.WindowRounding     = 0;
+    style.ChildRounding      = 0;
+    style.FrameRounding      = 0;
+    style.PopupRounding      = 0;
+    style.ScrollbarRounding  = 0;
+    style.GrabRounding       = 0;
     style.LogSliderDeadzone  = 4;
-    style.TabRounding        = 4;
+    style.TabRounding        = 0;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

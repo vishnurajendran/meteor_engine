@@ -35,6 +35,9 @@ protected:
     bool drawXYZComponent(const SString& label, SVector3& value);
     bool drawXYComponent(const SString& label, SVector2& value);
 
+    // Label + `count` (2 or 3) badge-prefixed drag floats in one field row.
+    bool drawAxisRow(const SString& label, float* components, int count);
+
     // Draws intensity + colour picker. Returns true if either value changed.
     // Callers pass their own float/SColor locals and apply them only when needed.
     bool drawLightIntensityAndColor(float& intensity, SColor& color);

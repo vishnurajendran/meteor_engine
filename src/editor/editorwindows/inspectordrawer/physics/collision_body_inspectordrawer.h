@@ -25,14 +25,20 @@ public:
     void onDrawInspector(MSpatialEntity* target) override;
 
 protected:
-    // Draws a standard physics layer combo (or raw int fallback) into the
-    // currently open ImGui table. Extracted so subclasses can call it if they
-    // ever need to redraw the layer row independently.
+    // Shared field rows, so shape drawers that build their own Physics Body
+    // section (e.g. mesh) draw them identically.
+
+    // "Physics Layer" combo (or raw int fallback when the layers asset is missing).
     static void drawPhysicsLayerRow(class MCollisionBodyEntity* body);
 
-    // Draws the "Collision Events" / "Trigger Events" rows (two rows, each
-    // label + checkbox) into the currently open two-column ImGui table.
+    // "Collision Events" / "Trigger Events" checkboxes.
     static void drawContactEventRows(class MCollisionBodyEntity* body);
+
+    // "Linear Drag" / "Angular Drag".
+    static void drawDampingRows(class MCollisionBodyEntity* body);
+
+    // Read-only "CoM (world)" row.
+    static void drawCenterOfMassRow(const SVector3& com);
 };
 
 #endif // COLLISION_BODY_ENTITY_INSPECTORDRAWER_H

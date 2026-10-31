@@ -71,6 +71,8 @@ MEditorHierarchyWindow::MEditorHierarchyWindow() : MEditorHierarchyWindow(300, 6
 MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x, y)
 {
     title = "Hierarchy";
+    // Toolbar, tree and status bar are edge-to-edge bands; each pads itself.
+    windowPadding = ImVec2(0.0f, 0.0f);
 
     // mesh
     typeToIcon[MStaticMeshEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_STATICMESH);
@@ -133,16 +135,36 @@ static ImU32 getEntityStripColor(MSpatialEntity* entity)
     return STRIP_SPATIAL;
 }
 
+// Layout: three bands stacked with no gaps, flush with the window edges
+// (the window itself has no padding):
+//   [ toolbar   ] fixed height, + button and search
+//   [ tree      ] fills the rest, padded inside
+//   [ status    ] fixed height, entity count / selection
+static constexpr float HIER_TOOLBAR_H = 32.0f;
+static constexpr float HIER_STATUS_H  = 22.0f;
+static constexpr float HIER_PAD_X     = 8.0f;   // inner horizontal padding of every band
+static constexpr float HIER_TREE_PAD  = 4.0f;   // padding around the tree rows
+
 void MEditorHierarchyWindow::onGui(float deltaTime)
 {
     auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
 
-    drawToolbar();
+    // No vertical gap between the bands.
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 0.0f));
 
-    const float statusH = 22.0f;
+    drawToolbar();
 
     // Reset the visible-row counter used for alternating row tints
     hierRowIdx = 0;
+
+    // ---- Tree -------------------------------------------------------------
+    // Negative height = fill the window except the status bar.
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(HIER_TREE_PAD, HIER_TREE_PAD));
+    ImGui::BeginChild("##hier_tree",
+                      ImVec2(0.0f, -HIER_STATUS_H),
+                      ImGuiChildFlags_AlwaysUseWindowPadding,
+                      ImGuiWindowFlags_HorizontalScrollbar);
+    ImGui::PopStyleVar();
 
     // Tighten indent and row padding for the whole tree.
     // ImGui defaults (IndentSpacing=21, FramePadding.y=3) are sized for
@@ -151,15 +173,10 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,  ImVec2(2.0f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(4.0f, 1.0f));
 
-    ImGui::BeginChild("##hier_tree",
-                      ImVec2(0, ImGui::GetContentRegionAvail().y - statusH),
-                      false,
-                      ImGuiWindowFlags_HorizontalScrollbar);
-
     if (scene)
         drawSceneRoot(scene);
     else
-        ImGui::TextDisabled("  No active scene.");
+        ImGui::TextDisabled("No active scene.");
 
     // Click on empty space -> deselect
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) &&
@@ -187,6 +204,9 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
         ImGui::EndPopup();
     }
 
+    // Pop before EndChild so the child is laid out in the parent with the
+    // band spacing (0), not the tree's row spacing.
+    ImGui::PopStyleVar(3); // IndentSpacing, FramePadding, ItemSpacing
     ImGui::EndChild();
 
     // Asset dropped on empty space in the tree → new entity at the scene root.
@@ -201,33 +221,40 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
         ImGui::EndDragDropTarget();
     }
 
-    ImGui::PopStyleVar(3); // IndentSpacing, FramePadding, ItemSpacing
-
-    ImDrawList* dl = ImGui::GetWindowDrawList();
-    ImVec2 wpos    = ImGui::GetWindowPos();
-    ImVec2 wsize   = ImGui::GetWindowSize();
-    float  barY    = wpos.y + wsize.y - statusH;
-    dl->AddRectFilled({wpos.x, barY}, {wpos.x + wsize.x, barY + statusH}, COL_TOOLBAR_BG);
-    dl->AddLine({wpos.x, barY}, {wpos.x + wsize.x, barY}, COL_SEPARATOR);
-
-    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - statusH + 4.0f);
-    ImGui::SetCursorPosX(8.0f);
-
-    if (scene)
+    // ---- Status bar -------------------------------------------------------
+    // Height 0 = whatever is left, which is exactly HIER_STATUS_H.
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_TOOLBAR_BG));
+    ImGui::BeginChild("##hier_status", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     {
-        int n = countVisibleEntities(scene);
-        auto* sel = MEditorApplication::SelectedObject;
-        if (sel) ImGui::Text("%d entities  |  %s", n, sel->getName().c_str());
-        else     ImGui::Text("%d entities", n);
+        const ImVec2 pos  = ImGui::GetWindowPos();
+        const ImVec2 size = ImGui::GetWindowSize();
+        ImGui::GetWindowDrawList()->AddLine(pos, {pos.x + size.x, pos.y}, COL_SEPARATOR);
+
+        if (scene)
+        {
+            ImGui::SetCursorPos({HIER_PAD_X, (size.y - ImGui::GetTextLineHeight()) * 0.5f});
+            const int n   = countVisibleEntities(scene);
+            auto*     sel = MEditorApplication::SelectedObject;
+            if (sel) ImGui::Text("%d entities  |  %s", n, sel->getName().c_str());
+            else     ImGui::Text("%d entities", n);
+        }
     }
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
+
+    ImGui::PopStyleVar(); // band ItemSpacing
 }
 
 
 void MEditorHierarchyWindow::drawToolbar()
 {
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_TOOLBAR_BG));
-    ImGui::BeginChild("##hier_toolbar", ImVec2(0, 32), false);
-    ImGui::SetCursorPosY(6.0f);
+    ImGui::BeginChild("##hier_toolbar", ImVec2(0.0f, HIER_TOOLBAR_H), ImGuiChildFlags_None,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+    // Controls centred vertically, HIER_PAD_X in from both sides.
+    ImGui::SetCursorPos({HIER_PAD_X, (HIER_TOOLBAR_H - ImGui::GetFrameHeight()) * 0.5f});
 
     if (ImGui::Button("  +  "))
         ImGui::OpenPopup("##create_menu");
@@ -241,10 +268,16 @@ void MEditorHierarchyWindow::drawToolbar()
         ImGui::EndPopup();
     }
 
-    ImGui::SameLine(0, 8);
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 4.0f);
-    ImGui::InputTextWithHint("##search", "  Search entities...",
+    ImGui::SameLine(0.0f, HIER_PAD_X);
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - HIER_PAD_X);
+    ImGui::InputTextWithHint("##search", "Search entities...",
                               searchBuffer, sizeof(searchBuffer));
+
+    // Bottom edge, matching the status bar's top edge.
+    const ImVec2 pos  = ImGui::GetWindowPos();
+    const ImVec2 size = ImGui::GetWindowSize();
+    ImGui::GetWindowDrawList()->AddLine({pos.x, pos.y + size.y - 1.0f},
+                                        {pos.x + size.x, pos.y + size.y - 1.0f}, COL_SEPARATOR);
 
     ImGui::EndChild();
     ImGui::PopStyleColor();
@@ -434,7 +467,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         else
         {
             ImGui::GetWindowDrawList()->AddRect(
-                itemMin, itemMax, COL_DROP_OUTLINE, 3.0f, 0, 1.5f);
+                itemMin, itemMax, COL_DROP_OUTLINE, 0.0f, 0, 1.5f);
         }
 
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_ENTITY"))

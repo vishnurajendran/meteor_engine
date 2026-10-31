@@ -23,6 +23,8 @@
 #include "editor/editor_utils/editor_utility.h"
 #include "core/utils/logger.h"
 #include "core/meteor_utils.h"
+#include "editor/app/editorapplication.h"
+#include "editor/editorwindows/inspector/asset_inspector.h"
 
 // ---------------------------------------------------------------------------
 // Source access
@@ -165,7 +167,18 @@ bool MEditorAssetManager::unregisterAsset(const SString& path)
 
     auto it = assetMap.find(path);
     if (it != assetMap.end() && it->second)
+    {
         thumbnailCache.evict(it->second->getAssetId());
+
+        // The base class deletes the asset. If the inspector is showing it,
+        // drop the selection first or the inspector draws freed memory next
+        // frame. Stop the clip preview too, in case it is this asset playing.
+        if (MEditorApplication::SelectedObject == it->second)
+        {
+            MAssetInspector::releaseAudioPreview();
+            MEditorApplication::SelectedObject = nullptr;
+        }
+    }
 
     return MAssetManager::unregisterAsset(path);
 }

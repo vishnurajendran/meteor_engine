@@ -116,12 +116,26 @@ static constexpr ImU32 COL_SEPARATOR         = IM_COL32(55,  55,  55,  255);
 static constexpr ImU32 COL_TREE_SELECTED     = IM_COL32(26,  95,  180, 200);
 static constexpr ImU32 COL_RELOAD_FLASH      = IM_COL32(80,  200, 120, 255);
 
-static constexpr float TILE_ROUNDING  = 6.0f;
+static constexpr float TILE_ROUNDING  = 0.0f;
 static constexpr float TYPE_BAR_H     = 16.0f;
 static constexpr float NAME_AREA_H    = 30.0f;
 static constexpr float THUMB_PAD      = 3.0f;
 static constexpr float CARD_HPAD      = 5.0f;
 static constexpr float SHADOW_OFFSET  = 3.0f;
+
+// Window layout. The window has no padding; these bands stack flush with its
+// edges and with each other, and pad their own content:
+//   [ toolbar                          ]
+//   [ sources | splitter | breadcrumbs ]
+//   [         |          | asset items ]
+//   [ status bar                       ]
+static constexpr float AB_TOOLBAR_H    = 32.0f;
+static constexpr float AB_STATUS_H     = 22.0f;
+static constexpr float AB_BREADCRUMB_H = 26.0f;
+static constexpr float AB_SPLITTER_W   = 4.0f;
+static constexpr float AB_PAD_X        = 8.0f;  // inner horizontal padding of every band
+static constexpr float AB_ITEMS_PAD    = 8.0f;  // padding around the asset grid / list
+static constexpr float AB_SOURCES_PAD  = 6.0f;  // padding inside the sources panel
 
 // --- Helpers -----------------------------------------------------------------
 
@@ -142,6 +156,8 @@ MEditorAssetWindow::MEditorAssetWindow() : MEditorAssetWindow(700, 300) {}
 MEditorAssetWindow::MEditorAssetWindow(int x, int y) : MImGuiSubWindow(x, y)
 {
     title = "Asset Browser";
+    // Toolbar, panels and status bar are edge-to-edge bands; each pads itself.
+    windowPadding = ImVec2(0.0f, 0.0f);
 
     auto* editorAssetManager = dynamic_cast<MEditorAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
     rootNode = editorAssetManager ? editorAssetManager->getAssetRootNode() : nullptr;
@@ -323,22 +339,29 @@ void MEditorAssetWindow::onGui(float deltaTime)
 
     if (!currentDirectoryNode) return;
 
+    const float top = ImGui::GetCursorPosY();
     drawToolbar();
 
-    float availHeight = ImGui::GetContentRegionAvail().y - 24.0f;
+    // Middle band: everything between the toolbar and the status bar.
+    ImGui::SetCursorPos({0.0f, top + AB_TOOLBAR_H});
+    const float middleH = std::max(ImGui::GetContentRegionAvail().y - AB_STATUS_H, 1.0f);
 
     if (showSources)
     {
-        ImGui::BeginChild("##sources", ImVec2(sourcesWidth, availHeight), false);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_PANEL_BG));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(AB_SOURCES_PAD, AB_SOURCES_PAD));
+        ImGui::BeginChild("##sources", ImVec2(sourcesWidth, middleH), ImGuiChildFlags_AlwaysUseWindowPadding);
+        ImGui::PopStyleVar();
         drawSourcesPanel();
         ImGui::EndChild();
+        ImGui::PopStyleColor();
 
-        ImGui::SameLine();
+        ImGui::SameLine(0.0f, 0.0f);
 
         ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0,0,0,0));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.4f,0.6f,1.0f,0.4f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.4f,0.6f,1.0f,0.6f));
-        ImGui::Button("##splitter", ImVec2(4.0f, availHeight));
+        ImGui::Button("##splitter", ImVec2(AB_SPLITTER_W, middleH));
         ImGui::PopStyleColor(3);
 
         if (ImGui::IsItemActive())
@@ -349,12 +372,23 @@ void MEditorAssetWindow::onGui(float deltaTime)
         if (ImGui::IsItemHovered())
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
 
-        ImGui::SameLine();
+        // Divider between the panels.
+        const ImVec2 sMin = ImGui::GetItemRectMin();
+        ImGui::GetWindowDrawList()->AddLine({sMin.x, sMin.y}, {sMin.x, sMin.y + middleH}, COL_SEPARATOR);
+
+        ImGui::SameLine(0.0f, 0.0f);
     }
 
-    ImGui::BeginChild("##content", ImVec2(0, availHeight), false);
+    ImGui::BeginChild("##content", ImVec2(0, middleH), ImGuiChildFlags_None);
     drawBreadcrumbs();
+
+    ImGui::SetCursorPos({0.0f, AB_BREADCRUMB_H});
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(AB_ITEMS_PAD, AB_ITEMS_PAD));
+    ImGui::BeginChild("##asset_items", ImVec2(0, 0), ImGuiChildFlags_AlwaysUseWindowPadding);
+    ImGui::PopStyleVar();
     drawContentArea();
+    ImGui::EndChild();
+
     ImGui::EndChild();
 
     // Drop an entity from the hierarchy onto the browser to save it as a .comp
@@ -373,37 +407,41 @@ void MEditorAssetWindow::onGui(float deltaTime)
     drawCreateAssetPopup();
 
     // -- Status bar ------------------------------------------------------------
-    ImDrawList* dl = ImGui::GetWindowDrawList();
-    ImVec2 statusPos = ImGui::GetWindowPos();
-    ImVec2 winSize   = ImGui::GetWindowSize();
-    statusPos.y += winSize.y - 22.0f;
-    dl->AddRectFilled(statusPos,
-                      ImVec2(statusPos.x + winSize.x, statusPos.y + 22.0f),
-                      COL_TOOLBAR_BG);
-
-    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 20.0f);
-    ImGui::SetCursorPosX(8.0f);
-
-    int totalItems = 0;
-    for (const auto& n : currentDirectoryNode->getChildrenNodes())
-        if (matchesSearch(n)) totalItems++;
-
-    const char* selectedName = selectedNode ? selectedNode->getName().c_str() : "";
-    if (selectedNode)
-        ImGui::Text("%d items  |  Selected: %s", totalItems, selectedName);
-    else
-        ImGui::Text("%d items", totalItems);
-
-    if (reloadFlashTimer > 0.0f)
+    // Pinned under the middle band, exactly AB_STATUS_H tall, so it never
+    // pushes the window's content past its bottom edge.
+    ImGui::SetCursorPos({0.0f, top + AB_TOOLBAR_H + middleH});
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_TOOLBAR_BG));
+    ImGui::BeginChild("##status", ImVec2(0, AB_STATUS_H), ImGuiChildFlags_None,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     {
-        const float alpha = reloadFlashTimer / RELOAD_FLASH_DURATION;
-        ImU32 flashCol = IM_COL32(80, 200, 120, (int)(alpha * 255));
+        const ImVec2 pos  = ImGui::GetWindowPos();
+        const ImVec2 size = ImGui::GetWindowSize();
+        ImGui::GetWindowDrawList()->AddLine(pos, {pos.x + size.x, pos.y}, COL_SEPARATOR);
 
-        ImGui::SameLine(0, 20);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(flashCol));
-        ImGui::Text("  Hot Reloaded  %d", lastSeenReloadCount);
-        ImGui::PopStyleColor();
+        ImGui::SetCursorPos({AB_PAD_X, (AB_STATUS_H - ImGui::GetTextLineHeight()) * 0.5f});
+
+        int totalItems = 0;
+        for (const auto& n : currentDirectoryNode->getChildrenNodes())
+            if (matchesSearch(n)) totalItems++;
+
+        if (selectedNode)
+            ImGui::Text("%d items  |  Selected: %s", totalItems, selectedNode->getName().c_str());
+        else
+            ImGui::Text("%d items", totalItems);
+
+        if (reloadFlashTimer > 0.0f)
+        {
+            const float alpha = reloadFlashTimer / RELOAD_FLASH_DURATION;
+            ImU32 flashCol = IM_COL32(80, 200, 120, (int)(alpha * 255));
+
+            ImGui::SameLine(0, 20);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(flashCol));
+            ImGui::Text("Hot Reloaded  %d", lastSeenReloadCount);
+            ImGui::PopStyleColor();
+        }
     }
+    ImGui::EndChild();
+    ImGui::PopStyleColor();
 }
 
 // --- Toolbar -----------------------------------------------------------------
@@ -411,9 +449,11 @@ void MEditorAssetWindow::onGui(float deltaTime)
 void MEditorAssetWindow::drawToolbar()
 {
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_TOOLBAR_BG));
-    ImGui::BeginChild("##toolbar", ImVec2(0, 32), false);
+    ImGui::BeginChild("##toolbar", ImVec2(0, AB_TOOLBAR_H), ImGuiChildFlags_None,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
-    ImGui::SetCursorPosY(6.0f);
+    // Controls centred vertically, AB_PAD_X in from the left edge.
+    ImGui::SetCursorPos({AB_PAD_X, (AB_TOOLBAR_H - ImGui::GetFrameHeight()) * 0.5f});
 
     ImGui::BeginDisabled(historyBack.size() <= 1);
     if (ImGui::Button(" < ")) navigateBack();
@@ -440,7 +480,7 @@ void MEditorAssetWindow::drawToolbar()
     ImGui::SameLine(0, 12);
 
     ImGui::SetNextItemWidth(220);
-    ImGui::InputTextWithHint("##search", "  Search assets...", searchBuffer, sizeof(searchBuffer));
+    ImGui::InputTextWithHint("##search", "Search assets...", searchBuffer, sizeof(searchBuffer));
 
     ImGui::SameLine(0, 12);
 
@@ -477,13 +517,20 @@ void MEditorAssetWindow::drawToolbar()
 
         ImGui::SameLine(0, 16);
         ImVec2 dotPos = ImGui::GetCursorScreenPos();
-        dotPos.y += 8.0f;
+        dotPos.x += 5.0f;
+        dotPos.y += ImGui::GetFrameHeight() * 0.5f;
         ImGui::GetWindowDrawList()->AddCircleFilled(dotPos, 5.0f, col);
-        ImGui::Dummy(ImVec2(12, 0));
+        ImGui::Dummy(ImVec2(12, ImGui::GetFrameHeight()));
 
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Assets hot-reloaded");
     }
+
+    // Bottom edge of the toolbar.
+    const ImVec2 pos  = ImGui::GetWindowPos();
+    const ImVec2 size = ImGui::GetWindowSize();
+    ImGui::GetWindowDrawList()->AddLine({pos.x, pos.y + size.y - 1.0f},
+                                        {pos.x + size.x, pos.y + size.y - 1.0f}, COL_SEPARATOR);
 
     ImGui::EndChild();
     ImGui::PopStyleColor();
@@ -493,11 +540,10 @@ void MEditorAssetWindow::drawToolbar()
 
 void MEditorAssetWindow::drawSourcesPanel()
 {
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_PANEL_BG));
+    // Background colour and padding are set by the child in onGui().
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 4);
-    ImGui::Text("  SOURCES");
-    ImGui::Separator();
+    ImGui::TextDisabled("SOURCES");
+    ImGui::Spacing();
 
     sourcesRowIdx = 0;
 
@@ -505,7 +551,6 @@ void MEditorAssetWindow::drawSourcesPanel()
         drawDirectoryTree(rootNode);
 
     ImGui::PopStyleVar();
-    ImGui::PopStyleColor();
 }
 
 void MEditorAssetWindow::drawDirectoryTree(SAssetDirectoryNode* node, int depth)
@@ -573,8 +618,17 @@ void MEditorAssetWindow::drawDirectoryTree(SAssetDirectoryNode* node, int depth)
 void MEditorAssetWindow::drawBreadcrumbs()
 {
     ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(COL_TOOLBAR_BG));
-    ImGui::BeginChild("##breadcrumbs", ImVec2(0, 26), false);
-    ImGui::SetCursorPosY(5.0f);
+    ImGui::BeginChild("##breadcrumbs", ImVec2(0, AB_BREADCRUMB_H), ImGuiChildFlags_None,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGui::SetCursorPos({AB_PAD_X, (AB_BREADCRUMB_H - ImGui::GetTextLineHeight()) * 0.5f});
+
+    // Bottom edge, separating the path from the items.
+    {
+        const ImVec2 pos  = ImGui::GetWindowPos();
+        const ImVec2 size = ImGui::GetWindowSize();
+        ImGui::GetWindowDrawList()->AddLine({pos.x, pos.y + size.y - 1.0f},
+                                            {pos.x + size.x, pos.y + size.y - 1.0f}, COL_SEPARATOR);
+    }
 
     if (!rootNode || !currentDirectoryNode)
     {
@@ -1285,11 +1339,16 @@ void MEditorAssetWindow::drawDeleteConfirmModal()
             }
         }
 
-        // Clear stale pointers - the tree has been rebuilt
-        selectedNode     = nullptr;
+        // The manager rebuilt its tree, so every node pointer we hold
+        // (current folder, history, selection) is dangling now - and the rest
+        // of this frame still draws the status bar from the current folder.
+        // Re-resolve them from the cached paths straight away. If the current
+        // folder itself was deleted, this falls back to the root.
+        selectedNode      = nullptr;
         cachedSelectedPath.clear();
-        rightClickedNode = nullptr;
+        rightClickedNode  = nullptr;
         pendingDeleteNode = nullptr;
+        syncWithAssetManager();
         ImGui::CloseCurrentPopup();
     }
     ImGui::PopStyleColor(3);

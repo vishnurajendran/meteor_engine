@@ -2,6 +2,7 @@
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/memory/mnew.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 
 bool MPointLightInspectorDrawer::registered = []() {
     registerDrawer(mnew<MPointLightInspectorDrawer>());
@@ -28,19 +29,21 @@ void MPointLightInspectorDrawer::drawPLGui(MSpatialEntity* target) {
         bool   castsShadow = light->getCastsShadow();
         bool   changed     = false;
 
-        ImGui::Text("Range:");
-        ImGui::SameLine();
-        ImGui::PushItemWidth(-FLT_MIN);
-        if (ImGui::DragFloat("##Range", &range, 0.01f, 0.0f, FLT_MAX, "%.2f"))
-            changed = true;
-        ImGui::PopItemWidth();
+        START_FIELD_DRAW("Range")
+            if (MInspectorField::DragFloat("##v", &range, 0.01f, 0.0f, FLT_MAX, "%.2f"))
+                changed = true;
+        END_FIELD_DRAW()
 
-        if (ImGui::Checkbox("Cast Shadow", &castsShadow))
-            light->setCastsShadow(castsShadow);
+        START_FIELD_DRAW("Cast Shadow")
+            if (ImGui::Checkbox("##v", &castsShadow))
+                light->setCastsShadow(castsShadow);
+        END_FIELD_DRAW()
 
-        bool smoothShadow = light->getSmoothShadow();
-        if (ImGui::Checkbox("Smooth Shadows", &smoothShadow))
-            light->setSmoothShadow(smoothShadow);
+        START_FIELD_DRAW("Smooth Shadows")
+            bool smoothShadow = light->getSmoothShadow();
+            if (ImGui::Checkbox("##v", &smoothShadow))
+                light->setSmoothShadow(smoothShadow);
+        END_FIELD_DRAW()
 
         if (drawLightIntensityAndColor(intensity, color))
             changed = true;

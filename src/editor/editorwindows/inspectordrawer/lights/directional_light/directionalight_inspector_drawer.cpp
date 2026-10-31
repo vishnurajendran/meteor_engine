@@ -1,5 +1,6 @@
 #include "directionalight_inspector_drawer.h"
 #include "core/engine/lighting/directional/directional_light.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/memory/mnew.h"
 
@@ -29,20 +30,26 @@ void MDirecionalLightInspectorDrawer::drawDLGui(MDirectionalLight* light) {
         }
 
         // Shadow settings - per-light, not global.
-        bool casts  = light->getCastsShadow();
-        bool smooth = light->getSmoothShadow();
 
-        if (ImGui::Checkbox("Cast Shadow", &casts))
-            light->setCastsShadow(casts);
+        START_FIELD_DRAW("Cast Shadow")
+            bool casts = light->getCastsShadow();
+            if (ImGui::Checkbox("##v", &casts))
+                light->setCastsShadow(casts);
+        END_FIELD_DRAW()
 
-        if (ImGui::Checkbox("Smooth Shadows", &smooth))
-            light->setSmoothShadow(smooth);
+        START_FIELD_DRAW("Smooth Shadows")
+            bool smooth = light->getSmoothShadow();
+            if (ImGui::Checkbox("##v", &smooth))
+                light->setSmoothShadow(smooth);
+        END_FIELD_DRAW()
 
-        float dist = light->getShadowDistance();
-        if (ImGui::DragFloat("Shadow Distance", &dist, 1.0f,
-                             MDirectionalLight::MIN_SHADOW_DISTANCE,
-                             MDirectionalLight::MAX_SHADOW_DISTANCE, "%.0f",
-                             ImGuiSliderFlags_AlwaysClamp))
-            light->setShadowDistance(dist);
+        START_FIELD_DRAW("Shadow Distance")
+            float dist = light->getShadowDistance();
+            if (MInspectorField::DragFloat("##v", &dist, 1.0f,
+                                 MDirectionalLight::MIN_SHADOW_DISTANCE,
+                                 MDirectionalLight::MAX_SHADOW_DISTANCE, "%.0f",
+                                 ImGuiSliderFlags_AlwaysClamp))
+                light->setShadowDistance(dist);
+        END_FIELD_DRAW()
     }
 }
