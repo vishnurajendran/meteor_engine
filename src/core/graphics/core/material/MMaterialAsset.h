@@ -29,6 +29,10 @@ public:
     // Name kept as-is so existing .material files still load.
     DECLARE_FIELD(shaderPathField,    std::string, "")
     DECLARE_FIELD(shadingModeStr,     std::string, "lit")  // "lit" | "unlit"
+    DECLARE_FIELD(renderModeStr,      std::string, "opaque") // "opaque" | "transparent"
+    DECLARE_FIELD(blendModeStr,       std::string, "alpha")  // "alpha" | "additive"
+    DECLARE_FIELD(doubleSided,        bool,        false)
+    DECLARE_FIELD(writeDepth,         bool,        false)  // transparent only
 
 public:
     explicit MMaterialAsset(const SString& path);
@@ -56,6 +60,7 @@ private:
 
     bool loadFromSource();
     void syncFromFields();
+    void applyRenderSettings(MMaterial* material) const;  // render/blend mode, double-sided
 };
 
 #endif // MMATERIALASSET_H

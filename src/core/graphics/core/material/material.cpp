@@ -58,5 +58,9 @@ MMaterial* MMaterial::clone() const
     auto* inst = mnew<MMaterial>(shader, shadingMode);
     inst->properties    = properties;
     inst->propertyOrder = propertyOrder;
+    inst->renderMode    = renderMode;
+    inst->blendMode     = blendMode;
+    inst->doubleSided   = doubleSided;
+    inst->writeDepth    = writeDepth;
     return inst;
 }

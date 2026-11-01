@@ -7,6 +7,7 @@
 #define LIGHTING_STAGE_H
 
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
+#include "core/graphics/core/render-pipeline/fullscreen_quad.h"
 
 class SFrameBuffer;
 
@@ -38,16 +39,11 @@ public:
     void postRender(IRenderPipeline* const pipeline) override;
 
 private:
-    void initFullscreenQuad();
-    void destroyFullscreenQuad();
-
     SFrameBuffer* lightsBuffer   = nullptr;
     // No cached MShader* - looked up fresh each render() to survive refresh().
     SString       lightingShaderPath;
 
-    unsigned int quadVAO = 0;
-    unsigned int quadVBO = 0;
-    unsigned int quadEBO = 0;
+    SFullscreenQuad quad;
 
     bool warnedMissingInputs = false;
 };

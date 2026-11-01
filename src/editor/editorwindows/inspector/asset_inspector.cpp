@@ -16,6 +16,7 @@
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/utils/logger.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "editor/editorwindows/inspectordrawer/controls/material_properties_controls.h"
 #include "imgui-SFML.h"
 #include "imgui.h"
@@ -391,7 +392,6 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
                                      ->getAssetFromReference<MAsset>(asset->getShaderPath());
         const SString shaderLabel = shaderAsset ? shaderAsset->getPath() : asset->getShaderPath();
         row("Shader:", shaderLabel.c_str());
-        row("Mode:",   asset->getShadingMode() == MMaterial::ShadingMode::Lit ? "Lit" : "Unlit");
         row("Path:",   asset->getPath().c_str());
 
         ImGui::EndTable();
@@ -442,6 +442,50 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
     const SString& id = asset->getAssetId();
     if (!propControlCache.contains(id))
         propControlCache[id] = mnew<MMaterialPropertyControl>();
+
+    // ---- Rendering settings ------------------------------------------------
+    // Edited on the live material (scene updates immediately); Save writes
+    // them to the .material file.
+    {
+        MMaterial* mat = asset->getMaterial();
+
+        START_FIELD_DRAW("Shading", "Lit materials receive scene lighting. Unlit materials show their colour as-is.")
+            int shading = mat->getShadingMode() == MMaterial::ShadingMode::Lit ? 0 : 1;
+            if (ImGui::Combo("##v", &shading, "Lit\0Unlit\0"))
+                mat->setShadingMode(shading == 0 ? MMaterial::ShadingMode::Lit : MMaterial::ShadingMode::Unlit);
+        END_FIELD_DRAW()
+
+        START_FIELD_DRAW("Render Mode", "Opaque: deferred path, casts shadows.\nTransparent: forward lit, sorted back to front, blended over the scene. Use a shader that outputs alpha, e.g. transparent.mesl.")
+            int mode = mat->isTransparent() ? 1 : 0;
+            if (ImGui::Combo("##v", &mode, "Opaque\0Transparent\0"))
+                mat->setRenderMode(mode == 1 ? MMaterial::RenderMode::Transparent : MMaterial::RenderMode::Opaque);
+        END_FIELD_DRAW()
+
+        if (mat->isTransparent())
+        {
+            START_FIELD_DRAW("Blend", "Alpha: covers what is behind by its alpha.\nAdditive: adds light on top (glows, fire, sparks).")
+                int blend = mat->getBlendMode() == MMaterial::BlendMode::Additive ? 1 : 0;
+                if (ImGui::Combo("##v", &blend, "Alpha\0Additive\0"))
+                    mat->setBlendMode(blend == 1 ? MMaterial::BlendMode::Additive : MMaterial::BlendMode::Alpha);
+            END_FIELD_DRAW()
+
+            START_FIELD_DRAW("Write Depth", "Also write this surface into the depth buffer, so post effects that run after transparents (depth of field, fog) treat it as solid.\nUse for thick glass or ice; leave off for smoke and thin glass.")
+                bool writesDepth = mat->getWritesDepth();
+                if (ImGui::Checkbox("##v", &writesDepth))
+                    mat->setWritesDepth(writesDepth);
+            END_FIELD_DRAW()
+        }
+
+        START_FIELD_DRAW("Double Sided", "Draw back faces too (leaves, cloth, planes seen from both sides). Back faces are lit with their normal flipped.")
+            bool doubleSided = mat->isDoubleSided();
+            if (ImGui::Checkbox("##v", &doubleSided))
+                mat->setDoubleSided(doubleSided);
+        END_FIELD_DRAW()
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+    }
 
     auto* ctrl = propControlCache[id];
 

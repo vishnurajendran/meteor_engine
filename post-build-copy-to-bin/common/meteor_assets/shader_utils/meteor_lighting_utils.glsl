@@ -278,4 +278,150 @@ vec3 applyLighting(vec3 inColor)
     return (ambient + directional + dynamic) * inColor;
 }
 
+// ============================================================================
+// Surface lighting - shared by the deferred lighting pass (lighting_pass.mesl)
+// and forward-lit transparent shaders (transparent.mesl), so a surface with
+// the same material values lights the same way in both paths.
+// ============================================================================
+
+// ---- Directional shadow (bound by bindShadowInputs() in C++) ---------------
+uniform sampler2D shadowMap;
+uniform mat4      lightSpaceMatrix;
+uniform int       hasShadow;
+uniform int       hasDirShadow;
+
+float computeDirectionalShadow(vec3 worldPos)
+{
+    if (hasDirShadow == 0) return 0.0;
+
+    vec4 fragPosLS  = lightSpaceMatrix * vec4(worldPos, 1.0);
+    vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
+    projCoords      = projCoords * 0.5 + 0.5;
+
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 ||
+        projCoords.y < 0.0 || projCoords.y > 1.0 ||
+        projCoords.z < 0.0 || projCoords.z > 1.0)
+        return 0.0;
+
+    vec2  texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+    float bias      = texelSize.x * 0.5;
+
+    // Fade shadows out over the outer 10% of the shadow area so the
+    // shadow distance limit isn't a hard visible line.
+    vec2  edgeDist = abs(projCoords.xy - 0.5) * 2.0;
+    float fade     = 1.0 - smoothstep(0.9, 1.0, max(edgeDist.x, edgeDist.y));
+
+    float shadow = 0.0;
+    if (smoothShadows == 1)
+    {
+        float spread = texelSize.x * 2.0;
+        for (int i = 0; i < 16; ++i)
+        {
+            float d = texture(shadowMap, projCoords.xy + poissonDisk[i] * spread).r;
+            shadow += (projCoords.z - bias > d) ? 1.0 : 0.0;
+        }
+        shadow /= 16.0;
+    }
+    else
+    {
+        float d = texture(shadowMap, projCoords.xy).r;
+        shadow = (projCoords.z - bias > d) ? 1.0 : 0.0;
+    }
+    return shadow * fade;
+}
+
+// Light arriving at a surface, before albedo:
+//   ambient + directional (with shadow) + every point/spot light in
+//   uDynamicLights (with shadows), diffuse + Blinn-Phong specular.
+// Multiply the result by the surface albedo to get the lit colour.
+//
+//   worldPos   - surface position, world space
+//   N          - unit surface normal, world space (normal map applied)
+//   cameraPos  - world-space camera position
+//   metallic   - 0 dielectric .. 1 metal (shifts diffuse into specular)
+//   smoothness - 0 rough .. 1 mirror-like (highlight tightness)
+vec3 meteorSurfaceLighting(vec3 worldPos, vec3 N, vec3 cameraPos,
+                           float metallic, float smoothness)
+{
+    vec3 V = normalize(cameraPos - worldPos);
+
+    // smoothness 0 -> power 2 (very rough), 1 -> power 2048 (near-mirror)
+    float specPower = pow(2.0, smoothness * 10.0 + 1.0);
+
+    // Dielectric F0 ~= 0.04, metallic F0 ~= 1.0. Multiplying by albedo
+    // afterwards tints metallic specular by the base colour, which is right;
+    // for dielectrics it is a known approximation (should be white).
+    float specWeight = mix(0.04, 1.0, metallic);
+
+    // -- Ambient --
+    vec3 ambient = uAmbientLight.intensity * uAmbientLight.color
+                   * float(uAmbientLight.enabled);
+
+    // -- Directional --
+    vec3 dirDiffuse  = vec3(0.0);
+    vec3 dirSpecular = vec3(0.0);
+    if (uDirectionalLight.enabled == 1)
+    {
+        vec3  L     = normalize(uDirectionalLight.forward);
+        float NdotL = max(dot(L, N), 0.0);
+        dirDiffuse  = NdotL * uDirectionalLight.color * uDirectionalLight.intensity;
+
+        vec3  H     = normalize(L + V);
+        float NdotH = max(dot(N, H), 0.0);
+        // Specular only where the surface faces the light
+        dirSpecular = pow(NdotH, specPower) * step(0.001, NdotL)
+                      * uDirectionalLight.color * uDirectionalLight.intensity;
+
+        float shadow = computeDirectionalShadow(worldPos);
+        dirDiffuse  *= (1.0 - shadow);
+        dirSpecular *= (1.0 - shadow);
+    }
+
+    // -- Point + spot --
+    vec3 dynDiffuse  = vec3(0.0);
+    vec3 dynSpecular = vec3(0.0);
+    for (int i = 0; i < uDynamicLights.dynLightCount; i++)
+    {
+        DynamicLightData light = uDynamicLights.lights[i];
+        if (light.type == 0) continue;
+
+        vec3  lightVec = light.position - worldPos;
+        float dist     = length(lightVec);
+        if (dist > light.range) continue;
+
+        vec3  lightDir = normalize(lightVec);
+        float atten    = pow(1.0 - (dist / light.range), 2.0);
+        float ndotl    = max(dot(N, lightDir), 0.0);
+
+        if (light.type == 2) // spot
+        {
+            float spotCos = dot(normalize(light.direction), lightDir);
+            if (spotCos < cos(light.angle)) continue;
+            atten *= smoothstep(cos(light.angle), 1.0, spotCos);
+        }
+
+        float shadowVal = 0.0;
+        if (light.shadowIndex >= 0)
+        {
+            if (light.type == 2)
+                shadowVal = computeSpotShadowN(light.shadowIndex, worldPos, N, light.smoothShadow);
+            else if (light.type == 1)
+                shadowVal = computePointShadow(light.shadowIndex, worldPos, light.position, light.smoothShadow);
+        }
+
+        float lightScale = atten * (1.0 - shadowVal);
+        dynDiffuse += ndotl * lightScale * light.color * light.intensity;
+
+        vec3  H     = normalize(lightDir + V);
+        float NdotH = max(dot(N, H), 0.0);
+        dynSpecular += pow(NdotH, specPower) * step(0.001, ndotl)
+                       * lightScale * light.color * light.intensity;
+    }
+
+    // Metallic 0: full diffuse, specular x0.04. Metallic 1: no diffuse, specular x1.
+    vec3 totalDiffuse  = (ambient + dirDiffuse + dynDiffuse) * (1.0 - metallic);
+    vec3 totalSpecular = (dirSpecular + dynSpecular) * specWeight;
+    return totalDiffuse + totalSpecular;
+}
+
 #endif

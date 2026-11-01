@@ -430,11 +430,17 @@ void MShadowStage::drawItems(IRenderPipeline* const pipeline,
                              MShader* shader, unsigned int* rawProg,
                              bool shadowCastersOnly, const SFrustum* cullFrustum)
 {
-    for (const SRenderItem& item : pipeline->getRenderItems())
+    // Transparents don't cast shadows (yet) - opaque items only.
+    for (const SRenderItem& item : pipeline->getOpaqueItems())
     {
         if (item.vao == 0) continue;
         if (shadowCastersOnly && !item.castsShadow) continue;
         if (!passesShadowCull(item, cullFrustum)) continue;
+
+        // Directional pass culls back faces; double-sided casters draw both.
+        // (Spot/point passes go through drawItemsRaw with culling off.)
+        if (item.isDoubleSided()) glDisable(GL_CULL_FACE);
+        else                      glEnable(GL_CULL_FACE);
 
         SShaderPropertyValue modelVal;
         modelVal.setMat4Val(item.transform);
@@ -450,6 +456,7 @@ void MShadowStage::drawItems(IRenderPipeline* const pipeline,
     }
     glBindVertexArray(0);
     glUseProgram(0);
+    glEnable(GL_CULL_FACE);
 }
 
 void MShadowStage::drawItemsRaw(IRenderPipeline* const pipeline,
@@ -457,7 +464,7 @@ void MShadowStage::drawItemsRaw(IRenderPipeline* const pipeline,
                                 const SFrustum* cullFrustum)
 {
     GLint modelLoc = glGetUniformLocation(prog, "model");
-    for (const SRenderItem& item : pipeline->getRenderItems())
+    for (const SRenderItem& item : pipeline->getOpaqueItems())
     {
         if (item.vao == 0) continue;
         if (shadowCastersOnly && !item.castsShadow) continue;

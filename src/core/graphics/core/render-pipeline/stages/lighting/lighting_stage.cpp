@@ -11,8 +11,10 @@
 #include "core/graphics/core/render-pipeline/buffers/texture/texture_buffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
+#include "core/graphics/core/render-pipeline/stages/lighting/shadow_inputs.h"
 #include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/graphics/core/render-pipeline/view_data.h"
+#include "core/graphics/core/render-pipeline/fullscreen_quad.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/frustum.h"
@@ -21,21 +23,11 @@
 static constexpr const char* LIGHTING_SHADER_PATH =
     "meteor_assets/engine_assets/shaders/internal/lighting_pass.mesl";
 
-static constexpr int TEX_UNIT_DIR_SHADOW   = 0;
-static constexpr int TEX_UNIT_SPOT_BASE    = 1;   // 1..4
-static constexpr int TEX_UNIT_POINT_BASE   = 5;   // 5..8
+// Units 0..8 are the shadow maps (MShadowInputs).
 static constexpr int TEX_UNIT_DEPTH        = 9;   // BUFFER_DEPTH
 static constexpr int TEX_UNIT_NORMAL       = 10;  // BUFFER_NORMAL
 static constexpr int TEX_UNIT_SURFACE      = 11;  // BUFFER_SURFACE
 static constexpr int TEX_UNIT_COUNT        = 12;
-
-// NDC quad: position (location 0) + uv (location 2), matching the standard
-// shader base's vertex attributes.
-static const float k_quadVerts[] = {
-    -1.f,-1.f,0.f, 0.f,0.f,   1.f,-1.f,0.f, 1.f,0.f,
-     1.f, 1.f,0.f, 1.f,1.f,  -1.f, 1.f,0.f, 0.f,1.f,
-};
-static const unsigned int k_quadIdx[] = { 0,1,2, 0,2,3 };
 
 void MLightingStage::init(IRenderPipeline* const pipeline)
 {
@@ -49,12 +41,12 @@ void MLightingStage::init(IRenderPipeline* const pipeline)
     else
         MERROR("MLightingStage::init -- could not find: " + SString(LIGHTING_SHADER_PATH));
 
-    initFullscreenQuad();
+    quad.create();
 }
 
 void MLightingStage::cleanup(IRenderPipeline* const pipeline)
 {
-    destroyFullscreenQuad();
+    quad.destroy();
     lightsBuffer       = nullptr;
     lightingShaderPath = "";
 }
@@ -94,7 +86,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
 
-    if (!hasPrepass || !lightingShader || !renderer || quadVAO == 0)
+    if (!hasPrepass || !lightingShader || !renderer || !quad.isValid())
     {
         // Warn once per stage instance, not every frame.
         if (!warnedMissingInputs)
@@ -130,12 +122,6 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
     glDepthMask(GL_FALSE);
     glDisable(GL_CULL_FACE);
     glDisable(GL_BLEND);
-
-    auto* sb = registry.getBuffer<SShadowBuffer>(MBufferNames::BUFFER_SHADOW);
-    const bool hasShadow = sb && sb->getFBOHandle() != 0 &&
-                           (pipeline->getCompositeFlags() & ECF_Shadow);
-    const bool dirShadowEnabled = mgr->isDirectionalShadowEnabled();
-    const bool dirSmoothShadow  = mgr->isDirectionalSmoothShadow();
 
     lightingShader->bind();
 
@@ -173,86 +159,11 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
         if (l >= 0) glUniform3fv(l, 1, glm::value_ptr(viewData.cameraPosition));
     }
 
-    // ---- Directional shadow ------------------------------------------------
-    if (hasShadow)
-    {
-        glActiveTexture(GL_TEXTURE0 + TEX_UNIT_DIR_SHADOW);
-        glBindTexture(GL_TEXTURE_2D, sb->getDepthTextureHandle());
-    }
-    {
-        GLint l;
-        l = glGetUniformLocation(prog, "shadowMap");
-        if (l >= 0) glUniform1i(l, TEX_UNIT_DIR_SHADOW);
-        l = glGetUniformLocation(prog, "lightSpaceMatrix");
-        if (l >= 0 && hasShadow)
-            glUniformMatrix4fv(l, 1, GL_FALSE, glm::value_ptr(sb->lightSpaceMatrix));
-        l = glGetUniformLocation(prog, "hasShadow");
-        if (l >= 0) glUniform1i(l, hasShadow ? 1 : 0);
-
-        l = glGetUniformLocation(prog, "hasDirShadow");
-        if (l >= 0) glUniform1i(l, (hasShadow && dirShadowEnabled) ? 1 : 0);
-
-        l = glGetUniformLocation(prog, "smoothShadows");
-        if (l >= 0) glUniform1i(l, dirSmoothShadow ? 1 : 0);
-    }
-
-    // ---- Spot shadow maps --------------------------------------------------
-    static const char* spotMapNames[]    = {"spotShadowMap0","spotShadowMap1","spotShadowMap2","spotShadowMap3"};
-    static const char* spotMatrixNames[] = {"spotLightSpaceMatrix0","spotLightSpaceMatrix1","spotLightSpaceMatrix2","spotLightSpaceMatrix3"};
-    static const char* spotPosNames[]    = {"spotLightPos0","spotLightPos1","spotLightPos2","spotLightPos3"};
-    static const char* spotFarNames2[]   = {"spotFarPlane0","spotFarPlane1","spotFarPlane2","spotFarPlane3"};
-
-    if (hasShadow)
-    {
-        for (int i = 0; i < SShadowBuffer::MAX_SPOT_SHADOWS; ++i)
-        {
-            glActiveTexture(GL_TEXTURE0 + TEX_UNIT_SPOT_BASE + i);
-            glBindTexture(GL_TEXTURE_2D,
-                          (i < sb->numSpotShadows) ? sb->spotDepthTextures[i] : 0);
-
-            GLint l = glGetUniformLocation(prog, spotMapNames[i]);
-            if (l >= 0) glUniform1i(l, TEX_UNIT_SPOT_BASE + i);
-
-            l = glGetUniformLocation(prog, spotMatrixNames[i]);
-            if (l >= 0 && i < sb->numSpotShadows)
-                glUniformMatrix4fv(l, 1, GL_FALSE,
-                                   glm::value_ptr(sb->spotLightSpaceMatrices[i]));
-
-            l = glGetUniformLocation(prog, spotPosNames[i]);
-            if (l >= 0 && i < sb->numSpotShadows)
-                glUniform3fv(l, 1, glm::value_ptr(sb->spotLightPositions[i]));
-
-            l = glGetUniformLocation(prog, spotFarNames2[i]);
-            if (l >= 0 && i < sb->numSpotShadows)
-                glUniform1f(l, sb->spotFarPlanes[i]);
-        }
-    }
-
-    // ---- Point shadow cube maps --------------------------------------------
-    static const char* pointMapNames[] = {"pointShadowMap0","pointShadowMap1","pointShadowMap2","pointShadowMap3"};
-    static const char* pointFarNames[] = {"pointFarPlane0","pointFarPlane1","pointFarPlane2","pointFarPlane3"};
-
-    if (hasShadow)
-    {
-        for (int i = 0; i < SShadowBuffer::MAX_POINT_SHADOWS; ++i)
-        {
-            glActiveTexture(GL_TEXTURE0 + TEX_UNIT_POINT_BASE + i);
-            glBindTexture(GL_TEXTURE_CUBE_MAP,
-                          (i < sb->numPointShadows) ? sb->pointCubemapTextures[i] : 0);
-
-            GLint l = glGetUniformLocation(prog, pointMapNames[i]);
-            if (l >= 0) glUniform1i(l, TEX_UNIT_POINT_BASE + i);
-
-            l = glGetUniformLocation(prog, pointFarNames[i]);
-            if (l >= 0 && i < sb->numPointShadows)
-                glUniform1f(l, sb->pointFarPlanes[i]);
-        }
-    }
+    // ---- Shadow maps (units 0..8, shared with MTransparentStage) -----------
+    MShadowInputs::bind(pipeline, static_cast<unsigned int>(prog));
 
     // ---- One fullscreen draw ------------------------------------------------
-    glBindVertexArray(quadVAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    glBindVertexArray(0);
+    quad.draw();
     glUseProgram(0);
 
     // ---- Restore ------------------------------------------------------------
@@ -274,29 +185,3 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 }
 
 void MLightingStage::postRender(IRenderPipeline* const pipeline) {}
-
-// ── Fullscreen quad ──────────────────────────────────────────────────────────
-
-void MLightingStage::initFullscreenQuad()
-{
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glGenBuffers(1, &quadEBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(k_quadVerts), k_quadVerts, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(k_quadIdx), k_quadIdx, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glBindVertexArray(0);
-}
-
-void MLightingStage::destroyFullscreenQuad()
-{
-    if (quadEBO) { glDeleteBuffers(1, &quadEBO);      quadEBO = 0; }
-    if (quadVBO) { glDeleteBuffers(1, &quadVBO);      quadVBO = 0; }
-    if (quadVAO) { glDeleteVertexArrays(1, &quadVAO); quadVAO = 0; }
-}

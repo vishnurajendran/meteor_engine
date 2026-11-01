@@ -59,6 +59,15 @@ struct SRenderItem
     // Sorting hint - stages may sort items before drawing.
     int       sortOrder    = 0;
 
+    // Transparent items are drawn only by MTransparentStage; every other
+    // camera and shadow pass uses the opaque list.
+    [[nodiscard]] bool isTransparent() const { return material != nullptr && material->isTransparent(); }
+
+    // Back faces drawn too. Every pass that draws this item (prepass, opaque,
+    // directional shadow, transparent) must agree, or back faces would be in
+    // the depth buffer but not shaded.
+    [[nodiscard]] bool isDoubleSided() const { return material != nullptr && material->isDoubleSided(); }
+
     [[nodiscard]] MMaterial::ShadingMode getShadingMode() const { return material == nullptr ?
                                                 MMaterial::ShadingMode::Unlit : material->getShadingMode(); }
 };

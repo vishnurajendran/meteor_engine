@@ -18,9 +18,11 @@
 #include "stages/lighting/lighting_stage.h"
 #include "stages/opaque/opaque_stage.h"
 #include "stages/prepass/prepass_stage.h"
+#include "stages/resolve/resolve_stage.h"
 #include "stages/shadow/shadow_stage.h"
 #include "stages/skybox/procedural_sky/procedural_sky_stage.h"
 #include "stages/skybox/skybox_stage.h"
+#include "stages/transparent/transparent_stage.h"
 
 MRenderPipeline::~MRenderPipeline()
 {
@@ -37,14 +39,19 @@ void MRenderPipeline::init()
         return;
 
     // Run order comes from each stage's getSortingOrder():
-    //   clear -> prepass -> shadow -> skybox -> opaque -> lighting -> composite
+    //   clear -> prepass -> shadow -> skybox -> opaque -> lighting
+    //   -> resolve -> transparent -> composite
     // Add order only matters for init(): the skybox stages look up
-    // BUFFER_OPAQUE, so they must be added after MOpaqueStage.
+    // BUFFER_OPAQUE, so they must be added after MOpaqueStage; MResolveStage
+    // needs BUFFER_DEPTH (prepass) and MTransparentStage needs BUFFER_SCENE
+    // (resolve).
     addStage<MClearStage>();              // clear BUFFER_OPAQUE (runs first)
     addStage<MPrepassStage>();            // depth/normal/surface -> BUFFER_DEPTH, BUFFER_NORMAL, BUFFER_SURFACE
     addStage<MShadowStage>();             // shadow map         -> BUFFER_SHADOW
     addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE (reuses prepass depth)
     addStage<MLightingStage>();           // fullscreen lighting -> BUFFER_LIGHTS (no mesh loop)
+    addStage<MResolveStage>();            // albedo x light     -> BUFFER_SCENE (linear HDR)
+    addStage<MTransparentStage>();        // forward-lit transparents, blended into BUFFER_SCENE
     addStage<MSkyboxStage>();             // cubemap skybox     (runs after shadow)
     addStage<MProceduralSkyboxStage>();   // procedural skybox  (runs after shadow)
     addStage<MCompositeStage>();          // blits all buffers  -> render target
@@ -165,6 +172,15 @@ void MRenderPipeline::preRender()
     std::sort(renderItems.begin(), renderItems.end(),
               [](const SRenderItem& a, const SRenderItem& b)
               { return a.sortOrder < b.sortOrder; });
+
+    // -- Split by render mode, once, for every stage --------------------------
+    opaqueItems.clear();
+    transparentItems.clear();
+    for (const SRenderItem& item : renderItems)
+    {
+        if (item.isTransparent()) transparentItems.push_back(item);
+        else                      opaqueItems.push_back(item);
+    }
 
     for (auto* stage : renderStages)
         stage->preRender(this);

@@ -15,3 +15,4 @@ const SString MBufferNames::BUFFER_LIGHTS      = "Buffer_Lights";
 const SString MBufferNames::BUFFER_SHADOW      = "Buffer_Shadow";
 const SString MBufferNames::BUFFER_TRANSPARENT = "Buffer_Transparent";
 const SString MBufferNames::BUFFER_COMPOSITE   = "Buffer_Composite";
+const SString MBufferNames::BUFFER_SCENE       = "Buffer_Scene";

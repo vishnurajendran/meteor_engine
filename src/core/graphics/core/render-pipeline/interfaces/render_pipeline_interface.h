@@ -23,6 +23,7 @@ enum ECompositeFlags : uint32_t
     ECF_Lights      = 1 << 2,
     ECF_Shadow      = 1 << 3,
     ECF_Transparent = 1 << 4,
+    ECF_Scene       = 1 << 5,   // BUFFER_SCENE holds the lit image (MResolveStage)
 };
 
 class IRenderPipeline
@@ -62,7 +63,11 @@ public:
     virtual MBufferRegistery& getBufferRegistry() = 0;
 
     // Render items
-    virtual const std::vector<SRenderItem>& getRenderItems() const = 0;
+    // All items this frame, plus the same items split by material render
+    // mode (built once in preRender, after culling and sorting).
+    virtual const std::vector<SRenderItem>& getRenderItems()      const = 0;
+    virtual const std::vector<SRenderItem>& getOpaqueItems()      const = 0;
+    virtual const std::vector<SRenderItem>& getTransparentItems() const = 0;
 
     // Composite flags
     virtual uint32_t getCompositeFlags()                  const = 0;

@@ -19,6 +19,8 @@
 #include "core/graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h"
 #include "core/graphics/core/render-pipeline/stages/prepass/prepass_stage.h"
+#include "core/graphics/core/render-pipeline/stages/resolve/resolve_stage.h"
+#include "core/graphics/core/render-pipeline/stages/transparent/transparent_stage.h"
 #include "core/utils/logger.h"
 
 // -- Built-in Lambert shader (mesh thumbnails only) ----------------------------
@@ -118,6 +120,7 @@ out vec4 FragColor;
 
 uniform sampler2D albedoTex;
 uniform sampler2D lightsTex;
+uniform int       useScene;   // 1 = albedoTex is BUFFER_SCENE (already lit)
 
 vec3 linearToSrgb(vec3 c)
 {
@@ -133,7 +136,8 @@ void main()
 
     // alpha > 0 means the pixel was rendered by the lighting stage (lit).
     // alpha == 0 means unlit -- pass through the opaque value as-is.
-    vec3 result = mix(opaque.rgb, opaque.rgb * lights.rgb, lights.a);
+    vec3 result = useScene == 1 ? opaque.rgb
+                                : mix(opaque.rgb, opaque.rgb * lights.rgb, lights.a);
     FragColor   = vec4(linearToSrgb(result), 1.0);
 }
 )GLSL";
@@ -180,6 +184,8 @@ void MThumbnailRenderer::initThumbnailPipeline()
     thumbnailPipeline.addStage<MPrepassStage>();
     thumbnailPipeline.addStage<MOpaqueStage>();
     thumbnailPipeline.addStage<MLightingStage>();
+    thumbnailPipeline.addStage<MResolveStage>();      // albedo x light -> BUFFER_SCENE
+    thumbnailPipeline.addStage<MTransparentStage>();  // transparent material previews
 
     headlessRenderBuffer = new SHeadlessRenderBuffer(THUMBNAIL_SIZE, THUMBNAIL_SIZE);
     thumbnailPipeline.setRenderBuffer(headlessRenderBuffer);
@@ -435,8 +441,14 @@ void MThumbnailRenderer::compositeThumbnail()
                                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     auto* lightsBuffer = thumbnailPipeline.getBufferRegistry()
                                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
+    auto* sceneBuffer  = thumbnailPipeline.getBufferRegistry()
+                                           .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_SCENE);
 
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
+
+    // BUFFER_SCENE is the lit image with transparents on top - prefer it.
+    const bool useScene = sceneBuffer && sceneBuffer->getFBOHandle() != 0 &&
+                          (thumbnailPipeline.getCompositeFlags() & ECF_Scene);
 
     // Render into the thumbnail's own FBO (not BUFFER_OPAQUE).
     fbo.bindAsActive();
@@ -449,7 +461,8 @@ void MThumbnailRenderer::compositeThumbnail()
     glUseProgram(compositeShader);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, opaqueBuffer->getColorTextureHandle());
+    glBindTexture(GL_TEXTURE_2D, useScene ? sceneBuffer->getColorTextureHandle()
+                                          : opaqueBuffer->getColorTextureHandle());
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D,
                   (lightsBuffer && lightsBuffer->getFBOHandle() != 0)
@@ -458,6 +471,8 @@ void MThumbnailRenderer::compositeThumbnail()
 
     if (ucAlbedoTex >= 0) glUniform1i(ucAlbedoTex, 0);
     if (ucLightsTex >= 0) glUniform1i(ucLightsTex, 1);
+    if (const GLint useLoc = glGetUniformLocation(compositeShader, "useScene"); useLoc >= 0)
+        glUniform1i(useLoc, useScene ? 1 : 0);
 
     glBindVertexArray(compositeQuadVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

@@ -1,0 +1,31 @@
+<shader name="resolve" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _albedoTex;  // BUFFER_OPAQUE (linear albedo, sky)
+    uniform sampler2D _lightsTex;  // BUFFER_LIGHTS (light per pixel, a = lit mask)
+    uniform int       _useLights;  // 0 = no lighting stage ran
+
+    // Writes BUFFER_SCENE: the lit opaque image, linear HDR (not encoded).
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        ivec2 pixel  = ivec2(gl_FragCoord.xy);
+        vec4  albedo = texelFetch(_albedoTex, pixel, 0);
+        vec4  light  = _useLights != 0 ? texelFetch(_lightsTex, pixel, 0) : vec4(0.0);
+
+        //   light.a = 0 -> unlit pixel or sky: albedo as-is
+        //   light.a = 1 -> lit pixel: albedo x light
+        vec3 result = mix(albedo.rgb, albedo.rgb * light.rgb, light.a);
+        return vec4(result, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

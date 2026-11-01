@@ -107,7 +107,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
         if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projMat));
     };
 
-    for (const SRenderItem& item : pipeline->getRenderItems())
+    for (const SRenderItem& item : pipeline->getOpaqueItems())
     {
         if (item.vao == 0 || !item.material) continue;
         if (!item.cameraVisible) continue; // outside the camera frustum
@@ -118,6 +118,10 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(depthFunc);
         glDepthMask(GL_TRUE);
+
+        // Must match the prepass, which drew the same faces into the depth.
+        if (item.isDoubleSided()) glDisable(GL_CULL_FACE);
+        else                      glEnable(GL_CULL_FACE);
 
         // No per-item light query: materials only output albedo, and the
         // lighting stage lights the whole view in one fullscreen pass.
@@ -137,6 +141,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     glBindVertexArray(0);
     glUseProgram(0);
     glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
     opaqueBuffer->unbind();
 
     pipeline->addCompositeFlag(ECF_Opaque);

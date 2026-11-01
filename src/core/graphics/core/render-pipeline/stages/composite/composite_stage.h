@@ -8,6 +8,7 @@
 enum class EBufferDebugView
 {
     Final = 0,      // normal composite output
+    Scene,          // BUFFER_SCENE: lit HDR image incl. transparents (before encode)
     Opaque,         // BUFFER_OPAQUE color (unlit albedo)
     Lighting,       // BUFFER_LIGHTS color (light contribution)
     Depth,          // BUFFER_DEPTH (contrast-boosted grayscale)
@@ -32,7 +33,9 @@ public:
     static EBufferDebugView debugView;
 
 private:
-    void compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights,
+    // fromScene: encode BUFFER_SCENE (resolve ran). Otherwise combine
+    // BUFFER_OPAQUE x BUFFER_LIGHTS directly (pipelines without a resolve stage).
+    void compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights, bool fromScene,
                                    int sfmlFBO, int w, int h) const;
     void compositeOpaqueOnly      (IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;

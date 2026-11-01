@@ -569,7 +569,7 @@ void MEditorSceneViewWindow::drawToolbar(bool playMode)
         ImGui::AlignTextToFramePadding();
         {
             static const char* viewNames[] = {
-                "Final", "Opaque", "Lighting", "Depth", "Light Mask", "Normals", "Surface"
+                "Final", "Scene (HDR)", "Opaque", "Lighting", "Depth", "Light Mask", "Normals", "Surface"
             };
             int cur = static_cast<int>(MCompositeStage::debugView);
 

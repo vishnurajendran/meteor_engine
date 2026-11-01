@@ -32,6 +32,15 @@ void MMaterialAsset::syncFromFields()
     shadingMode = (shadingModeStr.get() == "lit") ? MMaterial::ShadingMode::Lit : MMaterial::ShadingMode::Unlit;
 }
 
+void MMaterialAsset::applyRenderSettings(MMaterial* material) const
+{
+    if (!material) return;
+    material->setRenderMode(MMaterial::renderModeFromString(renderModeStr.get()));
+    material->setBlendMode (MMaterial::blendModeFromString (blendModeStr.get()));
+    material->setDoubleSided(doubleSided.get());
+    material->setWritesDepth(writeDepth.get());
+}
+
 MMaterial* MMaterialAsset::getMaterial()
 {
     if (!original && valid)
@@ -75,6 +84,7 @@ void MMaterialAsset::buildMaterialAsset()
         for (auto& [k, v] : properties)
             original->setProperty(k, v);
     }
+    applyRenderSettings(original);
 
     // Apply the XML file's property order to the material so the inspector
     // displays properties in the order the user authored them.
@@ -143,6 +153,16 @@ bool MMaterialAsset::loadFromSource()
     else
         shadingModeStr = std::string("lit");
 
+    // Older files have none of these - they load as opaque, alpha, one-sided.
+    if (auto n = root.child("renderModeStr"); n) renderModeStr = std::string(n.text().as_string());
+    else                                          renderModeStr = std::string("opaque");
+    if (auto n = root.child("blendModeStr"); n)  blendModeStr  = std::string(n.text().as_string());
+    else                                          blendModeStr  = std::string("alpha");
+    if (auto n = root.child("doubleSided"); n)   doubleSided   = n.text().as_bool();
+    else                                          doubleSided   = false;
+    if (auto n = root.child("writeDepth"); n)    writeDepth    = n.text().as_bool();
+    else                                          writeDepth    = false;
+
     syncFromFields();
 
     properties.clear();
@@ -184,7 +204,14 @@ bool MMaterialAsset::save()
         return false;
     }
 
+    // The inspector edits the live material, so take the render settings
+    // from it rather than from what was last loaded.
+    shadingMode    = original->getShadingMode();
     shadingModeStr = std::string(shadingMode == MMaterial::ShadingMode::Lit ? "lit" : "unlit");
+    renderModeStr  = std::string(MMaterial::renderModeToString(original->getRenderMode()));
+    blendModeStr   = std::string(MMaterial::blendModeToString(original->getBlendMode()));
+    doubleSided    = original->isDoubleSided();
+    writeDepth     = original->getWritesDepth();
 
     auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
 
@@ -199,6 +226,10 @@ bool MMaterialAsset::save()
 
     root.append_child("shaderPathField").text().set(shaderPathField.get().c_str());
     root.append_child("shadingModeStr").text().set(shadingModeStr.get().c_str());
+    root.append_child("renderModeStr").text().set(renderModeStr.get().c_str());
+    root.append_child("blendModeStr").text().set(blendModeStr.get().c_str());
+    root.append_child("doubleSided").text().set(doubleSided.get());
+    root.append_child("writeDepth").text().set(writeDepth.get());
 
     // Write properties in the material's display order so the saved file
     // preserves the authored sequence.

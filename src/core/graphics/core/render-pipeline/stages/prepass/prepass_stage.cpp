@@ -150,12 +150,16 @@ void MPrepassStage::render(IRenderPipeline* const pipeline)
         prepassShader->setPropertyValue("projection", projVal);
 
         int highestUnitUsed = -1;
-        for (const SRenderItem& item : pipeline->getRenderItems())
+        // Opaque only - transparents must not hide what is behind them.
+        for (const SRenderItem& item : pipeline->getOpaqueItems())
         {
             // Same filter as MOpaqueStage - anything drawn here occludes
             // opaque geometry, so it must also be drawn there.
             if (item.vao == 0 || !item.material) continue;
             if (!item.cameraVisible) continue;
+
+            if (item.isDoubleSided()) glDisable(GL_CULL_FACE);
+            else                      glEnable(GL_CULL_FACE);
 
             SShaderPropertyValue modelVal;
             modelVal.setMat4Val(item.transform);
@@ -178,6 +182,7 @@ void MPrepassStage::render(IRenderPipeline* const pipeline)
 
         glBindVertexArray(0);
         glUseProgram(0);
+        glEnable(GL_CULL_FACE);
 
         for (int unit = 0; unit <= highestUnitUsed; ++unit)
         {

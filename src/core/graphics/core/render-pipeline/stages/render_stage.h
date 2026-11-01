@@ -17,14 +17,23 @@ enum ERenderStageOrder
     RS_Skybox        = 300,     // cubemap + procedural sky into BUFFER_OPAQUE, only where the prepass left the far plane
 
     RS_Opaque        = 1000,    // opaque geometry
-    RS_Transparent   = 3000,    // transparent geometry
-
     RS_Lighting      = 4000,    // fullscreen lighting from prepass buffers
+    RS_Resolve       = 4100,    // albedo x light -> BUFFER_SCENE (linear HDR)
 
-    RS_UserInterface = 5000,    // UI
+    // Post-processing runs in two slots, both on BUFFER_SCENE (linear HDR):
+    //   RS_PostOpaque     - effects that must only see solid surfaces (SSAO,
+    //                       SSR, contact shadows). BUFFER_DEPTH holds opaque
+    //                       depth only.
+    //   RS_PostProcessing - effects on the finished image (bloom, tonemapping,
+    //                       grading, DOF, fog). BUFFER_DEPTH now also holds
+    //                       transparents whose material has Write Depth on.
+    RS_PostOpaque    = 4200,
+    RS_Transparent   = 4500,    // forward-lit transparents, blended into BUFFER_SCENE
+    RS_PostProcessing = 6000,
 
-    RS_Composite     = 8000,    // composite all flagged buffers into render target
-    RS_PostProcessing = 9999,   // post-process on the composited result
+    RS_UserInterface = 7000,    // game UI - after post so it isn't bloomed/tonemapped
+
+    RS_Composite     = 8000,    // encode BUFFER_SCENE to sRGB into the render target
 };
 
 class MRenderStage : public MObject, public IRenderStage

@@ -18,7 +18,8 @@ struct MBufferNames
     static const SString BUFFER_OPAQUE;
     static const SString BUFFER_LIGHTS;
     static const SString BUFFER_SHADOW;
-    static const SString BUFFER_TRANSPARENT;
+    static const SString BUFFER_TRANSPARENT;  // unused (transparents blend into BUFFER_SCENE)
+    static const SString BUFFER_SCENE;        // lit linear HDR image: resolve + transparents (SFrameBuffer, RGBA16F)
     static const SString BUFFER_COMPOSITE;
 };
 

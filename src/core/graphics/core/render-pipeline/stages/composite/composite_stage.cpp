@@ -145,8 +145,10 @@ void MCompositeStage::render(IRenderPipeline* const pipeline)
 
     // Both paths go through the composite shader so the sRGB encode happens
     // in exactly one place.
-    if (hasOpaque)
-        compositeOpaqueWithLights(pipeline, hasLights, sfmlFBO, w, h);
+    if (flags & ECF_Scene)
+        compositeOpaqueWithLights(pipeline, false, true, sfmlFBO, w, h);
+    else if (hasOpaque)
+        compositeOpaqueWithLights(pipeline, hasLights, false, sfmlFBO, w, h);
 
     if (flags & ECF_Prepass)
         compositeDepth(pipeline, sfmlFBO, w, h);
@@ -175,6 +177,13 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
 
     switch (debugView)
     {
+        case EBufferDebugView::Scene:
+            if (auto* scene = pipeline->getBufferRegistry()
+                                       .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_SCENE))
+                texHandle = scene->getColorTextureHandle();
+            mode = 0;
+            break;
+
         case EBufferDebugView::Opaque:
             if (opaque) texHandle = opaque->getColorTextureHandle();
             mode = 0;
@@ -235,7 +244,7 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
 
 // ── Normal composite helpers ──────────────────────────────────────────────────
 
-void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights,
+void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights, bool fromScene,
                                                 int sfmlFBO, int w, int h) const
 {
     auto compositeHandle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
@@ -244,11 +253,15 @@ void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
 
     if (!compositeShader || quadVAO == 0) return;
 
+    // With a resolve stage BUFFER_SCENE is already lit (and has the
+    // transparents) - the shader then only encodes it (_useLights = 0).
     auto* opaque = pipeline->getBufferRegistry()
-                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
+                            .getBuffer<SFrameBuffer>(fromScene ? MBufferNames::BUFFER_SCENE
+                                                               : MBufferNames::BUFFER_OPAQUE);
     auto* lights = pipeline->getBufferRegistry()
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
     if (!opaque || opaque->getFBOHandle() == 0) return;
+    if (fromScene) useLights = false;
 
     glBindFramebuffer(GL_FRAMEBUFFER, sfmlFBO);
     glViewport(0, 0, w, h);
