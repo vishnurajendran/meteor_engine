@@ -7,6 +7,8 @@
 #include "../../../../../engine/lighting/light_entity.h"
 #include "dynamic_light_datatype.h"
 #include "light_shader_constants.h"
+#include "core/utils/frustum.h"
+#include <algorithm>
 
 void MLightSystemManager::registerLight(MLightEntity* light)
 {
@@ -26,7 +28,7 @@ void MLightSystemManager::registerLight(MLightEntity* light)
         case ELightType::Point:
         case ELightType::Spot:
             addLightToDynamicLights(dynamic_cast<MDynamicLight*>(light));
-            lightScene.build(dynamicLights);
+            lightScene.setLights(dynamicLights);   // rebuilt on next query
         break;
     }
 }
@@ -49,7 +51,7 @@ void MLightSystemManager::unregisterLight(MLightEntity* light)
     case ELightType::Point:
     case ELightType::Spot:
         removeLightFromDynamicLights(light);
-        lightScene.build(dynamicLights);
+        lightScene.setLights(dynamicLights);   // rebuilt on next query
         break;
     }
 }
@@ -95,13 +97,6 @@ void MLightSystemManager::removeLightFromDynamicLights(MLightEntity* light)
 
 void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
 {
-    //rebuild if it was requested.
-    if (rebuildRequested)
-    {
-        rebuildRequested = false;
-        lightScene.build(dynamicLights);
-    }
-
     //reset lights data
     for (auto & data : dynLightsData.data)
     {
@@ -110,6 +105,7 @@ void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
 
     const auto& lights = lightScene.queryLights(bounds, MAX_DYN_LIGHTS);
 
+    // queryLights() rebuilds the BVH first if any light changed.
     // FIX 2: Track active lights to compact the array without gaps
     int activeLightCount = 0;
 
@@ -134,6 +130,38 @@ void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
     // Set the buffer count to ONLY the active, packed lights
     dynLightsData.lightCount = activeLightCount;
 
+    uploadDynamicLights();
+}
+
+void MLightSystemManager::prepareViewDynamicLights(const SFrustum* frustum, const SVector3& cameraPosition)
+{
+    for (auto& data : dynLightsData.data)
+        data.type = EDynamicLightDataType::None;
+
+    int count = 0;
+    if (frustum)
+    {
+        // BVH query: skips whole groups of off-screen lights, rebuilds first
+        // if any light was added, removed, moved or resized. Nearest first.
+        for (MDynamicLight* light : lightScene.queryLightsInFrustum(*frustum, cameraPosition))
+        {
+            if (count >= MAX_DYN_LIGHTS) break;
+            if (!light->isEnabledInHierarchy() || !light->getEnabled()) continue;
+
+            light->prepareLightRender();
+            auto data         = light->getLightData();
+            data.shadowIndex  = light->getShadowIndex();
+            data.smoothShadow = light->getSmoothShadow() ? 1 : 0;
+            dynLightsData.data[count++] = data;
+        }
+    }
+    dynLightsData.lightCount = count;
+
+    uploadDynamicLights();
+}
+
+void MLightSystemManager::uploadDynamicLights()
+{
     if (!dynLightsBuffer)
     {
         glGenBuffers(1, &dynLightsBuffer);
@@ -150,5 +178,5 @@ void MLightSystemManager::prepareDynamicLights(const AABB& bounds)
 
 void MLightSystemManager::requestLightSceneRebuild()
 {
-    rebuildRequested = true;
+    lightScene.markDirty();
 }

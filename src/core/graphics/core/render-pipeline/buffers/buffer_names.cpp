@@ -8,6 +8,8 @@
 #include "buffer_names.h"
 
 const SString MBufferNames::BUFFER_DEPTH       = "Buffer_Depth";
+const SString MBufferNames::BUFFER_NORMAL      = "Buffer_Normal";
+const SString MBufferNames::BUFFER_SURFACE     = "Buffer_Surface";
 const SString MBufferNames::BUFFER_OPAQUE      = "Buffer_Opaque";
 const SString MBufferNames::BUFFER_LIGHTS      = "Buffer_Lights";
 const SString MBufferNames::BUFFER_SHADOW      = "Buffer_Shadow";

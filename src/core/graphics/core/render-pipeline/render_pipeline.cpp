@@ -15,9 +15,9 @@
 #include "render_queue.h"
 #include "stages/clear/clear_stage.h"
 #include "stages/composite/composite_stage.h"
-#include "stages/depth/depth_render_stage.h"
 #include "stages/lighting/lighting_stage.h"
 #include "stages/opaque/opaque_stage.h"
+#include "stages/prepass/prepass_stage.h"
 #include "stages/shadow/shadow_stage.h"
 #include "stages/skybox/procedural_sky/procedural_sky_stage.h"
 #include "stages/skybox/skybox_stage.h"
@@ -36,13 +36,17 @@ void MRenderPipeline::init()
     if (initialised)
         return;
 
-    addStage<MClearStage>();              // clear screen pass.
-    addStage<MDepthRenderStage>();        // depth prepass
+    // Run order comes from each stage's getSortingOrder():
+    //   clear -> prepass -> shadow -> skybox -> opaque -> lighting -> composite
+    // Add order only matters for init(): the skybox stages look up
+    // BUFFER_OPAQUE, so they must be added after MOpaqueStage.
+    addStage<MClearStage>();              // clear BUFFER_OPAQUE (runs first)
+    addStage<MPrepassStage>();            // depth/normal/surface -> BUFFER_DEPTH, BUFFER_NORMAL, BUFFER_SURFACE
     addStage<MShadowStage>();             // shadow map         -> BUFFER_SHADOW
-    addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE
-    addStage<MLightingStage>();           // light accumulation -> BUFFER_LIGHTS
-    addStage<MSkyboxStage>();             // cubemap skybox        (after opaques)
-    addStage<MProceduralSkyboxStage>();   // procedural skybox     (after opaques)
+    addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE (reuses prepass depth)
+    addStage<MLightingStage>();           // fullscreen lighting -> BUFFER_LIGHTS (no mesh loop)
+    addStage<MSkyboxStage>();             // cubemap skybox     (runs after shadow)
+    addStage<MProceduralSkyboxStage>();   // procedural skybox  (runs after shadow)
     addStage<MCompositeStage>();          // blits all buffers  -> render target
 
     initialised = true;

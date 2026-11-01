@@ -6,7 +6,9 @@
 #define DYNAMIC_LIGHT_SHADER_CONTAINER_H
 #include "../../graphics/core/render-pipeline/stages/lighting/dynamic_light_data.h"
 
-static constexpr int MAX_DYN_LIGHTS = 8;
+// Dynamic lights uploaded per frame for the whole view (fullscreen lighting).
+// Must match MAX_DYN_LIGHTS in meteor_lighting_utils.glsl.
+static constexpr int MAX_DYN_LIGHTS = 32;
 struct alignas(16) SDynamicLightShaderContainer{
     SDynamicLightDataStruct data[MAX_DYN_LIGHTS];
     int lightCount;

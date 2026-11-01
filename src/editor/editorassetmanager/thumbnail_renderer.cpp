@@ -18,6 +18,7 @@
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_stage.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h"
+#include "core/graphics/core/render-pipeline/stages/prepass/prepass_stage.h"
 #include "core/utils/logger.h"
 
 // -- Built-in Lambert shader (mesh thumbnails only) ----------------------------
@@ -172,9 +173,11 @@ void MThumbnailRenderer::initThumbnailPipeline()
     thumbnailPipeline.initManual();
     thumbnailPipeline.setManualItemMode(true);
 
-    // Opaque stage renders albedo into BUFFER_OPAQUE.
-    // Lighting stage renders light contribution into BUFFER_LIGHTS.
-    // We skip depth/shadow/skybox/composite -- composite is done manually.
+    // Prepass writes depth/normal/surface (must be added before opaque so
+    // opaque shares its depth). Opaque renders albedo into BUFFER_OPAQUE.
+    // Lighting is a fullscreen pass over the prepass buffers -> BUFFER_LIGHTS.
+    // We skip shadow/skybox/composite -- composite is done manually.
+    thumbnailPipeline.addStage<MPrepassStage>();
     thumbnailPipeline.addStage<MOpaqueStage>();
     thumbnailPipeline.addStage<MLightingStage>();
 

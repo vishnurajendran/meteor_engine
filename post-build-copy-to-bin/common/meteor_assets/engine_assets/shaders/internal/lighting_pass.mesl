@@ -3,10 +3,23 @@
     </properties>
 
     #VERTEX_PASS
+    // Fullscreen quad, already in NDC. MLightingStage sets model/view/projection
+    // to identity, so the base shader passes positions through unchanged.
     void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
     #END_VERTEX_PASS
 
     #FRAGMENT_PASS
+
+    // ---- Prepass buffers (bound by lighting_stage.cpp) -----------------------
+    uniform sampler2D _depthTex;     // BUFFER_DEPTH
+    uniform sampler2D _normalTex;    // BUFFER_NORMAL:  rgb view-space normal, a coverage
+    uniform sampler2D _surfaceTex;   // BUFFER_SURFACE: r metallic, g smoothness, b lit
+
+    // ---- Camera the prepass rendered with -------------------------------------
+    // (The standard view/projection uniforms are identity for the quad.)
+    uniform mat4 _invView;
+    uniform mat4 _invProjection;
+    uniform vec3 _cameraPos;
 
     // ---- Shadow uniforms (set by lighting_stage.cpp) ------------------------
     uniform sampler2D shadowMap;
@@ -16,41 +29,7 @@
 
     // smoothShadows and poissonDisk are declared in meteor_lighting_utils.glsl
 
-    // ---- Material uniforms (forwarded per-item by lighting_stage.cpp) --------
-    uniform sampler2D _normalMap;
-    uniform int       _useNormalMap;
-    uniform float     _metallic;
-    uniform float     _smoothness;
-
-    // ---- Screen-space derivative TBN ----------------------------------------
-    // Reconstructs a tangent frame from world-position and UV derivatives
-    // without needing per-vertex tangent attributes.
-    //
-    // Quality tradeoff: lower fidelity at grazing angles, UV seams, and
-    // hard edges compared to proper MikkTSpace tangents. Good enough for
-    // most cases until the vertex pipeline ships tangent data.
-    vec3 perturbNormal(vec3 worldPos, vec3 N, vec2 uv)
-    {
-        vec3 mapN = texture(_normalMap, uv).rgb * 2.0 - 1.0;
-
-        vec3 dp1  = dFdx(worldPos);
-        vec3 dp2  = dFdy(worldPos);
-        vec2 duv1 = dFdx(uv);
-        vec2 duv2 = dFdy(uv);
-
-        vec3 dp2perp = cross(dp2, N);
-        vec3 dp1perp = cross(N, dp1);
-
-        vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
-        vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
-
-        float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
-        mat3  TBN    = mat3(T * invmax, B * invmax, N);
-
-        return normalize(TBN * mapN);
-    }
-
-    // ---- Directional shadow (unchanged from original) -----------------------
+    // ---- Directional shadow -------------------------------------------------
     float computeShadow(vec3 worldPos)
     {
         if (hasDirShadow == 0) return 0.0;
@@ -91,44 +70,52 @@
         return shadow * fade;
     }
 
+    // ---- Position from depth ------------------------------------------------
+    vec3 reconstructWorldPos(vec2 uv, float depth)
+    {
+        vec4 ndc     = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+        vec4 viewPos = _invProjection * ndc;
+        viewPos     /= viewPos.w;
+        return (_invView * viewPos).xyz;
+    }
+
     // ---- Main fragment ------------------------------------------------------
-    // Lighting is inlined here instead of calling getDirLightContrib() /
-    // getDynamicLightContrib() because those utility functions read the
-    // unperturbed vertex normal directly from the varying. We need the
-    // normal-mapped N for diffuse and specular, while shadow bias in
-    // computeSpotShadow/computePointShadow correctly keeps using the
-    // geometric normal from getVertexNormalWorld().
+    // Returns the light contribution only; the composite multiplies it by
+    // the albedo in BUFFER_OPAQUE. Alpha = 1 marks the pixel as lit.
 
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
-        vec3 worldPos = getVertexPositionWorld();
-        vec3 N        = normalize(getVertexNormalWorld());
+        ivec2 pixel = ivec2(gl_FragCoord.xy);
 
-        // -- Normal mapping --
-        if (_useNormalMap == 1)
-        {
-            N = perturbNormal(worldPos, N, v2fTexCoords);
-        }
+        float depth = texelFetch(_depthTex, pixel, 0).r;
+        if (depth >= 1.0) discard;                     // sky / nothing drawn
 
-        // -- View direction for specular --
-        // Camera position extracted from the view matrix. Since view is a
-        // uniform the driver computes the inverse once per draw, not per
-        // fragment. Passing cameraPos as a dedicated uniform would avoid
-        // this entirely if it becomes a concern.
-        vec3 cameraPos = (inverse(view) * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-        vec3 V         = normalize(cameraPos - worldPos);
+        vec4 surface = texelFetch(_surfaceTex, pixel, 0);
+        if (surface.b < 0.5) discard;                  // unlit material: albedo as-is
+
+        float metallic   = surface.r;
+        float smoothness = surface.g;
+
+        vec2 uv       = gl_FragCoord.xy / vec2(textureSize(_depthTex, 0));
+        vec3 worldPos = reconstructWorldPos(uv, depth);
+
+        // Normal map was applied in the prepass; bring it back to world space.
+        vec3 viewN = texelFetch(_normalTex, pixel, 0).xyz;
+        vec3 N     = normalize(mat3(_invView) * viewN);
+
+        vec3 V = normalize(_cameraPos - worldPos);
 
         // -- Smoothness to Blinn-Phong exponent --
         // smoothness 0 -> power 2 (very rough)
         // smoothness 1 -> power 2048 (near-mirror)
-        float specPower = pow(2.0, _smoothness * 10.0 + 1.0);
+        float specPower = pow(2.0, smoothness * 10.0 + 1.0);
 
         // -- Metallic controls the diffuse/specular balance --
         // Dielectric F0 ~= 0.04, metallic F0 ~= 1.0.
         // The composite multiplies lights * albedo, which correctly tints
         // metallic specular by the base color. For dielectrics the tint is
         // a known approximation (specular should ideally be white).
-        float specWeight = mix(0.04, 1.0, _metallic);
+        float specWeight = mix(0.04, 1.0, metallic);
 
         // -- Shadow --
         float shadow = computeShadow(worldPos);
@@ -158,6 +145,8 @@
         dirSpecular *= (1.0 - shadow);
 
         // -- Dynamic lights (point + spot, diffuse + specular) --
+        // One list for the whole view, nearest first (see
+        // MLightSystemManager::prepareViewDynamicLights).
         vec3 dynDiffuse  = vec3(0.0);
         vec3 dynSpecular = vec3(0.0);
 
@@ -184,12 +173,9 @@
             float shadowVal = 0.0;
             if (light.shadowIndex >= 0)
             {
-                // Shadow functions use the geometric normal from the
-                // varying for slope-scaled bias, which is correct --
-                // shadow bias should not be affected by the normal map.
                 if (light.type == 2)
-                    shadowVal = computeSpotShadow(
-                        light.shadowIndex, worldPos, light.smoothShadow);
+                    shadowVal = computeSpotShadowN(
+                        light.shadowIndex, worldPos, N, light.smoothShadow);
                 else if (light.type == 1)
                     shadowVal = computePointShadow(
                         light.shadowIndex, worldPos,
@@ -211,7 +197,7 @@
         // Metallic = 0: full diffuse, specular weighted by 0.04 (dielectric)
         // Metallic = 1: no diffuse, specular weighted by 1.0 (metal)
         vec3 totalDiffuse  = (ambient + dirDiffuse + dynDiffuse)
-                             * (1.0 - _metallic);
+                             * (1.0 - metallic);
         vec3 totalSpecular = (dirSpecular + dynSpecular) * specWeight;
 
         return vec4(totalDiffuse + totalSpecular, 1.0);

@@ -3,7 +3,7 @@
 #ifndef METEOR_LIGHTING_UTILS
 #define METEOR_LIGHTING_UTILS
 
-const int MAX_DYN_LIGHTS    = 8;
+const int MAX_DYN_LIGHTS    = 32;   // must match dynamic_light_shader_container.h
 const int MAX_SPOT_SHADOWS  = 4;
 const int MAX_POINT_SHADOWS = 4;
 
@@ -131,7 +131,9 @@ float getPointFarPlane(int idx)
 
 // ---- Shadow compute - usePCF is per-instance from the SSBO -----------------
 
-float computeSpotShadow(int idx, vec3 worldPos, int usePCF)
+// surfaceNormal (world space) drives the slope-scaled bias. Fullscreen passes
+// pass the normal from BUFFER_NORMAL; mesh passes use the overload below.
+float computeSpotShadowN(int idx, vec3 worldPos, vec3 surfaceNormal, int usePCF)
 {
     if (idx < 0 || idx >= MAX_SPOT_SHADOWS) return 0.0;
 
@@ -151,7 +153,7 @@ float computeSpotShadow(int idx, vec3 worldPos, int usePCF)
     // flat bias causes stripes. tan(acos(cosTheta)) grows toward infinity at
     // 90° - clamped to prevent full shadow detachment on near-perpendicular faces.
     vec3  toLightDir = normalize(getSpotLightPos(idx) - worldPos);
-    float cosTheta   = clamp(dot(getVertexNormalWorld(), toLightDir), 0.001, 1.0);
+    float cosTheta   = clamp(dot(surfaceNormal, toLightDir), 0.001, 1.0);
     float bias       = clamp(0.05 * tan(acos(cosTheta)), 0.02, 0.8);
 
     if (usePCF == 1)
@@ -171,6 +173,11 @@ float computeSpotShadow(int idx, vec3 worldPos, int usePCF)
         float d = sampleSpotDepth(idx, projCoords.xy);
         return (currentDist - bias > d * far) ? 1.0 : 0.0;
     }
+}
+
+float computeSpotShadow(int idx, vec3 worldPos, int usePCF)
+{
+    return computeSpotShadowN(idx, worldPos, getVertexNormalWorld(), usePCF);
 }
 
 float computePointShadow(int idx, vec3 worldPos, vec3 lightPos, int usePCF)

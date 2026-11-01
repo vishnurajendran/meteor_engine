@@ -17,7 +17,7 @@ class MProceduralSkyboxStage : public MRenderStage
 {
     DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxStage)
 public:
-    int  getSortingOrder() override { return ERenderStageOrder::RS_Transparent - 1; }
+    int  getSortingOrder() override { return ERenderStageOrder::RS_Skybox; }
 
     void init      (IRenderPipeline* const pipeline) override;
     void cleanup   (IRenderPipeline* const pipeline) override;

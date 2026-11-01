@@ -4,21 +4,33 @@
 #include "lightscene.h"
 #include "core/engine/lighting/dynamiclights/dynamic_light.h"
 #include "glm/gtx/norm.hpp"
+#include "core/utils/frustum.h"
+#include <algorithm>
 
 MLightScene::~MLightScene()
 {
     destroyBVH(bvhRoot);
 }
 
-void MLightScene::build(std::vector<MDynamicLight*> lights)
+void MLightScene::setLights(const std::vector<MDynamicLight*>& lights)
 {
-    dynamicLights = lights;
+    // Keep only valid lights so BVH leaf indices map 1:1 onto dynamicLights.
+    dynamicLights.clear();
+    dynamicLights.reserve(lights.size());
+    for (auto* light : lights)
+        if (light) dynamicLights.push_back(light);
+
+    rebuildRequired = true;
+}
+
+void MLightScene::rebuild()
+{
+    rebuildRequired = false;
     lightBounds.clear();
 
-    for (auto* light : lights) {
-        if (!light)
-            continue;
-
+    // Positions and ranges are re-read here, so moved lights and changed
+    // ranges are picked up by any rebuild.
+    for (auto* light : dynamicLights) {
         SLightBounds bounds;
         bounds.position = light->getWorldPosition();
         bounds.radius = light->getRange();
@@ -35,11 +47,15 @@ void MLightScene::build(std::vector<MDynamicLight*> lights)
     if (bvhRoot) {
         destroyBVH(bvhRoot);
     }
-    bvhRoot = buildBVH(indices, 0, indices.size());
+    bvhRoot = buildBVH(indices, 0, static_cast<int>(indices.size()));
 }
 
 std::vector<MDynamicLight*> MLightScene::queryLights(const AABB& bounds, const int& maxLights)
 {
+    // Lights were added, removed, moved or resized since the last build.
+    if (rebuildRequired)
+        rebuild();
+
     std::vector<std::pair<int, float>> foundLights; // {lightIndex, distanceSq}
     queryBVH(bounds, bvhRoot, foundLights);
 
@@ -57,6 +73,50 @@ std::vector<MDynamicLight*> MLightScene::queryLights(const AABB& bounds, const i
     return result;
 }
 
+
+std::vector<MDynamicLight*> MLightScene::queryLightsInFrustum(const SFrustum& frustum,
+                                                           const SVector3& viewerPosition)
+{
+    if (rebuildRequired)
+        rebuild();
+
+    std::vector<std::pair<int, float>> found; // {lightIndex, distance to sphere}
+    queryFrustumBVH(frustum, viewerPosition, bvhRoot, found);
+
+    std::sort(found.begin(), found.end(),
+              [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
+                  return a.second < b.second;
+              });
+
+    std::vector<MDynamicLight*> result;
+    result.reserve(found.size());
+    for (const auto& [index, distance] : found)
+        result.push_back(dynamicLights[index]);
+    return result;
+}
+
+void MLightScene::queryFrustumBVH(const SFrustum& frustum, const SVector3& viewerPosition,
+                                  SLightBVHNode* node, std::vector<std::pair<int, float>>& outLights)
+{
+    if (!node) return;
+
+    // Node bounds enclose every light sphere below it - if the box is
+    // outside the frustum, so is the whole branch.
+    if (!frustum.testAABB(node->bounds))
+        return;
+
+    if (node->lightIndex != -1)
+    {
+        // Leaf bounds are exactly this light's sphere box, already tested.
+        const SLightBounds& light = lightBounds[node->lightIndex];
+        const float distance = std::max(0.0f, glm::length(light.position - viewerPosition) - light.radius);
+        outLights.emplace_back(node->lightIndex, distance);
+        return;
+    }
+
+    queryFrustumBVH(frustum, viewerPosition, node->left,  outLights);
+    queryFrustumBVH(frustum, viewerPosition, node->right, outLights);
+}
 
 SLightBVHNode* MLightScene::buildBVH(std::vector<int>& indices, int start, int end)
 {

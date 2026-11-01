@@ -12,7 +12,9 @@
 // Use these everywhere instead of raw string literals.
 struct MBufferNames
 {
-    static const SString BUFFER_DEPTH;
+    static const SString BUFFER_DEPTH;        // prepass depth texture          (SDepthBuffer)
+    static const SString BUFFER_NORMAL;       // prepass view-space normals     (STextureBuffer, RGBA16F)
+    static const SString BUFFER_SURFACE;      // prepass metallic/smoothness/lit (STextureBuffer, RGBA8)
     static const SString BUFFER_OPAQUE;
     static const SString BUFFER_LIGHTS;
     static const SString BUFFER_SHADOW;

@@ -18,7 +18,7 @@ class MBufferRegistery;
 enum ECompositeFlags : uint32_t
 {
     ECF_None        = 0,
-    ECF_Depth       = 1 << 0,
+    ECF_Prepass     = 1 << 0,
     ECF_Opaque      = 1 << 1,
     ECF_Lights      = 1 << 2,
     ECF_Shadow      = 1 << 3,
@@ -41,7 +41,9 @@ public:
         IRenderStage* stage = mnew<T>();
         stage->init(this);
         renderStages.push_back(stage);
-        std::sort(renderStages.begin(), renderStages.end(),
+        // Stable: stages with the same order run in the order they were added
+        // (e.g. cubemap skybox, then procedural skybox).
+        std::stable_sort(renderStages.begin(), renderStages.end(),
             [](IRenderStage* a, IRenderStage* b) { return a->getSortingOrder() < b->getSortingOrder(); });
         return true;
     }

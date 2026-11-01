@@ -48,7 +48,7 @@ void MSkyboxStage::render(IRenderPipeline* const pipeline)
     const SVector2 res = pipeline->getRenderResolution();
     glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
 
-    glDepthMask(GL_FALSE);  // don't corrupt the clean depth from clear stage
+    glDepthMask(GL_FALSE);  // keep the prepass depth intact for the opaque stage
 
     for (auto* drawCall : renderer->getSkyboxQueue().getDrawCalls())
     {

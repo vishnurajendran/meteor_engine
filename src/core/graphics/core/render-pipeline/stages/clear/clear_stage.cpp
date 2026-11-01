@@ -23,8 +23,11 @@ void MClearStage::render(IRenderPipeline* const pipeline)
     const SVector2 res = pipeline->getRenderResolution();
     glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
 
-    glDepthMask(GL_TRUE);
+    // First stage of the frame - nothing has rendered yet, so depth can be
+    // cleared even when it is the shared prepass depth.
     glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClearDepth(1.0);
+    glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     opaqueBuffer->unbind();

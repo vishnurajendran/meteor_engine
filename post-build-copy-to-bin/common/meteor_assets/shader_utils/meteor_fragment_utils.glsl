@@ -1,7 +1,9 @@
 #ifndef METEOR_FRAG_UTILS
 #define METEOR_FRAG_UTILS
 
-out vec4 FragColor;  // Uniform color
+// Location 0 explicitly, so shaders can add more outputs (MRT) at
+// locations 1+ - e.g. prepass.mesl writes BUFFER_SURFACE at location 1.
+layout(location = 0) out vec4 FragColor;
 
 // MVP matrices - declared here so fragment shaders can access view/model/projection.
 // These are also declared in meteor_projection_utils.glsl (vertex only), but the

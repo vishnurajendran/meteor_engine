@@ -4,6 +4,7 @@
 
 #include <GL/glew.h>
 #include "frame_buffer.h"
+#include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
 #include "core/utils/logger.h"
 
 SFrameBuffer::~SFrameBuffer()
@@ -14,6 +15,23 @@ SFrameBuffer::~SFrameBuffer()
 void SFrameBuffer::bindAsActive()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
+    syncSharedDepth();
+}
+
+// Attaches the prepass depth texture if it changed since the last bind
+// (first bind, or either buffer was resized). Expects fboHandle to be bound.
+void SFrameBuffer::syncSharedDepth()
+{
+    if (!sharedDepthSource || fboHandle == 0) return;
+
+    const unsigned int tex = sharedDepthSource->getDepthTextureHandle();
+    if (tex == attachedSharedDepth) return;
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex, 0);
+    attachedSharedDepth = tex;
+
+    if (tex != 0 && glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        MERROR("SFrameBuffer::syncSharedDepth - FBO incomplete after attaching prepass depth for '" + name + "'");
 }
 
 void SFrameBuffer::unbind()
@@ -54,18 +72,25 @@ bool SFrameBuffer::resize(int width, int height)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // ---- Depth renderbuffer (DEPTH_COMPONENT24, matches SFML) ---------------
-    glGenRenderbuffers(1, &depthRenderbufferHandle);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbufferHandle);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    // Skipped when depth is shared - the prepass texture is attached lazily
+    // in bindAsActive(), because the prepass buffer may be resized after us.
+    if (!sharedDepthSource)
+    {
+        glGenRenderbuffers(1, &depthRenderbufferHandle);
+        glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbufferHandle);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
 
     // ---- FBO ----------------------------------------------------------------
     glGenFramebuffers(1, &fboHandle);
     glBindFramebuffer(GL_FRAMEBUFFER, fboHandle);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                            GL_TEXTURE_2D, colorTextureHandle, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                              GL_RENDERBUFFER, depthRenderbufferHandle);
+    if (depthRenderbufferHandle)
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  GL_RENDERBUFFER, depthRenderbufferHandle);
+    attachedSharedDepth = 0;   // new FBO - nothing shared attached yet
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

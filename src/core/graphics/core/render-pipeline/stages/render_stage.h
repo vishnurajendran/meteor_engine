@@ -11,15 +11,15 @@
 
 enum ERenderStageOrder
 {
-    RS_Depth         = 0,       // depth prepass
-    RS_Shadow        = 1,       // shadow maps
+    RS_Clear         = 0,       // clear BUFFER_OPAQUE colour + depth - first stage of the frame
+    RS_Prepass       = 100,     // depth/normal/surface prepass -> BUFFER_DEPTH, BUFFER_NORMAL, BUFFER_SURFACE
+    RS_Shadow        = 200,     // shadow maps
+    RS_Skybox        = 300,     // cubemap + procedural sky into BUFFER_OPAQUE, only where the prepass left the far plane
 
-    RS_Clear         = 500,     // clear BUFFER_OPAQUE (colour + depth)
-    RS_Skybox        = 750,     // skybox into BUFFER_OPAQUE (before geometry)
     RS_Opaque        = 1000,    // opaque geometry
     RS_Transparent   = 3000,    // transparent geometry
 
-    RS_Lighting      = 4000,    // lighting mask accumulation
+    RS_Lighting      = 4000,    // fullscreen lighting from prepass buffers
 
     RS_UserInterface = 5000,    // UI
 

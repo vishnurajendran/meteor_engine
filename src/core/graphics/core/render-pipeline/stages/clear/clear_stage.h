@@ -1,9 +1,10 @@
 //
-// Clear stage - RS_Clear (500).
+// Clear stage - RS_Clear (0), the first stage of every frame.
 //
-// Clears BUFFER_OPAQUE colour and depth before any rendering.
-// Runs after depth/shadow (which use their own buffers) and before
-// skybox and opaque geometry, so each stage only does its own job.
+// Clears BUFFER_OPAQUE colour and depth before anything else renders.
+// When BUFFER_OPAQUE shares the prepass depth, that depth is cleared here
+// too, which is safe because the prepass runs after this stage (and clears
+// its own targets again, so it also works in pipelines without a clear stage).
 //
 
 #pragma once

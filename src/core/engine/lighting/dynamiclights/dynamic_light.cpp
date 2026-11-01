@@ -38,6 +38,10 @@ void MDynamicLight::setRange(const float& r)
 {
     range           = r;
     lightData.range = r;
+
+    // Range is the light's BVH bounds.
+    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
+        renderer->getLightSystem().requestLightSceneRebuild();
 }
 
 void MDynamicLight::onDeserialise(const pugi::xml_node& node)

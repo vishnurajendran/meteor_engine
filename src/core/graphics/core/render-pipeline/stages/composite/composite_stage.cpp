@@ -7,6 +7,7 @@
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
+#include "core/graphics/core/render-pipeline/buffers/texture/texture_buffer.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
 #include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
@@ -47,7 +48,7 @@ in  vec2 vUV;
 out vec4 FragColor;
 
 uniform sampler2D uTex;
-uniform int       uMode;       // 0 = color, 1 = depth, 2 = alpha-as-grey, 3 = linear color
+uniform int       uMode;       // 0 = color, 1 = depth, 2 = alpha-as-grey, 3 = view normals, 4 = raw data
 
 vec3 linearToSrgb(vec3 c)
 {
@@ -70,6 +71,18 @@ void main()
         // Alpha channel as greyscale
         float a = texture(uTex, vUV).a;
         FragColor = vec4(vec3(a), 1.0);
+    }
+    else if (uMode == 3)
+    {
+        // View-space normals: remap -1..1 to 0..1. Shown as-is (data, not
+        // colour). Pixels with no geometry (alpha 0) stay black.
+        vec4 n = texture(uTex, vUV);
+        FragColor = vec4(n.a > 0.0 ? n.rgb * 0.5 + 0.5 : vec3(0.0), 1.0);
+    }
+    else if (uMode == 4)
+    {
+        // Raw 0..1 data (e.g. BUFFER_SURFACE) - no colour encode.
+        FragColor = vec4(texture(uTex, vUV).rgb, 1.0);
     }
     else
     {
@@ -135,7 +148,7 @@ void MCompositeStage::render(IRenderPipeline* const pipeline)
     if (hasOpaque)
         compositeOpaqueWithLights(pipeline, hasLights, sfmlFBO, w, h);
 
-    if (flags & ECF_Depth)
+    if (flags & ECF_Prepass)
         compositeDepth(pipeline, sfmlFBO, w, h);
 }
 
@@ -150,11 +163,15 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     auto* lights = pipeline->getBufferRegistry()
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
-    auto* depth  = pipeline->getBufferRegistry()
-                            .getBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH);
+    auto* depth   = pipeline->getBufferRegistry()
+                             .getBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH);
+    auto* normal  = pipeline->getBufferRegistry()
+                             .getBuffer<STextureBuffer>(MBufferNames::BUFFER_NORMAL);
+    auto* surface = pipeline->getBufferRegistry()
+                             .getBuffer<STextureBuffer>(MBufferNames::BUFFER_SURFACE);
 
     GLuint texHandle = 0;
-    int    mode      = 0;   // 0=color, 1=depth, 2=alpha
+    int    mode      = 0;   // 0=color, 1=depth, 2=alpha, 3=normals, 4=raw data
 
     switch (debugView)
     {
@@ -169,10 +186,18 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
             break;
 
         case EBufferDebugView::Depth:
-            // SFrameBuffer uses a depth renderbuffer (not sampleable).
-            // SDepthBuffer from the depth prepass has a depth texture.
             if (depth) texHandle = depth->getDepthTextureHandle();
             mode = 1;
+            break;
+
+        case EBufferDebugView::Normals:
+            if (normal) texHandle = normal->getTextureHandle();
+            mode = 3;
+            break;
+
+        case EBufferDebugView::Surface:
+            if (surface) texHandle = surface->getTextureHandle();
+            mode = 4;
             break;
 
         case EBufferDebugView::LightMask:
