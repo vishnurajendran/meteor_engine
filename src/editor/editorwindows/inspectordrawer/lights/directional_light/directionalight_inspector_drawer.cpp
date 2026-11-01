@@ -51,5 +51,23 @@ void MDirecionalLightInspectorDrawer::drawDLGui(MDirectionalLight* light) {
                                  ImGuiSliderFlags_AlwaysClamp))
                 light->setShadowDistance(dist);
         END_FIELD_DRAW()
+
+        START_FIELD_DRAW("Cascades", "Number of shadow maps the shadow distance is split into.\nMore = sharper shadows near the camera, one extra shadow pass each.")
+            int count = light->getCascadeCount();
+            if (ImGui::SliderInt("##v", &count, 1, MDirectionalLight::MAX_CASCADES, "%d", ImGuiSliderFlags_AlwaysClamp))
+                light->setCascadeCount(count);
+        END_FIELD_DRAW()
+
+        START_FIELD_DRAW("Cascade Split", "How cascade ranges are spread.\n0 = equal lengths, 1 = logarithmic (most detail near the camera).")
+            float split = light->getCascadeSplit();
+            if (MInspectorField::SliderFloat("##v", &split, 0.0f, 1.0f, "%.2f"))
+                light->setCascadeSplit(split);
+        END_FIELD_DRAW()
+
+        START_FIELD_DRAW("Show Cascades", "Debug: tint the scene by cascade (red, green, blue, yellow). Not saved.")
+            bool show = light->getShowCascades();
+            if (ImGui::Checkbox("##v", &show))
+                light->setShowCascades(show);
+        END_FIELD_DRAW()
     }
 }

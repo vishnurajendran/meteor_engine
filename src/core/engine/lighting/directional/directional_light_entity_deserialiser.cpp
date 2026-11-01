@@ -38,6 +38,10 @@ MSpatialEntity* MDirectionalLightEntityDeserialiser::deserialize(pugi::xml_node 
         entity->setSmoothShadow(std::string(n.attribute(ATTRIB_VALUE_KEY.c_str()).value()) != "0");
     if (const auto n = ln.child("shadowDistance"))
         entity->setShadowDistance(n.attribute(ATTRIB_VALUE_KEY.c_str()).as_float(100.0f));
+    if (const auto n = ln.child("cascadeCount"))
+        entity->setCascadeCount(n.attribute(ATTRIB_VALUE_KEY.c_str()).as_int(4));
+    if (const auto n = ln.child("cascadeSplit"))
+        entity->setCascadeSplit(n.attribute(ATTRIB_VALUE_KEY.c_str()).as_float(0.75f));
 
     return entity;
 }
@@ -54,5 +58,7 @@ pugi::xml_node MDirectionalLightEntityDeserialiser::serialise(MSpatialEntity* en
     writeBool (ln, "castsShadow",  light->getCastsShadow());
     writeBool (ln, "smoothShadow", light->getSmoothShadow());
     writeFloat(ln, "shadowDistance", light->getShadowDistance());
+    writeInt  (ln, "cascadeCount",   light->getCascadeCount());
+    writeFloat(ln, "cascadeSplit",   light->getCascadeSplit());
     return node;
 }

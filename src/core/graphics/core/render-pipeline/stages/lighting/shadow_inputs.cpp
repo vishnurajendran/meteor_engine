@@ -7,6 +7,7 @@
 
 #include "shadow_inputs.h"
 
+#include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
@@ -28,31 +29,52 @@ void bind(IRenderPipeline* pipeline, unsigned int program)
 
     bool dirShadowEnabled = false;
     bool dirSmoothShadow  = false;
+    bool showCascades     = false;
     if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
     {
-        dirShadowEnabled = renderer->getLightSystem().isDirectionalShadowEnabled();
-        dirSmoothShadow  = renderer->getLightSystem().isDirectionalSmoothShadow();
+        auto& lights     = renderer->getLightSystem();
+        dirShadowEnabled = lights.isDirectionalShadowEnabled();
+        dirSmoothShadow  = lights.isDirectionalSmoothShadow();
+        if (const auto* dir = dynamic_cast<MDirectionalLight*>(lights.getDirectionalLight()))
+            showCascades = dir->getShowCascades();
     }
 
-    // ---- Directional ---------------------------------------------------------
-    if (hasShadow)
+    // ---- Directional cascades ------------------------------------------------
+    const int cascades = (hasShadow && dirShadowEnabled && sb->cascadeArrayTexture != 0)
+                         ? sb->numCascades : 0;
+    if (cascades > 0)
     {
         glActiveTexture(GL_TEXTURE0 + UNIT_DIRECTIONAL);
-        glBindTexture(GL_TEXTURE_2D, sb->getDepthTextureHandle());
+        glBindTexture(GL_TEXTURE_2D_ARRAY, sb->cascadeArrayTexture);
     }
     {
         GLint l;
-        l = glGetUniformLocation(prog, "shadowMap");
+        l = glGetUniformLocation(prog, "shadowCascades");
         if (l >= 0) glUniform1i(l, UNIT_DIRECTIONAL);
-        l = glGetUniformLocation(prog, "lightSpaceMatrix");
-        if (l >= 0 && hasShadow)
-            glUniformMatrix4fv(l, 1, GL_FALSE, glm::value_ptr(sb->lightSpaceMatrix));
+        l = glGetUniformLocation(prog, "cascadeCount");
+        if (l >= 0) glUniform1i(l, cascades);
         l = glGetUniformLocation(prog, "hasShadow");
         if (l >= 0) glUniform1i(l, hasShadow ? 1 : 0);
         l = glGetUniformLocation(prog, "hasDirShadow");
-        if (l >= 0) glUniform1i(l, (hasShadow && dirShadowEnabled) ? 1 : 0);
+        if (l >= 0) glUniform1i(l, cascades > 0 ? 1 : 0);
         l = glGetUniformLocation(prog, "smoothShadows");
         if (l >= 0) glUniform1i(l, dirSmoothShadow ? 1 : 0);
+        l = glGetUniformLocation(prog, "showCascades");
+        if (l >= 0) glUniform1i(l, (cascades > 0 && showCascades) ? 1 : 0);
+
+        if (cascades > 0)
+        {
+            l = glGetUniformLocation(prog, "cascadeMatrices");
+            if (l >= 0) glUniformMatrix4fv(l, cascades, GL_FALSE, glm::value_ptr(sb->cascadeMatrices[0]));
+            l = glGetUniformLocation(prog, "cascadeSplits");
+            if (l >= 0) glUniform1fv(l, cascades, sb->cascadeSplits);
+            l = glGetUniformLocation(prog, "cascadeTexelWorld");
+            if (l >= 0) glUniform1fv(l, cascades, sb->cascadeTexelWorld);
+            l = glGetUniformLocation(prog, "cascadeCameraView");
+            if (l >= 0) glUniformMatrix4fv(l, 1, GL_FALSE, glm::value_ptr(sb->cascadeCameraView));
+            l = glGetUniformLocation(prog, "shadowDistance");
+            if (l >= 0) glUniform1f(l, sb->shadowDistance);
+        }
     }
 
     // ---- Spot ----------------------------------------------------------------
@@ -105,6 +127,7 @@ void unbind()
     {
         glActiveTexture(GL_TEXTURE0 + i);
         glBindTexture(GL_TEXTURE_2D,       0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     }
     glActiveTexture(GL_TEXTURE0);

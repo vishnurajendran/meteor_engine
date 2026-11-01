@@ -284,50 +284,113 @@ vec3 applyLighting(vec3 inColor)
 // the same material values lights the same way in both paths.
 // ============================================================================
 
-// ---- Directional shadow (bound by bindShadowInputs() in C++) ---------------
-uniform sampler2D shadowMap;
-uniform mat4      lightSpaceMatrix;
-uniform int       hasShadow;
-uniform int       hasDirShadow;
+// ---- Directional shadow: cascades (bound by MShadowInputs::bind in C++) -----
+// The view up to shadowDistance is split into cascadeCount depth ranges, each
+// with its own shadow map (one layer of shadowCascades). Near the camera a
+// cascade covers a few metres, so its texels are small; far ones cover more.
+const int MAX_CASCADES = 4;   // must match SShadowBuffer::MAX_CASCADES
 
-float computeDirectionalShadow(vec3 worldPos)
+uniform sampler2DArrayShadow shadowCascades;          // compare mode: returns lit fraction, bilinear PCF
+uniform mat4  cascadeMatrices[MAX_CASCADES];          // world -> light clip
+uniform float cascadeSplits[MAX_CASCADES];            // far edge of each cascade (view distance)
+uniform float cascadeTexelWorld[MAX_CASCADES];        // world size of one texel
+uniform int   cascadeCount;                           // 0 = no directional shadow
+uniform mat4  cascadeCameraView;                      // camera view the splits are measured in
+uniform float shadowDistance;
+uniform int   showCascades;                           // debug tint
+uniform int   hasShadow;
+uniform int   hasDirShadow;
+
+// World-space radius of the soft-shadow blur. Converted to texels per
+// cascade so soft shadows look the same width near and far.
+const float SOFT_SHADOW_WORLD_RADIUS = 0.06;
+
+// 0 = lit, 1 = fully shadowed, for one cascade. -1 if the point falls
+// outside this cascade's map (caller picks another cascade or treats as lit).
+float sampleShadowCascade(int c, vec3 worldPos, vec3 N, vec3 L)
 {
-    if (hasDirShadow == 0) return 0.0;
+    float texel = cascadeTexelWorld[c];
 
-    vec4 fragPosLS  = lightSpaceMatrix * vec4(worldPos, 1.0);
-    vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
-    projCoords      = projCoords * 0.5 + 0.5;
+    // Normal offset: push the lookup point off the surface by about a texel
+    // (more at grazing angles). Removes acne without the peter-panning a
+    // large depth bias causes, and scales with each cascade's texel size.
+    float NdotL = clamp(dot(N, L), 0.0, 1.0);
+    vec3  p     = worldPos + N * texel * (1.0 + 2.0 * (1.0 - NdotL));
 
-    if (projCoords.x < 0.0 || projCoords.x > 1.0 ||
-        projCoords.y < 0.0 || projCoords.y > 1.0 ||
-        projCoords.z < 0.0 || projCoords.z > 1.0)
-        return 0.0;
+    vec4 ls = cascadeMatrices[c] * vec4(p, 1.0);
+    vec3 pc = ls.xyz / ls.w * 0.5 + 0.5;
+    if (pc.x < 0.0 || pc.x > 1.0 || pc.y < 0.0 || pc.y > 1.0) return -1.0;
+    if (pc.z > 1.0) return 0.0;                        // beyond the cascade's far plane
 
-    vec2  texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
-    float bias      = texelSize.x * 0.5;
+    float ref = pc.z - 0.0002;
+    float layer = float(c);
 
-    // Fade shadows out over the outer 10% of the shadow area so the
-    // shadow distance limit isn't a hard visible line.
-    vec2  edgeDist = abs(projCoords.xy - 0.5) * 2.0;
-    float fade     = 1.0 - smoothstep(0.9, 1.0, max(edgeDist.x, edgeDist.y));
-
-    float shadow = 0.0;
     if (smoothShadows == 1)
     {
-        float spread = texelSize.x * 2.0;
+        vec2  texelUV  = 1.0 / vec2(textureSize(shadowCascades, 0).xy);
+        float spreadPx = clamp(SOFT_SHADOW_WORLD_RADIUS / texel, 1.0, 6.0);
+        vec2  spread   = texelUV * spreadPx;
+
+        float lit = 0.0;
         for (int i = 0; i < 16; ++i)
-        {
-            float d = texture(shadowMap, projCoords.xy + poissonDisk[i] * spread).r;
-            shadow += (projCoords.z - bias > d) ? 1.0 : 0.0;
-        }
-        shadow /= 16.0;
+            lit += texture(shadowCascades, vec4(pc.xy + poissonDisk[i] * spread, layer, ref));
+        return 1.0 - lit / 16.0;
     }
-    else
+
+    // Hardware 2x2 bilinear PCF.
+    return 1.0 - texture(shadowCascades, vec4(pc.xy, layer, ref));
+}
+
+int selectShadowCascade(float viewDepth)
+{
+    for (int i = 0; i < cascadeCount; ++i)
+        if (viewDepth < cascadeSplits[i]) return i;
+    return cascadeCount - 1;
+}
+
+// 0 = lit, 1 = fully shadowed. N is the world-space surface normal.
+float computeDirectionalShadow(vec3 worldPos, vec3 N)
+{
+    if (hasDirShadow == 0 || cascadeCount == 0) return 0.0;
+
+    float viewDepth = -(cascadeCameraView * vec4(worldPos, 1.0)).z;
+    if (viewDepth >= shadowDistance) return 0.0;
+
+    vec3 L = normalize(uDirectionalLight.forward);
+    int  c = selectShadowCascade(viewDepth);
+    float shadow = max(sampleShadowCascade(c, worldPos, N, L), 0.0);
+
+    // Blend into the next cascade over the last 10% of this one, so the
+    // resolution change isn't a visible line.
+    if (c < cascadeCount - 1)
     {
-        float d = texture(shadowMap, projCoords.xy).r;
-        shadow = (projCoords.z - bias > d) ? 1.0 : 0.0;
+        float start = (c == 0) ? 0.0 : cascadeSplits[c - 1];
+        float end   = cascadeSplits[c];
+        float band  = (end - start) * 0.1;
+        if (viewDepth > end - band)
+        {
+            float t    = (viewDepth - (end - band)) / band;
+            float next = sampleShadowCascade(c + 1, worldPos, N, L);
+            if (next >= 0.0) shadow = mix(shadow, next, t);
+        }
     }
+
+    // Fade out over the last 10% of the shadow distance.
+    float fade = 1.0 - smoothstep(shadowDistance * 0.9, shadowDistance, viewDepth);
     return shadow * fade;
+}
+
+// Debug colour per cascade (Show Cascades on the directional light).
+vec3 cascadeDebugTint(vec3 worldPos)
+{
+    if (cascadeCount == 0) return vec3(1.0);
+    float viewDepth = -(cascadeCameraView * vec4(worldPos, 1.0)).z;
+    if (viewDepth >= shadowDistance) return vec3(1.0);
+    int c = selectShadowCascade(viewDepth);
+    if (c == 0) return vec3(1.0, 0.45, 0.45);
+    if (c == 1) return vec3(0.45, 1.0, 0.45);
+    if (c == 2) return vec3(0.45, 0.6, 1.0);
+    return vec3(1.0, 1.0, 0.45);
 }
 
 // Light arriving at a surface, before albedo:
@@ -372,7 +435,7 @@ vec3 meteorSurfaceLighting(vec3 worldPos, vec3 N, vec3 cameraPos,
         dirSpecular = pow(NdotH, specPower) * step(0.001, NdotL)
                       * uDirectionalLight.color * uDirectionalLight.intensity;
 
-        float shadow = computeDirectionalShadow(worldPos);
+        float shadow = computeDirectionalShadow(worldPos, N);
         dirDiffuse  *= (1.0 - shadow);
         dirSpecular *= (1.0 - shadow);
     }
@@ -421,7 +484,12 @@ vec3 meteorSurfaceLighting(vec3 worldPos, vec3 N, vec3 cameraPos,
     // Metallic 0: full diffuse, specular x0.04. Metallic 1: no diffuse, specular x1.
     vec3 totalDiffuse  = (ambient + dirDiffuse + dynDiffuse) * (1.0 - metallic);
     vec3 totalSpecular = (dirSpecular + dynSpecular) * specWeight;
-    return totalDiffuse + totalSpecular;
+    vec3 total         = totalDiffuse + totalSpecular;
+
+    if (showCascades == 1)
+        total *= cascadeDebugTint(worldPos);
+
+    return total;
 }
 
 #endif

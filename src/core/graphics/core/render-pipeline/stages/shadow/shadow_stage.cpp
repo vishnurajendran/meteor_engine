@@ -11,6 +11,7 @@
 #include "core/graphics/core/render-pipeline/buffers/shadow/shadow_buffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
+#include "core/graphics/core/render-pipeline/view_data.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
 #include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/graphics/core/shader/shader.h"
@@ -121,8 +122,11 @@ void MShadowStage::init(IRenderPipeline* const pipeline)
         return;
     }
 
-    shadowBuffer->resize(SShadowBuffer::SHADOW_MAP_RESOLUTION,
-                         SShadowBuffer::SHADOW_MAP_RESOLUTION);
+    // The base SDepthBuffer (single directional map) is no longer sampled -
+    // directional shadows live in the cascade array. Keep it at 1x1 so the
+    // buffer still reports a valid FBO to existing checks.
+    shadowBuffer->resize(1, 1);
+    shadowBuffer->initCascades(SShadowBuffer::CASCADE_RESOLUTION);
     shadowBuffer->initDynamicShadows(1024);
 
     const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MShaderAsset>(SHADOW_SHADER_PATH);
@@ -136,7 +140,11 @@ void MShadowStage::init(IRenderPipeline* const pipeline)
 
 void MShadowStage::cleanup(IRenderPipeline* const pipeline)
 {
-    if (shadowBuffer) shadowBuffer->destroyDynamicShadows();
+    if (shadowBuffer)
+    {
+        shadowBuffer->destroyDynamicShadows();
+        shadowBuffer->destroyCascades();
+    }
     shadowBuffer = nullptr;
     shadowShader = nullptr;
     if (pointShadowProgram) { glDeleteProgram(pointShadowProgram); pointShadowProgram = 0; }
@@ -157,6 +165,8 @@ void MShadowStage::render(IRenderPipeline* const pipeline)
     if (!renderer) return;
     auto* mgr = &renderer->getLightSystem();
 
+    shadowBuffer->numCascades = 0;   // stays 0 if the directional shadow is skipped
+
     auto* dirLight = mgr->getDirectionalLight();
     if (dirLight && dirLight->getEnabled() && mgr->isDirectionalShadowEnabled())
         renderDirectionalShadow(pipeline, dirLight);
@@ -172,66 +182,138 @@ void MShadowStage::render(IRenderPipeline* const pipeline)
 void MShadowStage::renderDirectionalShadow(IRenderPipeline* const pipeline,
                                            MLightEntity* dirLight)
 {
+    if (shadowBuffer->cascadeFBO == 0) return;
+
+    // Same camera as every other stage (respects the pipeline camera override).
+    const SViewData viewData = resolveViewData(pipeline);
+    if (!viewData.valid) return;
+
+    const auto* dir        = dynamic_cast<MDirectionalLight*>(dirLight);
+    const float distance   = dir ? dir->getShadowDistance() : 100.0f;
+    const int   count      = dir ? glm::clamp(dir->getCascadeCount(), 1, SShadowBuffer::MAX_CASCADES)
+                                 : SShadowBuffer::MAX_CASCADES;
+    const float splitBlend = dir ? dir->getCascadeSplit() : 0.75f;
+
     const glm::vec3 towardLight = glm::normalize(dirLight->getForwardVector());
-
-    MCameraEntity* camera = MEngineSubsystemRegistry::getSubsystem<MViewManagement>()->getFirstActiveCamera();
-
-    // Shadow distance comes from the light (inspector: "Shadow Distance").
-    const auto* dir      = dynamic_cast<MDirectionalLight*>(dirLight);
-    const float distance = dir ? dir->getShadowDistance() : 100.0f;
-
-    // The shadow map covers a square of side `distance`. Shift it forward so
-    // the camera sits near its back edge - coverage behind the camera is
-    // mostly wasted.
-    const glm::vec3 camPos = camera ? glm::vec3(camera->getWorldPosition()) : glm::vec3(0.f);
-    const glm::vec3 camFwd = camera
-        ? glm::normalize(glm::vec3(camera->getWorldRotation() * glm::vec3(0, 0, -1)))
-        : glm::vec3(0.f);
-    const float     half   = distance * 0.5f;
-    const glm::vec3 anchor = camPos + camFwd * (half * 0.8f);
-
-    // Pull the light back far enough to catch casters outside the view
-    // (tall objects, things behind the camera) that throw shadows into it.
-    const float     pullback = glm::max(distance, 100.0f);
-    const glm::vec3 lightPos = anchor + towardLight * pullback;
-
     const glm::vec3 up = (glm::abs(glm::dot(towardLight, glm::vec3(0,1,0))) < 0.99f)
                           ? glm::vec3(0,1,0) : glm::vec3(1,0,0);
 
-    const glm::mat4 lightView = glm::lookAt(lightPos, anchor, up);
-    glm::mat4       lightProj = glm::ortho(-half, half, -half, half,
-                                           0.1f, pullback * 2.0f);
-
-    // Snap the projection to whole shadow-map texels. Without this, the
-    // shadow map's texel grid slides with the camera and shadow edges
-    // shimmer - more noticeable the larger the distance.
+    // ---- Camera frustum corners, view space -----------------------------------
+    // Near corners at NDC z = -1, far at z = +1. A point at view distance d
+    // lies at the same fraction along each near->far edge (view z is linear
+    // along the edge), so a slice of the frustum is a lerp of these corners.
+    // Works for perspective and orthographic cameras alike.
+    glm::vec3 nearCorner[4], farCorner[4];
     {
-        const float res    = static_cast<float>(SShadowBuffer::SHADOW_MAP_RESOLUTION);
-        glm::vec4   origin = lightProj * lightView * glm::vec4(0, 0, 0, 1);
-        origin *= res * 0.5f;
-        const glm::vec2 offset = (glm::round(glm::vec2(origin)) - glm::vec2(origin)) * (2.0f / res);
-        lightProj[3][0] += offset.x;
-        lightProj[3][1] += offset.y;
+        const glm::vec2 ndc[4] = { {-1,-1}, {1,-1}, {1,1}, {-1,1} };
+        for (int i = 0; i < 4; ++i)
+        {
+            glm::vec4 n = viewData.inverseProjection * glm::vec4(ndc[i], -1.f, 1.f);
+            glm::vec4 f = viewData.inverseProjection * glm::vec4(ndc[i],  1.f, 1.f);
+            nearCorner[i] = glm::vec3(n) / n.w;
+            farCorner[i]  = glm::vec3(f) / f.w;
+        }
+    }
+    const float camNear = -nearCorner[0].z;
+    const float camFar  = -farCorner[0].z;
+    if (camFar <= camNear) return;
+
+    const float shadowFar = glm::clamp(distance, camNear + 0.01f, camFar);
+
+    // ---- Split distances ---------------------------------------------------------
+    // Blend of logarithmic (resolution concentrated near the camera) and
+    // uniform splits - the usual "practical split scheme".
+    float splits[SShadowBuffer::MAX_CASCADES] = {};
+    for (int i = 0; i < count; ++i)
+    {
+        const float p      = static_cast<float>(i + 1) / static_cast<float>(count);
+        const float logD   = camNear * glm::pow(shadowFar / camNear, p);
+        const float linD   = camNear + (shadowFar - camNear) * p;
+        splits[i] = glm::mix(linD, logD, splitBlend);
+    }
+    splits[count - 1] = shadowFar;
+
+    const float res = static_cast<float>(SShadowBuffer::CASCADE_RESOLUTION);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer->cascadeFBO);
+    glViewport(0, 0, SShadowBuffer::CASCADE_RESOLUTION, SShadowBuffer::CASCADE_RESOLUTION);
+    setGLDepthOnlyState();
+
+    shadowBuffer->cascadeCameraView = viewData.view;
+    shadowBuffer->shadowDistance    = shadowFar;
+
+    float sliceStart = camNear;
+    for (int c = 0; c < count; ++c)
+    {
+        const float sliceEnd = splits[c];
+
+        // ---- Slice corners -> world space ---------------------------------------
+        const float t0 = (sliceStart - camNear) / (camFar - camNear);
+        const float t1 = (sliceEnd   - camNear) / (camFar - camNear);
+        glm::vec3 corners[8];
+        for (int i = 0; i < 4; ++i)
+        {
+            const glm::vec3 a = glm::mix(nearCorner[i], farCorner[i], t0);
+            const glm::vec3 b = glm::mix(nearCorner[i], farCorner[i], t1);
+            corners[i]     = glm::vec3(viewData.inverseView * glm::vec4(a, 1.f));
+            corners[i + 4] = glm::vec3(viewData.inverseView * glm::vec4(b, 1.f));
+        }
+
+        // ---- Bounding sphere ----------------------------------------------------
+        // A sphere doesn't change size when the camera rotates, so the ortho
+        // box (and texel size) stays constant - no shimmering on rotation.
+        glm::vec3 center(0.f);
+        for (const auto& p : corners) center += p;
+        center /= 8.f;
+        float radius = 0.f;
+        for (const auto& p : corners) radius = glm::max(radius, glm::length(p - center));
+        radius = glm::ceil(radius * 16.f) / 16.f;   // quantise against float jitter
+
+        // Pull the light back to catch casters outside the slice (tall
+        // objects, things behind the camera) that throw shadows into it.
+        const float     margin   = glm::max(radius, 100.0f);
+        const glm::vec3 lightPos = center + towardLight * (radius + margin);
+
+        const glm::mat4 lightView = glm::lookAt(lightPos, center, up);
+        glm::mat4       lightProj = glm::ortho(-radius, radius, -radius, radius,
+                                               0.0f, 2.0f * (radius + margin));
+
+        // Snap to whole texels so the texel grid doesn't slide when the
+        // camera moves - otherwise shadow edges crawl.
+        {
+            glm::vec4 origin = lightProj * lightView * glm::vec4(0, 0, 0, 1);
+            origin *= res * 0.5f;
+            const glm::vec2 offset = (glm::round(glm::vec2(origin)) - glm::vec2(origin)) * (2.0f / res);
+            lightProj[3][0] += offset.x;
+            lightProj[3][1] += offset.y;
+        }
+
+        const glm::mat4 lightVP = lightProj * lightView;
+        shadowBuffer->cascadeMatrices[c]   = lightVP;
+        shadowBuffer->cascadeSplits[c]     = sliceEnd;
+        shadowBuffer->cascadeTexelWorld[c] = (2.0f * radius) / res;
+
+        // ---- Render this cascade's layer ---------------------------------------
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                                  shadowBuffer->cascadeArrayTexture, 0, c);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        shadowShader->bind();
+        SShaderPropertyValue v, p;
+        v.setMat4Val(lightView); p.setMat4Val(lightProj);
+        shadowShader->setPropertyValue("view",       v);
+        shadowShader->setPropertyValue("projection", p);
+
+        // Cull against this cascade's ortho box - anything inside can cast
+        // into it, whether or not the camera sees it.
+        SFrustum cascadeFrustum;
+        cascadeFrustum.extractFromVP(lightVP);
+        drawItems(pipeline, shadowShader, nullptr, true, &cascadeFrustum);
+
+        sliceStart = sliceEnd;
     }
 
-    shadowBuffer->lightSpaceMatrix = lightProj * lightView;
-
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer->getFBOHandle());
-    glViewport(0, 0, SShadowBuffer::SHADOW_MAP_RESOLUTION, SShadowBuffer::SHADOW_MAP_RESOLUTION);
-    setGLDepthOnlyState();
-    glClear(GL_DEPTH_BUFFER_BIT);
-
-    shadowShader->bind();
-    SShaderPropertyValue v, p;
-    v.setMat4Val(lightView); p.setMat4Val(lightProj);
-    shadowShader->setPropertyValue("view",       v);
-    shadowShader->setPropertyValue("projection", p);
-
-    // Cull against the shadow map's ortho box — anything inside it can cast
-    // into the map, whether or not the camera sees it.
-    SFrustum lightFrustum;
-    lightFrustum.extractFromVP(shadowBuffer->lightSpaceMatrix);
-    drawItems(pipeline, shadowShader, nullptr, true, &lightFrustum);
+    shadowBuffer->numCascades = count;
 
     restoreGLDepthOnlyState();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
