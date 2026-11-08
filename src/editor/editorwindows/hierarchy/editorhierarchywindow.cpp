@@ -26,6 +26,7 @@
 #include "editor/app/editorapplication.h"
 #include "editor/editor_utils/engine_textures.h"
 #include "editor/editor_utils/entity_duplicator.h"
+#include "editor/editor_utils/entity_clipboard.h"
 #include "editor/editor_utils/asset_drop_spawner.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/window/menubar/menubartree.h"
@@ -145,6 +146,37 @@ static constexpr float HIER_STATUS_H  = 22.0f;
 static constexpr float HIER_PAD_X     = 8.0f;   // inner horizontal padding of every band
 static constexpr float HIER_TREE_PAD  = 4.0f;   // padding around the tree rows
 
+// Draws the Add menu. Anything an item creates goes under `parent` (when there
+// is one) and is selected. Add items create entities at the scene root, so
+// new roots are found by comparing the root list before and after.
+static void renderAddMenuUnder(MMenubarTreeNode* addNode, MSpatialEntity* parent)
+{
+    auto* sceneManager = MEngineSubsystemRegistry::getSubsystem<MSceneManager>();
+    MScene* scene = sceneManager ? sceneManager->getActiveScene() : nullptr;
+
+    std::vector<MSpatialEntity*> before;
+    if (scene && parent) before = scene->getRootEntities();
+
+    addNode->renderAsContextMenu();
+
+    if (!scene || !parent) return;
+
+    std::vector<MSpatialEntity*> added;
+    for (auto* e : scene->getRootEntities())
+        if (e != parent && std::ranges::find(before, e) == before.end())
+            added.push_back(e);
+
+    for (auto* e : added)
+        e->setParent(parent);   // keeps local transform: spawns at the parent
+    if (!added.empty())
+        MEditorApplication::SelectedObject = added.back();
+}
+
+static MSpatialEntity* selectedEntity()
+{
+    return dynamic_cast<MSpatialEntity*>(MEditorApplication::SelectedObject);
+}
+
 void MEditorHierarchyWindow::onGui(float deltaTime)
 {
     auto* scene = MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->getActiveScene();
@@ -200,7 +232,11 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
         ImGui::TextDisabled("Create");
         ImGui::Separator();
         if (auto* addNode = MMenubarTreeNode::getNodeAtPath("Add"))
-            addNode->renderAsContextMenu();
+            renderAddMenuUnder(addNode, selectedEntity());
+        ImGui::Separator();
+        // Empty space: paste at the end of the scene root.
+        if (ImGui::MenuItem("Paste", "Ctrl+V", false, MEntityClipboard::canPaste()))
+            MEntityClipboard::paste(nullptr);
         ImGui::EndPopup();
     }
 
@@ -217,6 +253,14 @@ void MEditorHierarchyWindow::onGui(float deltaTime)
                 ImGui::AcceptDragDropPayload(MAssetReferenceControl::ASSET_REF_TARGET_KEY.c_str()))
         {
             MAssetDropSpawner::spawn(SString(static_cast<const char*>(payload->Data)));
+        }
+
+        // Entity dropped on empty space -> unparent it, to the end of the scene root.
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("HIERARCHY_ENTITY"))
+        {
+            if (auto* src = *static_cast<MSpatialEntity**>(payload->Data))
+                scene->insertRootEntityAt(src, static_cast<int>(scene->getRootEntities().size()));
+            draggedEntity = dropTargetEntity = nullptr;
         }
         ImGui::EndDragDropTarget();
     }
@@ -264,7 +308,7 @@ void MEditorHierarchyWindow::drawToolbar()
         ImGui::TextDisabled("Create");
         ImGui::Separator();
         if (auto* addNode = MMenubarTreeNode::getNodeAtPath("Add"))
-            addNode->renderAsContextMenu();
+            renderAddMenuUnder(addNode, selectedEntity());
         ImGui::EndPopup();
     }
 
@@ -559,11 +603,13 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
     ImGui::SameLine(0, 4);
 
-    // Dim icon and text for disabled entities
+    // Dim icon and text for disabled entities, and for a cut waiting to be pasted
     const bool activeInHierarchy = entity->isEnabledInHierarchy();
-    if (!activeInHierarchy)
+    const bool pendingCut        = MEntityClipboard::isPendingCut(entity);
+    const bool dimRow            = !activeInHierarchy || pendingCut;
+    if (dimRow)
     {
-        const float dimAlpha = entity->getEnabled() ? 0.45f : 0.35f;
+        const float dimAlpha = pendingCut ? 0.5f : (entity->getEnabled() ? 0.45f : 0.35f);
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, dimAlpha);
     }
 
@@ -580,7 +626,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
 
     if (isRenaming)
     {
-        if (!activeInHierarchy) ImGui::PopStyleVar(); // restore alpha for input field
+        if (dimRow) ImGui::PopStyleVar(); // restore alpha for input field
 
         if (pendingFocusRename)
         {
@@ -614,7 +660,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         ImGui::PushStyleColor(ImGuiCol_Text, COL_TEXT_MATCH);
         ImGui::TextUnformatted(entity->getName().c_str());
         ImGui::PopStyleColor();
-        if (!activeInHierarchy) ImGui::PopStyleVar();
+        if (dimRow) ImGui::PopStyleVar();
     }
     else
     {
@@ -622,7 +668,7 @@ void MEditorHierarchyWindow::drawEntityRow(MSpatialEntity* entity)
         if (inComposition) ImGui::PushStyleColor(ImGuiCol_Text, COL_TEXT_COMPOSITION);
         ImGui::TextUnformatted(entity->getName().c_str());
         if (inComposition) ImGui::PopStyleColor();
-        if (!activeInHierarchy) ImGui::PopStyleVar();
+        if (dimRow) ImGui::PopStyleVar();
     }
 
     // Children - ImGui's indent stack handles depth automatically
@@ -678,7 +724,32 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
         std::strncpy(renameBuffer, target->getName().c_str(), sizeof(renameBuffer) - 1);
     }
 
-    if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, MEntityDuplicator::canDuplicate(target)))
+    // ---- Clipboard ---------------------------------------------------------
+    ImGui::Separator();
+    const bool canCopy  = MEntityDuplicator::canDuplicate(target);
+    const bool canPaste = MEntityClipboard::canPaste();   // parses the clipboard: only while open
+
+    if (ImGui::MenuItem("Cut", "Ctrl+X", false, canCopy))
+    {
+        MEntityClipboard::cut(target);
+        rightClickedEntity = nullptr;
+    }
+    if (ImGui::MenuItem("Copy", "Ctrl+C", false, canCopy))
+    {
+        MEntityClipboard::copy(target);
+        rightClickedEntity = nullptr;
+    }
+    if (ImGui::MenuItem("Paste", "Ctrl+V", false, canPaste && target))
+    {
+        MEntityClipboard::paste(target, false);   // sibling, right after the target
+        rightClickedEntity = nullptr;
+    }
+    if (ImGui::MenuItem("Paste As Child", nullptr, false, canPaste && target))
+    {
+        MEntityClipboard::paste(target, true);
+        rightClickedEntity = nullptr;
+    }
+    if (ImGui::MenuItem("Duplicate", "Ctrl+D", false, canCopy))
     {
         MEntityDuplicator::duplicateAndSelect(target);
         rightClickedEntity = nullptr;
@@ -690,7 +761,7 @@ void MEditorHierarchyWindow::openContextMenu(MSpatialEntity* entity)
     {
         if (ImGui::BeginMenu("Add"))
         {
-            addNode->renderAsContextMenu();
+            renderAddMenuUnder(addNode, target);   // new entities become children of the target
             ImGui::EndMenu();
         }
     }

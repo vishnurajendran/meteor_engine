@@ -13,7 +13,7 @@ class SFrameBuffer;
 
 // Combines the deferred opaque result into one linear HDR image:
 //
-//   BUFFER_SCENE = albedo (BUFFER_OPAQUE) × light (BUFFER_LIGHTS)
+//   BUFFER_SCENE = albedo (BUFFER_OPAQUE) × light (BUFFER_LIGHTS) + emission
 //                  (unlit pixels and sky: albedo as-is)
 //
 // BUFFER_SCENE shares BUFFER_DEPTH, so MTransparentStage can draw into it

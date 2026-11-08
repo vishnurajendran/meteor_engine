@@ -14,8 +14,22 @@
 
     #FRAGMENT_PASS
 
+    // Alpha cutout, set per item by MShadowStage (see cutout_inputs.h).
+    uniform int       _useCutout;
+    uniform float     _cutoutThreshold;
+    uniform int       _useAlbedoTex;
+    uniform sampler2D _albedo;
+    uniform vec4      _color;
+
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
+        if (_useCutout == 1)
+        {
+            float alpha = _color.a;
+            if (_useAlbedoTex == 1) alpha *= texture(_albedo, v2fTexCoords).a;
+            if (alpha < _cutoutThreshold) discard;
+        }
+
         // Depth written automatically - no colour output needed.
         return vec4(0.0);
     }

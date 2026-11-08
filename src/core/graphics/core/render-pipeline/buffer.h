@@ -29,9 +29,24 @@ public:
     SBuffer()          = default;
     virtual ~SBuffer() = default;
 
+    // Changes every time the buffer recreates its GPU storage (resize).
+    // Unique across all buffers and never reused, unlike GL texture names,
+    // which drivers often hand straight back after a delete. Anything that
+    // attaches another buffer's texture to its own FBO must compare this,
+    // not the GL name - otherwise it keeps drawing into the deleted (but
+    // still attached, so still alive) old texture.
+    [[nodiscard]] unsigned long long getStorageId() const { return storageId; }
+
+protected:
+    // Call after (re)creating GPU storage.
+    void newStorageId() { storageId = ++nextStorageId; }
+
 private:
     // Raw handle kept private; concrete types manage their own GL objects.
     unsigned int bufferHandle = 0;
+
+    unsigned long long storageId = 0;   // 0 = no storage yet
+    static inline unsigned long long nextStorageId = 0;
 };
 
 #endif // BUFFER_H

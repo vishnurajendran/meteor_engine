@@ -1,0 +1,75 @@
+<shader name="pp_dof_bokeh" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;        // half res: rgb colour, a = CoC
+    uniform vec2      _texelSize;     // 1 / half-res size
+    uniform float     _bokehRadius;   // max CoC, half-res pixels
+
+    const int   RINGS = 4;
+    const float PI    = 3.14159265;
+
+    // How much a sample at distance `radius` contributes, given its CoC:
+    // a sample only reaches this pixel if its blur disc is at least that big.
+    float weigh(float coc, float radius)
+    {
+        return clamp((coc - radius + 2.0) / 2.0, 0.0, 1.0);
+    }
+
+    // Disc gather over concentric rings (1 + 8 + 16 + 24 + 32 = 81 taps).
+    // Background and foreground accumulate separately:
+    //   background - limited by this pixel's own CoC, so a sharp pixel
+    //                isn't overwritten by blur from behind it;
+    //   foreground - samples in front (negative CoC) spill over anything,
+    //                which is what lets a blurry foreground edge soften.
+    // Output a = how much of the result is foreground.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv     = v2fTexCoords;
+        vec4 center = texture(_source, uv);
+
+        vec3  bgColor = vec3(0.0), fgColor = vec3(0.0);
+        float bgWeight = 0.0,      fgWeight = 0.0;
+        float sampleCount = 0.0;
+
+        for (int ring = 0; ring <= RINGS; ++ring)
+        {
+            int   count  = (ring == 0) ? 1 : ring * 8;
+            float radius = float(ring) / float(RINGS) * _bokehRadius;
+            float twist  = float(ring) * 0.5;   // stagger rings so taps don't line up
+
+            for (int k = 0; k < count; ++k)
+            {
+                float angle  = (float(k) + twist) / float(count) * 2.0 * PI;
+                vec2  offset = vec2(cos(angle), sin(angle)) * radius;
+                vec4  s      = texture(_source, uv + offset * _texelSize);
+
+                float bw = weigh(max(0.0, min(s.a, center.a)), radius);
+                // Only genuinely out-of-focus foreground counts as foreground.
+                // Without the smoothstep, in-focus neighbours (CoC ~ 0) added
+                // weight here and softened every in-focus pixel by ~20%.
+                float fw = weigh(-s.a, radius) * smoothstep(0.1, 1.0, -s.a);
+
+                bgColor  += s.rgb * bw;  bgWeight += bw;
+                fgColor  += s.rgb * fw;  fgWeight += fw;
+                sampleCount += 1.0;
+            }
+        }
+
+        bgColor = (bgWeight > 0.0) ? bgColor / bgWeight : center.rgb;
+        fgColor = (fgWeight > 0.0) ? fgColor / fgWeight : center.rgb;
+
+        float fgAmount = min(1.0, fgWeight * PI / sampleCount);
+        return vec4(mix(bgColor, fgColor, fgAmount), fgAmount);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

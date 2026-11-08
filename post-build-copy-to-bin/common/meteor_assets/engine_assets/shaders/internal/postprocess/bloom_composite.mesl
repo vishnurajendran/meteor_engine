@@ -1,0 +1,41 @@
+<shader name="pp_bloom_composite" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;          // HDR scene
+    uniform sampler2D _bloom;           // first (half-resolution) bloom mip, fully accumulated
+    uniform vec2      _bloomTexelSize;
+    uniform float     _intensity;
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv = v2fTexCoords;
+        vec2 t  = _bloomTexelSize;
+        vec3 scene = texelFetch(_source, ivec2(gl_FragCoord.xy), 0).rgb;
+
+        // Final tent upsample from half resolution.
+        vec3 bloom  = texture(_bloom, uv).rgb * 4.0;
+        bloom += texture(_bloom, uv + vec2(-t.x, 0.0)).rgb * 2.0;
+        bloom += texture(_bloom, uv + vec2( t.x, 0.0)).rgb * 2.0;
+        bloom += texture(_bloom, uv + vec2(0.0, -t.y)).rgb * 2.0;
+        bloom += texture(_bloom, uv + vec2(0.0,  t.y)).rgb * 2.0;
+        bloom += texture(_bloom, uv + vec2(-t.x, -t.y)).rgb;
+        bloom += texture(_bloom, uv + vec2( t.x, -t.y)).rgb;
+        bloom += texture(_bloom, uv + vec2(-t.x,  t.y)).rgb;
+        bloom += texture(_bloom, uv + vec2( t.x,  t.y)).rgb;
+        bloom /= 16.0;
+
+        // Linear HDR out - the composite stage encodes to sRGB.
+        return vec4(scene + bloom * _intensity, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

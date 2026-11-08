@@ -42,8 +42,6 @@ public:
     SCRIPT_BIND_FUNC()
     bool isClosing() { return sceneClosing; }
 
-    bool tryParse(pugi::xml_document* doc);
-
     // Removes entity from its current parent/root, inserts into root list at index.
     void insertRootEntityAt(MSpatialEntity* entity, int index);
 
@@ -81,7 +79,6 @@ private:
     std::vector<MSpatialEntity*> pendingAwake;
     void awakePending();
 
-    void recursivelyLoadEntity(pugi::xml_node currNode, MSpatialEntity* parent);
     bool sceneClosing = false;
 public:
     std::unordered_map<MObject*, MObjectPtr<MSpatialEntity>>& getAllEntities() { return allAliveEntities; }
@@ -91,9 +88,6 @@ public:
     void markHierarchyDirty() { entityOrderDirty = true; }
     void markForDestroy(MSpatialEntity* entity);
     void destroyMarked();
-public:
-    static const SString VALID_SCENE_FILE_XML_TAG;
-    static const SString SCENE_NAME_TAG;
 };
 
 #endif //SCENE_H

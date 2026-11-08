@@ -389,6 +389,13 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
     glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
     glClearColor(0.12f, 0.12f, 0.12f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // BUFFER_EMISSION (attachment 1) must start black, not the grey above.
+    opaqueBuffer->setDrawExtraColor(true);
+    {
+        const GLfloat noEmission[4] = { 0.f, 0.f, 0.f, 0.f };
+        glClearBufferfv(GL_COLOR, 1, noEmission);
+    }
+    opaqueBuffer->setDrawExtraColor(false);
     opaqueBuffer->unbind();
 
     // -- Save current UBO bindings so the scene lights are restored after ----

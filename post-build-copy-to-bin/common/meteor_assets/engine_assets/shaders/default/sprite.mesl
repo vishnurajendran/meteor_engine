@@ -1,0 +1,59 @@
+<shader name="sprite" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+        <property key="_albedo"             type="tex2d"    default=""/>
+        <property key="_color"              type="color"    default="(1,1,1,1)"/>
+
+        <!-- Lighting on/off. Drives the material's shading mode (MMaterial::getShadingMode). -->
+        <property key="_lit"                type="bool"     default="True"/>
+        <property key="_metallic"           type="float"    default="0.0"/>
+        <property key="_smoothness"         type="float"    default="0.0"/>
+
+        <property key="_useCutout"          type="bool"     default="True"/>
+        <property key="_cutoutThreshold"    type="float"    default="0.5"/>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Standard transform. MSpriteEntity scales a unit quad to the texture's size.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    // Textured quad for opaque (alpha cutout) materials, used by MSpriteEntity.
+    // Lit by the deferred lighting pass like any mesh; the prepass and shadow
+    // passes discard the same pixels (property names match lit.mesl and
+    // cutout_inputs.h). Transparent sprites use transparent.mesl instead.
+    //
+    // _lit is a material property, not read here: it sets the material's
+    // shading mode (MMaterial::getShadingMode), which the prepass writes for
+    // the lighting pass.
+    //
+    // Don't call meteorSurfaceLighting() here: it pulls in the shadow-map
+    // samplers, which share texture unit 0 with _albedo in the opaque pass -
+    // GL then refuses the draw and the sprite comes out black.
+
+    uniform sampler2D _albedo;
+    uniform vec4      _color;
+
+    // _metallic, _smoothness: read by the prepass for the lighting pass.
+
+    uniform int       _useCutout;
+    uniform float     _cutoutThreshold;
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec4 albedo = texture(_albedo, v2fTexCoords) * _color;
+
+        if (_useCutout == 1 && albedo.a < _cutoutThreshold)
+            discard;
+
+        return albedo;
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

@@ -712,6 +712,11 @@ void MEditorAssetWindow::drawContentArea()
         ImGui::TextDisabled("This Folder");
         ImGui::Separator();
 
+        // Empty at the virtual root, where folders can't be created.
+        const SString targetDir = getCreateTargetDir(nullptr);
+        if (ImGui::MenuItem("New Folder", nullptr, false, !targetDir.empty()))
+            openNewFolderPopup(targetDir);
+
         // Create submenu - built from MAssetTemplateRegistry.
         if (ImGui::BeginMenu("Create"))
         {
@@ -1215,12 +1220,10 @@ void MEditorAssetWindow::openContextMenu(SAssetDirectoryNode* node)
     }
 
     // -- Create New Directory -------------------------------------------------
-    if (ImGui::MenuItem("New Folder"))
-    {
-        std::strncpy(newFolderNameBuffer, "New Folder", sizeof(newFolderNameBuffer) - 1);
-        newFolderNameBuffer[sizeof(newFolderNameBuffer) - 1] = '\0';
-        pendingNewFolderPopup = true;
-    }
+    // Inside the right-clicked folder, or the current one for a file.
+    const SString newFolderDir = getCreateTargetDir(target);
+    if (ImGui::MenuItem("New Folder", nullptr, false, !newFolderDir.empty()))
+        openNewFolderPopup(newFolderDir);
 
     ImGui::Separator();
 
@@ -1365,6 +1368,14 @@ void MEditorAssetWindow::drawDeleteConfirmModal()
 
 // --- New Folder popup --------------------------------------------------------
 
+void MEditorAssetWindow::openNewFolderPopup(const SString& targetDir)
+{
+    std::strncpy(newFolderNameBuffer, "New Folder", sizeof(newFolderNameBuffer) - 1);
+    newFolderNameBuffer[sizeof(newFolderNameBuffer) - 1] = '\0';
+    newFolderTargetDir    = targetDir;
+    pendingNewFolderPopup = true;
+}
+
 void MEditorAssetWindow::drawNewFolderPopup()
 {
     if (pendingNewFolderPopup)
@@ -1403,26 +1414,22 @@ void MEditorAssetWindow::drawNewFolderPopup()
     ImGui::Spacing();
 
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.f));
-    if (currentDirectoryNode)
-        ImGui::Text("Location: %s/", currentDirectoryNode->getPath().c_str());
+    ImGui::Text("Location: %s/", newFolderTargetDir.c_str());
     ImGui::PopStyleColor();
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    const bool canCreate = newFolderNameBuffer[0] != '\0';
+    const bool canCreate = newFolderNameBuffer[0] != '\0' && !newFolderTargetDir.empty();
 
     ImGui::BeginDisabled(!canCreate);
     if (ImGui::Button("Create", ImVec2(120, 0)) || (enterPressed && canCreate))
     {
         auto* editorAM = dynamic_cast<MEditorAssetManager*>(
             MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
-        if (editorAM && currentDirectoryNode)
-        {
-            editorAM->createDirectory(currentDirectoryNode->getPath(),
-                                       SString(newFolderNameBuffer));
-        }
+        if (editorAM)
+            editorAM->createDirectory(newFolderTargetDir, SString(newFolderNameBuffer));
         newFolderNameBuffer[0] = '\0';
         ImGui::CloseCurrentPopup();
     }

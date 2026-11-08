@@ -15,6 +15,7 @@ enum class EBufferDebugView
     LightMask,      // BUFFER_LIGHTS alpha (1 = lit, 0 = unlit)
     Normals,        // BUFFER_NORMAL view-space normals (remapped to 0..1)
     Surface,        // BUFFER_SURFACE: r metallic, g smoothness, b lit
+    Emission,       // BUFFER_EMISSION: material emission (added after lighting)
     COUNT
 };
 

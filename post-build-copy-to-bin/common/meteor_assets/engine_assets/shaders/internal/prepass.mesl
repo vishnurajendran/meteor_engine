@@ -18,10 +18,10 @@
     // ---- Outputs --------------------------------------------------------------
     // Output 0 (FragColor, the returned value) -> BUFFER_NORMAL  (RGBA16F)
     //     rgb = view-space normal, normal map applied; a = 1 (geometry drawn)
-    // Output 1 (outSurface)                    -> BUFFER_SURFACE (RGBA8)
+    // Output 1 (FragData1)                     -> BUFFER_SURFACE (RGBA8)
     //     r = metallic, g = smoothness, b = 1 lit / 0 unlit, a = 1 (drawn)
     // Depth is written to BUFFER_DEPTH by the hardware.
-    layout(location = 1) out vec4 outSurface;
+    // (FragData1 is declared in meteor_fragment_utils.glsl.)
 
     // ---- Material inputs (forwarded per item by MPrepassStage) ---------------
     uniform sampler2D _normalMap;
@@ -29,6 +29,14 @@
     uniform float     _metallic;
     uniform float     _smoothness;
     uniform int       _lit;          // material shading mode, 1 = Lit
+
+    // Alpha cutout (lit / unlit): drop the pixels the material's own pass
+    // discards, or they'd still write depth and hide what is behind them.
+    uniform int       _useCutout;
+    uniform float     _cutoutThreshold;
+    uniform int       _useAlbedoTex;   // lit's toggle; 1 for unlit
+    uniform sampler2D _albedo;
+    uniform vec4      _color;
 
     // ---- Screen-space derivative TBN ----------------------------------------
     // Reconstructs a tangent frame from world-position and UV derivatives
@@ -57,16 +65,24 @@
 
     vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
     {
+        if (_useCutout == 1)
+        {
+            float alpha = _color.a;
+            if (_useAlbedoTex == 1) alpha *= texture(_albedo, v2fTexCoords).a;
+            if (alpha < _cutoutThreshold) discard;
+        }
+
         vec3 worldPos = getVertexPositionWorld();
         vec3 N        = normalize(getVertexNormalWorld());
-        if (!gl_FrontFacing) N = -N;   // double-sided back faces face the viewer
+        // Flip to the side the camera sees (double-sided; winding-independent).
+        N = meteorFaceForwardNormal(N, worldPos, meteorCameraPositionFromView(view));
 
         if (_useNormalMap == 1)
             N = perturbNormal(worldPos, N, v2fTexCoords);
 
         vec3 viewNormal = normalize(mat3(view) * N);
 
-        outSurface = vec4(clamp(_metallic,   0.0, 1.0),
+        FragData1 = vec4(clamp(_metallic,   0.0, 1.0),
                           clamp(_smoothness, 0.0, 1.0),
                           float(_lit),
                           1.0);

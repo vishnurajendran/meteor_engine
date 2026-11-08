@@ -14,6 +14,7 @@
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
 #include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
+#include "core/graphics/core/render-pipeline/buffers/texture/texture_buffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
@@ -40,6 +41,16 @@ void MOpaqueStage::init(IRenderPipeline* const pipeline)
         if (auto* prepassDepth = pipeline->getBufferRegistry()
                                           .getBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH))
             opaqueBuffer->shareDepthFrom(prepassDepth);
+
+        // Emission goes to its own buffer (shader output 1, meteorSetEmission)
+        // so MResolveStage can add it after lighting - emissive surfaces
+        // stay bright in the dark and keep their HDR values for bloom.
+        if (auto* emission = pipeline->getBufferRegistry()
+                                      .createBuffer<STextureBuffer>(MBufferNames::BUFFER_EMISSION))
+        {
+            emission->setFormat(0x881A); // GL_RGBA16F
+            opaqueBuffer->setExtraColorAttachment(emission);
+        }
     }
 }
 
@@ -63,6 +74,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
 
     opaqueBuffer->bindAsActive();
+    opaqueBuffer->setDrawExtraColor(true);   // output 0 albedo, output 1 emission
 
     const SVector2 res = pipeline->getRenderResolution();
     glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
@@ -142,6 +154,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     glUseProgram(0);
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
+    opaqueBuffer->setDrawExtraColor(false);
     opaqueBuffer->unbind();
 
     pipeline->addCompositeFlag(ECF_Opaque);

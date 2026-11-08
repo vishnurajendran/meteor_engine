@@ -1,0 +1,150 @@
+<shader name="pp_fog" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    // Distance fog plus optional volumetric sun scattering (god rays).
+    //
+    // Plain fog:   out = mix(scene, fogColor, A(D)), A = linear / exp / exp2.
+    // Volumetric:  a separate, uniform scattering medium (density sigma),
+    //              independent of the fog curve. The view ray is marched to
+    //              the surface; a segment [t0, t1] scatters
+    //                  exp(-sigma t0) - exp(-sigma t1)
+    //              of the sun's light toward the camera if it is sunlit
+    //              (directional shadow cascades), nothing if shadowed. The
+    //              weights are largest near the camera, where object shadows
+    //              cut the sharpest shafts. Added on top of the plain fog.
+    //
+    // Shadow maps are bound by MShadowInputs on units 0-8; _source and
+    // _depthTex sit above them (see MFogEffect::apply).
+
+    uniform sampler2D _source;          // HDR scene
+    uniform sampler2D _depthTex;        // BUFFER_DEPTH
+    uniform mat4      _invProjection;   // camera the prepass rendered with
+    uniform mat4      _invView;
+    uniform vec3      _cameraPos;       // world space
+
+    uniform int       _mode;            // 0 linear, 1 exp, 2 exp2
+    uniform vec3      _fogColor;        // linear HDR, intensity applied
+    uniform float     _density;
+    uniform float     _start;           // world units
+    uniform float     _end;             // world units, linear mode
+    uniform float     _maxOpacity;      // 0..1
+    uniform float     _skyAmount;       // 0..1, plain fog on pixels with no geometry
+
+    uniform int       _volumetric;      // 1 = march the ray for sun scattering
+    uniform int       _showVolumetric;  // debug: output only the scattered sun light
+    uniform float     _volDensity;      // scattering medium density, per world unit
+    uniform int       _steps;
+    uniform float     _marchDistance;   // longest ray marched (sky, far geometry)
+    uniform float     _sunScattering;   // strength of the sun's in-scattered light
+    uniform float     _anisotropy;      // Henyey-Greenstein g: 0 even, toward 1 = glow around the sun
+
+    // Fog amount reached at distance t from the camera, 0..1.
+    float fogAmount(float t)
+    {
+        float d = max(t - _start, 0.0);
+        if (_mode == 0) return clamp(d / max(_end - _start, 0.001), 0.0, 1.0);
+        float x = _density * d;
+        if (_mode == 2) x *= x;
+        return 1.0 - exp(-x);
+    }
+
+    // Henyey-Greenstein, scaled so an even (g = 0) phase is 1.
+    float phaseHG(float cosT, float g)
+    {
+        float g2 = g * g;
+        return (1.0 - g2) / pow(max(1.0 + g2 - 2.0 * g * cosT, 1e-4), 1.5);
+    }
+
+    // 1 = sunlit, 0 = in shadow. One hardware-PCF tap per sample - a march
+    // takes many samples, so the surface shadow's soft filter is skipped.
+    float sunVisibility(vec3 p)
+    {
+        if (hasDirShadow == 0 || cascadeCount == 0) return 1.0;
+
+        float viewDepth = -(cascadeCameraView * vec4(p, 1.0)).z;
+        if (viewDepth >= shadowDistance) return 1.0;
+
+        int  c  = selectShadowCascade(viewDepth);
+        vec4 ls = cascadeMatrices[c] * vec4(p, 1.0);
+        vec3 pc = ls.xyz / ls.w * 0.5 + 0.5;
+        // Outside the cascade's map: no shadow information, treat as lit.
+        vec2 inside = step(vec2(0.0), pc.xy) * step(pc.xy, vec2(1.0));
+        if (inside.x * inside.y == 0.0 || pc.z >= 1.0) return 1.0;
+
+        return texture(shadowCascades, vec4(pc.xy, float(c), pc.z - 0.0005));
+    }
+
+    // Per-pixel offset for the march samples - hides step banding as fine noise.
+    float interleavedGradientNoise(vec2 pixel)
+    {
+        return fract(52.9829189 * fract(dot(pixel, vec2(0.06711056, 0.00583715))));
+    }
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        ivec2 pixel = ivec2(gl_FragCoord.xy);
+        vec3  scene = texelFetch(_source, pixel, 0).rgb;
+        float depth = texelFetch(_depthTex, pixel, 0).r;
+        bool  sky   = depth >= 1.0;   // nothing drawn here
+
+        // World-space ray to this pixel. The sky uses the far plane for direction.
+        vec2 uv      = gl_FragCoord.xy / vec2(textureSize(_depthTex, 0));
+        vec4 viewPos = _invProjection * vec4(uv * 2.0 - 1.0, (sky ? 1.0 : depth) * 2.0 - 1.0, 1.0);
+        viewPos     /= viewPos.w;
+        vec3 worldPos = (_invView * viewPos).xyz;
+        vec3 toPixel  = worldPos - _cameraPos;
+        float dist    = length(toPixel);
+        vec3  rayDir  = toPixel / max(dist, 1e-5);
+
+        // ---- Plain fog ------------------------------------------------------
+        float amount = sky ? _skyAmount : fogAmount(dist);
+        vec3  fogged = mix(scene, _fogColor, amount * _maxOpacity);
+
+        if (_volumetric == 0 || uDirectionalLight.enabled == 0)
+            return vec4(_showVolumetric == 1 ? vec3(0.0) : fogged, 1.0);
+
+        // ---- Sun scattering along the ray ----------------------------------
+        vec3  L      = normalize(uDirectionalLight.forward);   // toward the sun
+        vec3  sunCol = uDirectionalLight.color * uDirectionalLight.intensity
+                     * phaseHG(dot(rayDir, L), _anisotropy) * _sunScattering;
+
+        float sigma    = max(_volDensity, 0.0);
+        float rayEnd   = sky ? _marchDistance : dist;
+        float marchEnd = min(rayEnd, _marchDistance);
+        int   steps    = max(_steps, 1);
+        float jitter   = interleavedGradientNoise(gl_FragCoord.xy);
+
+        float t0 = 0.0;
+        float T0 = 1.0;          // exp(-sigma * t0)
+        float sunLight = 0.0;    // sum of segment weight x sun visibility
+        for (int i = 0; i != steps; ++i)
+        {
+            // Quadratic spacing: more samples near the camera, where shafts are sharpest.
+            float f  = float(i + 1) / float(steps);
+            float t1 = marchEnd * f * f;
+            float T1 = exp(-sigma * t1);
+            float ts = mix(t0, t1, jitter);
+            sunLight += (T0 - T1) * sunVisibility(_cameraPos + rayDir * ts);
+            t0 = t1;
+            T0 = T1;
+        }
+        // Past the march distance: assume sunlit (shadows end before it).
+        sunLight += T0 - exp(-sigma * rayEnd);
+
+        vec3 shafts = sunCol * sunLight;
+        if (_showVolumetric == 1)
+            return vec4(shafts, 1.0);
+        return vec4(fogged + shafts, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

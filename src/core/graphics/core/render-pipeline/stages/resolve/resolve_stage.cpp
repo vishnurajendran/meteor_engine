@@ -12,6 +12,7 @@
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
+#include "core/graphics/core/render-pipeline/buffers/texture/texture_buffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/graphics/core/shader/shaderasset.h"
@@ -62,6 +63,9 @@ void MResolveStage::render(IRenderPipeline* const pipeline)
     if (!(flags & ECF_Opaque)) return;
     const bool useLights = (flags & ECF_Lights) && lights && lights->getFBOHandle() != 0;
 
+    auto* emission = registry.getBuffer<STextureBuffer>(MBufferNames::BUFFER_EMISSION);
+    const bool useEmission = emission && emission->getTextureHandle() != 0;
+
     auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                            ->getAsset<MShaderAsset>(RESOLVE_SHADER_PATH);
     MShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
@@ -93,14 +97,20 @@ void MResolveStage::render(IRenderPipeline* const pipeline)
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, useLights ? lights->getColorTextureHandle()
                                            : opaque->getColorTextureHandle());
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, useEmission ? emission->getTextureHandle()
+                                             : opaque->getColorTextureHandle());
 
     GLint l;
     l = glGetUniformLocation(prog, "_albedoTex"); if (l >= 0) glUniform1i(l, 0);
     l = glGetUniformLocation(prog, "_lightsTex"); if (l >= 0) glUniform1i(l, 1);
     l = glGetUniformLocation(prog, "_useLights"); if (l >= 0) glUniform1i(l, useLights ? 1 : 0);
+    l = glGetUniformLocation(prog, "_emissionTex"); if (l >= 0) glUniform1i(l, 2);
+    l = glGetUniformLocation(prog, "_useEmission"); if (l >= 0) glUniform1i(l, useEmission ? 1 : 0);
 
     quad.draw();
 
+    glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);

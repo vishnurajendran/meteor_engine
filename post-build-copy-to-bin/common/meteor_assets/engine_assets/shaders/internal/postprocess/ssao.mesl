@@ -1,0 +1,83 @@
+<shader name="pp_ssao" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    const int SAMPLE_COUNT = 16;      // must match MSSAOEffect::SAMPLE_COUNT
+
+    uniform sampler2D _depthTex;      // BUFFER_DEPTH (opaque only in this slot)
+    uniform sampler2D _normalTex;     // BUFFER_NORMAL: rgb view-space normal, a coverage
+    uniform mat4      _projection;
+    uniform mat4      _invProjection;
+    uniform vec3      _kernel[SAMPLE_COUNT];   // hemisphere, z along the normal
+    uniform float     _radius;
+    uniform float     _bias;
+    uniform float     _intensity;
+
+    vec3 viewPositionAt(vec2 uv)
+    {
+        float d = texture(_depthTex, uv).r;
+        vec4  p = _invProjection * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);
+        return p.xyz / p.w;
+    }
+
+    // Per-pixel pseudo-random value in [0,1) (Jimenez's interleaved gradient
+    // noise) - rotates the kernel so the blur pass can average the banding out.
+    float interleavedGradientNoise(vec2 pixel)
+    {
+        return fract(52.9829189 * fract(dot(pixel, vec2(0.06711056, 0.00583715))));
+    }
+
+    // r = ambient visibility (1 open, 0 fully occluded), g = linear depth.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        ivec2 pixel = ivec2(gl_FragCoord.xy);
+        vec2  size  = vec2(textureSize(_depthTex, 0));
+        vec2  uv    = gl_FragCoord.xy / size;
+
+        vec4 n4 = texelFetch(_normalTex, pixel, 0);
+        if (n4.a < 0.5) return vec4(1.0, 1e6, 0.0, 1.0);   // sky: nothing to occlude
+
+        vec3 P = viewPositionAt(uv);
+        vec3 N = normalize(n4.xyz);
+
+        // Random tangent frame around N.
+        float angle = interleavedGradientNoise(gl_FragCoord.xy) * 6.28318530;
+        vec3  r     = vec3(cos(angle), sin(angle), 0.0);
+        vec3  T     = r - N * dot(r, N);
+        if (dot(T, T) < 1e-6) T = cross(N, vec3(0.0, 1.0, 0.0));   // r parallel to N
+        T = normalize(T);
+        vec3 B   = cross(N, T);
+        mat3 TBN = mat3(T, B, N);
+
+        float occlusion = 0.0;
+        for (int i = 0; i < SAMPLE_COUNT; ++i)
+        {
+            vec3 samplePos = P + TBN * _kernel[i] * _radius;
+
+            vec4 clip = _projection * vec4(samplePos, 1.0);
+            vec2 suv  = clip.xy / clip.w * 0.5 + 0.5;
+            if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) continue;
+
+            float sceneZ = viewPositionAt(suv).z;
+
+            // Fade out occluders far outside the radius (e.g. a foreground
+            // object in front of a distant wall shouldn't darken the wall).
+            float rangeCheck = smoothstep(0.0, 1.0, _radius / max(abs(P.z - sceneZ), 1e-4));
+            occlusion += (sceneZ >= samplePos.z + _bias ? 1.0 : 0.0) * rangeCheck;
+        }
+
+        float visibility = 1.0 - occlusion / float(SAMPLE_COUNT);
+        visibility = pow(clamp(visibility, 0.0, 1.0), _intensity);
+        return vec4(visibility, -P.z, 0.0, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

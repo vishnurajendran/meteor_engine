@@ -82,6 +82,7 @@ bool SDepthBuffer::resize(int width, int height)
         return false;
     }
 
+    newStorageId();
     return true;
 }
 

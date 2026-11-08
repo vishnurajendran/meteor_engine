@@ -10,6 +10,7 @@
 #include "core/utils/glmhelper.h"
 
 class SDepthBuffer;
+class STextureBuffer;
 
 // General-purpose offscreen FBO with:
 //   - GL_RGBA8 colour texture  (sample in composite/post-process shaders)
@@ -44,9 +45,18 @@ public:
     void shareDepthFrom(const SDepthBuffer* source) { sharedDepthSource = source; }
     [[nodiscard]] bool hasSharedDepth() const { return sharedDepthSource != nullptr; }
 
+    // Optional second colour target (COLOR_ATTACHMENT1), e.g. BUFFER_EMISSION
+    // on BUFFER_OPAQUE. Synced in bindAsActive() like the shared depth.
+    // bindAsActive() always leaves only attachment 0 enabled for drawing, so
+    // passes whose shaders don't write output 1 (skybox) can't leave garbage
+    // in it. Call setDrawExtraColor(true) after binding to draw both.
+    void setExtraColorAttachment(const STextureBuffer* source) { extraColorSource = source; }
+    void setDrawExtraColor(bool enable) const;
+
 private:
     void destroyGL();
     void syncSharedDepth();
+    void syncExtraColor();
 
 private:
     unsigned int fboHandle               = 0;
@@ -54,7 +64,9 @@ private:
     unsigned int depthRenderbufferHandle = 0;
     unsigned int colorFormat             = 0x8058; // GL_RGBA8 by default
     const SDepthBuffer* sharedDepthSource = nullptr;
-    unsigned int attachedSharedDepth     = 0;      // texture currently attached from the source
+    unsigned long long attachedSharedDepth = 0;    // source storage id currently attached
+    const STextureBuffer* extraColorSource = nullptr;
+    unsigned long long attachedExtraColor  = 0;    // source storage id currently attached
     SVector2     resolution              = { 0.f, 0.f };
     SString      name;
 };

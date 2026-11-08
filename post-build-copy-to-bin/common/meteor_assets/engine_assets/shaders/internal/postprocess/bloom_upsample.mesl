@@ -1,0 +1,38 @@
+<shader name="pp_bloom_upsample" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;      // the smaller mip being upsampled
+    uniform vec2      _texelSize;   // 1 / source size
+    uniform float     _scatter;     // 0..1, scales each level's contribution
+
+    // 3x3 tent filter, drawn with additive blending onto the next larger
+    // mip, so every level accumulates the blur of all smaller ones.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv = v2fTexCoords;
+        vec2 t  = _texelSize;
+
+        vec3 s  = texture(_source, uv).rgb * 4.0;
+        s += texture(_source, uv + vec2(-t.x, 0.0)).rgb * 2.0;
+        s += texture(_source, uv + vec2( t.x, 0.0)).rgb * 2.0;
+        s += texture(_source, uv + vec2(0.0, -t.y)).rgb * 2.0;
+        s += texture(_source, uv + vec2(0.0,  t.y)).rgb * 2.0;
+        s += texture(_source, uv + vec2(-t.x, -t.y)).rgb;
+        s += texture(_source, uv + vec2( t.x, -t.y)).rgb;
+        s += texture(_source, uv + vec2(-t.x,  t.y)).rgb;
+        s += texture(_source, uv + vec2( t.x,  t.y)).rgb;
+
+        return vec4((s / 16.0) * _scatter, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

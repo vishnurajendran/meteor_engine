@@ -135,10 +135,39 @@
               + sumM * BETA_M * phaseM(cosT, MIE_G)) * I_SUN;
     }
 
-    float sunDisc(float cosT, float size, float conv)
+    // ---- Sun ------------------------------------------------------------------
+    // u_SunSize            -> angular radius of the disc: size * 0.5 radians
+    //                         (0.04 = ~1.15 degrees; the real sun is ~0.27).
+    // u_SunSizeConvergence -> halo tightness: the glow fades over
+    //                         20 / convergence disc radii (5 = 4 radii).
+    const float SUN_RADIUS_SCALE = 0.5;
+    const float SUN_INTENSITY    = 6.0;    // disc, linear HDR - above 1 so it reads white and blooms
+    const float HALO_INTENSITY   = 0.35;
+
+    // Angle between two unit vectors. 2*asin(|a-b|/2) stays exact for tiny
+    // angles, where acos(dot) loses precision and would blur the edge.
+    float angleBetween(vec3 a, vec3 b)
     {
-        float edge = 1.0 - size;
-        return pow(max(cosT - edge, 0.0) / max(1.0 - edge, 1e-5), conv * 10.0);
+        return 2.0 * asin(clamp(length(a - b) * 0.5, 0.0, 1.0));
+    }
+
+    // Crisp disc: an anti-aliased edge about one pixel wide, with limb
+    // darkening (the rim is dimmer than the centre, like the real sun).
+    float sunDisc(float angle, float radius)
+    {
+        float aa    = max(fwidth(angle), 1e-6);
+        float cover = 1.0 - smoothstep(radius - aa, radius + aa, angle);
+        float r     = clamp(angle / radius, 0.0, 1.0);
+        float mu    = sqrt(1.0 - r * r);
+        float limb  = 1.0 - 0.5 * (1.0 - mu);
+        return cover * limb;
+    }
+
+    // Soft glow just outside the disc.
+    float sunHalo(float angle, float radius, float conv)
+    {
+        float width = radius * 20.0 / max(conv, 0.1);
+        return exp(-max(angle - radius, 0.0) / width);
     }
 
     // Output stays linear; the final composite does the sRGB encode.
@@ -171,14 +200,21 @@
         // Tint (neutral = 0.5 maps to x1.0 multiplier).
         sky *= u_SkyTint * 2.0;
 
-        // Sun disc - added after tint so it is not tinted.
-        float cosT   = dot(dir, sunDir);
-        float disc   = sunDisc(cosT, u_SunSize, u_SunSizeConvergence);
+        // Sun - added after the tint so it is not tinted, and after the tone
+        // map so the disc can exceed 1 (crisp white core, drives bloom)
+        // instead of being squashed into the sky's range.
+        float radius = max(u_SunSize * SUN_RADIUS_SCALE, 1e-4);
+        float angle  = angleBetween(dir, sunDir);
         float horizT = clamp(1.0 - sunDir.y, 0.0, 1.0);
         vec3  sunCol = mix(vec3(1.0, 0.98, 0.92), vec3(1.0, 0.5, 0.1), horizT*horizT);
-        sky          += disc * sunCol * (u_Exposure * 3.0);
+        // Hidden below the horizon (ground covers it).
+        float above  = clamp(dir.y * 400.0 + 0.5, 0.0, 1.0);
 
-        FragColor = vec4(toneMap(sky, u_Exposure), 1.0);
+        vec3 col = toneMap(sky, u_Exposure);
+        col += sunDisc(angle, radius) * sunCol * SUN_INTENSITY * above;
+        col += sunHalo(angle, radius, u_SunSizeConvergence) * sunCol * HALO_INTENSITY * above;
+
+        FragColor = vec4(col, 1.0);
     }
 
     #END_FRAGMENT_PASS

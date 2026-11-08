@@ -56,9 +56,11 @@ private:
     STextureBuffer* surfaceBuffer = nullptr;
 
     unsigned int fbo               = 0;        // owned by this stage
-    unsigned int attachedDepth     = 0;
-    unsigned int attachedNormal    = 0;
-    unsigned int attachedSurface   = 0;
+    // Storage ids (SBuffer::getStorageId) currently attached - not GL names,
+    // which can repeat after a resize.
+    unsigned long long attachedDepth   = 0;
+    unsigned long long attachedNormal  = 0;
+    unsigned long long attachedSurface = 0;
 
     MShader* prepassShader = nullptr;          // owned by MShaderAsset
 };

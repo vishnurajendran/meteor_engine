@@ -1,0 +1,28 @@
+<shader name="pp_ssao_apply" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;   // HDR scene (opaque, lit)
+    uniform sampler2D _ao;       // r = blurred visibility
+    uniform int       _showAO;   // debug: output the occlusion only
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        ivec2 pixel = ivec2(gl_FragCoord.xy);
+        vec3  color = texelFetch(_source, pixel, 0).rgb;
+        float ao    = texelFetch(_ao, pixel, 0).r;
+
+        if (_showAO != 0) return vec4(vec3(ao), 1.0);
+        return vec4(color * ao, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

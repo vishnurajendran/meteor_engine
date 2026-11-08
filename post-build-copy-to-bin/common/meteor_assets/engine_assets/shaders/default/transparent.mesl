@@ -88,7 +88,7 @@
         {
             vec3 worldPos = getVertexPositionWorld();
             vec3 N        = normalize(getVertexNormalWorld());
-            if (!gl_FrontFacing) N = -N;            // double-sided back faces
+            N = meteorFaceForwardNormal(N, worldPos, _cameraPos);   // double-sided; winding-independent
 
             if (_useNormalMap == 1)
                 N = perturbNormal(worldPos, N, v2fTexCoords);

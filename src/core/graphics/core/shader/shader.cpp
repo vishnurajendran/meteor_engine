@@ -13,6 +13,7 @@
 #include "core/engine/texture/textureasset.h"
 #include "core/utils/logger.h"
 #include "core/utils/serialisation_utils.h"
+#include "default_textures.h"
 #include "shadercompiler.h"
 
 
@@ -130,8 +131,7 @@ void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &
             setUniformMat4(name, value.getMat4Val());
             break;
         case Texture:
-            if (!value.getTexAssetReference().empty())
-                setTexture(name, value.getTexAssetReference());
+            setTexture(name, value.getTexAssetReference());   // empty -> white
             break;
         default:
             break;
@@ -181,20 +181,30 @@ void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
 }
 
 void MShader::setTexture(const SString &name, const SString& textureAssetPath, const unsigned int& index) const {
+    auto location = getUniformLocation(name);
+    if (location == -1) return;
+
+    // Nothing assigned, or the asset can't be loaded: sample white instead
+    // of whatever an earlier draw left bound on this unit.
+    if (textureAssetPath.empty()) {
+        setTextureWhite(name, index);
+        return;
+    }
+
     // textureAssetPath is a reference string — "guid:<id>" or a bare path.
     auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetFromReference<MTextureAsset>(textureAssetPath);
-    if(!asset) {
-        MERROR("Shader: Invalid Texture Asset");
+    if(!asset || !asset->getTexture()) {
+        MERROR("Shader: Invalid Texture Asset " + textureAssetPath);
+        setTextureWhite(name, index);
         return;
     }
-    auto texture = asset->getTexture();
-    if(!texture) {
-        MERROR("Shader: NULL SHADER");
-        return;
-    }
+    asset->bindForRendering(index);
+    glUniform1i(location, static_cast<GLint>(index));
+}
+
+void MShader::setTextureWhite(const SString &name, const unsigned int& index) const {
     auto location = getUniformLocation(name);
-    if (location != -1) {
-        asset->bindForRendering(index);
-        glUniform1i(location, static_cast<GLint>(index));
-    }
+    if (location == -1) return;
+    MDefaultTextures::bindWhite(index);
+    glUniform1i(location, static_cast<GLint>(index));
 }

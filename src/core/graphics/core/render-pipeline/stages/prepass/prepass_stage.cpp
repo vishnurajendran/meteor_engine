@@ -21,6 +21,7 @@
 #include "core/graphics/core/render-pipeline/view_data.h"
 #include "core/graphics/core/shader/shader.h"
 #include "core/graphics/core/shader/shaderasset.h"
+#include "core/graphics/core/shader/default_textures.h"
 #include "core/utils/logger.h"
 
 static constexpr const char* PREPASS_SHADER_PATH =
@@ -78,9 +79,9 @@ bool MPrepassStage::syncFramebuffer()
     if (fbo == 0) glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    if (depthTex   == attachedDepth &&
-        normalTex  == attachedNormal &&
-        surfaceTex == attachedSurface)
+    if (depthBuffer->getStorageId()   == attachedDepth &&
+        normalBuffer->getStorageId()  == attachedNormal &&
+        surfaceBuffer->getStorageId() == attachedSurface)
         return true;
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, depthTex,   0);
@@ -91,9 +92,9 @@ bool MPrepassStage::syncFramebuffer()
     const GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
     glDrawBuffers(2, drawBuffers);
 
-    attachedDepth   = depthTex;
-    attachedNormal  = normalTex;
-    attachedSurface = surfaceTex;
+    attachedDepth   = depthBuffer->getStorageId();
+    attachedNormal  = normalBuffer->getStorageId();
+    attachedSurface = surfaceBuffer->getStorageId();
 
     const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE)
@@ -205,6 +206,13 @@ int MPrepassStage::bindMaterialInputs(const SRenderItem& item, unsigned int prog
     l = glGetUniformLocation(prog, "_useNormalMap"); if (l >= 0) glUniform1i(l, 0);
     l = glGetUniformLocation(prog, "_metallic");     if (l >= 0) glUniform1f(l, 0.0f);
     l = glGetUniformLocation(prog, "_smoothness");   if (l >= 0) glUniform1f(l, 0.5f);
+    // Cutout: the loop below fills these from the material (and binds
+    // _albedo, since the prepass shader samples it); reset so a cutout
+    // material's values never carry over to the next item.
+    l = glGetUniformLocation(prog, "_useCutout");       if (l >= 0) glUniform1i(l, 0);
+    l = glGetUniformLocation(prog, "_cutoutThreshold"); if (l >= 0) glUniform1f(l, 0.5f);
+    l = glGetUniformLocation(prog, "_useAlbedoTex");    if (l >= 0) glUniform1i(l, 1);
+    l = glGetUniformLocation(prog, "_color");           if (l >= 0) glUniform4f(l, 1.f, 1.f, 1.f, 1.f);
     l = glGetUniformLocation(prog, "_lit");
     if (l >= 0) glUniform1i(l, item.getShadingMode() == MMaterial::ShadingMode::Lit ? 1 : 0);
 
@@ -214,16 +222,24 @@ int MPrepassStage::bindMaterialInputs(const SRenderItem& item, unsigned int prog
         if (val.getType() == SShaderPropertyType::Texture)
         {
             // Only bind textures the prepass shader actually samples
-            // (currently _normalMap); albedo etc. are skipped.
+            // (_normalMap, and _albedo for cutout); others are skipped.
             const GLint loc = glGetUniformLocation(prog, key.c_str());
-            if (loc < 0 || val.getTexAssetReference().empty()) continue;
+            if (loc < 0) continue;
             if (texUnit > MAX_MATERIAL_TEX_UNIT) continue;
 
-            const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-                ->getAssetFromReference<MTextureAsset>(val.getTexAssetReference());
-            if (!texAsset || !texAsset->getTexture()) continue;
-
-            texAsset->bindForRendering(texUnit);
+            // Empty or missing -> white, never a stale texture.
+            bool bound = false;
+            if (!val.getTexAssetReference().empty())
+            {
+                const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                    ->getAssetFromReference<MTextureAsset>(val.getTexAssetReference());
+                if (texAsset && texAsset->getTexture())
+                {
+                    texAsset->bindForRendering(texUnit);
+                    bound = true;
+                }
+            }
+            if (!bound) MDefaultTextures::bindWhite(texUnit);
             glUniform1i(loc, texUnit);
             ++texUnit;
         }

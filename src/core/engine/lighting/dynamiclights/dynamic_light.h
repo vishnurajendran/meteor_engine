@@ -20,6 +20,10 @@ class MDynamicLight : public MLightEntity {
     DECLARE_FIELD(range,        float,    10.0f)
     DECLARE_FIELD(castsShadow,  bool,     true)
     DECLARE_FIELD(smoothShadow, bool,     false)
+    // When more lights want shadows than there are shadow maps, higher
+    // priority always wins; equal priorities go to the light nearest the
+    // camera. See MShadowStage::selectShadowCasters.
+    DECLARE_FIELD(shadowPriority, int,    0)
 
 protected:
     SDynamicLightDataStruct lightData;
@@ -59,6 +63,11 @@ public:
     // Read by MLightSystemManager::prepareDynamicLights() to fill the SSBO.
     int  getShadowIndex() const   { return lightData.shadowIndex; }
     void setShadowIndex(int idx)  { lightData.shadowIndex = idx; }
+
+    SCRIPT_BIND_FUNC()
+    int  getShadowPriority() const { return shadowPriority.get(); }
+    SCRIPT_BIND_FUNC()
+    void setShadowPriority(int v)  { shadowPriority = v; }
 
     SCRIPT_BIND_FUNC()
     bool getSmoothShadow() const  { return smoothShadow.get(); }

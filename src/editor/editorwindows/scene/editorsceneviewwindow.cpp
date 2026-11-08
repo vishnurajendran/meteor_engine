@@ -454,8 +454,8 @@ MSpatialEntity* MEditorSceneViewWindow::pickEntity(MCameraEntity*  camera,
 
 void MEditorSceneViewWindow::drawTransformHandles()
 {
-    if (!gizmosEnabled)
-        return;
+    // Always drawn: the Gizmos toggle only hides scene gizmos (MGizmos -
+    // icons, wireframes, bounds), never the move / rotate / scale handles.
     if (!MEditorApplication::SelectedObject)
         return;
 
@@ -560,7 +560,8 @@ void MEditorSceneViewWindow::drawToolbar(bool playMode)
             MGizmos::enableGizmos(gizmosEnabled);
         }
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip(gizmosEnabled ? "Click to hide gizmos" : "Click to show gizmos");
+            ImGui::SetTooltip(gizmosEnabled ? "Click to hide scene gizmos (icons, wireframes).\nTransform handles stay visible."
+                                            : "Click to show scene gizmos (icons, wireframes).");
 
         // -- Always visible: render mode dropdown -----------------------
         ImGui::SameLine(0, OVL_PAD);
@@ -569,7 +570,7 @@ void MEditorSceneViewWindow::drawToolbar(bool playMode)
         ImGui::AlignTextToFramePadding();
         {
             static const char* viewNames[] = {
-                "Final", "Scene (HDR)", "Opaque", "Lighting", "Depth", "Light Mask", "Normals", "Surface"
+                "Final", "Scene (HDR)", "Opaque", "Lighting", "Depth", "Light Mask", "Normals", "Surface", "Emission"
             };
             int cur = static_cast<int>(MCompositeStage::debugView);
 

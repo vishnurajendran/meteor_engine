@@ -24,6 +24,7 @@
 #include "core/graphics/core/render-pipeline/stages/lighting/shadow_inputs.h"
 #include "core/graphics/core/render-pipeline/view_data.h"
 #include "core/graphics/core/shader/shader.h"
+#include "core/graphics/core/shader/default_textures.h"
 #include "core/utils/logger.h"
 
 // Material textures use units MShadowInputs::UNIT_COUNT .. MAX_TEX_UNIT.
@@ -143,9 +144,10 @@ void MTransparentStage::render(IRenderPipeline* const pipeline)
         modelVal.setMat4Val(item->transform);
         shader->setPropertyValue("model", modelVal);
 
+        const bool  lit    = item->getShadingMode() == MMaterial::ShadingMode::Lit;
         const GLint litLoc = glGetUniformLocation(prog, "_lit");
         if (litLoc >= 0)
-            glUniform1i(litLoc, item->getShadingMode() == MMaterial::ShadingMode::Lit ? 1 : 0);
+            glUniform1i(litLoc, lit ? 1 : 0);
 
         highestTexUnit = std::max(highestTexUnit, bindMaterialProperties(*item, prog));
 
@@ -227,14 +229,22 @@ int MTransparentStage::bindMaterialProperties(const SRenderItem& item, unsigned 
         // Each texture gets its own unit (MMaterial::bindMaterial puts every
         // texture on unit 0).
         const GLint loc = glGetUniformLocation(prog, key.c_str());
-        if (loc < 0 || val.getTexAssetReference().empty()) continue;
+        if (loc < 0) continue;
         if (texUnit > MAX_TEX_UNIT) continue;
 
-        const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-            ->getAssetFromReference<MTextureAsset>(val.getTexAssetReference());
-        if (!texAsset || !texAsset->getTexture()) continue;
-
-        texAsset->bindForRendering(texUnit);
+        // Empty or missing -> white, never a stale texture.
+        bool bound = false;
+        if (!val.getTexAssetReference().empty())
+        {
+            const auto texAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                ->getAssetFromReference<MTextureAsset>(val.getTexAssetReference());
+            if (texAsset && texAsset->getTexture())
+            {
+                texAsset->bindForRendering(texUnit);
+                bound = true;
+            }
+        }
+        if (!bound) MDefaultTextures::bindWhite(texUnit);
         glUniform1i(loc, texUnit);
         highest = texUnit;
         ++texUnit;

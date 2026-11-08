@@ -204,6 +204,13 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
             mode = 3;
             break;
 
+        case EBufferDebugView::Emission:
+            if (auto* emission = pipeline->getBufferRegistry()
+                                          .getBuffer<STextureBuffer>(MBufferNames::BUFFER_EMISSION))
+                texHandle = emission->getTextureHandle();
+            mode = 0;
+            break;
+
         case EBufferDebugView::Surface:
             if (surface) texHandle = surface->getTextureHandle();
             mode = 4;

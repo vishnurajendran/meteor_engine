@@ -76,7 +76,16 @@ public:
         }
     }
 
-    [[nodiscard]] ShadingMode getShadingMode()const { return shadingMode; }
+    // A shader can expose lighting as a material property: a bool "_lit"
+    // (e.g. sprite.mesl). When present it decides the mode, so the material's
+    // checkbox and every pass that reads the mode (prepass, transparent) agree.
+    [[nodiscard]] ShadingMode getShadingMode() const
+    {
+        if (const auto it = properties.find("_lit");
+            it != properties.end() && it->second.getType() == SShaderPropertyType::Bool)
+            return it->second.getBoolValue() ? ShadingMode::Lit : ShadingMode::Unlit;
+        return shadingMode;
+    }
     void setShadingMode(ShadingMode mode) { shadingMode = mode; }
 
     [[nodiscard]] RenderMode getRenderMode() const { return renderMode; }
@@ -103,7 +112,7 @@ public:
     static const char* blendModeToString(BlendMode mode) { return mode == BlendMode::Additive ? "additive" : "alpha"; }
     static BlendMode   blendModeFromString(const std::string& s) { return s == "additive" ? BlendMode::Additive : BlendMode::Alpha; }
     [[nodiscard]] bool        isValid()       const { return shader != nullptr; }
-    [[nodiscard]] bool isUnlit() const { return shadingMode == ShadingMode::Unlit; }
+    [[nodiscard]] bool isUnlit() const { return getShadingMode() == ShadingMode::Unlit; }
 };
 
 #endif //MATERIAL_H

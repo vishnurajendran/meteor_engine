@@ -18,6 +18,8 @@
 #include "stages/lighting/lighting_stage.h"
 #include "stages/opaque/opaque_stage.h"
 #include "stages/prepass/prepass_stage.h"
+#include "stages/postprocess/post_process_stage.h"
+#include "postprocess/post_process_stack.h"
 #include "stages/resolve/resolve_stage.h"
 #include "stages/shadow/shadow_stage.h"
 #include "stages/skybox/procedural_sky/procedural_sky_stage.h"
@@ -38,9 +40,12 @@ void MRenderPipeline::init()
     if (initialised)
         return;
 
+    // Attachments first - stages fetch them in init().
+    addAttachment<MPostProcessStack>();   // effects + settings, edited via MPostProcessStackEntity
+
     // Run order comes from each stage's getSortingOrder():
     //   clear -> prepass -> shadow -> skybox -> opaque -> lighting
-    //   -> resolve -> transparent -> composite
+    //   -> resolve -> post (opaque) -> transparent -> post -> composite
     // Add order only matters for init(): the skybox stages look up
     // BUFFER_OPAQUE, so they must be added after MOpaqueStage; MResolveStage
     // needs BUFFER_DEPTH (prepass) and MTransparentStage needs BUFFER_SCENE
@@ -51,7 +56,9 @@ void MRenderPipeline::init()
     addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE (reuses prepass depth)
     addStage<MLightingStage>();           // fullscreen lighting -> BUFFER_LIGHTS (no mesh loop)
     addStage<MResolveStage>();            // albedo x light     -> BUFFER_SCENE (linear HDR)
+    addStage<MPostProcessOpaqueStage>();  // post effects on opaque only (SSAO, ...)
     addStage<MTransparentStage>();        // forward-lit transparents, blended into BUFFER_SCENE
+    addStage<MPostProcessStage>();        // post effects on the finished image (tonemapping, ...)
     addStage<MSkyboxStage>();             // cubemap skybox     (runs after shadow)
     addStage<MProceduralSkyboxStage>();   // procedural skybox  (runs after shadow)
     addStage<MCompositeStage>();          // blits all buffers  -> render target
@@ -84,6 +91,9 @@ void MRenderPipeline::cleanup()
         renderStages.pop_back();
     }
 
+    // After the stages, which may hold attachment pointers until cleanup().
+    attachments.clear(this);
+
     renderItems.clear();
     compositeFlags = ECF_None;
     initialised = false;
@@ -104,6 +114,7 @@ void MRenderPipeline::setRenderBuffer(SRenderBuffer* renderBuffer)
     {
         const auto res = renderBuffer->getResolution();
         bufferRegistry.resizeAll(static_cast<int>(res.x), static_cast<int>(res.y));
+        attachments.resizeAll(static_cast<int>(res.x), static_cast<int>(res.y));
     }
 }
 

@@ -93,6 +93,8 @@ private:
     // Folder new assets go into: the right-clicked folder, else the folder
     // being viewed. Empty at the tree root (which is not a real folder).
     SString getCreateTargetDir(SAssetDirectoryNode* clicked) const;
+    // Arms the New Folder dialog for `targetDir` (from getCreateTargetDir).
+    void openNewFolderPopup(const SString& targetDir);
     // "Create" submenu built from MAssetTemplateRegistry (menuPath "A/B/C").
     void drawCreateMenuItems(const SString& targetDir);
     // Arms the create dialog for a template.
@@ -150,6 +152,7 @@ private:
     // -- New Folder popup state ------------------------------------------------
     bool pendingNewFolderPopup = false;        // arms ImGui::OpenPopup on next frame
     char newFolderNameBuffer[256] = {};        // text input buffer
+    SString newFolderTargetDir;                // folder the new folder goes in
 
     // -- Create-asset dialog state ---------------------------------------------
     bool                          pendingCreatePopup = false;

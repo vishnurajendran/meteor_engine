@@ -1034,7 +1034,89 @@ void MAssetInspector::drawStaticMeshAsset(MStaticMeshAsset* asset)
         ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Triangles");
         ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(triBuf);
 
+        // Size as it will load with the scale factor below - updates while
+        // the factor is edited, so it can be tuned before reimporting.
+        const SVector3 size = asset->getScaledBoundsSize();
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Size");
+        ImGui::TableSetColumnIndex(1); ImGui::Text("%.3g x %.3g x %.3g", size.x, size.y, size.z);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Bounding box (X x Y x Z) in world units, with the scale factor applied.");
+
         ImGui::EndTable();
+    }
+
+    // -- Import settings ------------------------------------------------------
+    ImGui::Spacing();
+    if (ImGui::CollapsingHeader("Import Settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::BeginTable("##mesh_import", 2, ImGuiTableFlags_None))
+        {
+            ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed, 100.f);
+            ImGui::TableSetupColumn("value", ImGuiTableColumnFlags_WidthStretch);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Scale Factor");
+            ImGui::TableSetColumnIndex(1);
+
+            float scale = asset->getScaleFactor();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            // Logarithmic: the useful range spans 0.001 (mm) to 100+.
+            if (ImGui::DragFloat("##mesh_scale", &scale, 0.005f, 0.0001f, 10000.0f, "%.4g",
+                                 ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp))
+                asset->setScaleFactor(scale);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip(
+                    "Uniform scale baked into the mesh when it loads, so entities\n"
+                    "using it can keep a transform scale of 1.\n"
+                    "Common values: 0.01 (cm -> m), 0.0254 (inches), 0.001 (mm).\n"
+                    "FBX files are already converted from centimetres on import.");
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Pivot");
+            ImGui::TableSetColumnIndex(1);
+            static const char* pivotLabels[] = { "File Origin", "Center", "Bottom Center" };
+            int pivot = static_cast<int>(asset->getPivot());
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            if (ImGui::Combo("##mesh_pivot", &pivot, pivotLabels, IM_ARRAYSIZE(pivotLabels)))
+                asset->setPivot(static_cast<EMeshPivot>(pivot));
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip(
+                    "Where the mesh's origin goes.\n"
+                    "File Origin: as authored. Files often keep the position the model\n"
+                    "had in the artist's scene, which offsets it from its entity.\n"
+                    "Center: middle of the bounding box.\n"
+                    "Bottom Center: middle of the base - for props that sit on the ground.");
+
+            ImGui::EndTable();
+        }
+
+        ImGui::Spacing();
+        if (ImGui::Button("Save & Reimport##mesh_save", ImVec2(-FLT_MIN, 0)))
+        {
+            if (asset->saveImportSettings())
+            {
+                if (!asset->requestReload())
+                    MWARN("Mesh reimport failed for: " + asset->getPath());
+            }
+            else
+            {
+                ImGui::OpenPopup("##mesh_save_err");
+            }
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Write import settings to .meta and reload the mesh");
+
+        if (ImGui::BeginPopup("##mesh_save_err"))
+        {
+            ImGui::TextUnformatted("Failed to save mesh import settings. Check logs.");
+            if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
     }
 }
 

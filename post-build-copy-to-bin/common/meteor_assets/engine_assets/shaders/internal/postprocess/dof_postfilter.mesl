@@ -1,0 +1,30 @@
+<shader name="pp_dof_postfilter" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;      // half-res bokeh result
+    uniform vec2      _texelSize;   // 1 / half-res size
+
+    // 4-tap tent (bilinear taps half a texel off-centre) to smooth out the
+    // gather's ring pattern.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv = v2fTexCoords;
+        vec2 o  = _texelSize * 0.5;
+        vec4 s  = texture(_source, uv + vec2(-o.x, -o.y))
+                + texture(_source, uv + vec2( o.x, -o.y))
+                + texture(_source, uv + vec2(-o.x,  o.y))
+                + texture(_source, uv + vec2( o.x,  o.y));
+        return s * 0.25;
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

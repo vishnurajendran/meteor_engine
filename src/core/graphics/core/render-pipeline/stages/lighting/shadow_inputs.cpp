@@ -42,11 +42,12 @@ void bind(IRenderPipeline* pipeline, unsigned int program)
     // ---- Directional cascades ------------------------------------------------
     const int cascades = (hasShadow && dirShadowEnabled && sb->cascadeArrayTexture != 0)
                          ? sb->numCascades : 0;
-    if (cascades > 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + UNIT_DIRECTIONAL);
-        glBindTexture(GL_TEXTURE_2D_ARRAY, sb->cascadeArrayTexture);
-    }
+    // Unit 0 holds only the cascade array. Clear the 2D binding a material
+    // may have left there, so samplers of different types never share it.
+    glActiveTexture(GL_TEXTURE0 + UNIT_DIRECTIONAL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, cascades > 0 ? sb->cascadeArrayTexture : 0);
     {
         GLint l;
         l = glGetUniformLocation(prog, "shadowCascades");
@@ -87,17 +88,24 @@ void bind(IRenderPipeline* pipeline, unsigned int program)
     static const char* pointMapNames[] = {"pointShadowMap0","pointShadowMap1","pointShadowMap2","pointShadowMap3"};
     static const char* pointFarNames[] = {"pointFarPlane0","pointFarPlane1","pointFarPlane2","pointFarPlane3"};
 
-    if (!hasShadow) return;
+    // Always give every shadow sampler its own unit, shadows or not.
+    // Left at the default (unit 0) they would share a unit with the cascade
+    // array's sampler2DArrayShadow, and GL can reject the whole draw for
+    // mixing sampler types on one unit.
+    const int numSpot  = hasShadow ? sb->numSpotShadows  : 0;
+    const int numPoint = hasShadow ? sb->numPointShadows : 0;
 
     for (int i = 0; i < SShadowBuffer::MAX_SPOT_SHADOWS; ++i)
     {
         glActiveTexture(GL_TEXTURE0 + UNIT_SPOT_BASE + i);
-        glBindTexture(GL_TEXTURE_2D, (i < sb->numSpotShadows) ? sb->spotDepthTextures[i] : 0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        glBindTexture(GL_TEXTURE_2D, (i < numSpot) ? sb->spotDepthTextures[i] : 0);
 
         GLint l = glGetUniformLocation(prog, spotMapNames[i]);
         if (l >= 0) glUniform1i(l, UNIT_SPOT_BASE + i);
 
-        if (i >= sb->numSpotShadows) continue;
+        if (i >= numSpot) continue;
         l = glGetUniformLocation(prog, spotMatrixNames[i]);
         if (l >= 0) glUniformMatrix4fv(l, 1, GL_FALSE, glm::value_ptr(sb->spotLightSpaceMatrices[i]));
         l = glGetUniformLocation(prog, spotPosNames[i]);
@@ -109,12 +117,14 @@ void bind(IRenderPipeline* pipeline, unsigned int program)
     for (int i = 0; i < SShadowBuffer::MAX_POINT_SHADOWS; ++i)
     {
         glActiveTexture(GL_TEXTURE0 + UNIT_POINT_BASE + i);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, (i < sb->numPointShadows) ? sb->pointCubemapTextures[i] : 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, (i < numPoint) ? sb->pointCubemapTextures[i] : 0);
 
         GLint l = glGetUniformLocation(prog, pointMapNames[i]);
         if (l >= 0) glUniform1i(l, UNIT_POINT_BASE + i);
 
-        if (i >= sb->numPointShadows) continue;
+        if (i >= numPoint) continue;
         l = glGetUniformLocation(prog, pointFarNames[i]);
         if (l >= 0) glUniform1f(l, sb->pointFarPlanes[i]);
     }

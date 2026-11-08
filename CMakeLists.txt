@@ -190,7 +190,7 @@ set_target_properties(glew PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_O
 # GLEW always defines a static variant too — we don't use it, so don't build it.
 set_target_properties(glew_s PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
-# ---- ASSIMP (glTF / GLB only) -----------------------------------------------
+# ---- ASSIMP (glTF / GLB, OBJ, FBX) -----------------------------------------
 set(ASSIMP_BUILD_TESTS                   OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ASSIMP_TOOLS            OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_SAMPLES                 OFF CACHE BOOL "" FORCE)
@@ -202,11 +202,14 @@ set(ASSIMP_IGNORE_GIT_HASH               ON  CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ZLIB                    ON  CACHE BOOL "" FORCE) # bundled zlib — no system dependency
 
 # Disable every importer, then opt in to the formats we support.
-# glTF covers both .gltf and .glb. To add a format later, add a line —
-# e.g. ASSIMP_BUILD_FBX_IMPORTER / ASSIMP_BUILD_OBJ_IMPORTER.
+# glTF covers both .gltf and .glb; OBJ also reads its .mtl companion.
+# To add a format later, add a line here (e.g. ASSIMP_BUILD_COLLADA_IMPORTER)
+# and its extension to MStaticMeshAssetImporter::canImport().
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_GLTF_IMPORTER           ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER            ON  CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_FBX_IMPORTER            ON  CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
         assimp

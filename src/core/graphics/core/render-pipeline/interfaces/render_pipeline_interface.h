@@ -11,6 +11,7 @@
 
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "render_stage_interface.h"
+#include "core/graphics/core/render-pipeline/attachments/pipeline_attachments.h"
 #include "core/memory/mnew.h"
 
 class MBufferRegistery;
@@ -61,6 +62,19 @@ public:
 
     // Buffer registry
     virtual MBufferRegistery& getBufferRegistry() = 0;
+
+    // ---- Attachments --------------------------------------------------------
+    // Per-pipeline systems (IPipelineAttachment), one per type, e.g.
+    // MPostProcessStack. Add them before the stages that use them, so stages
+    // can fetch them in init(). They outlive every stage (see cleanup()).
+    template <typename T, typename... Args>
+    T* addAttachment(Args&&... args) { return attachments.add<T>(this, std::forward<Args>(args)...); }
+
+    template <typename T>
+    T* getAttachment() const { return attachments.get<T>(); }
+
+    template <typename T>
+    bool removeAttachment() { return attachments.remove<T>(this); }
 
     // Render items
     // All items this frame, plus the same items split by material render
@@ -124,6 +138,7 @@ public:
 
 protected:
     std::vector<IRenderStage*> renderStages;
+    SPipelineAttachments       attachments;
     SCameraOverride            cameraOverride;
     SLightOverride             lightOverride;
 };
