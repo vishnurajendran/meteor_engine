@@ -247,21 +247,12 @@ GLEW and Assimp are built as shared libraries. Everything else is linked statica
 
 ## Roadmap
 
-**Done recently**
-- Render pipeline rework: deferred lighting, HDR, cascaded shadows, transparents, post-processing stack
-- Particle system with instanced rendering
-- Job system (multithreaded `parallelFor`)
-- Game publishing
-
 **In progress**
-- Physics-based scene picking in the editor
-- Asset system: dependency tracking
 - Editor UX and tooling polish
 - Expanding the Lua API
 
 **Planned**
 - Animation system (skinning, built on the job system)
-- Tonemapping and exposure
 - Plugin support
 - Networking
 - Compound collision shapes
