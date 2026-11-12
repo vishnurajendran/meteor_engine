@@ -1,0 +1,144 @@
+<shader name="pp_fxaa" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;              // HDR image, bilinear filtering
+    uniform vec2      _texelSize;           // 1 / resolution
+    uniform float     _contrastThreshold;
+    uniform float     _relativeThreshold;
+    uniform float     _subpixelBlending;
+
+    // Steps taken along an edge looking for its end (FXAA 3.11 quality, ~preset 12).
+    const int   EDGE_STEP_COUNT = 10;
+    const float EDGE_STEPS[EDGE_STEP_COUNT] = float[](1.0, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 4.0);
+    const float EDGE_GUESS = 8.0;           // assumed remaining distance if no end was found
+
+    // Perceptual luma, compressed so HDR values (> 1) don't blow out the
+    // contrast tests. There is no tonemapping before this yet.
+    float lumaAt(vec2 uv)
+    {
+        vec3  c = texture(_source, uv).rgb;
+        float l = dot(c, vec3(0.299, 0.587, 0.114));
+        return l / (1.0 + l);
+    }
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv = v2fTexCoords;
+        vec2 t  = _texelSize;
+
+        // ---- Neighbourhood ----------------------------------------------------
+        float m  = lumaAt(uv);
+        float n  = lumaAt(uv + vec2( 0.0,  t.y));
+        float e  = lumaAt(uv + vec2( t.x,  0.0));
+        float s  = lumaAt(uv + vec2( 0.0, -t.y));
+        float w  = lumaAt(uv + vec2(-t.x,  0.0));
+
+        float highest  = max(max(max(max(n, e), s), w), m);
+        float lowest   = min(min(min(min(n, e), s), w), m);
+        float contrast = highest - lowest;
+
+        // Flat area: leave untouched.
+        if (contrast < max(_contrastThreshold, _relativeThreshold * highest))
+            return texture(_source, uv);
+
+        float ne = lumaAt(uv + vec2( t.x,  t.y));
+        float nw = lumaAt(uv + vec2(-t.x,  t.y));
+        float se = lumaAt(uv + vec2( t.x, -t.y));
+        float sw = lumaAt(uv + vec2(-t.x, -t.y));
+
+        // ---- Sub-pixel blend: how different this pixel is from its surround ----
+        float neighbourDiff = 2.0 * (n + e + s + w) + ne + nw + se + sw;
+        neighbourDiff = abs(neighbourDiff / 12.0 - m);
+        neighbourDiff = clamp(neighbourDiff / contrast, 0.0, 1.0);
+        float subpixelBlend = smoothstep(0.0, 1.0, neighbourDiff);
+        subpixelBlend = subpixelBlend * subpixelBlend * _subpixelBlending;
+
+        // ---- Edge orientation ------------------------------------------------
+        float horizontal = abs(n + s - 2.0 * m) * 2.0 + abs(ne + se - 2.0 * e) + abs(nw + sw - 2.0 * w);
+        float vertical   = abs(e + w - 2.0 * m) * 2.0 + abs(ne + nw - 2.0 * n) + abs(se + sw - 2.0 * s);
+        bool  isHorizontal = horizontal >= vertical;
+
+        // Which side of this pixel the edge lies on.
+        float pixelStep = isHorizontal ? t.y : t.x;
+        float pLuma     = isHorizontal ? n : e;
+        float nLuma     = isHorizontal ? s : w;
+        float pGradient = abs(pLuma - m);
+        float nGradient = abs(nLuma - m);
+
+        float gradient, oppositeLuma;
+        if (pGradient < nGradient)
+        {
+            pixelStep    = -pixelStep;
+            oppositeLuma = nLuma;
+            gradient     = nGradient;
+        }
+        else
+        {
+            oppositeLuma = pLuma;
+            gradient     = pGradient;
+        }
+
+        // ---- Walk along the edge in both directions ----------------------------
+        vec2 uvEdge = uv;
+        vec2 edgeStep;
+        if (isHorizontal) { uvEdge.y += pixelStep * 0.5; edgeStep = vec2(t.x, 0.0); }
+        else              { uvEdge.x += pixelStep * 0.5; edgeStep = vec2(0.0, t.y); }
+
+        float edgeLuma          = (m + oppositeLuma) * 0.5;
+        float gradientThreshold = gradient * 0.25;
+
+        vec2  puv = uvEdge + edgeStep * EDGE_STEPS[0];
+        float pLumaDelta = lumaAt(puv) - edgeLuma;
+        bool  pAtEnd = abs(pLumaDelta) >= gradientThreshold;
+        for (int i = 1; i < EDGE_STEP_COUNT && !pAtEnd; ++i)
+        {
+            puv += edgeStep * EDGE_STEPS[i];
+            pLumaDelta = lumaAt(puv) - edgeLuma;
+            pAtEnd = abs(pLumaDelta) >= gradientThreshold;
+        }
+        if (!pAtEnd) puv += edgeStep * EDGE_GUESS;
+
+        vec2  nuv = uvEdge - edgeStep * EDGE_STEPS[0];
+        float nLumaDelta = lumaAt(nuv) - edgeLuma;
+        bool  nAtEnd = abs(nLumaDelta) >= gradientThreshold;
+        for (int i = 1; i < EDGE_STEP_COUNT && !nAtEnd; ++i)
+        {
+            nuv -= edgeStep * EDGE_STEPS[i];
+            nLumaDelta = lumaAt(nuv) - edgeLuma;
+            nAtEnd = abs(nLumaDelta) >= gradientThreshold;
+        }
+        if (!nAtEnd) nuv -= edgeStep * EDGE_GUESS;
+
+        // ---- Blend amount from the distance to the nearer edge end -------------
+        float pDistance = isHorizontal ? (puv.x - uv.x) : (puv.y - uv.y);
+        float nDistance = isHorizontal ? (uv.x - nuv.x) : (uv.y - nuv.y);
+
+        float shortestDistance;
+        bool  deltaSign;
+        if (pDistance <= nDistance) { shortestDistance = pDistance; deltaSign = pLumaDelta >= 0.0; }
+        else                        { shortestDistance = nDistance; deltaSign = nLumaDelta >= 0.0; }
+
+        float edgeBlend = 0.0;
+        if (deltaSign != (m - edgeLuma >= 0.0))
+            edgeBlend = 0.5 - shortestDistance / (pDistance + nDistance);
+
+        float finalBlend = max(subpixelBlend, edgeBlend);
+
+        // ---- Resample across the edge (bilinear does the mixing) ---------------
+        if (isHorizontal) uv.y += pixelStep * finalBlend;
+        else              uv.x += pixelStep * finalBlend;
+
+        return vec4(texture(_source, uv).rgb, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

@@ -12,11 +12,17 @@
 // Use these everywhere instead of raw string literals.
 struct MBufferNames
 {
-    static const SString BUFFER_DEPTH;
+    static const SString BUFFER_DEPTH;        // prepass depth texture          (SDepthBuffer)
+    static const SString BUFFER_NORMAL;       // prepass view-space normals     (STextureBuffer, RGBA16F)
+    static const SString BUFFER_SURFACE;      // prepass metallic/smoothness/lit (STextureBuffer, RGBA8)
     static const SString BUFFER_OPAQUE;
     static const SString BUFFER_LIGHTS;
     static const SString BUFFER_SHADOW;
-    static const SString BUFFER_TRANSPARENT;
+    static const SString BUFFER_TRANSPARENT;  // unused (transparents blend into BUFFER_SCENE)
+    static const SString BUFFER_SCENE;        // lit linear HDR image: resolve + transparents (SFrameBuffer, RGBA16F)
+    static const SString BUFFER_EMISSION;     // material emission, added after lighting (STextureBuffer, RGBA16F)
+    static const SString BUFFER_POST_A;       // post-process ping-pong (SFrameBuffer, RGBA16F)
+    static const SString BUFFER_POST_B;
     static const SString BUFFER_COMPOSITE;
 };
 

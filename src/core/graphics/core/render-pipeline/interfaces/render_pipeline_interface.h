@@ -11,6 +11,7 @@
 
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "render_stage_interface.h"
+#include "core/graphics/core/render-pipeline/attachments/pipeline_attachments.h"
 #include "core/memory/mnew.h"
 
 class MBufferRegistery;
@@ -18,11 +19,12 @@ class MBufferRegistery;
 enum ECompositeFlags : uint32_t
 {
     ECF_None        = 0,
-    ECF_Depth       = 1 << 0,
+    ECF_Prepass     = 1 << 0,
     ECF_Opaque      = 1 << 1,
     ECF_Lights      = 1 << 2,
     ECF_Shadow      = 1 << 3,
     ECF_Transparent = 1 << 4,
+    ECF_Scene       = 1 << 5,   // BUFFER_SCENE holds the lit image (MResolveStage)
 };
 
 class IRenderPipeline
@@ -41,7 +43,9 @@ public:
         IRenderStage* stage = mnew<T>();
         stage->init(this);
         renderStages.push_back(stage);
-        std::sort(renderStages.begin(), renderStages.end(),
+        // Stable: stages with the same order run in the order they were added
+        // (e.g. cubemap skybox, then procedural skybox).
+        std::stable_sort(renderStages.begin(), renderStages.end(),
             [](IRenderStage* a, IRenderStage* b) { return a->getSortingOrder() < b->getSortingOrder(); });
         return true;
     }
@@ -59,8 +63,25 @@ public:
     // Buffer registry
     virtual MBufferRegistery& getBufferRegistry() = 0;
 
+    // ---- Attachments --------------------------------------------------------
+    // Per-pipeline systems (IPipelineAttachment), one per type, e.g.
+    // MPostProcessStack. Add them before the stages that use them, so stages
+    // can fetch them in init(). They outlive every stage (see cleanup()).
+    template <typename T, typename... Args>
+    T* addAttachment(Args&&... args) { return attachments.add<T>(this, std::forward<Args>(args)...); }
+
+    template <typename T>
+    T* getAttachment() const { return attachments.get<T>(); }
+
+    template <typename T>
+    bool removeAttachment() { return attachments.remove<T>(this); }
+
     // Render items
-    virtual const std::vector<SRenderItem>& getRenderItems() const = 0;
+    // All items this frame, plus the same items split by material render
+    // mode (built once in preRender, after culling and sorting).
+    virtual const std::vector<SRenderItem>& getRenderItems()      const = 0;
+    virtual const std::vector<SRenderItem>& getOpaqueItems()      const = 0;
+    virtual const std::vector<SRenderItem>& getTransparentItems() const = 0;
 
     // Composite flags
     virtual uint32_t getCompositeFlags()                  const = 0;
@@ -117,6 +138,7 @@ public:
 
 protected:
     std::vector<IRenderStage*> renderStages;
+    SPipelineAttachments       attachments;
     SCameraOverride            cameraOverride;
     SLightOverride             lightOverride;
 };

@@ -1,0 +1,35 @@
+<shader name="pp_dof_coc" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _depthTex;        // BUFFER_DEPTH
+    uniform mat4      _invProjection;   // camera the prepass rendered with
+    uniform float     _focusDistance;   // world units
+    uniform float     _focusRange;      // world units to full blur
+    uniform float     _bokehRadius;     // max CoC, half-res pixels
+
+    // r = signed circle of confusion in half-res pixels:
+    //   < 0 in front of the focus plane, > 0 behind it, 0 in focus.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        ivec2 pixel = ivec2(gl_FragCoord.xy);
+        vec2  uv    = gl_FragCoord.xy / vec2(textureSize(_depthTex, 0));
+        float d     = texelFetch(_depthTex, pixel, 0).r;
+
+        vec4 viewPos = _invProjection * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);
+        float dist   = -viewPos.z / viewPos.w;   // linear distance along the view axis
+
+        float coc = clamp((dist - _focusDistance) / _focusRange, -1.0, 1.0) * _bokehRadius;
+        return vec4(coc, 0.0, 0.0, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

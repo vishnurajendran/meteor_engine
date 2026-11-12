@@ -51,7 +51,9 @@ public:
     MBufferRegistery& getBufferRegistry() override { return bufferRegistry; }
 
     // ---- IRenderPipeline -- render items -------------------------------------
-    const std::vector<SRenderItem>& getRenderItems() const override { return renderItems; }
+    const std::vector<SRenderItem>& getRenderItems()      const override { return renderItems; }
+    const std::vector<SRenderItem>& getOpaqueItems()      const override { return opaqueItems; }
+    const std::vector<SRenderItem>& getTransparentItems() const override { return transparentItems; }
 
     // ---- IRenderPipeline -- composite flags ----------------------------------
     uint32_t getCompositeFlags()                  const override { return compositeFlags; }
@@ -78,6 +80,8 @@ private:
 private:
     MBufferRegistery           bufferRegistry;
     std::vector<SRenderItem>   renderItems;
+    std::vector<SRenderItem>   opaqueItems;        // rebuilt in preRender()
+    std::vector<SRenderItem>   transparentItems;   // rebuilt in preRender(); MTransparentStage sorts by distance
     uint32_t                   compositeFlags = ECF_None;
     bool                       initialised    = false;
     bool                       manualItemMode = false;

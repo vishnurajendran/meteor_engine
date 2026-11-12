@@ -7,13 +7,22 @@
 #define LIGHTING_STAGE_H
 
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
+#include "core/graphics/core/render-pipeline/fullscreen_quad.h"
 
 class SFrameBuffer;
 
 // Lighting stage - RS_Lighting (4000).
 //
-// Renders all scene geometry into BUFFER_LIGHTS using lighting_pass.mesl -
-// outputs applyLighting(vec3(1.0)) - the raw light intensity with no albedo.
+// A single fullscreen pass - it does not iterate meshes. lighting_pass.mesl
+// reads the prepass buffers per pixel:
+//   BUFFER_DEPTH   -> world position (reconstructed with the frame's camera)
+//   BUFFER_NORMAL  -> shading normal (normal map already applied)
+//   BUFFER_SURFACE -> metallic, smoothness, lit/unlit
+// and writes the raw light intensity (no albedo) into BUFFER_LIGHTS, with
+// alpha = 1 on lit pixels and 0 on unlit pixels and sky.
+//
+// Point/spot lights come from one list uploaded per frame for the whole
+// view (MLightSystemManager::prepareViewDynamicLights).
 //
 // MCompositeStage multiplies BUFFER_OPAQUE × BUFFER_LIGHTS to produce the
 // final lit image:  albedo × (ambient + directional + spot/point) = result.
@@ -33,6 +42,10 @@ private:
     SFrameBuffer* lightsBuffer   = nullptr;
     // No cached MShader* - looked up fresh each render() to survive refresh().
     SString       lightingShaderPath;
+
+    SFullscreenQuad quad;
+
+    bool warnedMissingInputs = false;
 };
 
 #endif // LIGHTING_STAGE_H

@@ -2,6 +2,7 @@
 // MProceduralSkyboxDrawCall
 //
 #include "procedural_skybox_drawcall.h"
+#include "core/graphics/core/color_space.h"
 #include <GL/glew.h>
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/skybox/skybox.h"
@@ -71,7 +72,7 @@ void MProceduralSkyboxDrawCall::uploadUniforms(const SMatrix4& proj,
     v.setVec3Val(skyTint);
     shader->setPropertyValue("u_SkyTint", v);
 
-    v.setVec3Val(groundColor);
+    v.setVec3Val(MColorSpace::srgbToLinear(groundColor));
     shader->setPropertyValue("u_GroundColor", v);
 
     v.setFloatVal(exposure);

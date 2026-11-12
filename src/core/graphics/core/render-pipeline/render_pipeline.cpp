@@ -3,6 +3,7 @@
 //
 #include <GL/glew.h>
 #include "render_pipeline.h"
+#include "core/engine/texture/textureasset.h"
 #include "buffers/render/renderbuffer.h"
 #include "core/engine/camera/camera_spatial_entity.h"
 #include "core/engine/camera/viewmanagement.h"
@@ -14,12 +15,16 @@
 #include "render_queue.h"
 #include "stages/clear/clear_stage.h"
 #include "stages/composite/composite_stage.h"
-#include "stages/depth/depth_render_stage.h"
 #include "stages/lighting/lighting_stage.h"
 #include "stages/opaque/opaque_stage.h"
+#include "stages/prepass/prepass_stage.h"
+#include "stages/postprocess/post_process_stage.h"
+#include "postprocess/post_process_stack.h"
+#include "stages/resolve/resolve_stage.h"
 #include "stages/shadow/shadow_stage.h"
 #include "stages/skybox/procedural_sky/procedural_sky_stage.h"
 #include "stages/skybox/skybox_stage.h"
+#include "stages/transparent/transparent_stage.h"
 
 MRenderPipeline::~MRenderPipeline()
 {
@@ -35,13 +40,27 @@ void MRenderPipeline::init()
     if (initialised)
         return;
 
-    addStage<MClearStage>();              // clear screen pass.
-    addStage<MDepthRenderStage>();        // depth prepass
+    // Attachments first - stages fetch them in init().
+    addAttachment<MPostProcessStack>();   // effects + settings, edited via MPostProcessStackEntity
+
+    // Run order comes from each stage's getSortingOrder():
+    //   clear -> prepass -> shadow -> skybox -> opaque -> lighting
+    //   -> resolve -> post (opaque) -> transparent -> post -> composite
+    // Add order only matters for init(): the skybox stages look up
+    // BUFFER_OPAQUE, so they must be added after MOpaqueStage; MResolveStage
+    // needs BUFFER_DEPTH (prepass) and MTransparentStage needs BUFFER_SCENE
+    // (resolve).
+    addStage<MClearStage>();              // clear BUFFER_OPAQUE (runs first)
+    addStage<MPrepassStage>();            // depth/normal/surface -> BUFFER_DEPTH, BUFFER_NORMAL, BUFFER_SURFACE
     addStage<MShadowStage>();             // shadow map         -> BUFFER_SHADOW
-    addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE
-    addStage<MLightingStage>();           // light accumulation -> BUFFER_LIGHTS
-    addStage<MSkyboxStage>();             // cubemap skybox        (after opaques)
-    addStage<MProceduralSkyboxStage>();   // procedural skybox     (after opaques)
+    addStage<MOpaqueStage>();             // opaque geometry    -> BUFFER_OPAQUE (reuses prepass depth)
+    addStage<MLightingStage>();           // fullscreen lighting -> BUFFER_LIGHTS (no mesh loop)
+    addStage<MResolveStage>();            // albedo x light     -> BUFFER_SCENE (linear HDR)
+    addStage<MPostProcessOpaqueStage>();  // post effects on opaque only (SSAO, ...)
+    addStage<MTransparentStage>();        // forward-lit transparents, blended into BUFFER_SCENE
+    addStage<MPostProcessStage>();        // post effects on the finished image (tonemapping, ...)
+    addStage<MSkyboxStage>();             // cubemap skybox     (runs after shadow)
+    addStage<MProceduralSkyboxStage>();   // procedural skybox  (runs after shadow)
     addStage<MCompositeStage>();          // blits all buffers  -> render target
 
     initialised = true;
@@ -72,6 +91,9 @@ void MRenderPipeline::cleanup()
         renderStages.pop_back();
     }
 
+    // After the stages, which may hold attachment pointers until cleanup().
+    attachments.clear(this);
+
     renderItems.clear();
     compositeFlags = ECF_None;
     initialised = false;
@@ -92,6 +114,7 @@ void MRenderPipeline::setRenderBuffer(SRenderBuffer* renderBuffer)
     {
         const auto res = renderBuffer->getResolution();
         bufferRegistry.resizeAll(static_cast<int>(res.x), static_cast<int>(res.y));
+        attachments.resizeAll(static_cast<int>(res.x), static_cast<int>(res.y));
     }
 }
 
@@ -161,6 +184,15 @@ void MRenderPipeline::preRender()
               [](const SRenderItem& a, const SRenderItem& b)
               { return a.sortOrder < b.sortOrder; });
 
+    // -- Split by render mode, once, for every stage --------------------------
+    opaqueItems.clear();
+    transparentItems.clear();
+    for (const SRenderItem& item : renderItems)
+    {
+        if (item.isTransparent()) transparentItems.push_back(item);
+        else                      opaqueItems.push_back(item);
+    }
+
     for (auto* stage : renderStages)
         stage->preRender(this);
     STOP_PROFILING_SAMPLE("RenderPipeline.PreRender")
@@ -174,6 +206,9 @@ void MRenderPipeline::render()
 
     for (auto* stage : renderStages)
         stage->render(this);
+
+    // Hand sRGB textures back to the UI with decoding off.
+    MTextureAsset::endRenderingDecode();
     STOP_PROFILING_SAMPLE("RenderPipeline.Render")
 }
 

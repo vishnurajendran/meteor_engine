@@ -36,8 +36,22 @@ void MMaterial::bindMaterial() const
     }
 
     shader->bind();
-    for (auto kv : properties)
-        shader->setPropertyValue(kv.first, kv.second);
+
+    // Each texture gets its own unit (0, 1, 2, ...). Binding them all to
+    // unit 0 made every sampler read the last texture bound.
+    unsigned int textureUnit = 0;
+    for (const auto& [key, value] : properties)
+    {
+        if (value.getType() == SShaderPropertyType::Texture)
+        {
+            // Empty slots bind white (see MShader::setTexture).
+            shader->setTexture(key, value.getTexAssetReference(), textureUnit++);
+        }
+        else
+        {
+            shader->setPropertyValue(key, value);
+        }
+    }
 }
 
 void MMaterial::setProperty(const SString& name, const SShaderPropertyValue& value)
@@ -58,5 +72,9 @@ MMaterial* MMaterial::clone() const
     auto* inst = mnew<MMaterial>(shader, shadingMode);
     inst->properties    = properties;
     inst->propertyOrder = propertyOrder;
+    inst->renderMode    = renderMode;
+    inst->blendMode     = blendMode;
+    inst->doubleSided   = doubleSided;
+    inst->writeDepth    = writeDepth;
     return inst;
 }

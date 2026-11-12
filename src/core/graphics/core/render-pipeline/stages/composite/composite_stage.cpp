@@ -7,6 +7,7 @@
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
+#include "core/graphics/core/render-pipeline/buffers/texture/texture_buffer.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
 #include "core/graphics/core/render-pipeline/buffers/render/renderbuffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
@@ -47,7 +48,14 @@ in  vec2 vUV;
 out vec4 FragColor;
 
 uniform sampler2D uTex;
-uniform int       uMode;       // 0 = color, 1 = depth, 2 = alpha-as-grey
+uniform int       uMode;       // 0 = color, 1 = depth, 2 = alpha-as-grey, 3 = view normals, 4 = raw data
+
+vec3 linearToSrgb(vec3 c)
+{
+    c = clamp(c, 0.0, 1.0);
+    return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92,
+               vec3(lessThanEqual(c, vec3(0.0031308))));
+}
 
 void main()
 {
@@ -64,10 +72,22 @@ void main()
         float a = texture(uTex, vUV).a;
         FragColor = vec4(vec3(a), 1.0);
     }
+    else if (uMode == 3)
+    {
+        // View-space normals: remap -1..1 to 0..1. Shown as-is (data, not
+        // colour). Pixels with no geometry (alpha 0) stay black.
+        vec4 n = texture(uTex, vUV);
+        FragColor = vec4(n.a > 0.0 ? n.rgb * 0.5 + 0.5 : vec3(0.0), 1.0);
+    }
+    else if (uMode == 4)
+    {
+        // Raw 0..1 data (e.g. BUFFER_SURFACE) - no colour encode.
+        FragColor = vec4(texture(uTex, vUV).rgb, 1.0);
+    }
     else
     {
-        // Passthrough color
-        FragColor = vec4(texture(uTex, vUV).rgb, 1.0);
+        // Buffers hold linear values - encode for display.
+        FragColor = vec4(linearToSrgb(texture(uTex, vUV).rgb), 1.0);
     }
 }
 )GLSL";
@@ -123,12 +143,14 @@ void MCompositeStage::render(IRenderPipeline* const pipeline)
     const bool hasOpaque = flags & ECF_Opaque;
     const bool hasLights = flags & ECF_Lights;
 
-    if (hasOpaque && hasLights)
-        compositeOpaqueWithLights(pipeline, sfmlFBO, w, h);
+    // Both paths go through the composite shader so the sRGB encode happens
+    // in exactly one place.
+    if (flags & ECF_Scene)
+        compositeOpaqueWithLights(pipeline, false, true, sfmlFBO, w, h);
     else if (hasOpaque)
-        compositeOpaqueOnly(pipeline, sfmlFBO, w, h);
+        compositeOpaqueWithLights(pipeline, hasLights, false, sfmlFBO, w, h);
 
-    if (flags & ECF_Depth)
+    if (flags & ECF_Prepass)
         compositeDepth(pipeline, sfmlFBO, w, h);
 }
 
@@ -143,14 +165,25 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     auto* lights = pipeline->getBufferRegistry()
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
-    auto* depth  = pipeline->getBufferRegistry()
-                            .getBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH);
+    auto* depth   = pipeline->getBufferRegistry()
+                             .getBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH);
+    auto* normal  = pipeline->getBufferRegistry()
+                             .getBuffer<STextureBuffer>(MBufferNames::BUFFER_NORMAL);
+    auto* surface = pipeline->getBufferRegistry()
+                             .getBuffer<STextureBuffer>(MBufferNames::BUFFER_SURFACE);
 
     GLuint texHandle = 0;
-    int    mode      = 0;   // 0=color, 1=depth, 2=alpha
+    int    mode      = 0;   // 0=color, 1=depth, 2=alpha, 3=normals, 4=raw data
 
     switch (debugView)
     {
+        case EBufferDebugView::Scene:
+            if (auto* scene = pipeline->getBufferRegistry()
+                                       .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_SCENE))
+                texHandle = scene->getColorTextureHandle();
+            mode = 0;
+            break;
+
         case EBufferDebugView::Opaque:
             if (opaque) texHandle = opaque->getColorTextureHandle();
             mode = 0;
@@ -162,10 +195,25 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
             break;
 
         case EBufferDebugView::Depth:
-            // SFrameBuffer uses a depth renderbuffer (not sampleable).
-            // SDepthBuffer from the depth prepass has a depth texture.
             if (depth) texHandle = depth->getDepthTextureHandle();
             mode = 1;
+            break;
+
+        case EBufferDebugView::Normals:
+            if (normal) texHandle = normal->getTextureHandle();
+            mode = 3;
+            break;
+
+        case EBufferDebugView::Emission:
+            if (auto* emission = pipeline->getBufferRegistry()
+                                          .getBuffer<STextureBuffer>(MBufferNames::BUFFER_EMISSION))
+                texHandle = emission->getTextureHandle();
+            mode = 0;
+            break;
+
+        case EBufferDebugView::Surface:
+            if (surface) texHandle = surface->getTextureHandle();
+            mode = 4;
             break;
 
         case EBufferDebugView::LightMask:
@@ -203,7 +251,7 @@ void MCompositeStage::renderDebugView(IRenderPipeline* const pipeline,
 
 // ── Normal composite helpers ──────────────────────────────────────────────────
 
-void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
+void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights, bool fromScene,
                                                 int sfmlFBO, int w, int h) const
 {
     auto compositeHandle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
@@ -212,11 +260,15 @@ void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
 
     if (!compositeShader || quadVAO == 0) return;
 
+    // With a resolve stage BUFFER_SCENE is already lit (and has the
+    // transparents) - the shader then only encodes it (_useLights = 0).
     auto* opaque = pipeline->getBufferRegistry()
-                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
+                            .getBuffer<SFrameBuffer>(fromScene ? MBufferNames::BUFFER_SCENE
+                                                               : MBufferNames::BUFFER_OPAQUE);
     auto* lights = pipeline->getBufferRegistry()
                             .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
     if (!opaque || opaque->getFBOHandle() == 0) return;
+    if (fromScene) useLights = false;
 
     glBindFramebuffer(GL_FRAMEBUFFER, sfmlFBO);
     glViewport(0, 0, w, h);
@@ -235,16 +287,18 @@ void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, opaque->getColorTextureHandle());
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, lights && lights->getFBOHandle() != 0
-                                  ? lights->getColorTextureHandle()
-                                  : opaque->getColorTextureHandle());
+    const bool lightsValid = useLights && lights && lights->getFBOHandle() != 0;
+    glBindTexture(GL_TEXTURE_2D, lightsValid ? lights->getColorTextureHandle()
+                                             : opaque->getColorTextureHandle());
 
     GLint prog = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
     GLint albLoc = glGetUniformLocation(prog, "_albedoTex");
     GLint litLoc = glGetUniformLocation(prog, "_lightsTex");
+    GLint useLoc = glGetUniformLocation(prog, "_useLights");
     if (albLoc >= 0) glUniform1i(albLoc, 0);
     if (litLoc >= 0) glUniform1i(litLoc, 1);
+    if (useLoc >= 0) glUniform1i(useLoc, lightsValid ? 1 : 0);
 
     glBindVertexArray(quadVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

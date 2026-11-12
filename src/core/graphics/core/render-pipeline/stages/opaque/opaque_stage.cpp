@@ -13,6 +13,8 @@
 #include "core/graphics/core/render-pipeline/buffers/buffer_names.h"
 #include "core/graphics/core/render-pipeline/buffer_registry.h"
 #include "core/graphics/core/render-pipeline/buffers/frame/frame_buffer.h"
+#include "core/graphics/core/render-pipeline/buffers/depth/depthbuffer.h"
+#include "core/graphics/core/render-pipeline/buffers/texture/texture_buffer.h"
 #include "core/graphics/core/render-pipeline/interfaces/render_pipeline_interface.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_system_manager.h"
@@ -27,6 +29,29 @@ void MOpaqueStage::init(IRenderPipeline* const pipeline)
                             .createBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     if (!opaqueBuffer)
         MERROR("MOpaqueStage::init failed to create opaque buffer");
+    else
+    {
+        // Linear scene colour. 8 bits per channel bands badly in the darks
+        // once values are linear, and the sky can exceed 1.0.
+        opaqueBuffer->setColorFormat(0x881A); // GL_RGBA16F
+
+        // Reuse the prepass depth when the pipeline has one (MPrepassStage is
+        // added before us). Pipelines without it, like the thumbnail renderer,
+        // keep a private depth buffer.
+        if (auto* prepassDepth = pipeline->getBufferRegistry()
+                                          .getBuffer<SDepthBuffer>(MBufferNames::BUFFER_DEPTH))
+            opaqueBuffer->shareDepthFrom(prepassDepth);
+
+        // Emission goes to its own buffer (shader output 1, meteorSetEmission)
+        // so MResolveStage can add it after lighting - emissive surfaces
+        // stay bright in the dark and keep their HDR values for bloom.
+        if (auto* emission = pipeline->getBufferRegistry()
+                                      .createBuffer<STextureBuffer>(MBufferNames::BUFFER_EMISSION))
+        {
+            emission->setFormat(0x881A); // GL_RGBA16F
+            opaqueBuffer->setExtraColorAttachment(emission);
+        }
+    }
 }
 
 void MOpaqueStage::cleanup(IRenderPipeline* const pipeline)
@@ -49,14 +74,20 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
 
     opaqueBuffer->bindAsActive();
+    opaqueBuffer->setDrawExtraColor(true);   // output 0 albedo, output 1 emission
 
     const SVector2 res = pipeline->getRenderResolution();
     glViewport(0, 0, static_cast<int>(res.x), static_cast<int>(res.y));
+    // GL_LEQUAL: with shared prepass depth, every visible surface is already
+    // in the depth buffer at exactly the depth we will compute, so only the
+    // front-most fragment of each pixel passes and gets shaded.
+    // Without a prepass this behaves like GL_LESS.
+    const GLenum depthFunc = GL_LEQUAL;
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(depthFunc);
     glDepthMask(GL_TRUE);
     glEnable(GL_CULL_FACE);
-    // No glClear -- MClearStage handles clearing before skybox and geometry.
+    // No glClear -- MClearStage (colour) and MPrepassStage (depth) handle clearing.
 
     // Camera -- use pipeline override if set, otherwise MViewManagement.
     glm::mat4 viewMat(1.f), projMat(1.f);
@@ -73,8 +104,6 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
         projMat = camera ? camera->getProjectionMatrix(res) : glm::mat4(1.f);
     }
 
-    const bool lightOverrideActive = pipeline->getLightOverride().active;
-
     auto setMVP = [&](const glm::mat4& model)
     {
         GLint prog = 0;
@@ -90,7 +119,7 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
         if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projMat));
     };
 
-    for (const SRenderItem& item : pipeline->getRenderItems())
+    for (const SRenderItem& item : pipeline->getOpaqueItems())
     {
         if (item.vao == 0 || !item.material) continue;
         if (!item.cameraVisible) continue; // outside the camera frustum
@@ -99,19 +128,15 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
         setMVP(item.transform);
 
         glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
+        glDepthFunc(depthFunc);
         glDepthMask(GL_TRUE);
 
-        // When light override is active, skip dynamic lights -- the override
-        // provides ambient + directional only, no point/spot lights.
-        if (!lightOverrideActive)
-        {
-            AABB queryBounds  = item.bounds;
-            queryBounds.min  -= SVector3(5.0f);
-            queryBounds.max  += SVector3(5.0f);
-            if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
-                renderer->getLightSystem().prepareDynamicLights(queryBounds);
-        }
+        // Must match the prepass, which drew the same faces into the depth.
+        if (item.isDoubleSided()) glDisable(GL_CULL_FACE);
+        else                      glEnable(GL_CULL_FACE);
+
+        // No per-item light query: materials only output albedo, and the
+        // lighting stage lights the whole view in one fullscreen pass.
 
         glBindVertexArray(item.vao);
         if (item.ebo != 0)
@@ -127,6 +152,9 @@ void MOpaqueStage::render(IRenderPipeline* const pipeline)
 
     glBindVertexArray(0);
     glUseProgram(0);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    opaqueBuffer->setDrawExtraColor(false);
     opaqueBuffer->unbind();
 
     pipeline->addCompositeFlag(ECF_Opaque);

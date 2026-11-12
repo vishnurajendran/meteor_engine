@@ -1,0 +1,54 @@
+<shader name="pp_dof_prefilter" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;      // full-res HDR scene
+    uniform sampler2D _coc;         // full-res CoC
+    uniform vec2      _texelSize;   // 1 / full-res size
+
+    float maxComponent(vec3 c) { return max(c.r, max(c.g, c.b)); }
+
+    // Half-res output: rgb = colour, a = CoC.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv = v2fTexCoords;
+        vec2 o0 = vec2(-0.5, -0.5) * _texelSize;
+        vec2 o1 = vec2( 0.5, -0.5) * _texelSize;
+        vec2 o2 = vec2(-0.5,  0.5) * _texelSize;
+        vec2 o3 = vec2( 0.5,  0.5) * _texelSize;
+
+        // Weight against bright single pixels so they don't become big
+        // flickering discs.
+        vec3 s0 = texture(_source, uv + o0).rgb;
+        vec3 s1 = texture(_source, uv + o1).rgb;
+        vec3 s2 = texture(_source, uv + o2).rgb;
+        vec3 s3 = texture(_source, uv + o3).rgb;
+        float w0 = 1.0 / (1.0 + maxComponent(s0));
+        float w1 = 1.0 / (1.0 + maxComponent(s1));
+        float w2 = 1.0 / (1.0 + maxComponent(s2));
+        float w3 = 1.0 / (1.0 + maxComponent(s3));
+        vec3 color = (s0 * w0 + s1 * w1 + s2 * w2 + s3 * w3) / max(w0 + w1 + w2 + w3, 1e-5);
+
+        // Keep the CoC of largest magnitude, so edges between sharp and
+        // blurry regions favour the blurrier side.
+        float c0 = texture(_coc, uv + o0).r;
+        float c1 = texture(_coc, uv + o1).r;
+        float c2 = texture(_coc, uv + o2).r;
+        float c3 = texture(_coc, uv + o3).r;
+        float cocMin = min(min(c0, c1), min(c2, c3));
+        float cocMax = max(max(c0, c1), max(c2, c3));
+        float coc    = (cocMax >= -cocMin) ? cocMax : cocMin;
+
+        return vec4(color, coc);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

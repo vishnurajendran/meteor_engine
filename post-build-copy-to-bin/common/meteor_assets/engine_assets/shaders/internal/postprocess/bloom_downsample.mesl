@@ -1,0 +1,95 @@
+<shader name="pp_bloom_downsample" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;      // scene (first pass) or the previous, larger mip
+    uniform vec2      _texelSize;   // 1 / source size
+    uniform int       _prefilter;   // 1 on the first pass: threshold + Karis average
+    uniform float     _threshold;   // linear brightness where bloom starts
+    uniform float     _knee;        // 0..1 soft knee
+
+    float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+
+    // Soft threshold: full contribution above the threshold, a smooth
+    // quadratic ramp in the knee below it, nothing further down.
+    vec3 thresholdColor(vec3 c)
+    {
+        float brightness = max(c.r, max(c.g, c.b));
+        float knee       = _threshold * _knee + 1e-5;
+        float soft       = clamp(brightness - _threshold + knee, 0.0, 2.0 * knee);
+        soft             = soft * soft / (4.0 * knee);
+        float weight     = max(soft, brightness - _threshold) / max(brightness, 1e-5);
+        return c * weight;
+    }
+
+    // Karis average: weight a group by 1 / (1 + luma) so a single extremely
+    // bright pixel can't dominate (stops bloom flickering on tiny highlights).
+    vec3 karis(vec3 a, vec3 b, vec3 c, vec3 d)
+    {
+        vec4 sum = vec4(0.0);
+        float wa = 1.0 / (1.0 + luma(a)); sum += vec4(a * wa, wa);
+        float wb = 1.0 / (1.0 + luma(b)); sum += vec4(b * wb, wb);
+        float wc = 1.0 / (1.0 + luma(c)); sum += vec4(c * wc, wc);
+        float wd = 1.0 / (1.0 + luma(d)); sum += vec4(d * wd, wd);
+        return sum.rgb / max(sum.a, 1e-5);
+    }
+
+    vec3 tap(vec2 uv, vec2 offset)
+    {
+        // Clamp so a stray NaN/Inf in the scene can't spread across the bloom.
+        return min(texture(_source, uv + offset * _texelSize).rgb, vec3(65000.0));
+    }
+
+    // 13-tap downsample (Jimenez, "Next Generation Post Processing in Call
+    // of Duty: Advanced Warfare"): five overlapping 2x2 boxes using bilinear
+    // taps, which avoids the blocky shimmer of a plain 2x2 box.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec2 uv = v2fTexCoords;
+
+        vec3 a = tap(uv, vec2(-2.0,  2.0));
+        vec3 b = tap(uv, vec2( 0.0,  2.0));
+        vec3 c = tap(uv, vec2( 2.0,  2.0));
+        vec3 d = tap(uv, vec2(-2.0,  0.0));
+        vec3 e = tap(uv, vec2( 0.0,  0.0));
+        vec3 f = tap(uv, vec2( 2.0,  0.0));
+        vec3 g = tap(uv, vec2(-2.0, -2.0));
+        vec3 h = tap(uv, vec2( 0.0, -2.0));
+        vec3 i = tap(uv, vec2( 2.0, -2.0));
+        vec3 j = tap(uv, vec2(-1.0,  1.0));
+        vec3 k = tap(uv, vec2( 1.0,  1.0));
+        vec3 l = tap(uv, vec2(-1.0, -1.0));
+        vec3 m = tap(uv, vec2( 1.0, -1.0));
+
+        vec3 color;
+        if (_prefilter == 1)
+        {
+            // Same five boxes, each Karis-averaged, then thresholded.
+            color  = karis(j, k, l, m)       * 0.5;
+            color += karis(a, b, d, e)       * 0.125;
+            color += karis(b, c, e, f)       * 0.125;
+            color += karis(d, e, g, h)       * 0.125;
+            color += karis(e, f, h, i)       * 0.125;
+            color  = thresholdColor(color);
+        }
+        else
+        {
+            color  = e * 0.125;
+            color += (a + c + g + i) * 0.03125;
+            color += (b + d + f + h) * 0.0625;
+            color += (j + k + l + m) * 0.125;
+        }
+
+        return vec4(max(color, vec3(0.0)), 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

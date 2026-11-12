@@ -19,7 +19,12 @@ bool MStaticMeshAssetImporter::canImport(SString fileExtension) {
 }
 
 MAsset * MStaticMeshAssetImporter::importAsset(SString path, const pugi::xml_document& metaData) {
-    auto asset = mnew<MStaticMeshAsset>(path);
+    // Import settings live in the meta file:
+    //   <asset_id id="..."><meshImport><scaleFactor>0.01</scaleFactor></meshImport></asset_id>
+    auto settingsNode = metaData.child("asset_id").child("meshImport");
+    auto asset = settingsNode
+        ? mnew<MStaticMeshAsset>(path, settingsNode)
+        : mnew<MStaticMeshAsset>(path);
     if(!asset->isValid()) {
         MERROR(STR("MStaticMeshAssetImporter::importAsset(): invalid asset"));
         delete asset;

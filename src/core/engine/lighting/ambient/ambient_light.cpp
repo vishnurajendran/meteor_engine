@@ -2,6 +2,7 @@
 // ambient_light.cpp
 //
 #include "ambient_light.h"
+#include "core/graphics/core/color_space.h"
 
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "GL/glew.h"
@@ -52,7 +53,7 @@ float MAmbientLightEntity::getIntensity() const          { return intensity.get(
 void MAmbientLightEntity::prepareLightRender()
 {
     // Sync field values → GPU struct before upload
-    ambientLightData.color     = color.get();
+    ambientLightData.color     = MColorSpace::srgbToLinear(color.get());
     ambientLightData.intensity = intensity.get();
     ambientLightData.enabled   = getEnabled() && isEnabledInHierarchy();
 

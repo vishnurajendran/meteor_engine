@@ -59,6 +59,7 @@ void main(){
 
     //set the final output color from the
     //output of shader.
+    FragData1  = vec4(0.0);   // no emission unless the shader sets it
     vec4 color = meteorFragmentPass(getVertexPosition(), getVertexNormal(), getTexCoords());
     setFinalOutColor(color);
 }

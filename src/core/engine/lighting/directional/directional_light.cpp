@@ -2,6 +2,7 @@
 // directional_light.cpp
 //
 #include "directional_light.h"
+#include "core/graphics/core/color_space.h"
 #include <GL/glew.h>
 
 #include "../../../graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
@@ -47,7 +48,7 @@ float MDirectionalLight::getIntensity() const          { return intensity.get();
 
 void MDirectionalLight::prepareLightRender()
 {
-    lightData.lightColor     = color.get();
+    lightData.lightColor     = MColorSpace::srgbToLinear(color.get());
     lightData.lightIntensity = intensity.get();
     lightData.lightDirection = getForwardVector();
     lightData.enabled        = getEnabled() && isEnabledInHierarchy();

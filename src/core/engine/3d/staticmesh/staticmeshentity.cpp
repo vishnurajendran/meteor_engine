@@ -185,7 +185,8 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
         item.material    = mat;
         item.bounds      = bounds;
         item.castsShadow = castsShadow.get();
-        item.sortOrder   = static_cast<int>(ERenderStageOrder::RS_Opaque);
+        item.sortOrder   = static_cast<int>(mat->isTransparent() ? ERenderStageOrder::RS_Transparent
+                                                                 : ERenderStageOrder::RS_Opaque);
         collector->submitRenderItem(item);
     }
 }

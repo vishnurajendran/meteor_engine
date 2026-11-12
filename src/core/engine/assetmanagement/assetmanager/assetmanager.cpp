@@ -178,7 +178,8 @@ void MAssetManager::cleanup() {
 
 bool MAssetManager::loadAsset(SString path) {
     path = MAssetPath::normalize(path);
-    const SString extension = FileIO::getFileExtension(path);
+    // Lower-cased so "Model.FBX" / "mesh.OBJ" match importers' lowercase lists.
+    const SString extension = FileIO::getFileExtension(path).toLower();
     if (!hasMetaData(path))
         createMetaFile(path);
 

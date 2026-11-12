@@ -224,7 +224,7 @@ bool MTextureAsset::loadWithSettings()
     if (!needsProcessing)
     {
         // Fast path - SFML decodes and uploads directly, then apply GL params
-        if (!texture.loadFromMemory(bytes.data(), bytes.size()))
+        if (!texture.getCoreTexture()->loadFromMemory(bytes.data(), bytes.size(), usesSrgbStorage()))
         {
             MERROR("MTextureAsset: failed to decode image " + path);
             return false;
@@ -255,8 +255,8 @@ bool MTextureAsset::loadWithSettings()
         }
     }
 
-    // Upload to sf::Texture (GPU as RGBA8)
-    if (!texture.getCoreTexture()->loadFromImage(img))
+    // Upload to sf::Texture (GPU as RGBA8, or SRGB8_ALPHA8 for colour textures)
+    if (!texture.getCoreTexture()->loadFromImage(img, usesSrgbStorage()))
     {
         MERROR("MTextureAsset: failed to create texture from image " + path);
         return false;
@@ -274,11 +274,14 @@ bool MTextureAsset::loadWithSettings()
     if (compression != ETextureCompression::None)
     {
         auto sz = img.getSize();
-        GLenum internalFmt = GL_RGBA8;
+        const bool s = usesSrgbStorage();
+        GLenum internalFmt = s ? GL_SRGB8_ALPHA8 : GL_RGBA8;
         if (compression == ETextureCompression::DXT1)
-            internalFmt = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+            internalFmt = s ? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
+                            : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         else if (compression == ETextureCompression::DXT5)
-            internalFmt = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            internalFmt = s ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT
+                            : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 
         glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
         glTexImage2D(GL_TEXTURE_2D, 0, internalFmt,
@@ -308,7 +311,50 @@ void MTextureAsset::applyGLParams()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     toGLWrap(wrapS));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     toGLWrap(wrapT));
 
+    // Raw sRGB values by default; see bindForRendering().
+    if (usesSrgbStorage())
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT);
+
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// -- Colour-space aware binding -------------------------------------------------
+
+namespace
+{
+    // Textures switched to decode-on-sample during the current pipeline run.
+    std::vector<unsigned int> g_decodingTextures;
+}
+
+bool MTextureAsset::usesSrgbStorage() const
+{
+    // Without EXT_texture_sRGB_decode we could not keep the UI showing raw
+    // values, so fall back to plain RGBA8 (no decode, the old behaviour).
+    return srgb && GLEW_EXT_texture_sRGB_decode;
+}
+
+void MTextureAsset::bindForRendering(unsigned int textureUnit)
+{
+    const unsigned int texId = texture.getTextureID();
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
+    glBindTexture(GL_TEXTURE_2D, texId);
+
+    if (texId != 0 && usesSrgbStorage())
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
+        g_decodingTextures.push_back(texId);
+    }
+}
+
+void MTextureAsset::endRenderingDecode()
+{
+    if (g_decodingTextures.empty()) return;
+
+    // DSA so no texture binding is disturbed. A texture deleted mid-frame
+    // just raises a harmless GL_INVALID_OPERATION here.
+    for (unsigned int texId : g_decodingTextures)
+        glTextureParameteri(texId, GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT);
+    g_decodingTextures.clear();
 }
 
 // -- Import settings persistence -----------------------------------------------
@@ -323,6 +369,7 @@ void MTextureAsset::loadImportSettings(const pugi::xml_node& node)
     if (auto n = node.child("wrapT"))       wrapT       = stringToWrap(n.text().as_string());
     if (auto n = node.child("maxSize"))     maxImportSize = n.text().as_int(0);
     if (auto n = node.child("compression")) compression = stringToCompression(n.text().as_string());
+    if (auto n = node.child("srgb"))        srgb        = n.text().as_bool(true);
 }
 
 bool MTextureAsset::saveImportSettings()
@@ -355,6 +402,7 @@ bool MTextureAsset::saveImportSettings()
     settings.append_child("wrapT").text().set(wrapToString(wrapT));
     settings.append_child("maxSize").text().set(maxImportSize);
     settings.append_child("compression").text().set(compressionToString(compression));
+    settings.append_child("srgb").text().set(srgb);
 
     return target->writeMeta(path, doc);
 }

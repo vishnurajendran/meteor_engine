@@ -18,6 +18,9 @@
 #include "core/graphics/core/render-pipeline/stages/lighting/lighting_stage.h"
 #include "core/graphics/core/render-pipeline/stages/lighting/light_shader_constants.h"
 #include "core/graphics/core/render-pipeline/stages/opaque/opaque_stage.h"
+#include "core/graphics/core/render-pipeline/stages/prepass/prepass_stage.h"
+#include "core/graphics/core/render-pipeline/stages/resolve/resolve_stage.h"
+#include "core/graphics/core/render-pipeline/stages/transparent/transparent_stage.h"
 #include "core/utils/logger.h"
 
 // -- Built-in Lambert shader (mesh thumbnails only) ----------------------------
@@ -49,15 +52,28 @@ in  vec3 vNormal;
 in  vec3 vFragPos;
 out vec4 FragColor;
 
-uniform vec3      baseColor;
-uniform sampler2D albedoTex;
+uniform vec3      baseColor;   // sRGB
+uniform sampler2D albedoTex;   // sRGB texture, decoded to linear on sample
 uniform int       useAlbedoTex;
+
+vec3 srgbToLinear(vec3 c)
+{
+    return mix(pow((c + 0.055) / 1.055, vec3(2.4)), c / 12.92,
+               vec3(lessThanEqual(c, vec3(0.04045))));
+}
+
+vec3 linearToSrgb(vec3 c)
+{
+    c = clamp(c, 0.0, 1.0);
+    return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92,
+               vec3(lessThanEqual(c, vec3(0.0031308))));
+}
 
 void main()
 {
     vec3 N = normalize(vNormal);
 
-    vec3 color = baseColor;
+    vec3 color = srgbToLinear(baseColor);
     if (useAlbedoTex == 1)
     {
         vec2 uv = vec2(
@@ -77,7 +93,7 @@ void main()
     float rd  = pow(max(dot(N, rim), 0.0), 4.0) * 0.3;
 
     vec3 col  = color * (0.18 + kd + fd) + vec3(0.3) * rd;
-    FragColor = vec4(col, 1.0);
+    FragColor = vec4(linearToSrgb(col), 1.0);
 }
 )GLSL";
 
@@ -104,6 +120,14 @@ out vec4 FragColor;
 
 uniform sampler2D albedoTex;
 uniform sampler2D lightsTex;
+uniform int       useScene;   // 1 = albedoTex is BUFFER_SCENE (already lit)
+
+vec3 linearToSrgb(vec3 c)
+{
+    c = clamp(c, 0.0, 1.0);
+    return mix(1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, c * 12.92,
+               vec3(lessThanEqual(c, vec3(0.0031308))));
+}
 
 void main()
 {
@@ -112,8 +136,9 @@ void main()
 
     // alpha > 0 means the pixel was rendered by the lighting stage (lit).
     // alpha == 0 means unlit -- pass through the opaque value as-is.
-    vec3 result = mix(opaque.rgb, opaque.rgb * lights.rgb, lights.a);
-    FragColor   = vec4(result, 1.0);
+    vec3 result = useScene == 1 ? opaque.rgb
+                                : mix(opaque.rgb, opaque.rgb * lights.rgb, lights.a);
+    FragColor   = vec4(linearToSrgb(result), 1.0);
 }
 )GLSL";
 
@@ -152,11 +177,15 @@ void MThumbnailRenderer::initThumbnailPipeline()
     thumbnailPipeline.initManual();
     thumbnailPipeline.setManualItemMode(true);
 
-    // Opaque stage renders albedo into BUFFER_OPAQUE.
-    // Lighting stage renders light contribution into BUFFER_LIGHTS.
-    // We skip depth/shadow/skybox/composite -- composite is done manually.
+    // Prepass writes depth/normal/surface (must be added before opaque so
+    // opaque shares its depth). Opaque renders albedo into BUFFER_OPAQUE.
+    // Lighting is a fullscreen pass over the prepass buffers -> BUFFER_LIGHTS.
+    // We skip shadow/skybox/composite -- composite is done manually.
+    thumbnailPipeline.addStage<MPrepassStage>();
     thumbnailPipeline.addStage<MOpaqueStage>();
     thumbnailPipeline.addStage<MLightingStage>();
+    thumbnailPipeline.addStage<MResolveStage>();      // albedo x light -> BUFFER_SCENE
+    thumbnailPipeline.addStage<MTransparentStage>();  // transparent material previews
 
     headlessRenderBuffer = new SHeadlessRenderBuffer(THUMBNAIL_SIZE, THUMBNAIL_SIZE);
     thumbnailPipeline.setRenderBuffer(headlessRenderBuffer);
@@ -360,6 +389,13 @@ sf::Texture* MThumbnailRenderer::renderMaterialThumbnail(MMaterialAsset* asset)
     glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
     glClearColor(0.12f, 0.12f, 0.12f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // BUFFER_EMISSION (attachment 1) must start black, not the grey above.
+    opaqueBuffer->setDrawExtraColor(true);
+    {
+        const GLfloat noEmission[4] = { 0.f, 0.f, 0.f, 0.f };
+        glClearBufferfv(GL_COLOR, 1, noEmission);
+    }
+    opaqueBuffer->setDrawExtraColor(false);
     opaqueBuffer->unbind();
 
     // -- Save current UBO bindings so the scene lights are restored after ----
@@ -412,8 +448,14 @@ void MThumbnailRenderer::compositeThumbnail()
                                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_OPAQUE);
     auto* lightsBuffer = thumbnailPipeline.getBufferRegistry()
                                            .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_LIGHTS);
+    auto* sceneBuffer  = thumbnailPipeline.getBufferRegistry()
+                                           .getBuffer<SFrameBuffer>(MBufferNames::BUFFER_SCENE);
 
     if (!opaqueBuffer || opaqueBuffer->getFBOHandle() == 0) return;
+
+    // BUFFER_SCENE is the lit image with transparents on top - prefer it.
+    const bool useScene = sceneBuffer && sceneBuffer->getFBOHandle() != 0 &&
+                          (thumbnailPipeline.getCompositeFlags() & ECF_Scene);
 
     // Render into the thumbnail's own FBO (not BUFFER_OPAQUE).
     fbo.bindAsActive();
@@ -426,7 +468,8 @@ void MThumbnailRenderer::compositeThumbnail()
     glUseProgram(compositeShader);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, opaqueBuffer->getColorTextureHandle());
+    glBindTexture(GL_TEXTURE_2D, useScene ? sceneBuffer->getColorTextureHandle()
+                                          : opaqueBuffer->getColorTextureHandle());
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D,
                   (lightsBuffer && lightsBuffer->getFBOHandle() != 0)
@@ -435,6 +478,8 @@ void MThumbnailRenderer::compositeThumbnail()
 
     if (ucAlbedoTex >= 0) glUniform1i(ucAlbedoTex, 0);
     if (ucLightsTex >= 0) glUniform1i(ucLightsTex, 1);
+    if (const GLint useLoc = glGetUniformLocation(compositeShader, "useScene"); useLoc >= 0)
+        glUniform1i(useLoc, useScene ? 1 : 0);
 
     glBindVertexArray(compositeQuadVAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);

@@ -51,6 +51,17 @@ void MSpotLightInspectorDrawer::drawSLGui(MSpatialEntity* target) {
                 light->setSmoothShadow(smoothShadow);
         END_FIELD_DRAW()
 
+        ImGui::BeginDisabled(!castsShadow);
+        START_FIELD_DRAW("Shadow Priority",
+                         "Shadow maps are limited. When more lights want one, higher priority\n"
+                         "always wins; equal priorities go to the light nearest the camera.\n"
+                         "Lights whose range is off-screen never take one.")
+            int priority = light->getShadowPriority();
+            if (MInspectorField::DragInt("##v", &priority, 0.1f, -100, 100))
+                light->setShadowPriority(priority);
+        END_FIELD_DRAW()
+        ImGui::EndDisabled();
+
         if (drawLightIntensityAndColor(intensity, color))
             changed = true;
 

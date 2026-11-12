@@ -32,6 +32,13 @@ struct SRenderItem
     int          vertexCount  = 0;
     int          indexCount   = 0;
 
+    // Instancing. 0 = a normal draw. > 0 = draw the geometry this many
+    // times in one call (glDraw*Instanced); the VAO must carry the
+    // per-instance attributes (divisor 1) and the shader must read them.
+    // Only MTransparentStage draws instanced items — submit them with a
+    // Transparent material (the other passes would draw one copy).
+    int          instanceCount = 0;
+
     // Transform - world-space model matrix.
     // Stages set this as the "u_model" uniform after binding their shader.
     glm::mat4 transform    = glm::mat4(1.f);
@@ -59,8 +66,17 @@ struct SRenderItem
     // Sorting hint - stages may sort items before drawing.
     int       sortOrder    = 0;
 
+    // Transparent items are drawn only by MTransparentStage; every other
+    // camera and shadow pass uses the opaque list.
+    [[nodiscard]] bool isTransparent() const { return material != nullptr && material->isTransparent(); }
+
+    // Back faces drawn too. Every pass that draws this item (prepass, opaque,
+    // directional shadow, transparent) must agree, or back faces would be in
+    // the depth buffer but not shaded.
+    [[nodiscard]] bool isDoubleSided() const { return material != nullptr && material->isDoubleSided(); }
+
     [[nodiscard]] MMaterial::ShadingMode getShadingMode() const { return material == nullptr ?
                                                 MMaterial::ShadingMode::Unlit : material->getShadingMode(); }
 };
 
-#endif // RENDER_ITEM_H
+#endif // RENDER_ITEM_H

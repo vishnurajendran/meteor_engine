@@ -9,13 +9,16 @@
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
+#include "core/engine/particles/particle_emitter.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
 #include "core/engine/physics/entities/capsule_collision_body_entity.h"
 #include "core/engine/physics/entities/convexhull_collision_body_entity.h"
 #include "core/engine/physics/entities/cylinder_collision_body_entity.h"
 #include "core/engine/physics/entities/mesh_collision_body_entity.h"
 #include "core/engine/physics/entities/sphere_collision_body_entity.h"
+#include "core/engine/postprocess/post_process_stack_entity.h"
 #include "core/engine/skybox/procedural_sky/procedural_sky.h"
+#include "core/engine/sprite/sprite_entity.h"
 #include "editor/window/menubar/menubaritem.h"
 #include "menu_additem_macros.h"
 
@@ -100,11 +103,35 @@ REGISTER_SPATIAL_ENTITY_CREATE_MENU(
 )
 
 REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddPostProcessStackItem,
+    "Add/Rendering/Post Process Stack",
+    MMenubarItem::PRIORITY_REGULAR + 3,
+    MPostProcessStackEntity,
+    "Post Process Stack"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
     MAddProceduralSkyboxItem,
     "Add/Sky/Procedural Skybox",
     MMenubarItem::PRIORITY_REGULAR + 3,
     MProceduralSkyboxEntity,
     "Procedural Skybox"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddSpriteItem,
+    "Add/2D/Sprite",
+    MMenubarItem::PRIORITY_REGULAR + 3,
+    MSpriteEntity,
+    "Sprite"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddParticleEmitterItem,
+    "Add/Effects/Particle Emitter",
+    MMenubarItem::PRIORITY_REGULAR + 3,
+    MParticleEmitter,
+    "Particle Emitter"
 )
 
 REGISTER_SPATIAL_ENTITY_CREATE_MENU(
@@ -181,4 +208,4 @@ REGISTER_SPATIAL_ENTITY_CREATE_MENU(
 
 
 
-#endif //ADD_ENTITY_MENU_H
+#endif //ADD_ENTITY_MENU_H

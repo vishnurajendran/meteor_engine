@@ -87,13 +87,13 @@ void MProceduralSkyInspectorDrawer::onDrawInspector(MSpatialEntity* target)
         ImGui::EndDisabled();
     }
 
-    START_FIELD_DRAW("Sun Size")
+    START_FIELD_DRAW("Sun Size", "Size of the sun disc. 0.04 is about 1.15 degrees in radius.")
         float v = sky->getSunSize();
         if (MInspectorField::SliderFloat("##v", &v, 0.0f, 0.2f, "%.3f"))
             sky->setSunSize(v);
     END_FIELD_DRAW()
 
-    START_FIELD_DRAW("Sun Sharpness", "Higher = harder disc edge.")
+    START_FIELD_DRAW("Sun Sharpness", "How tightly the glow hugs the disc. Higher = smaller halo.\nThe disc edge itself is always crisp.")
         float v = sky->getSunSizeConvergence();
         if (MInspectorField::SliderFloat("##v", &v, 1.0f, 10.0f, "%.1f"))
             sky->setSunSizeConvergence(v);

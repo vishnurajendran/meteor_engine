@@ -1,0 +1,48 @@
+<shader name="pp_ssao_blur" version="440 core" base="meteor_assets/shader_base/standard_shader.glsl">
+    <properties>
+    </properties>
+
+    #VERTEX_PASS
+    // Fullscreen quad, already in NDC; model/view/projection are identity.
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords) {}
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    uniform sampler2D _source;      // r = visibility, g = linear depth
+    uniform ivec2     _direction;   // (1,0) horizontal, (0,1) vertical
+
+    const int   RADIUS  = 4;
+    const float WEIGHTS[RADIUS + 1] = float[](0.2270270, 0.1945946, 0.1216216, 0.0540541, 0.0162162);
+
+    // Separable Gaussian that skips samples at a different depth, so
+    // occlusion doesn't bleed across object silhouettes.
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        ivec2 pixel  = ivec2(gl_FragCoord.xy);
+        ivec2 maxPix = textureSize(_source, 0) - 1;
+        vec2  center = texelFetch(_source, pixel, 0).rg;
+
+        float sum    = center.r * WEIGHTS[0];
+        float weight = WEIGHTS[0];
+
+        for (int i = 1; i <= RADIUS; ++i)
+        {
+            for (int sgn = -1; sgn <= 1; sgn += 2)
+            {
+                ivec2 p = clamp(pixel + _direction * (i * sgn), ivec2(0), maxPix);
+                vec2  s = texelFetch(_source, p, 0).rg;
+                // Relative depth difference: 0 same surface, large = other object.
+                float dz = abs(s.g - center.g) / max(center.g, 1e-3);
+                float w  = WEIGHTS[i] * max(0.0, 1.0 - dz * 20.0);
+                sum    += s.r * w;
+                weight += w;
+            }
+        }
+
+        return vec4(sum / weight, center.g, 0.0, 1.0);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

@@ -4,6 +4,9 @@
         <property key="_albedo"             type="tex2d"    default=""/>
         <property key="_color"              type="color"    default="(1,1,1,1)"/>
 
+        <property key="_useCutout"          type="bool"     default="False"/>
+        <property key="_cutoutThreshold"    type="float"    default="0.5"/>
+
         <property key="_normalMap"          type="tex2d"    default=""/>
         <property key="_useNormalMap"       type="bool"     default="False"/>
         
@@ -33,6 +36,11 @@
     uniform int       _useAlbedoTex;
     uniform vec4      _color;
 
+    // Alpha cutout - the prepass and shadow passes discard the same pixels
+    // (see cutout_inputs.h), so leaves don't occlude or shadow as quads.
+    uniform int       _useCutout;
+    uniform float     _cutoutThreshold;
+
     uniform sampler2D _normalMap;
     uniform int       _useNormalMap;
 
@@ -58,11 +66,12 @@
             albedo = texture(_albedo, v2fTexCoords) * _color;
         }
 
+        if (_useCutout == 1 && albedo.a < _cutoutThreshold)
+            discard;
+
         // -- Emission --
-        // Added to albedo so it is always visible regardless of lighting.
-        // Note: the composite multiplies albedo by the light mask, so
-        // emission written here will still be dimmed in dark areas. A
-        // dedicated emission buffer would solve this if needed later.
+        // Written to BUFFER_EMISSION and added after lighting, so it glows
+        // in the dark and keeps its HDR value (intensity > 1 drives bloom).
         if (_useEmission == 1)
         {
             vec3 emission = texture(_emissionTex, v2fTexCoords).rgb
@@ -74,7 +83,7 @@
                 emission *= mask;
             }
 
-            albedo.rgb += emission;
+            meteorSetEmission(emission);
         }
 
         // _normalMap, _metallic, _smoothness are declared here so the

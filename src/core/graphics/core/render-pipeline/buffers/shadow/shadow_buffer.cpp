@@ -59,3 +59,40 @@ void SShadowBuffer::destroyDynamicShadows()
         if (pointCubemapTextures[i]) { glDeleteTextures(1,    &pointCubemapTextures[i]); pointCubemapTextures[i] = 0; }
     }
 }
+void SShadowBuffer::initCascades(int res)
+{
+    glGenTextures(1, &cascadeArrayTexture);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, cascadeArrayTexture);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT24, res, res, MAX_CASCADES,
+                 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
+
+    // Hardware depth compare + linear filtering: each texture() call on a
+    // sampler2DArrayShadow returns a bilinear 2x2 PCF result, not 0 or 1.
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+    // Outside a cascade = fully lit.
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    const float border[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+    glGenFramebuffers(1, &cascadeFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, cascadeFBO);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cascadeArrayTexture, 0, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    for (auto& m : cascadeMatrices) m = glm::mat4(1.0f);
+}
+
+void SShadowBuffer::destroyCascades()
+{
+    if (cascadeFBO)          { glDeleteFramebuffers(1, &cascadeFBO);       cascadeFBO = 0; }
+    if (cascadeArrayTexture) { glDeleteTextures(1, &cascadeArrayTexture);  cascadeArrayTexture = 0; }
+    numCascades = 0;
+}

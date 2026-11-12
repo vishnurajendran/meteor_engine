@@ -166,6 +166,21 @@ void MSpatialEntityInspectorDrawer::onDrawInspector(MSpatialEntity* target) {
                 target->setEnabled(enabled);
         END_FIELD_DRAW()
 
+        START_FIELD_DRAW("Can Tick", "Call this entity's per-frame updates (onUpdate, onFixedUpdate, onLateUpdate)\n"
+                                      "and its script's onTick / onFixedTick / onLateTick.\n"
+                                      "Off: onStart still runs, but nothing per frame — engine behaviour that\n"
+                                      "lives in onUpdate (particle simulation, light moves) stops too.")
+            bool tick = target->getCanTick();
+            if (ImGui::Checkbox("##v", &tick))
+                target->setCanTick(tick);
+            if (!tick && !target->getScriptAssetId().empty())
+            {
+                ImGui::SameLine();
+                MInspectorField::statusText(EInspectorStatus::Warning, "Script won't tick",
+                                            "The attached script's onTick, onFixedTick and onLateTick are skipped.");
+            }
+        END_FIELD_DRAW()
+
         auto name = target->getName();
         if (drawTextField("Entity Name", name))
             target->setName(name);

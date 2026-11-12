@@ -8,10 +8,14 @@
 enum class EBufferDebugView
 {
     Final = 0,      // normal composite output
+    Scene,          // BUFFER_SCENE: lit HDR image incl. transparents (before encode)
     Opaque,         // BUFFER_OPAQUE color (unlit albedo)
     Lighting,       // BUFFER_LIGHTS color (light contribution)
-    Depth,          // BUFFER_OPAQUE depth (linearised grayscale)
+    Depth,          // BUFFER_DEPTH (contrast-boosted grayscale)
     LightMask,      // BUFFER_LIGHTS alpha (1 = lit, 0 = unlit)
+    Normals,        // BUFFER_NORMAL view-space normals (remapped to 0..1)
+    Surface,        // BUFFER_SURFACE: r metallic, g smoothness, b lit
+    Emission,       // BUFFER_EMISSION: material emission (added after lighting)
     COUNT
 };
 
@@ -30,10 +34,14 @@ public:
     static EBufferDebugView debugView;
 
 private:
-    void compositeOpaqueWithLights(IRenderPipeline* const pipeline,
+    // fromScene: encode BUFFER_SCENE (resolve ran). Otherwise combine
+    // BUFFER_OPAQUE x BUFFER_LIGHTS directly (pipelines without a resolve stage).
+    void compositeOpaqueWithLights(IRenderPipeline* const pipeline, bool useLights, bool fromScene,
                                    int sfmlFBO, int w, int h) const;
     void compositeOpaqueOnly      (IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;
+    // Copies the prepass depth into the render target so later stages
+    // (editor gizmos) depth-test against the scene.
     void compositeDepth           (IRenderPipeline* const pipeline,
                                    int sfmlFBO, int w, int h) const;
 
@@ -52,7 +60,7 @@ private:
     // Debug visualisation shader (built once in init).
     unsigned int debugShader   = 0;
     int          dbgLocTex     = -1;
-    int          dbgLocMode    = -1;   // 0=color, 1=depth, 2=alpha
+    int          dbgLocMode    = -1;   // 0=color, 1=depth, 2=alpha, 3=normals, 4=raw data
     int          dbgLocNearFar = -1;
 };
 

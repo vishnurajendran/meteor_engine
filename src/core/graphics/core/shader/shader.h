@@ -84,6 +84,13 @@ public:
     [[nodiscard]] const std::vector<SString>& getPropertyOrder() const { return propertyOrder; }
     void setPropertyOrder(const std::vector<SString>& order) { propertyOrder = order; }
 
+    // Binds a texture asset to `index` and points sampler `name` at it.
+    // Public so materials can give each texture its own unit.
+    // An empty reference (or a missing asset) binds a 1x1 white texture, so
+    // "texture × colour" falls back to the colour.
+    void setTexture(const SString &name,const SString& textureAssetPath, const unsigned int& index=0) const;
+    void setTextureWhite(const SString &name, const unsigned int& index=0) const;
+
 private:
     void setUniform1i(const SString &name, int value) const;
     void setUniform1f(const SString &name, float value) const;
@@ -91,7 +98,6 @@ private:
     void setUniform3f(const SString &name, const SVector3 &value) const;
     void setUniform4f(const SString &name, const SVector4 &value) const;
     void setUniformMat4(const SString &name, const SMatrix4 &value) const;
-    void setTexture(const SString &name,const SString& textureAssetPath, const unsigned int& index=0) const;
 };
 
 

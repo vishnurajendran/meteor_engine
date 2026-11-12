@@ -19,6 +19,13 @@ class MDirectionalLight : public MLightEntity
     // units. Larger values cover more of the scene but spread the same shadow
     // map over a bigger area, so shadows get softer / blockier.
     DECLARE_FIELD(shadowDistance, float,  100.0f)
+    // Shadow cascades: the view up to shadowDistance is split into this many
+    // depth ranges, each with its own shadow map. More cascades = sharper
+    // shadows near the camera, one extra shadow pass each.
+    DECLARE_FIELD(cascadeCount,   int,    4)
+    // How the ranges are spread: 0 = equal lengths, 1 = logarithmic (most
+    // resolution near the camera). 0.75 suits most scenes.
+    DECLARE_FIELD(cascadeSplit,   float,  0.75f)
 
 public:
     MDirectionalLight();
@@ -53,6 +60,22 @@ public:
         shadowDistance = glm::clamp(v, MIN_SHADOW_DISTANCE, MAX_SHADOW_DISTANCE);
     }
 
+    static constexpr int MAX_CASCADES = 4;   // must match SShadowBuffer::MAX_CASCADES
+
+    SCRIPT_BIND_FUNC()
+    int   getCascadeCount() const { return cascadeCount.get(); }
+    SCRIPT_BIND_FUNC()
+    void  setCascadeCount(int v) { cascadeCount = glm::clamp(v, 1, MAX_CASCADES); }
+
+    SCRIPT_BIND_FUNC()
+    float getCascadeSplit() const { return cascadeSplit.get(); }
+    SCRIPT_BIND_FUNC()
+    void  setCascadeSplit(float v) { cascadeSplit = glm::clamp(v, 0.0f, 1.0f); }
+
+    // Editor debug view: tints the scene by cascade. Not saved.
+    bool  getShowCascades() const { return showCascades; }
+    void  setShowCascades(bool v) { showCascades = v; }
+
     void prepareLightRender() override;
 
     void onExit() override;
@@ -60,6 +83,7 @@ public:
 
 private:
     SDirectionalLightData lightData;
+    bool showCascades = false;
     unsigned int bufferId = 0;
     static MDirectionalLight* lightInstance;
 };

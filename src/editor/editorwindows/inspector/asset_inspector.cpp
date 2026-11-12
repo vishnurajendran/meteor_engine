@@ -16,6 +16,7 @@
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/utils/logger.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
+#include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
 #include "editor/editorwindows/inspectordrawer/controls/material_properties_controls.h"
 #include "imgui-SFML.h"
 #include "imgui.h"
@@ -391,7 +392,6 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
                                      ->getAssetFromReference<MAsset>(asset->getShaderPath());
         const SString shaderLabel = shaderAsset ? shaderAsset->getPath() : asset->getShaderPath();
         row("Shader:", shaderLabel.c_str());
-        row("Mode:",   asset->getShadingMode() == MMaterial::ShadingMode::Lit ? "Lit" : "Unlit");
         row("Path:",   asset->getPath().c_str());
 
         ImGui::EndTable();
@@ -442,6 +442,50 @@ void MAssetInspector::drawMaterialAsset(MMaterialAsset* asset)
     const SString& id = asset->getAssetId();
     if (!propControlCache.contains(id))
         propControlCache[id] = mnew<MMaterialPropertyControl>();
+
+    // ---- Rendering settings ------------------------------------------------
+    // Edited on the live material (scene updates immediately); Save writes
+    // them to the .material file.
+    {
+        MMaterial* mat = asset->getMaterial();
+
+        START_FIELD_DRAW("Shading", "Lit materials receive scene lighting. Unlit materials show their colour as-is.")
+            int shading = mat->getShadingMode() == MMaterial::ShadingMode::Lit ? 0 : 1;
+            if (ImGui::Combo("##v", &shading, "Lit\0Unlit\0"))
+                mat->setShadingMode(shading == 0 ? MMaterial::ShadingMode::Lit : MMaterial::ShadingMode::Unlit);
+        END_FIELD_DRAW()
+
+        START_FIELD_DRAW("Render Mode", "Opaque: deferred path, casts shadows.\nTransparent: forward lit, sorted back to front, blended over the scene. Use a shader that outputs alpha, e.g. transparent.mesl.")
+            int mode = mat->isTransparent() ? 1 : 0;
+            if (ImGui::Combo("##v", &mode, "Opaque\0Transparent\0"))
+                mat->setRenderMode(mode == 1 ? MMaterial::RenderMode::Transparent : MMaterial::RenderMode::Opaque);
+        END_FIELD_DRAW()
+
+        if (mat->isTransparent())
+        {
+            START_FIELD_DRAW("Blend", "Alpha: covers what is behind by its alpha.\nAdditive: adds light on top (glows, fire, sparks).")
+                int blend = mat->getBlendMode() == MMaterial::BlendMode::Additive ? 1 : 0;
+                if (ImGui::Combo("##v", &blend, "Alpha\0Additive\0"))
+                    mat->setBlendMode(blend == 1 ? MMaterial::BlendMode::Additive : MMaterial::BlendMode::Alpha);
+            END_FIELD_DRAW()
+
+            START_FIELD_DRAW("Write Depth", "Also write this surface into the depth buffer, so post effects that run after transparents (depth of field, fog) treat it as solid.\nUse for thick glass or ice; leave off for smoke and thin glass.")
+                bool writesDepth = mat->getWritesDepth();
+                if (ImGui::Checkbox("##v", &writesDepth))
+                    mat->setWritesDepth(writesDepth);
+            END_FIELD_DRAW()
+        }
+
+        START_FIELD_DRAW("Double Sided", "Draw back faces too (leaves, cloth, planes seen from both sides). Back faces are lit with their normal flipped.")
+            bool doubleSided = mat->isDoubleSided();
+            if (ImGui::Checkbox("##v", &doubleSided))
+                mat->setDoubleSided(doubleSided);
+        END_FIELD_DRAW()
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+    }
 
     auto* ctrl = propControlCache[id];
 
@@ -680,6 +724,23 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
                 ImGui::SetNextItemWidth(-FLT_MIN);
                 if (ImGui::Combo("##compression", &cur, labels, IM_ARRAYSIZE(labels)))
                     asset->setCompression(static_cast<ETextureCompression>(cur));
+            }
+
+            // sRGB -- colour textures are decoded to linear on sample
+            {
+                bool srgb = asset->isSrgb();
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("sRGB:");
+                ImGui::TableSetColumnIndex(1);
+                if (ImGui::Checkbox("##srgb", &srgb))
+                    asset->setSrgb(srgb);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip(
+                        "On for colour textures (albedo, UI, skybox faces).\n"
+                        "Off for data textures (normal maps, masks, roughness).");
             }
 
             ImGui::EndTable();
@@ -973,7 +1034,89 @@ void MAssetInspector::drawStaticMeshAsset(MStaticMeshAsset* asset)
         ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Triangles");
         ImGui::TableSetColumnIndex(1); ImGui::TextUnformatted(triBuf);
 
+        // Size as it will load with the scale factor below - updates while
+        // the factor is edited, so it can be tuned before reimporting.
+        const SVector3 size = asset->getScaledBoundsSize();
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0); ImGui::TextUnformatted("Size");
+        ImGui::TableSetColumnIndex(1); ImGui::Text("%.3g x %.3g x %.3g", size.x, size.y, size.z);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Bounding box (X x Y x Z) in world units, with the scale factor applied.");
+
         ImGui::EndTable();
+    }
+
+    // -- Import settings ------------------------------------------------------
+    ImGui::Spacing();
+    if (ImGui::CollapsingHeader("Import Settings", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        if (ImGui::BeginTable("##mesh_import", 2, ImGuiTableFlags_None))
+        {
+            ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed, 100.f);
+            ImGui::TableSetupColumn("value", ImGuiTableColumnFlags_WidthStretch);
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Scale Factor");
+            ImGui::TableSetColumnIndex(1);
+
+            float scale = asset->getScaleFactor();
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            // Logarithmic: the useful range spans 0.001 (mm) to 100+.
+            if (ImGui::DragFloat("##mesh_scale", &scale, 0.005f, 0.0001f, 10000.0f, "%.4g",
+                                 ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp))
+                asset->setScaleFactor(scale);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip(
+                    "Uniform scale baked into the mesh when it loads, so entities\n"
+                    "using it can keep a transform scale of 1.\n"
+                    "Common values: 0.01 (cm -> m), 0.0254 (inches), 0.001 (mm).\n"
+                    "FBX files are already converted from centimetres on import.");
+
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Pivot");
+            ImGui::TableSetColumnIndex(1);
+            static const char* pivotLabels[] = { "File Origin", "Center", "Bottom Center" };
+            int pivot = static_cast<int>(asset->getPivot());
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            if (ImGui::Combo("##mesh_pivot", &pivot, pivotLabels, IM_ARRAYSIZE(pivotLabels)))
+                asset->setPivot(static_cast<EMeshPivot>(pivot));
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip(
+                    "Where the mesh's origin goes.\n"
+                    "File Origin: as authored. Files often keep the position the model\n"
+                    "had in the artist's scene, which offsets it from its entity.\n"
+                    "Center: middle of the bounding box.\n"
+                    "Bottom Center: middle of the base - for props that sit on the ground.");
+
+            ImGui::EndTable();
+        }
+
+        ImGui::Spacing();
+        if (ImGui::Button("Save & Reimport##mesh_save", ImVec2(-FLT_MIN, 0)))
+        {
+            if (asset->saveImportSettings())
+            {
+                if (!asset->requestReload())
+                    MWARN("Mesh reimport failed for: " + asset->getPath());
+            }
+            else
+            {
+                ImGui::OpenPopup("##mesh_save_err");
+            }
+        }
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Write import settings to .meta and reload the mesh");
+
+        if (ImGui::BeginPopup("##mesh_save_err"))
+        {
+            ImGui::TextUnformatted("Failed to save mesh import settings. Check logs.");
+            if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
+            ImGui::EndPopup();
+        }
     }
 }
 

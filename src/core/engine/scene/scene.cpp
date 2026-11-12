@@ -5,10 +5,6 @@
 #include "scene.h"
 
 #include "core/engine/entities/spatial/spatial.h"
-#include "serialisation/sceneentitytypemap.h"
-
-const SString MScene::VALID_SCENE_FILE_XML_TAG = "mscene";
-const SString MScene::SCENE_NAME_TAG = "name";
 
 
 MScene::MScene() {
@@ -77,10 +73,10 @@ void MScene::fixedUpdate(float fixedDeltaTime)
         if (!ptr->hasStarted())
             ptr->onStart();
 
+        // Entities with Can Tick off are skipped silently — this runs every
+        // fixed step, so logging here would flood the console.
         if (ptr->getCanTick())
             ptr->onFixedUpdate(fixedDeltaTime);
-        else
-            MLOG(SString::format("NON TICK: {0}", ptr->getName()));
     }
 }
 
@@ -219,16 +215,14 @@ void MScene::insertRootEntityAt(MSpatialEntity* entity, int index)
     if (!entity)
         return;
 
-    // Remove from current parent if any.
+    // Detach from the current parent through setParent so the entity's
+    // parent pointer is cleared too. Only erasing it from the parent's child
+    // list left it pointing at the old parent: listed as a root but not
+    // treated as one, so walks from the roots skipped it and it vanished
+    // from the hierarchy. setParent(nullptr) appends to the root list; it is
+    // moved to `index` below.
     if (entity->getParent())
-    {
-        auto& siblings = entity->getParent()->getChildren();
-        auto it = std::find(siblings.begin(), siblings.end(), entity);
-        if (it != siblings.end())
-            siblings.erase(it);
-        // Clear parent pointer - can't call setParent(nullptr) as that
-        // would call addToSceneRoot which appends to the end.
-    }
+        entity->setParent(nullptr);   // also updates transforms
 
     // Remove from root list if already present.
     auto it = std::find(rootEntities.begin(), rootEntities.end(), entity);
@@ -267,66 +261,6 @@ MSpatialEntity* MScene::find(const SString& path)
     return nullptr;
 }
 
-bool MScene::tryParse(pugi::xml_document* doc) {
-    if (doc == nullptr)
-        return false;
-
-    if (!doc->child(VALID_SCENE_FILE_XML_TAG.c_str()))
-        return false;
-
-    auto scene_xml = doc->child(VALID_SCENE_FILE_XML_TAG.c_str());
-    if(scene_xml.attribute(SCENE_NAME_TAG.c_str()) != nullptr) {
-        name = scene_xml.attribute(SCENE_NAME_TAG.c_str()).value();
-    }
-    else
-        name = "Untitled";
-
-    for (auto& child : scene_xml.children()) {
-        recursivelyLoadEntity(child, nullptr);
-    }
-
-    for(auto& entity : rootEntities) {
-        entity->updateTransforms();
-    }
-
-    startScene();
-    return true;
-}
-
-void MScene::recursivelyLoadEntity(pugi::xml_node currNode, MSpatialEntity* parent)
-{
-    if (currNode == nullptr)
-    {
-        return;
-    }
-    if (MSceneEntityTypeDeserializer::ATTRIB_NODE == SString(currNode.name()))
-    {
-        return;
-    }
-
-    auto type = currNode.name();
-    auto deserializer = MSceneEntityTypeMap::getDeserializer(type);
-    if (deserializer == nullptr)
-    {
-        MWARN("cannot find deserializer for {}, skipping this branch." + std::string(type));
-        return;
-    }
-
-    MSpatialEntity* entity = deserializer->deserialize(currNode);
-    if (entity == nullptr)
-    {
-        MWARN("deserialized entity for {} is nullptr, skipping this branch." + std::string(type));
-        return;
-    }
-    if (parent != nullptr)
-        parent->addChild(entity);
-
-    for (auto child : currNode.children())
-    {
-        recursivelyLoadEntity(child, entity);
-    }
-}
-
 bool MScene::registerEntity(MSpatialEntity* entity)
 {
     if (entity == nullptr) return false;
@@ -362,4 +296,4 @@ const std::vector<MSpatialEntity*>& MScene::getEntityOrder()
         entityOrderDirty = false;
     }
     return entityOrder;
-}
+}
