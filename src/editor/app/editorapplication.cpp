@@ -16,6 +16,7 @@
 #include "core/engine/scripting/lua/lua_script_context.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/jobs/job_system.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/render_queue.h"
@@ -143,6 +144,10 @@ void MEditorApplication::registerSubsystems()
 {
     // Input - depends on nothing; scripts and shortcuts read it every frame
     MEngineSubsystemRegistry::registerSubsystem<IInputSubsystem, MSfmlInputSubsystem>();
+
+    // Job system — worker threads for MParallel::forEach. Registered early so
+    // it is cleaned up (threads joined) after everything that might use it.
+    MEngineSubsystemRegistry::registerSubsystem<MJobSystem>();
 
     // Asset Manager
     assetManagerRef = dynamic_cast<MEditorAssetManager*>(
@@ -486,4 +491,4 @@ MApplication* getAppInstance(){
     MVERBOSE("Creating Editor Application instance");
     return mnew<MEditorApplication>();
 }
-#endif
+#endif

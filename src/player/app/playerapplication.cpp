@@ -13,6 +13,7 @@
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/input/impl_sfml/sfml_input.h"
+#include "core/engine/jobs/job_system.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/physics/interface/physics_engine_interface.h"
 #include "core/engine/scripting/lua/lua_scripting_engine.h"
@@ -36,6 +37,10 @@ void MPlayerApplication::registerSubsystems(const std::shared_ptr<MPackagedAsset
 {
     // Input - depends on nothing; scripts and shortcuts read it every frame
     MEngineSubsystemRegistry::registerSubsystem<IInputSubsystem, MSfmlInputSubsystem>();
+
+    // Job system — worker threads for MParallel::forEach. Registered early so
+    // it is cleaned up (threads joined) after everything that might use it.
+    MEngineSubsystemRegistry::registerSubsystem<MJobSystem>();
 
     // Asset Manager
     // Lazy-loads from the package in published builds; imports everything
@@ -279,4 +284,4 @@ MApplication* getAppInstance(){
     MLOG("Creating Player Application instance");
     return mnew<MPlayerApplication>();
 }
-#endif
+#endif

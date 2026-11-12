@@ -218,13 +218,11 @@ void MSpatialEntity::ensureScript()
 
     scriptInstance = engine->createScriptInstance(scriptReference.get().resolve(), this);
 
-    // A valid script needs per-frame updates so the scene loop
-    // calls onUpdate, which drives scriptTick / onTick().
+    // Ticking is not forced here — canTick (the inspector's Can Tick box) is
+    // respected. Entities tick by default, so a script runs onTick unless the
+    // user turned ticking off; onStart still runs either way.
     if (scriptInstance != nullptr)
-    {
-        canTick = true;
         applyBehaviourTuning();   // before scriptStart() calls onStart
-    }
 }
 
 void MSpatialEntity::scriptStart()
@@ -346,6 +344,10 @@ void MSpatialEntity::onSerialise(pugi::xml_node& node)
     node.append_attribute("name")    = getName().c_str();
     node.append_attribute("enabled") = enabled;
     node.append_attribute("flags")   = static_cast<uint32_t>(flags);
+    // Only written when off — ticking is the default, so existing scenes and
+    // composition hashes stay unchanged.
+    if (!canTick)
+        node.append_attribute("canTick") = false;
 
     // Composition change-tracking — only on instance roots.
     if (!compAssetReference.get().isEmpty())
@@ -368,6 +370,7 @@ void MSpatialEntity::onDeserialise(const pugi::xml_node& node)
     if (auto a = node.attribute("name"))    setName(SString(a.value()));
     if (auto a = node.attribute("enabled")) enabled = a.as_bool(true);
     if (auto a = node.attribute("flags"))   flags   = static_cast<EEntityFlags>(a.as_uint());
+    if (auto a = node.attribute("canTick")) canTick = a.as_bool(true);   // absent — keep the constructor's value
 
     compSourceHash = SString(node.attribute(MCompositionAsset::SOURCE_HASH_ATTRIBUTE).as_string(""));
     compStateHash  = SString(node.attribute(MCompositionAsset::STATE_HASH_ATTRIBUTE).as_string(""));

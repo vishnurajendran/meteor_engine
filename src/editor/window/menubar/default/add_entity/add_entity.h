@@ -9,6 +9,7 @@
 #include "core/engine/lighting/directional/directional_light.h"
 #include "core/engine/lighting/dynamiclights/point_light/point_light.h"
 #include "core/engine/lighting/dynamiclights/spot_light/spot_light.h"
+#include "core/engine/particles/particle_emitter.h"
 #include "core/engine/physics/entities/box_collision_body_entity.h"
 #include "core/engine/physics/entities/capsule_collision_body_entity.h"
 #include "core/engine/physics/entities/convexhull_collision_body_entity.h"
@@ -126,6 +127,14 @@ REGISTER_SPATIAL_ENTITY_CREATE_MENU(
 )
 
 REGISTER_SPATIAL_ENTITY_CREATE_MENU(
+    MAddParticleEmitterItem,
+    "Add/Effects/Particle Emitter",
+    MMenubarItem::PRIORITY_REGULAR + 3,
+    MParticleEmitter,
+    "Particle Emitter"
+)
+
+REGISTER_SPATIAL_ENTITY_CREATE_MENU(
     MAddCameraItem,
     "Add/Camera",
     MMenubarItem::PRIORITY_REGULAR + 3,
@@ -199,4 +208,4 @@ REGISTER_SPATIAL_ENTITY_CREATE_MENU(
 
 
 
-#endif //ADD_ENTITY_MENU_H
+#endif //ADD_ENTITY_MENU_H

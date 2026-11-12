@@ -176,15 +176,23 @@ void MTransparentStage::render(IRenderPipeline* const pipeline)
         glDepthMask(material->getWritesDepth() ? GL_TRUE : GL_FALSE);
 
         // ---- Draw ------------------------------------------------------------
+        // instanceCount > 0: one call draws every instance (e.g. every
+        // particle) — the VAO supplies the per-instance attributes.
         glBindVertexArray(item->vao);
         if (item->ebo != 0)
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, item->ebo);
-            glDrawElements(GL_TRIANGLES, item->indexCount, GL_UNSIGNED_INT, nullptr);
+            if (item->instanceCount > 0)
+                glDrawElementsInstanced(GL_TRIANGLES, item->indexCount, GL_UNSIGNED_INT, nullptr, item->instanceCount);
+            else
+                glDrawElements(GL_TRIANGLES, item->indexCount, GL_UNSIGNED_INT, nullptr);
         }
         else
         {
-            glDrawArrays(GL_TRIANGLES, 0, item->vertexCount);
+            if (item->instanceCount > 0)
+                glDrawArraysInstanced(GL_TRIANGLES, 0, item->vertexCount, item->instanceCount);
+            else
+                glDrawArrays(GL_TRIANGLES, 0, item->vertexCount);
         }
     }
 

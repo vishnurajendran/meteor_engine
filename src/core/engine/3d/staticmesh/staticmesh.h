@@ -33,6 +33,9 @@ public:
     const std::vector<unsigned int>& getIndices()    const { return indices; }
 
     unsigned int getVAO()        const { return VAO; }
+    // Raw vertex buffer (SVertex layout) — for code that builds its own VAO
+    // over this mesh, e.g. instanced particle meshes.
+    unsigned int getVBO()        const { return VBO; }
     unsigned int getEBO()        const { return EBO; }
 
     SCRIPT_BIND_FUNC()
@@ -49,4 +52,4 @@ private:
     unsigned int VAO = 0, VBO = 0, EBO = 0;
 };
 
-#endif // STATICMESH_H
+#endif // STATICMESH_H

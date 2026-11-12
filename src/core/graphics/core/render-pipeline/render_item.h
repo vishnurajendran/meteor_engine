@@ -32,6 +32,13 @@ struct SRenderItem
     int          vertexCount  = 0;
     int          indexCount   = 0;
 
+    // Instancing. 0 = a normal draw. > 0 = draw the geometry this many
+    // times in one call (glDraw*Instanced); the VAO must carry the
+    // per-instance attributes (divisor 1) and the shader must read them.
+    // Only MTransparentStage draws instanced items — submit them with a
+    // Transparent material (the other passes would draw one copy).
+    int          instanceCount = 0;
+
     // Transform - world-space model matrix.
     // Stages set this as the "u_model" uniform after binding their shader.
     glm::mat4 transform    = glm::mat4(1.f);
@@ -72,4 +79,4 @@ struct SRenderItem
                                                 MMaterial::ShadingMode::Unlit : material->getShadingMode(); }
 };
 
-#endif // RENDER_ITEM_H
+#endif // RENDER_ITEM_H

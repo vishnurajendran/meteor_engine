@@ -1,0 +1,71 @@
+<shader name="particle" version="440 core" base="meteor_assets/shader_base/particle_shader.glsl">
+    <properties>
+        <property key="_useAlbedoTex"       type="bool"     default="False"/>
+        <property key="_albedo"             type="tex2d"    default=""/>
+        <property key="_color"              type="color"    default="(1,1,1,1)"/>
+
+        <!-- Set by the particle renderer every frame -->
+        <property key="_lit"                type="bool"     default="False"/>
+        <property key="_isSprite"           type="bool"     default="True"/>
+        <property key="_alignment"          type="int"      default="0"/>
+        <property key="_metallic"           type="float"    default="0.0"/>
+        <property key="_smoothness"         type="float"    default="0.0"/>
+    </properties>
+
+    #VERTEX_PASS
+
+    void meteorVertexPass(inout vec3 vertexPosition, inout vec3 vertexNormal, inout vec2 vertexTexCoords)
+    {
+        // Size, rotation and billboarding are applied by the particle base.
+    }
+
+    #END_VERTEX_PASS
+
+    #FRAGMENT_PASS
+
+    // Default particle shader, used by MSpriteParticleRenderer and
+    // MMeshParticleRenderer. Drawn by MTransparentStage (alpha or additive
+    // blend, no depth write). Colour = particle colour * _color * texture.
+    // Billboards without a texture draw a soft round dot.
+
+    uniform sampler2D _albedo;
+    uniform int       _useAlbedoTex;
+    uniform vec4      _color;
+    uniform float     _metallic;
+    uniform float     _smoothness;
+
+    // ---- Set by MTransparentStage / the renderer ----------------------------------
+    uniform int       _lit;
+    uniform int       _isSprite;     // 1 = sprite quad (soft dot without a texture)
+    uniform vec3      _cameraPos;
+
+    vec4 meteorFragmentPass(vec3 v2fPosition, vec3 v2fNormal, vec2 v2fTexCoords)
+    {
+        vec4 albedo = getParticleColor() * _color;
+
+        if (_useAlbedoTex == 1)
+        {
+            albedo *= texture(_albedo, v2fTexCoords);
+        }
+        else if (_isSprite == 1)
+        {
+            // Soft circle: full alpha in the middle, fading out to the quad's edge.
+            float d   = length(v2fTexCoords * 2.0 - 1.0);
+            albedo.a *= 1.0 - smoothstep(0.5, 1.0, d);
+        }
+
+        vec3 color = albedo.rgb;
+        if (_lit == 1)
+        {
+            vec3 worldPos = getVertexPositionWorld();
+            vec3 N        = normalize(getVertexNormalWorld());
+            color *= meteorSurfaceLighting(worldPos, N, _cameraPos, _metallic, _smoothness);
+        }
+
+        // Linear, HDR — blended into BUFFER_SCENE.
+        return vec4(color, albedo.a);
+    }
+
+    #END_FRAGMENT_PASS
+
+</shader>

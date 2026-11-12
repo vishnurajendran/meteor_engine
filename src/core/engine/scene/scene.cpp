@@ -73,10 +73,10 @@ void MScene::fixedUpdate(float fixedDeltaTime)
         if (!ptr->hasStarted())
             ptr->onStart();
 
+        // Entities with Can Tick off are skipped silently — this runs every
+        // fixed step, so logging here would flood the console.
         if (ptr->getCanTick())
             ptr->onFixedUpdate(fixedDeltaTime);
-        else
-            MLOG(SString::format("NON TICK: {0}", ptr->getName()));
     }
 }
 
@@ -296,4 +296,4 @@ const std::vector<MSpatialEntity*>& MScene::getEntityOrder()
         entityOrderDirty = false;
     }
     return entityOrder;
-}
+}

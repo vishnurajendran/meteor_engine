@@ -13,6 +13,28 @@ namespace MeteorBindingGenerator;
 public static class CodeEmitter
 {
     private static HashSet<string> _boundClassNames = new();
+    private static Dictionary<string, BoundClass> _boundClassesByName = new();
+
+    // Every bound ancestor of `cls` — parents, grandparents, ... — nearest
+    // first, each once. Sol2 only resolves members and casts through the
+    // bases listed in sol::bases<...>; it does not follow a base's own
+    // bases. So the whole chain must be listed, not just the direct parent.
+    private static List<string> GetBoundAncestors(BoundClass cls)
+    {
+        var result = new List<string>();
+        var queue  = new Queue<string>(cls.ParentClasses);
+        while (queue.Count > 0)
+        {
+            var name = queue.Dequeue();
+            if (!_boundClassNames.Contains(name) || result.Contains(name))
+                continue;
+            result.Add(name);
+            if (_boundClassesByName.TryGetValue(name, out var parent))
+                foreach (var grandParent in parent.ParentClasses)
+                    queue.Enqueue(grandParent);
+        }
+        return result;
+    }
 
     // ---- Class binding emission ---------------------------------------------
 
@@ -35,9 +57,8 @@ public static class CodeEmitter
         sb.AppendLine();
         sb.AppendLine($"static void {cls.Name}_registerBinding(sol::state& lua) {{");
 
-        var boundParents = cls.ParentClasses
-            .Where(p => _boundClassNames.Contains(p))
-            .ToList();
+        // All bound ancestors, nearest first — see GetBoundAncestors.
+        var boundParents = GetBoundAncestors(cls);
 
         bool hasMembers = cls.Properties.Count > 0 || cls.Functions.Count > 0;
 
@@ -59,9 +80,13 @@ public static class CodeEmitter
                 // Type-casting constructor: ClassName(basePtr) does dynamic_cast.
                 // Enables Python-like syntax in Lua:
                 //   local derived = MDerived(self:find("./child"))
-                // Accepts the first bound parent. dynamic_cast handles the full
-                // inheritance chain regardless of how deep the hierarchy is.
-                var castFrom = boundParents[0];
+                // Accepts the root-most bound ancestor (usually MObject), not the
+                // direct parent: sol2 type-checks the argument before the
+                // lambda runs, and an MSpatialEntity userdata is not accepted
+                // where an MDynamicLight* is expected. With the root type any
+                // bound object can be passed; dynamic_cast then checks the real
+                // type and returns nil if it doesn't match.
+                var castFrom = boundParents[^1];
                 entries.Add(
                     $"        sol::call_constructor, sol::factories(\n" +
                     $"            []({castFrom}* base) -> {cls.Name}* {{\n" +
@@ -149,6 +174,7 @@ public static class CodeEmitter
         var generatedFiles = new List<string>();
 
         _boundClassNames = new HashSet<string>(boundClasses.Select(c => c.Name));
+        _boundClassesByName = boundClasses.GroupBy(c => c.Name).ToDictionary(g => g.Key, g => g.First());
 
         var normalizedSourceDir = Path.GetFullPath(sourceDir)
             .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
@@ -179,7 +205,7 @@ public static class CodeEmitter
             File.WriteAllText(filePath, content);
             generatedFiles.Add(filePath);
 
-            var boundParents = cls.ParentClasses.Where(p => _boundClassNames.Contains(p)).ToList();
+            var boundParents = GetBoundAncestors(cls);
             var parentInfo = boundParents.Count > 0
                 ? $" -> [{string.Join(", ", boundParents)}]"
                 : "";
