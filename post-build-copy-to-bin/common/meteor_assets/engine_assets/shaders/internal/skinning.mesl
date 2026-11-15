@@ -1,0 +1,63 @@
+<shader name="skinning" version="460 core" base="">
+    <!--
+        Compute skinning (MGpuSkinningBackend). One invocation per vertex:
+        skins the shared bind-pose vertices with this instance's slice of the
+        bone matrices into the entity's own output buffer, laid out exactly
+        as SVertex, which every render pass then draws unchanged.
+
+        Influences are variable-length per vertex: the loop runs over the
+        vertex's own count, so a mesh authored for 4 costs the same as a
+        fixed-4 layout, and only vertices that really use more pay more.
+
+        Vertex buffers are float[] indexed by hand: under std430 a vec3
+        aligns to 16 bytes, but SVertex is 8 packed floats (32 bytes).
+
+        No binding qualifiers on the buffers: the backend assigns binding
+        points at runtime, keeping clear of LIGHT_INDEX_DYNAMIC, which the
+        lighting system binds once and expects to stay.
+    -->
+    <properties/>
+
+    #COMPUTE_PASS
+
+    layout(local_size_x = 64) in;
+
+    struct Influence { uint joint; float weight; };
+
+    layout(std430) readonly  buffer BindPose   { float bindVerts[]; };   // 8 floats per vertex
+    layout(std430) readonly  buffer Offsets    { uint  offsets[];   };   // vertexCount + 1
+    layout(std430) readonly  buffer Influences { Influence infl[];  };
+    layout(std430) readonly  buffer Bones      { mat4  bones[];     };
+    layout(std430) writeonly buffer Out        { float outVerts[];  };
+
+    uniform uint u_vertexCount;
+    uniform uint u_boneOffset;   // this instance's slice of the bone buffer
+
+    void main()
+    {
+        uint v = gl_GlobalInvocationID.x;
+        if (v >= u_vertexCount) return;
+        uint b = v * 8u;
+
+        vec4 p = vec4(bindVerts[b], bindVerts[b + 1u], bindVerts[b + 2u], 1.0);
+        vec3 n = vec3(bindVerts[b + 3u], bindVerts[b + 4u], bindVerts[b + 5u]);
+
+        mat4 m = mat4(0.0);
+        for (uint i = offsets[v]; i < offsets[v + 1u]; ++i)
+            m += infl[i].weight * bones[u_boneOffset + infl[i].joint];
+
+        vec3 sp = (m * p).xyz;
+        // Correct without non-uniform bone scale - true for nearly all rigs.
+        vec3 sn = mat3(m) * n;
+        float len = length(sn);
+        sn = len > 0.0 ? sn / len : n;
+
+        outVerts[b]      = sp.x; outVerts[b + 1u] = sp.y; outVerts[b + 2u] = sp.z;
+        outVerts[b + 3u] = sn.x; outVerts[b + 4u] = sn.y; outVerts[b + 5u] = sn.z;
+        outVerts[b + 6u] = bindVerts[b + 6u];   // UVs copied through
+        outVerts[b + 7u] = bindVerts[b + 7u];
+    }
+
+    #END_COMPUTE_PASS
+
+</shader>

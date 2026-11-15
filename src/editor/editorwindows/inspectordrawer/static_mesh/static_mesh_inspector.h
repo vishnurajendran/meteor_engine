@@ -2,8 +2,7 @@
 #ifndef STATIC_MESH_INSPECTOR_H
 #define STATIC_MESH_INSPECTOR_H
 
-#include "core/engine/assetmanagement/asset/asset_handle.h"
-#include "core/graphics/core/material/MMaterialAsset.h"
+#include "editor/editorwindows/inspectordrawer/mesh_common/material_slots_drawer.h"
 #include "editor/editorwindows/inspectordrawer/spatialentityinspectordrawer.h"
 
 class MAssetReferenceControl;
@@ -21,18 +20,9 @@ protected:
 private:
     MStaticMeshInspectorDrawer();
 
-    // One reference control per material slot - no property panel here.
+    MAssetReferenceControl* meshAssetControl;
     // Material properties are edited by selecting the material asset directly.
-    struct SSlotControls
-    {
-        MAssetReferenceControl*      assetRef       = nullptr;
-        TAssetHandle<MMaterialAsset> lastKnownAsset;
-    };
-
-    void ensureSlotControls(int count);
-
-    MAssetReferenceControl*    meshAssetControl;
-    std::vector<SSlotControls> slotControls;
+    MMaterialSlotsDrawer    materialSlots;
 
     static bool registered;
 };

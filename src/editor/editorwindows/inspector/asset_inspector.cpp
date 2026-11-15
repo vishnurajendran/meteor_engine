@@ -14,6 +14,8 @@
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
+#include "core/engine/3d/skeletal/anim_clip_asset.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_asset.h"
 #include "core/utils/logger.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
@@ -61,8 +63,14 @@ void MAssetInspector::draw(MAsset* asset)
         drawShaderAsset(shd);
     else if (auto* mesh = dynamic_cast<MStaticMeshAsset*>(asset))
         drawStaticMeshAsset(mesh);
+    else if (auto* skeletal = dynamic_cast<MSkeletalMeshAsset*>(asset))
+        drawSkeletalMeshAsset(skeletal);
+    else if (auto* clips = dynamic_cast<MAnimClipAsset*>(asset))
+        drawAnimClipAsset(clips);
     else
         drawGenericAsset(asset);
+
+    drawEntitySwapPrompt();
 }
 
 // -- audio clip ---------------------------------------------------------------
@@ -919,22 +927,25 @@ void MAssetInspector::drawShaderAsset(MShaderAsset* asset)
     ImGui::PopStyleColor();
     ImGui::Separator();
 
-    MShader* shader = asset->getShader();
+    // Standard or compute - both share the properties shown below.
+    MShaderBase* shader = asset->getShaderBase();
 
     ImGui::Text("Name:  %s", asset->getName().c_str());
     ImGui::Text("Path:  %s", asset->getPath().c_str());
+    if (shader)
+        ImGui::Text("Type:  %s", shader->isCompute() ? "Compute (#COMPUTE_PASS)" : "Standard (vertex + fragment)");
 
     // Valid/invalid badge
     if (shader)
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.3f, 1.f));
-        ImGui::TextUnformatted("\xe2\x97\x8f Compiled");  // filled circle UTF-8
+        ImGui::TextUnformatted("Compiled");  // filled circle UTF-8
         ImGui::PopStyleColor();
     }
     else
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.3f, 0.3f, 1.f));
-        ImGui::TextUnformatted("\xe2\x97\x8f Compile Error");
+        ImGui::TextUnformatted("Compile Error");
         ImGui::PopStyleColor();
     }
 
@@ -1047,77 +1058,9 @@ void MAssetInspector::drawStaticMeshAsset(MStaticMeshAsset* asset)
     }
 
     // -- Import settings ------------------------------------------------------
+    // Shared with skeletal meshes and clip assets (asset_inspector_models.cpp).
     ImGui::Spacing();
-    if (ImGui::CollapsingHeader("Import Settings", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        if (ImGui::BeginTable("##mesh_import", 2, ImGuiTableFlags_None))
-        {
-            ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthFixed, 100.f);
-            ImGui::TableSetupColumn("value", ImGuiTableColumnFlags_WidthStretch);
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Scale Factor");
-            ImGui::TableSetColumnIndex(1);
-
-            float scale = asset->getScaleFactor();
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            // Logarithmic: the useful range spans 0.001 (mm) to 100+.
-            if (ImGui::DragFloat("##mesh_scale", &scale, 0.005f, 0.0001f, 10000.0f, "%.4g",
-                                 ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp))
-                asset->setScaleFactor(scale);
-            if (ImGui::IsItemHovered())
-                ImGui::SetTooltip(
-                    "Uniform scale baked into the mesh when it loads, so entities\n"
-                    "using it can keep a transform scale of 1.\n"
-                    "Common values: 0.01 (cm -> m), 0.0254 (inches), 0.001 (mm).\n"
-                    "FBX files are already converted from centimetres on import.");
-
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::AlignTextToFramePadding();
-            ImGui::TextUnformatted("Pivot");
-            ImGui::TableSetColumnIndex(1);
-            static const char* pivotLabels[] = { "File Origin", "Center", "Bottom Center" };
-            int pivot = static_cast<int>(asset->getPivot());
-            ImGui::SetNextItemWidth(-FLT_MIN);
-            if (ImGui::Combo("##mesh_pivot", &pivot, pivotLabels, IM_ARRAYSIZE(pivotLabels)))
-                asset->setPivot(static_cast<EMeshPivot>(pivot));
-            if (ImGui::IsItemHovered())
-                ImGui::SetTooltip(
-                    "Where the mesh's origin goes.\n"
-                    "File Origin: as authored. Files often keep the position the model\n"
-                    "had in the artist's scene, which offsets it from its entity.\n"
-                    "Center: middle of the bounding box.\n"
-                    "Bottom Center: middle of the base - for props that sit on the ground.");
-
-            ImGui::EndTable();
-        }
-
-        ImGui::Spacing();
-        if (ImGui::Button("Save & Reimport##mesh_save", ImVec2(-FLT_MIN, 0)))
-        {
-            if (asset->saveImportSettings())
-            {
-                if (!asset->requestReload())
-                    MWARN("Mesh reimport failed for: " + asset->getPath());
-            }
-            else
-            {
-                ImGui::OpenPopup("##mesh_save_err");
-            }
-        }
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Write import settings to .meta and reload the mesh");
-
-        if (ImGui::BeginPopup("##mesh_save_err"))
-        {
-            ImGui::TextUnformatted("Failed to save mesh import settings. Check logs.");
-            if (ImGui::Button("OK")) ImGui::CloseCurrentPopup();
-            ImGui::EndPopup();
-        }
-    }
+    drawModelImportSettings(asset, asset->getImportSettings());   // returns true if `asset` was recreated
 }
 
 // -- text ---------------------------------------------------------------------

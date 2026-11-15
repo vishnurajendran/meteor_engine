@@ -15,6 +15,8 @@ public:
     bool canImport(SString fileExtension) override;
     MAsset * importAsset(SString path, const pugi::xml_document& metaData) override;
     [[nodiscard]] SString getIconPath() const override { return SEngineAssetIconPaths::HIGHRES_TEX_ASSET_SHADER; }
+    // Compute shaders get their own icon.
+    [[nodiscard]] SString getIconPath(const MAsset* asset) const override;
 };
 
 

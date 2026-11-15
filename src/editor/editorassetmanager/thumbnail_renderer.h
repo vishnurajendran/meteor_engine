@@ -31,6 +31,7 @@
 #include "thumbnail_cache.h"
 
 class MStaticMeshAsset;
+class MSkeletalMeshAsset;
 class MMaterialAsset;
 class SHeadlessRenderBuffer;
 
@@ -61,6 +62,7 @@ private:
     void destroyGL();
 
     sf::Texture* renderMeshThumbnail    (MStaticMeshAsset* asset);
+    sf::Texture* renderSkeletalMeshThumbnail(MSkeletalMeshAsset* asset);
     sf::Texture* renderMaterialThumbnail(MMaterialAsset*   asset);
 
     // Composites BUFFER_OPAQUE x BUFFER_LIGHTS into the thumbnail FBO.

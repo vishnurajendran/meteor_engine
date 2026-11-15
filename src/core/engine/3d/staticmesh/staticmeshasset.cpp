@@ -69,7 +69,7 @@ void MStaticMeshAsset::processNode(aiNode *node, const aiScene *scene, const SVe
                                    std::vector<MStaticMesh*>& meshes) {
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, origin, scaleFactor));
+        meshes.push_back(processMesh(mesh, origin, importSettings.scaleFactor));
     }
 
     // After processing meshes, recursively process each child node
@@ -131,7 +131,7 @@ void MStaticMeshAsset::loadMesh() {
     computeSceneBounds(scene, boundsMin, boundsMax);
 
     SVector3 origin(0.0f);
-    switch (pivot) {
+    switch (importSettings.pivot) {
         case EMeshPivot::Center:
             origin = (boundsMin + boundsMax) * 0.5f;
             break;
@@ -162,44 +162,18 @@ void MStaticMeshAsset::loadMesh() {
 }
 
 // -- Import settings persistence -----------------------------------------------
-//   <asset_id id="...">
-//       <meshImport>
-//           <scaleFactor>0.01</scaleFactor>
-//           <pivot>2</pivot>            0 file origin, 1 center, 2 bottom center
-//       </meshImport>
-//   </asset_id>
+// Format: see model_import_settings.h.
 
 void MStaticMeshAsset::loadImportSettings(const pugi::xml_node& node) {
-    if (!node) return;
-    if (auto n = node.child("scaleFactor"))
-        setScaleFactor(n.text().as_float(1.0f));
-    if (auto n = node.child("pivot"))
-        pivot = static_cast<EMeshPivot>(std::clamp(n.text().as_int(0), 0, 2));
+    importSettings.load(node);
 }
 
 bool MStaticMeshAsset::saveImportSettings() {
-    auto target = MAssetSources::getWritable();
-    if (!target) {
-        MERROR("MStaticMeshAsset::saveImportSettings - active asset source is read-only: " + path);
+    if (!importSettings.saveToMeta(path)) {
+        MERROR("MStaticMeshAsset::saveImportSettings - could not write the meta (read-only source?): " + path);
         return false;
     }
-
-    // Read the existing meta so the GUID and anything else in it is kept.
-    pugi::xml_document doc;
-    target->readMeta(path, doc);
-
-    auto root = doc.child("asset_id");
-    if (!root) {
-        MERROR("MStaticMeshAsset::saveImportSettings - meta file missing <asset_id> root: " + path);
-        return false;
-    }
-
-    root.remove_child("meshImport");
-    auto settings = root.append_child("meshImport");
-    settings.append_child("scaleFactor").text().set(scaleFactor);
-    settings.append_child("pivot").text().set(static_cast<int>(pivot));
-
-    return target->writeMeta(path, doc);
+    return true;
 }
 
 std::vector<MStaticMesh *> MStaticMeshAsset::getMeshes() const {

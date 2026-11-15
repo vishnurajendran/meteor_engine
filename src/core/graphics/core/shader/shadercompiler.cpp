@@ -76,6 +76,53 @@ bool MShaderCompiler::compileShader(const SString& name, const SString& vertexSo
     return true;
 }
 
+bool MShaderCompiler::compileComputeShader(const SString& name, const SString& computeSource, GLuint& shaderProgramHandle)
+{
+    if (!initialised)
+    {
+        initialiseEngine();
+    }
+
+    if (!glDispatchCompute)
+    {
+        MERROR(STR("ShadeCompiler:: compute shaders are not supported by this GL context (") + name + ")");
+        return false;
+    }
+
+    const char* search_directories[] = { "/" };
+
+    auto compute = glCreateShader(GL_COMPUTE_SHADER);
+    auto compBuff = computeSource.c_str();
+    GLint compLength = computeSource.length();
+
+    //include search directories
+    glCompileShaderIncludeARB(compute, _countof(search_directories), search_directories, nullptr);
+    glShaderSource(compute, 1, &compBuff, &compLength);
+    glCompileShader(compute);
+
+    if (!getShaderCompilationStatus(compute)) {
+        MERROR(STR("ShadeCompiler:: Error compiling compute shader ") + name + ": " + getShaderInfoLog(compute));
+        glDeleteShader(compute);
+        return false;
+    }
+
+    shaderProgramHandle = glCreateProgram();
+    glAttachShader(shaderProgramHandle, compute);
+    glLinkProgram(shaderProgramHandle);
+
+    GLint programSuccess;
+    glGetProgramiv(shaderProgramHandle, GL_LINK_STATUS, &programSuccess);
+    if (!programSuccess) {
+        MERROR(STR("ShadeCompiler:: Error linking compute program ") + name + ": " + getShaderProgramInfoLog(shaderProgramHandle));
+        glDeleteProgram(shaderProgramHandle);
+        glDeleteShader(compute);
+        return false;
+    }
+
+    glDeleteShader(compute);
+    return true;
+}
+
 bool MShaderCompiler::getShaderCompilationStatus(const GLuint& shaderId) {
     GLint success;
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);

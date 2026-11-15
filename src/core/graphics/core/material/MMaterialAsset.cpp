@@ -65,7 +65,7 @@ void MMaterialAsset::buildMaterialAsset()
         return;
     }
 
-    MShader* shader = shaderAsset->getShader();
+    MStandardShader* shader = shaderAsset->getShader();
     if (!shader)
     {
         MERROR("MMaterialAsset::buildMaterialAsset(): shader compiled with errors: " + SString(sp.c_str()));

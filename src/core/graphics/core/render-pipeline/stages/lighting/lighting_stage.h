@@ -40,7 +40,7 @@ public:
 
 private:
     SFrameBuffer* lightsBuffer   = nullptr;
-    // No cached MShader* - looked up fresh each render() to survive refresh().
+    // No cached MStandardShader* - looked up fresh each render() to survive refresh().
     SString       lightingShaderPath;
 
     SFullscreenQuad quad;

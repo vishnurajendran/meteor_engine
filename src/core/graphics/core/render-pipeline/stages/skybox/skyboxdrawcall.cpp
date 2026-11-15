@@ -72,7 +72,7 @@ void MSkyboxDrawCall::initialise()
     initialised = true;
 }
 
-MSkyboxDrawCall::MSkyboxDrawCall(TAssetHandle<MCubemapAsset> cubemap, MShader* shader)
+MSkyboxDrawCall::MSkyboxDrawCall(TAssetHandle<MCubemapAsset> cubemap, MStandardShader* shader)
 {
     this->cubemapTexture = cubemap;
     this->skyboxShader = shader;

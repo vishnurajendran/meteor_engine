@@ -256,7 +256,7 @@ void MCompositeStage::compositeOpaqueWithLights(IRenderPipeline* const pipeline,
 {
     auto compositeHandle = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                                ->getAsset<MShaderAsset>(FINAL_COMPOSITE_SHADER_PATH);
-    MShader* compositeShader = compositeHandle ? compositeHandle->getShader() : nullptr;
+    MStandardShader* compositeShader = compositeHandle ? compositeHandle->getShader() : nullptr;
 
     if (!compositeShader || quadVAO == 0) return;
 

@@ -69,6 +69,11 @@ public:
     // reports later (it is a no-op for already-loaded paths).
     bool onFileAdded(const SString& path, bool rebuildTree = true);
 
+    // Recreates the asset (see MAssetManager::reimportAsset), keeps the
+    // watcher, thumbnail and browser tree in step, and re-selects it if it
+    // was selected.
+    MAsset* reimportAsset(const SString& path) override;
+
     // -- Asset creation --------------------------------------------------------
     // Templates available for the "Create >" menu. Built-ins are registered on
     // first refresh(); templates.xml files in template directories add more.

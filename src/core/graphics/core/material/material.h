@@ -11,7 +11,7 @@
 #include "core/graphics/core/shader/shader.h"
 #include "core/object/object.h"
 
-class MShader;
+class MStandardShader;
 
 class MMaterial : public MObject {
     DEFINE_OBJECT_SUBCLASS(MMaterial)
@@ -30,7 +30,7 @@ public:
     enum class BlendMode { Alpha, Additive };
 
 private:
-    MShader*    shader      = nullptr;
+    MStandardShader*    shader      = nullptr;
     ShadingMode shadingMode = ShadingMode::Lit;
     RenderMode  renderMode  = RenderMode::Opaque;
     BlendMode   blendMode   = BlendMode::Alpha;
@@ -40,7 +40,7 @@ private:
     std::vector<SString> propertyOrder;  // tracks key order for UI display
 
 public:
-    explicit MMaterial(MShader* shader, ShadingMode mode = ShadingMode::Lit);
+    explicit MMaterial(MStandardShader* shader, ShadingMode mode = ShadingMode::Lit);
     ~MMaterial() override = default;
 
     void bindMaterial() const;
@@ -54,9 +54,9 @@ public:
     [[nodiscard]] const std::vector<SString>& getPropertyOrder() const { return propertyOrder; }
     void setPropertyOrder(const std::vector<SString>& order) { propertyOrder = order; }
 
-    [[nodiscard]] MShader*    getShader()     const { return shader; }
+    [[nodiscard]] MStandardShader*    getShader()     const { return shader; }
 
-    void updateShader(MShader* newShader, ShadingMode newMode)
+    void updateShader(MStandardShader* newShader, ShadingMode newMode)
     {
         shader      = newShader;
         shadingMode = newMode;

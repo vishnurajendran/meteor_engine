@@ -160,9 +160,6 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     tickViewportInteraction();
     drawFpsOverlay();
 
-    if (profilerVisible)
-        profilerDisplayer.draw(viewportMin, viewportSize);
-
     if (!playing)
     {
         drawEditorSceneView(deltaTime, region);
@@ -583,16 +580,6 @@ void MEditorSceneViewWindow::drawToolbar(bool playMode)
             ImGui::PopStyleColor(3);
         }
 
-        // -- Always visible: profiler toggle ----------------------------
-        ImGui::SameLine(0, OVL_PAD);
-        overlayDivider(iconH);
-
-        const char* profLabel = profilerVisible ? "Stats On" : "Stats Off";
-        if (overlayTextButton(profLabel, profLabel, profilerVisible))
-            profilerVisible = !profilerVisible;
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip(profilerVisible ? "Click to hide stats" : "Click to show stats");
-
         // -- Edit-mode only: camera speed (right-aligned) ---------------
         if (!playMode)
         {
@@ -794,4 +781,4 @@ SString MEditorSceneViewWindow::getCurrentTransformModeText() const
         case ImGuizmo::WORLD: return "World";
         default:              return "???";
     }
-}
+}

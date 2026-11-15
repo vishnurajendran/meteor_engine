@@ -8,7 +8,7 @@
 #include "core/utils/logger.h"
 #include "core/memory/mnew.h"
 
-MMaterial::MMaterial(MShader* shader, ShadingMode mode) : MObject()
+MMaterial::MMaterial(MStandardShader* shader, ShadingMode mode) : MObject()
 {
     name         = "Material";
     this->shader = shader;
@@ -44,7 +44,7 @@ void MMaterial::bindMaterial() const
     {
         if (value.getType() == SShaderPropertyType::Texture)
         {
-            // Empty slots bind white (see MShader::setTexture).
+            // Empty slots bind white (see MStandardShader::setTexture).
             shader->setTexture(key, value.getTexAssetReference(), textureUnit++);
         }
         else

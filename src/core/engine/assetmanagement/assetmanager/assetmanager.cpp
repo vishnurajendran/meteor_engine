@@ -269,6 +269,23 @@ bool MAssetManager::reloadAsset(MAsset* asset)
     return ok;
 }
 
+MAsset* MAssetManager::reimportAsset(const SString& rawPath)
+{
+    const SString path = MAssetPath::normalize(rawPath);
+    unregisterAsset(path);
+
+    const size_t deferredBefore = defferedLoadableAssetList.size();
+    if (!loadAsset(path))
+        return nullptr;
+
+    for (size_t i = deferredBefore; i < defferedLoadableAssetList.size(); ++i)
+        if (defferedLoadableAssetList[i])
+            defferedLoadableAssetList[i]->deferredAssetLoad(false);
+
+    auto it = assetMap.find(path);
+    return it != assetMap.end() ? it->second : nullptr;
+}
+
 // ---------------------------------------------------------------------------
 // Meta data
 // ---------------------------------------------------------------------------

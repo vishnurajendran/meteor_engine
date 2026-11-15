@@ -14,6 +14,8 @@ class MShaderCompiler : public MObject {
 public:
     static bool initialiseEngine();
     static bool compileShader(const SString& name, const SString& vertexSource, const SString& fragmentSource, GLuint& shaderProgramHandle);
+    // A program with a single compute stage (GL 4.3+).
+    static bool compileComputeShader(const SString& name, const SString& computeSource, GLuint& shaderProgramHandle);
 private:
     static bool initialised;
 private:

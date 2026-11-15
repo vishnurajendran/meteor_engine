@@ -6,6 +6,7 @@
 #include <filesystem>
 #include "../../../default_engine_icon_paths.h"
 #include "core/engine/3d/staticmesh/staticmesh.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_entity.h"
 #include "core/engine/audio/audio_entity/audio_listener_entity.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/camera/camera_spatial_entity.h"
@@ -77,6 +78,7 @@ MEditorHierarchyWindow::MEditorHierarchyWindow(int x, int y) : MImGuiSubWindow(x
 
     // mesh
     typeToIcon[MStaticMeshEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_STATICMESH);
+    typeToIcon[MSkeletalMeshEntity::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_STATICMESH);
 
     // lights
     typeToIcon[MDirectionalLight::staticTypeInfo()] = loadEngineTexture(SEngineAssetIconPaths::LOWRES_TEX_DIRECTIONAL_LIGHT);
@@ -117,7 +119,8 @@ static ImU32 getEntityStripColor(MSpatialEntity* entity)
 {
     if (!entity) return STRIP_SPATIAL;
     const auto& info = entity->typeInfo();
-    if (info == MStaticMeshEntity::staticTypeInfo())        return STRIP_MESH;
+    if (info == MStaticMeshEntity::staticTypeInfo() ||
+        info == MSkeletalMeshEntity::staticTypeInfo())      return STRIP_MESH;
     if (info == MDirectionalLight::staticTypeInfo() ||
         info == MPointLight::staticTypeInfo()       ||
         info == MSpotLight::staticTypeInfo()        ||

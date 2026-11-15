@@ -6,6 +6,8 @@
 
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_asset.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_entity.h"
 #include "core/engine/assetmanagement/assetmanager/asset_manager_subsystem.h"
 #include "core/engine/audio/asset/audioclip_asset.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
@@ -47,6 +49,7 @@ bool MAssetDropSpawner::canSpawn(const SString& assetId)
 
     // Each check is one map lookup + dynamic_cast.
     return am->getAssetById<MStaticMeshAsset>(assetId).isValid()
+        || am->getAssetById<MSkeletalMeshAsset>(assetId).isValid()
         || am->getAssetById<MAudioClipAsset>(assetId).isValid()
         || am->getAssetById<MCompositionAsset>(assetId).isValid();
 }
@@ -63,6 +66,12 @@ MSpatialEntity* MAssetDropSpawner::spawn(const SString& assetId)
     {
         auto* meshEntity = MSpatialEntity::createInstance<MStaticMeshEntity>(entityNameFor(mesh.get()));
         meshEntity->setStaticMeshAsset(mesh);
+        entity = meshEntity;
+    }
+    else if (const auto skeletal = am->getAssetById<MSkeletalMeshAsset>(assetId))
+    {
+        auto* meshEntity = MSpatialEntity::createInstance<MSkeletalMeshEntity>(entityNameFor(skeletal.get()));
+        meshEntity->setSkeletalMeshAsset(skeletal);
         entity = meshEntity;
     }
     else if (const auto clip = am->getAssetById<MAudioClipAsset>(assetId))

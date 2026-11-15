@@ -704,7 +704,7 @@ void MShadowStage::renderPointShadows(IRenderPipeline* const pipeline)
 // ---------------------------------------------------------------------------
 
 void MShadowStage::drawItems(IRenderPipeline* const pipeline,
-                             MShader* shader, unsigned int* rawProg,
+                             MStandardShader* shader, unsigned int* rawProg,
                              bool shadowCastersOnly, const SFrustum* cullFrustum)
 {
     // The shader is bound by the caller; cutout uniforms go straight to it.

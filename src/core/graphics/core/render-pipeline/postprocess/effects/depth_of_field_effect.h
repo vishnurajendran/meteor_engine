@@ -58,11 +58,11 @@ private:
     int builtWidth  = 0;
     int builtHeight = 0;
 
-    MShader* cocShader        = nullptr;   // owned by the asset manager
-    MShader* prefilterShader  = nullptr;
-    MShader* bokehShader      = nullptr;
-    MShader* postfilterShader = nullptr;
-    MShader* combineShader    = nullptr;
+    MStandardShader* cocShader        = nullptr;   // owned by the asset manager
+    MStandardShader* prefilterShader  = nullptr;
+    MStandardShader* bokehShader      = nullptr;
+    MStandardShader* postfilterShader = nullptr;
+    MStandardShader* combineShader    = nullptr;
 };
 
 #endif // DEPTH_OF_FIELD_EFFECT_H

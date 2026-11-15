@@ -15,7 +15,7 @@
 #include "core/utils/field_engine_types.h"
 
 class MMaterial;
-class MShader;
+class MStandardShader;
 
 // Draws a texture on a quad. The quad lies in the entity's local XY plane,
 // facing +Z, centred on the entity, and is sized from the texture:
@@ -109,7 +109,7 @@ private:
     SMatrix4 getQuadMatrix() const;   // entity transform * quad size & flips
 
     MMaterial* material       = nullptr;   // owned
-    MShader*   materialShader = nullptr;   // owned by the shader asset
+    MStandardShader*   materialShader = nullptr;   // owned by the shader asset
     AABB       bounds         = { {0,0,0}, {0,0,0} };
 };
 

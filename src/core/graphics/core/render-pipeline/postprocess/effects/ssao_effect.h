@@ -63,9 +63,9 @@ private:
 
     std::vector<glm::vec3> kernel;   // hemisphere samples, z up, length <= 1
 
-    MShader* aoShader    = nullptr;  // owned by the asset manager
-    MShader* blurShader  = nullptr;
-    MShader* applyShader = nullptr;
+    MStandardShader* aoShader    = nullptr;  // owned by the asset manager
+    MStandardShader* blurShader  = nullptr;
+    MStandardShader* applyShader = nullptr;
 };
 
 #endif // SSAO_EFFECT_H

@@ -26,3 +26,10 @@ MAsset * MShaderAssetImporter::importAsset(SString path, const pugi::xml_documen
     }
     return asset;
 }
+
+SString MShaderAssetImporter::getIconPath(const MAsset* asset) const {
+    const auto* shaderAsset = dynamic_cast<const MShaderAsset*>(asset);
+    return shaderAsset && shaderAsset->isComputeShader()
+        ? SEngineAssetIconPaths::HIGHRES_TEX_ASSET_SHADER_COMPUTE
+        : SEngineAssetIconPaths::HIGHRES_TEX_ASSET_SHADER;
+}

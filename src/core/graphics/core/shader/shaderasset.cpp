@@ -22,16 +22,20 @@ const SString MShaderAsset::SHDR_VERT_PROGRAM_BEGIN = "#VERTEX_PASS";
 const SString MShaderAsset::SHDR_VERT_PROGRAM_END = "#END_VERTEX_PASS";
 const SString MShaderAsset::SHDR_FRAG_PROGRAM_BEGIN = "#FRAGMENT_PASS";
 const SString MShaderAsset::SHDR_FRAG_PROGRAM_END = "#END_FRAGMENT_PASS";
+const SString MShaderAsset::SHDR_COMP_PROGRAM_BEGIN = "#COMPUTE_PASS";
+const SString MShaderAsset::SHDR_COMP_PROGRAM_END = "#END_COMPUTE_PASS";
 const SString MShaderAsset::SHDR_CDATA_BEGIN = "<![CDATA[";
 const SString MShaderAsset::SHDR_CDATA_END = "]]>";
 
 const SString MShaderAsset::SHDR_VERTNODE = "vert";
 const SString MShaderAsset::SHDR_FRAGNODE= "frag";
+const SString MShaderAsset::SHDR_COMPNODE= "comp";
 
 const SString MShaderAsset::SHDR_EXTENSIONS = "#extension GL_ARB_shading_language_include : require\n"
                                               "#extension GL_NV_uniform_buffer_std430_layout : require\n";
 const SString MShaderAsset::SHDR_DEFINE_COMPILE_VERT =  "#define COMPILE_VERTEX\n";
 const SString MShaderAsset::SHDR_DEFINE_COMPILE_FRAG =  "#define COMPILE_FRAGMENT\n";
+const SString MShaderAsset::SHDR_DEFINE_COMPILE_COMP =  "#define COMPILE_COMPUTE\n";
 
 const SString MShaderAsset::SHDR_FALLBACK_MISSING_VERT_PASS = "#define NO_VERTEX_PASS_DEFINED\n";
 const SString MShaderAsset::SHDR_FALLBACK_MISSING_FRAG_PASS = "#define NO_FRAGMENT_PASS_DEFINED\n";
@@ -54,11 +58,16 @@ void MShaderAsset::loadShader()
     bool hasFragPass = data.find(SHDR_FRAG_PROGRAM_BEGIN) != std::string::npos &&
         data.find(SHDR_FRAG_PROGRAM_END) != std::string::npos;
 
+    bool hasCompPass = data.find(SHDR_COMP_PROGRAM_BEGIN) != std::string::npos &&
+        data.find(SHDR_COMP_PROGRAM_END) != std::string::npos;
+
     // replace files correctly
     data.replace(SHDR_VERT_PROGRAM_BEGIN, STR("<" + SHDR_VERTNODE.str() + ">") + SHDR_CDATA_BEGIN);
     data.replace(SHDR_FRAG_PROGRAM_BEGIN, STR("<" + SHDR_FRAGNODE.str() + ">") + SHDR_CDATA_BEGIN);
     data.replace(SHDR_VERT_PROGRAM_END, SHDR_CDATA_END + STR("</" + SHDR_VERTNODE.str() + ">"));
     data.replace(SHDR_FRAG_PROGRAM_END, SHDR_CDATA_END + STR("</" + SHDR_FRAGNODE.str() + ">"));
+    data.replace(SHDR_COMP_PROGRAM_BEGIN, STR("<" + SHDR_COMPNODE.str() + ">") + SHDR_CDATA_BEGIN);
+    data.replace(SHDR_COMP_PROGRAM_END, SHDR_CDATA_END + STR("</" + SHDR_COMPNODE.str() + ">"));
 
     pugi::xml_document document;
     auto parseRes = document.load_string(data.c_str(), pugi::parse_default);
@@ -79,8 +88,14 @@ void MShaderAsset::loadShader()
 
     auto baseSourcePath = STR(rootNode.attribute(SHDR_ATTRIB_BASE_SOURCE.c_str()).value());
 
-    MShader* built = nullptr;
-    if (baseSourcePath.empty())
+    MShaderBase* built = nullptr;
+    if (hasCompPass)
+    {
+        if (hasVertPass || hasFragPass || !baseSourcePath.empty())
+            MWARN("MShaderAsset::loadShader(): " + path + " has a compute pass - its vertex/fragment passes and base source are ignored");
+        built = loadAsComputeShader(rootNode);
+    }
+    else if (baseSourcePath.empty())
     {
         //Shader is not using a base shader file, compile as if it is an independent shader
         built = loadAsIndependantShader(rootNode, hasVertPass, hasFragPass);
@@ -112,7 +127,7 @@ void MShaderAsset::loadShader()
     valid  = true;
 }
 
-MShader* MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass,
+MStandardShader* MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SString& baseSource, const bool& hasVertPass,
                                    const bool& hasFragPass)
 {
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
@@ -138,13 +153,13 @@ MShader* MShaderAsset::loadAsSubShader(const pugi::xml_node& rootNode, const SSt
 
     std::vector<SString> propOrder;
     const auto properties = getShaderProperties(rootNode, propOrder);
-    auto* built = mnew<MShader>(vertexSource, fragmentSource, properties);
+    auto* built = mnew<MStandardShader>(vertexSource, fragmentSource, properties);
     built->setName(name);
     built->setPropertyOrder(propOrder);
     return built;
 }
 
-MShader* MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass,const bool& hasFragPass)
+MStandardShader* MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, const bool& hasVertPass,const bool& hasFragPass)
 {
     auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
     name = nameAndVersiontring.first;
@@ -171,12 +186,29 @@ MShader* MShaderAsset::loadAsIndependantShader(const pugi::xml_node& rootNode, c
 
     std::vector<SString> propOrder;
     const auto properties = getShaderProperties(rootNode, propOrder);
-    auto* built = mnew<MShader>(vertexSource, fragmentSource, properties);
+    auto* built = mnew<MStandardShader>(vertexSource, fragmentSource, properties);
     built->setName(name);
     built->setPropertyOrder(propOrder);
     return built;
 }
 
+
+MComputeShader* MShaderAsset::loadAsComputeShader(const pugi::xml_node& rootNode)
+{
+    auto nameAndVersiontring = getShaderNameAndVersion(rootNode);
+    name = nameAndVersiontring.first;
+    auto versionStr = nameAndVersiontring.second + "\n";
+
+    const SString computeSource = versionStr + SHDR_EXTENSIONS + SHDR_DEFINE_COMPILE_COMP
+                                + rootNode.child(SHDR_COMPNODE.c_str()).text().get();
+
+    std::vector<SString> propOrder;
+    const auto properties = getShaderProperties(rootNode, propOrder);
+    auto* built = mnew<MComputeShader>(computeSource, properties);
+    built->setName(name);
+    built->setPropertyOrder(propOrder);
+    return built;
+}
 
 std::unordered_map<SString, SShaderPropertyValue> MShaderAsset::getShaderProperties(
     pugi::xml_node node, std::vector<SString>& outOrder)
@@ -253,6 +285,14 @@ MShaderAsset::~MShaderAsset() {
     retiredShaders.clear();
 }
 
-MShader *MShaderAsset::getShader() const {
-    return shader;
+MStandardShader* MShaderAsset::getShader() const {
+    return dynamic_cast<MStandardShader*>(shader);
+}
+
+MComputeShader* MShaderAsset::getComputeShader() const {
+    return dynamic_cast<MComputeShader*>(shader);
+}
+
+bool MShaderAsset::isComputeShader() const {
+    return shader && shader->isCompute();
 }

@@ -15,6 +15,7 @@
 #include "core/utils/serialisation_utils.h"
 #include "default_textures.h"
 #include "shadercompiler.h"
+#include "core/memory/mnew.h"
 
 
 void SShaderPropertyValue::print() {
@@ -47,164 +48,87 @@ void SShaderPropertyValue::print() {
     }
 }
 
-MShader::MShader(const SString& vertProg, const SString& fragProg, const std::unordered_map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse) {
-    this->vertexShaderSource = std::move(vertProg);
-    this->fragmentShaderSource = std::move(fragProg);
-    this->properties = std::move(properties);
-    this->compileOnFirstUse = compileOnFirstUse;
-
-    // Default order from the map (arbitrary hash order).
-    // MShaderAsset overrides this with the .mesl XML declaration order
-    // via setPropertyOrder() immediately after construction.
-    for (auto& [key, _] : this->properties)
+MShaderBase::MShaderBase(const std::unordered_map<SString, SShaderPropertyValue>& props, bool compileFirstUse)
+    : compileOnFirstUse(compileFirstUse), properties(props)
+{
+    // Default order from the map (arbitrary hash order). MShaderAsset
+    // overrides this with the .mesl declaration order via setPropertyOrder().
+    for (auto& [key, _] : properties)
         propertyOrder.push_back(key);
-
-    if(!compileOnFirstUse)
-        compile();
 }
 
-MShader::~MShader() {
+MShaderBase::~MShaderBase() {
     if(compiled) {
         glDeleteProgram(shaderProgram);
     }
 }
 
-std::unordered_map<SString, SShaderPropertyValue> MShader::getProperties() const {
+std::unordered_map<SString, SShaderPropertyValue> MShaderBase::getProperties() const {
     return properties;
 }
 
-GLint MShader::getUniformLocation(const SString& name) const {
+bool MShaderBase::ensureCompiled() {
+    if (!compiled && compileOnFirstUse) {
+        compileOnFirstUse = false;   // one attempt - a broken shader is reported once
+        compile();
+    }
+    return compiled;
+}
+
+GLuint MShaderBase::getProgramHandle() {
+    return ensureCompiled() ? shaderProgram : 0;
+}
+
+GLint MShaderBase::getUniformLocation(const SString& name) const {
     auto nameBuff = name.c_str();
     return glGetUniformLocation(shaderProgram, nameBuff);
 }
 
-void MShader::compile() {
-    if(compiled) {
-        MWARN(STR("Shader already compiled"));
-        return;
-    }
-    compiled = MShaderCompiler::compileShader(getName(), this->vertexShaderSource, this->fragmentShaderSource, this->shaderProgram);
-}
-
-void MShader::bind() {
-    if(!compiled && compileOnFirstUse) {
-        compile();
-    }
-
-    if(!compiled) {
-        MERROR(STR("Shader cannot be bound! Reason: Error during compilation and/or not compiled."));
-        return;
-    }
-
-    glUseProgram(shaderProgram);
-}
-
-void MShader::setPropertyValue(const SString &name, const SShaderPropertyValue &value) {
-    if(properties.contains(name)) {
-        properties[name] = value;
-    }
-
-    switch (value.getType()) {
-        case Int:
-            setUniform1i(name, value.getIntVal());
-            break;
-    case Bool:
-        setUniform1i(name, value.getBoolValue() ? 1 : 0);
-        break;
-        case Float:
-            setUniform1f(name, value.getFloatVal());
-            break;
-        case UniformVec2:
-            setUniform2f(name, value.getVec2Val());
-            break;
-        case UniformVec3:
-            setUniform3f(name, value.getVec3Val());
-            break;
-        case Color:
-            // Colours are picked in sRGB; shaders work in linear.
-            setUniform4f(name, MColorSpace::srgbToLinear(value.getColor()));
-            break;
-        case UniformVec4:
-            setUniform4f(name, value.getVec4Val());
-            break;
-        case Matrix4:
-            setUniformMat4(name, value.getMat4Val());
-            break;
-        case Texture:
-            setTexture(name, value.getTexAssetReference());   // empty -> white
-            break;
-        default:
-            break;
+void MShaderBase::setUniform1ui(const SString &name, unsigned int value) const {
+    auto location = getUniformLocation(name);
+    if (location != -1) {
+        glUniform1ui(location, value);
     }
 }
 
-void MShader::setUniform1i(const SString &name, int value) const {
+void MShaderBase::setUniform1i(const SString &name, int value) const {
     auto location = getUniformLocation(name);
     if (location != -1)  {
         glUniform1i(location, value);
     }
 }
 
-void MShader::setUniform1f(const SString &name, float value) const {
+void MShaderBase::setUniform1f(const SString &name, float value) const {
     auto location = getUniformLocation(name);
     if (location != -1) {
         glUniform1f(location, value);
     }
 }
 
-void MShader::setUniform2f(const SString &name, const SVector2 &value) const {
+void MShaderBase::setUniform2f(const SString &name, const SVector2 &value) const {
     auto location = getUniformLocation(name);
     if (location != -1) {
         glUniform2f(location, value.x, value.y);
     }
 }
 
-void MShader::setUniform3f(const SString &name, const SVector3 &value) const {
+void MShaderBase::setUniform3f(const SString &name, const SVector3 &value) const {
     auto location = getUniformLocation(name);
     if (location != -1) {
         glUniform3f(location, value.x, value.y, value.z);
     }
 }
 
-void MShader::setUniform4f(const SString &name, const SVector4 &value) const {
+void MShaderBase::setUniform4f(const SString &name, const SVector4 &value) const {
     auto location = getUniformLocation(name);
     if (location != -1) {
         glUniform4f(location, value.x, value.y, value.z, value.w);
     }
 }
 
-void MShader::setUniformMat4(const SString &name, const SMatrix4 &value) const {
+void MShaderBase::setUniformMat4(const SString &name, const SMatrix4 &value) const {
     auto location = getUniformLocation(name);
     if (location != -1) {
         glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(value));
     }
-}
-
-void MShader::setTexture(const SString &name, const SString& textureAssetPath, const unsigned int& index) const {
-    auto location = getUniformLocation(name);
-    if (location == -1) return;
-
-    // Nothing assigned, or the asset can't be loaded: sample white instead
-    // of whatever an earlier draw left bound on this unit.
-    if (textureAssetPath.empty()) {
-        setTextureWhite(name, index);
-        return;
-    }
-
-    // textureAssetPath is a reference string — "guid:<id>" or a bare path.
-    auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAssetFromReference<MTextureAsset>(textureAssetPath);
-    if(!asset || !asset->getTexture()) {
-        MERROR("Shader: Invalid Texture Asset " + textureAssetPath);
-        setTextureWhite(name, index);
-        return;
-    }
-    asset->bindForRendering(index);
-    glUniform1i(location, static_cast<GLint>(index));
-}
-
-void MShader::setTextureWhite(const SString &name, const unsigned int& index) const {
-    auto location = getUniformLocation(name);
-    if (location == -1) return;
-    MDefaultTextures::bindWhite(index);
-    glUniform1i(location, static_cast<GLint>(index));
 }

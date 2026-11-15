@@ -66,7 +66,7 @@ sf::Texture* MAssetReferenceControl::getFileIcon(IAssetManagerSubsystem* am, TAs
         auto ext = FileIO::getFileExtension(asset->getPath());
         if (imp->canImport(ext))
         {
-            const auto iconAsset = am->getAsset<MTextureAsset>(imp->getIconPath());
+            const auto iconAsset = am->getAsset<MTextureAsset>(imp->getIconPath(asset.get()));
             if (iconAsset && iconAsset->getTexture())
                 if (auto* core = iconAsset->getTexture()->getCoreTexture())
                     return core;

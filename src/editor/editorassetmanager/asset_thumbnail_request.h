@@ -13,6 +13,7 @@ enum class EThumbnailAssetType
 {
     Unknown,
     StaticMesh,
+    SkeletalMesh,  // drawn in bind pose
     Material,  // material asset - rendered onto a UV sphere
 };
 

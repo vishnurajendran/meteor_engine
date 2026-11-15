@@ -7,13 +7,9 @@
 #include <vector>
 #include <algorithm>
 
-// --- Overlay style constants -------------------------------------------------
-static constexpr ImU32  OVL_BG_PROF      = IM_COL32(22,  22,  22,  210);
-static constexpr ImU32  OVL_BORDER_PROF  = IM_COL32(70,  70,  70,  200);
-static constexpr ImU32  OVL_DIVIDER_PROF = IM_COL32(80,  80,  80,  200);
-static constexpr float  OVL_ROUNDING_P   = 0.0f;
-static constexpr float  OVL_PAD_P        = 6.0f;
-static constexpr float  GRAPH_RIGHT_PAD  = 12.0f; // <-- Extra breathing room on the right side
+// --- Style constants ----------------------------------------------------------
+static constexpr ImU32  DIVIDER_COLOR    = IM_COL32(80,  80,  80,  200);
+static constexpr float  GRAPH_RIGHT_PAD  = 12.0f; // breathing room on the right side
 
 static constexpr ImU32 GRAPH_COLORS[] = {
     IM_COL32(100, 180, 255, 255),   // blue
@@ -24,23 +20,6 @@ static constexpr ImU32 GRAPH_COLORS[] = {
     IM_COL32(255, 160, 100, 255),   // orange
 };
 static constexpr int GRAPH_COLOR_COUNT = sizeof(GRAPH_COLORS) / sizeof(GRAPH_COLORS[0]);
-
-static void beginProfilerPanel(const char* id, ImVec2 screenPos, ImVec2 size)
-{
-    ImGui::SetCursorScreenPos(screenPos);
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(OVL_BG_PROF));
-    ImGui::PushStyleColor(ImGuiCol_Border,  ImGui::ColorConvertU32ToFloat4(OVL_BORDER_PROF));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(OVL_PAD_P, OVL_PAD_P));
-    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, OVL_ROUNDING_P);
-    ImGui::BeginChild(id, size, ImGuiChildFlags_Borders);
-}
-
-static void endProfilerPanel()
-{
-    ImGui::EndChild();
-    ImGui::PopStyleVar(2);
-    ImGui::PopStyleColor(2);
-}
 
 void SProfilerHistory::push(float value)
 {
@@ -66,16 +45,18 @@ void MProfilerStatsDisplayer::sampleHistory()
         histories[key].push(ms);
 }
 
-void MProfilerStatsDisplayer::draw(const ImVec2& viewportMin, const ImVec2& viewportSize)
+void MProfilerStatsDisplayer::draw()
 {
     sampleHistory();
 
     const auto& times = MSimpleProfiler::getExecutionTimes();
-    if (times.empty()) return;
+    if (times.empty())
+    {
+        ImGui::TextDisabled("No profiler samples yet");
+        return;
+    }
 
-    const float margin  = 10.0f;
-    const float panelW  = 420.0f;
-    const float graphH  = 38.0f;
+    const float graphH = 38.0f;
 
     // Group and sort keys by category dynamically using the '.' separator
     std::map<std::string, std::vector<std::pair<SString, float>>> groupedTimes;
@@ -92,11 +73,6 @@ void MProfilerStatsDisplayer::draw(const ImVec2& viewportMin, const ImVec2& view
         groupedTimes[category].push_back({ keyName, timeMs });
     }
 
-    float posX = viewportMin.x + margin;
-    float posY = viewportMin.y + margin;
-    float activePanelH = std::clamp(lastPanelHeight, 50.0f, viewportSize.y - margin * 2.0f);
-
-    beginProfilerPanel("##profiler_graphs", { posX, posY }, { panelW, activePanelH });
     {
         // -- Main Title Header ---------------------------------------------
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2.0f);
@@ -114,7 +90,7 @@ void MProfilerStatsDisplayer::draw(const ImVec2& viewportMin, const ImVec2& view
         ImGui::GetWindowDrawList()->AddLine(
             ImGui::GetCursorScreenPos(),
             {ImGui::GetCursorScreenPos().x + ImGui::GetContentRegionAvail().x - GRAPH_RIGHT_PAD, ImGui::GetCursorScreenPos().y},
-            OVL_DIVIDER_PROF);
+            DIVIDER_COLOR);
         ImGui::Dummy({0.0f, 4.0f});
 
         // -- Process Categories -------------------------------------------
@@ -173,10 +149,7 @@ void MProfilerStatsDisplayer::draw(const ImVec2& viewportMin, const ImVec2& view
                 ImGui::Unindent(12.0f);
             }
         }
-
-        lastPanelHeight = ImGui::GetCursorPosY() + OVL_PAD_P * 2.0f;
     }
-    endProfilerPanel();
 }
 
 void MProfilerStatsDisplayer::drawLineGraph(const SProfilerHistory& history,

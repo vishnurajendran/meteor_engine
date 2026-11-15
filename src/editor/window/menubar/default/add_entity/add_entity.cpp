@@ -2,6 +2,10 @@
 #include <GL/glew.h>
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
+#include "core/engine/3d/skeletal/bone_control_entity.h"
+#include "core/engine/3d/skeletal/bone_socket_entity.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_entity.h"
+#include "editor/app/editorapplication.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/audio/audio_entity/audio_source_entity.h"
 #include "core/engine/entities/spatial/spatial.h"
@@ -84,6 +88,41 @@ bool MAddStaticMeshItem::registered = []() {
     return true;
 }();
 void MAddStaticMeshItem::onSelect() {  MSpatialEntity::createInstance<MStaticMeshEntity>("StaticMesh"); }
+
+// Skeletal mesh / sockets / controls
+bool MAddSkeletalMeshItem::registered = []() {
+    MMenubarTreeNode::registerItem(mnew<MAddSkeletalMeshItem>());
+    return true;
+}();
+void MAddSkeletalMeshItem::onSelect()
+{
+    MEditorApplication::SelectedObject = MSpatialEntity::createInstance<MSkeletalMeshEntity>("SkeletalMesh");
+}
+
+template <typename T>
+static void spawnUnderSelectedSkeletalMesh(const char* name)
+{
+    auto* parent = dynamic_cast<MSkeletalMeshEntity*>(MEditorApplication::SelectedObject);
+    auto* entity = MSpatialEntity::createInstance<T>(name);
+    if (parent)
+        entity->setParent(parent);
+    else
+        MWARN(SString::format("{0} must be a direct child of a Skeletal Mesh entity - select one first, or reparent it",
+                              SString(name)));
+    MEditorApplication::SelectedObject = entity;
+}
+
+bool MAddBoneSocketItem::registered = []() {
+    MMenubarTreeNode::registerItem(mnew<MAddBoneSocketItem>());
+    return true;
+}();
+void MAddBoneSocketItem::onSelect() { spawnUnderSelectedSkeletalMesh<MBoneSocketEntity>("BoneSocket"); }
+
+bool MAddBoneControlItem::registered = []() {
+    MMenubarTreeNode::registerItem(mnew<MAddBoneControlItem>());
+    return true;
+}();
+void MAddBoneControlItem::onSelect() { spawnUnderSelectedSkeletalMesh<MBoneControlEntity>("BoneControl"); }
 
 void MAddEmptySpatialItem::onSelect() { MSpatialEntity::createInstance("Spatial Entity"); }
 bool MAddEmptySpatialItem::registered = []()

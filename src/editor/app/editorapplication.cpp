@@ -17,6 +17,7 @@
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/jobs/job_system.h"
+#include "core/engine/animation/animation_subsystem.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/graphics/core/render-pipeline/render_queue.h"
@@ -70,6 +71,10 @@ void MEditorApplication::run() {
     {
         START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
         sceneManagerRef->update(deltaTime);
+        // Poses and skinning: after every onTick (a playClip there shows this
+        // frame), before onLateTick (followers see this frame's bones).
+        if (auto* animation = MEngineSubsystemRegistry::getSubsystem<MAnimationSubsystem>())
+            animation->update(deltaTime);
         // after every onTick, so followers (cameras) see this frame's poses
         sceneManagerRef->lateUpdate(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
@@ -165,6 +170,10 @@ void MEditorApplication::registerSubsystems()
 
     // Init Physics engine
     physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
+
+    // Animation - pose evaluation and skinning. Driven by the application
+    // between the scene's update and lateUpdate, not ticked.
+    MEngineSubsystemRegistry::registerSubsystem<MAnimationSubsystem>();
 
     // Engine domains - creates DOMAIN_0, the editor's script sandbox
     MEngineSubsystemRegistry::registerSubsystem<MEngineDomainSubsystem>();
@@ -491,4 +500,4 @@ MApplication* getAppInstance(){
     MVERBOSE("Creating Editor Application instance");
     return mnew<MEditorApplication>();
 }
-#endif
+#endif

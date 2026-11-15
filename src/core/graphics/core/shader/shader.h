@@ -61,45 +61,56 @@ public:
     void print();
 };
 
-class MShader : public MObject {
-    DEFINE_OBJECT_SUBCLASS(MShader)
-private:
-    GLuint shaderProgram;
-    GLint getUniformLocation(const SString& name) const;
-    SString vertexShaderSource;
-    SString fragmentShaderSource;
-    bool compiled = false;
-    bool compileOnFirstUse;
-    std::unordered_map<SString, SShaderPropertyValue> properties;
-    std::vector<SString> propertyOrder;  // .mesl declaration order
-private:
-    void compile();
+// Common to every shader program loaded from a .mesl: the GL program, its
+// compile state and the properties declared in the file. Two kinds:
+//
+//   MStandardShader  vertex + fragment passes - materials, stages, effects
+//   MComputeShader   a #COMPUTE_PASS - dispatched by code (e.g. skinning)
+//
+// MShaderAsset builds the right one from the file; getShader() /
+// getComputeShader() hand out the typed pointer.
+class MShaderBase : public MObject {
+    DEFINE_OBJECT_SUBCLASS(MShaderBase)
 public:
-    MShader(const SString& vertProg, const SString& fragProg, const std::unordered_map<SString, SShaderPropertyValue>& properties, const bool& compileOnFirstUse=true);
-    ~MShader() override;
-    [[nodiscard]] std::unordered_map<SString, SShaderPropertyValue>  getProperties() const;
-    void bind();
-    void setPropertyValue(const SString& name, const SShaderPropertyValue& value);
+    ~MShaderBase() override;
 
+    [[nodiscard]] virtual bool isCompute() const = 0;
+
+    // The linked GL program, compiling it first if needed. 0 if it failed.
+    GLuint getProgramHandle();
+    [[nodiscard]] bool isCompiled() const { return compiled; }
+
+    [[nodiscard]] std::unordered_map<SString, SShaderPropertyValue> getProperties() const;
     [[nodiscard]] const std::vector<SString>& getPropertyOrder() const { return propertyOrder; }
     void setPropertyOrder(const std::vector<SString>& order) { propertyOrder = order; }
 
-    // Binds a texture asset to `index` and points sampler `name` at it.
-    // Public so materials can give each texture its own unit.
-    // An empty reference (or a missing asset) binds a 1x1 white texture, so
-    // "texture × colour" falls back to the colour.
-    void setTexture(const SString &name,const SString& textureAssetPath, const unsigned int& index=0) const;
-    void setTextureWhite(const SString &name, const unsigned int& index=0) const;
+protected:
+    MShaderBase(const std::unordered_map<SString, SShaderPropertyValue>& properties, bool compileOnFirstUse);
 
-private:
+    // Builds and links `shaderProgram`; sets `compiled`.
+    virtual void compile() = 0;
+    // Compiles on first use if allowed. False (with an error) if unusable.
+    bool ensureCompiled();
+
+    GLint getUniformLocation(const SString& name) const;
     void setUniform1i(const SString &name, int value) const;
+    void setUniform1ui(const SString &name, unsigned int value) const;
     void setUniform1f(const SString &name, float value) const;
     void setUniform2f(const SString &name, const SVector2 &value) const;
     void setUniform3f(const SString &name, const SVector3 &value) const;
     void setUniform4f(const SString &name, const SVector4 &value) const;
     void setUniformMat4(const SString &name, const SMatrix4 &value) const;
+
+    GLuint shaderProgram = 0;
+    bool   compiled = false;
+    bool   compileOnFirstUse = true;
+    std::unordered_map<SString, SShaderPropertyValue> properties;
+    std::vector<SString> propertyOrder;  // .mesl declaration order
 };
 
-
+// The concrete kinds - included here so code that includes shader.h keeps
+// seeing a complete shader type.
+#include "standard_shader.h"
+#include "compute_shader.h"
 
 #endif //SHADER_H

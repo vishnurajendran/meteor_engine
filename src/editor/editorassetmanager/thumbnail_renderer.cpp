@@ -7,6 +7,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
+#include "core/engine/3d/skeletal/skeletal_mesh.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_asset.h"
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/texture/textureasset.h"
@@ -211,6 +213,8 @@ void MThumbnailRenderer::requestThumbnail(MAsset* asset, MThumbnailCache& cache)
     EThumbnailAssetType type = EThumbnailAssetType::Unknown;
     if (dynamic_cast<MStaticMeshAsset*>(asset))
         type = EThumbnailAssetType::StaticMesh;
+    else if (dynamic_cast<MSkeletalMeshAsset*>(asset))
+        type = EThumbnailAssetType::SkeletalMesh;
     else if (dynamic_cast<MMaterialAsset*>(asset))
         type = EThumbnailAssetType::Material;
     else
@@ -245,8 +249,17 @@ bool MThumbnailRenderer::tick(MThumbnailCache& cache)
     SAssetThumbnailRequest req = requestQueue.front();
     requestQueue.pop();
 
-    if (!req.asset) return false;
     if (cache.has(req.assetId)) return false;
+
+    // The queued pointer may be stale: the asset can be deleted or recreated
+    // (reimported as another class) while the request waits. Resolve by GUID.
+    auto* assetManager = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    req.asset = assetManager ? assetManager->getAssetById<MAsset>(req.assetId).get() : nullptr;
+    if (!req.asset) return false;
+    if (dynamic_cast<MStaticMeshAsset*>(req.asset))
+        req.type = EThumbnailAssetType::StaticMesh;
+    else if (dynamic_cast<MSkeletalMeshAsset*>(req.asset))
+        req.type = EThumbnailAssetType::SkeletalMesh;
 
     sf::Texture* thumb = nullptr;
 
@@ -254,6 +267,9 @@ bool MThumbnailRenderer::tick(MThumbnailCache& cache)
     {
         case EThumbnailAssetType::StaticMesh:
             thumb = renderMeshThumbnail(dynamic_cast<MStaticMeshAsset*>(req.asset));
+            break;
+        case EThumbnailAssetType::SkeletalMesh:
+            thumb = renderSkeletalMeshThumbnail(dynamic_cast<MSkeletalMeshAsset*>(req.asset));
             break;
         case EThumbnailAssetType::Material:
             thumb = renderMaterialThumbnail(dynamic_cast<MMaterialAsset*>(req.asset));
@@ -325,6 +341,55 @@ sf::Texture* MThumbnailRenderer::renderMeshThumbnail(MStaticMeshAsset* asset)
 
     glm::vec3 meshColor(0.72f, 0.72f, 0.75f);
     drawMeshes(draws, cam, meshColor);
+
+    auto* tex = readbackToTexture();
+    fbo.unbind();
+    return tex;
+}
+
+// -- Skeletal mesh thumbnail (bind pose) -----------------------------------------
+
+sf::Texture* MThumbnailRenderer::renderSkeletalMeshThumbnail(MSkeletalMeshAsset* asset)
+{
+    if (!asset) return nullptr;
+    const auto& meshes = asset->getMeshes();
+    if (meshes.empty()) return nullptr;
+
+    // Bind-pose vertices are drawn as stored, before the pivot's root offset.
+    glm::vec3 aabbMin( 1e9f);
+    glm::vec3 aabbMax(-1e9f);
+    std::vector<SMeshDraw> draws;
+    for (auto* m : meshes)
+    {
+        if (!m) continue;
+        for (const auto& v : m->getVertices())
+        {
+            aabbMin = glm::min(aabbMin, v.Position);
+            aabbMax = glm::max(aabbMax, v.Position);
+        }
+        SMeshDraw d;
+        d.vao   = m->getBindVAO();
+        d.ebo   = m->getEBO();
+        d.count = m->getIndexCount();
+        if (d.vao != 0) draws.push_back(d);
+    }
+    if (draws.empty() || aabbMin.x > 1e8f) return nullptr;
+
+    const glm::vec3 center = (aabbMin + aabbMax) * 0.5f;
+    const float     radius = glm::max(glm::length(aabbMax - center), 0.001f);
+    SThumbnailCamera cam = computeThumbnailCamera(center, radius);
+
+    fbo.bindAsActive();
+    glViewport(0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glClearColor(0.12f, 0.12f, 0.12f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    drawMeshes(draws, cam, glm::vec3(0.72f, 0.75f, 0.80f));
 
     auto* tex = readbackToTexture();
     fbo.unbind();

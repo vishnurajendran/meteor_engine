@@ -160,6 +160,25 @@ bool MEditorAssetManager::onFileAdded(const SString& rawPath, bool rebuildTree)
     return true;
 }
 
+MAsset* MEditorAssetManager::reimportAsset(const SString& rawPath)
+{
+    const SString path = MAssetPath::normalize(rawPath);
+    auto it = assetMap.find(path);
+    const bool wasSelected = it != assetMap.end() && it->second
+                          && MEditorApplication::SelectedObject == it->second;
+
+    unregisterAsset(path);              // drops the selection if it pointed here
+    failedAssetPaths.erase(path);
+    if (!onFileAdded(path, true))
+        return nullptr;
+
+    MAsset* asset = assetMap[path];
+    if (wasSelected)
+        MEditorApplication::SelectedObject = asset;
+    requestThumbnail(asset);
+    return asset;
+}
+
 bool MEditorAssetManager::unregisterAsset(const SString& path)
 {
     watcherThread.unwatchPath(path);

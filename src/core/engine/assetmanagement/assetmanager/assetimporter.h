@@ -38,6 +38,10 @@ public:
     /// returns the icon to represent this asset.\n
     /// used by **EDITOR** application
     virtual SString getIconPath() const;
+    /// The icon for one loaded asset. Override when assets of the same type
+    /// need different icons (e.g. compute vs standard shaders); defaults to
+    /// getIconPath(). `asset` may be nullptr.
+    virtual SString getIconPath(const MAsset* asset) const { return getIconPath(); }
 
     // special open requests
     /// attempts opening the asset\n

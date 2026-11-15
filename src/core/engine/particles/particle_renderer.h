@@ -35,7 +35,7 @@
 
 class MMaterial;
 class MParticleEmitter;
-class MShader;
+class MStandardShader;
 
 class IParticleRenderer : public IParticleSettings
 {
@@ -141,7 +141,7 @@ private:
     void uploadInstances();
 
     MMaterial* material       = nullptr;   // owned
-    MShader*   materialShader = nullptr;   // owned by the shader asset
+    MStandardShader*   materialShader = nullptr;   // owned by the shader asset
 
     unsigned int instanceVBO      = 0;
     size_t       instanceCapacity = 0;      // in instances, not bytes
