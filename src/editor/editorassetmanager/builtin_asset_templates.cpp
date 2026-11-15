@@ -26,7 +26,7 @@ namespace
 // ---------------------------------------------------------------------------
 // Shader-declared defaults
 //
-// The live MShader's property values can be changed by materials that share
+// The live MStandardShader's property values can be changed by materials that share
 // it, so defaults are read from the shader file instead. Only the
 // <properties> block is parsed: the rest of a .mesl file is GLSL and is not
 // valid XML until MShaderAsset preprocesses it.
@@ -107,7 +107,7 @@ bool generateMaterial(const STemplateContext& ctx, SString& outContent)
         return false;
     }
 
-    MShader* shader = shaderAsset->getShader();
+    MStandardShader* shader = shaderAsset->getShader();
     if (!shader)
     {
         MERROR(SString::format("MaterialTemplate:: shader has errors {0}", shaderPath));
@@ -213,4 +213,4 @@ void registerBuiltInAssetTemplates(MAssetTemplateRegistry& registry)
     material.params.push_back(modeParam);
 
     registry.registerTemplate(material);
-}
+}

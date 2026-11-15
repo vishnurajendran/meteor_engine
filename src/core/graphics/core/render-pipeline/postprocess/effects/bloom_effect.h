@@ -55,9 +55,9 @@ private:
     int builtWidth  = 0;
     int builtHeight = 0;
 
-    MShader* downsampleShader = nullptr;   // owned by the asset manager
-    MShader* upsampleShader   = nullptr;
-    MShader* compositeShader  = nullptr;
+    MStandardShader* downsampleShader = nullptr;   // owned by the asset manager
+    MStandardShader* upsampleShader   = nullptr;
+    MStandardShader* compositeShader  = nullptr;
 };
 
 #endif // BLOOM_EFFECT_H

@@ -83,6 +83,13 @@ public:
     // (MAsset::dependsOn), e.g. materials using a reloaded shader.
     virtual bool reloadAsset(MAsset* asset);
 
+    // Destroys the asset at `path` and imports the file again, through the
+    // importers, as a new object with the same GUID. Use it when a setting
+    // decides the asset's class (a model's importAs) - reloadAsset() keeps
+    // the existing object. Handles resolve to the new asset by GUID; raw
+    // pointers to the old one dangle. Returns the new asset, or nullptr.
+    virtual MAsset* reimportAsset(const SString& path);
+
     // Every asset path this manager can provide. The editor lists what is
     // loaded (everything); the player lists the whole package, loaded or not.
     [[nodiscard]] virtual std::vector<SString> listAssetPaths() const;

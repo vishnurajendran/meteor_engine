@@ -53,6 +53,7 @@ struct SEngineAssetIconPaths
     static constexpr const char* HIGHRES_TEX_ASSET_STATICMESH   = "meteor_assets/engine_assets/icons/highres/file-glb.png";
     static constexpr const char* HIGHRES_TEX_ASSET_MATERIAL     = "meteor_assets/engine_assets/icons/highres/file-material.png";
     static constexpr const char* HIGHRES_TEX_ASSET_SHADER       = "meteor_assets/engine_assets/icons/highres/file-shader.png";
+    static constexpr const char* HIGHRES_TEX_ASSET_SHADER_COMPUTE = "meteor_assets/engine_assets/icons/highres/file-shader-compute.png";
     static constexpr const char* HIGHRES_TEX_ASSET_SKYBOX       = "meteor_assets/engine_assets/icons/highres/file-skybox.png";
     static constexpr const char* HIGHRES_TEX_ASSET_TEXT         = "meteor_assets/engine_assets/icons/highres/file-text.png";
     static constexpr const char* HIGHRES_TEX_ASSET_AUDIOCLIP    = "meteor_assets/engine_assets/icons/highres/file-sound.png";

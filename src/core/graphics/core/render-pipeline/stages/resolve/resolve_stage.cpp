@@ -68,7 +68,7 @@ void MResolveStage::render(IRenderPipeline* const pipeline)
 
     auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                            ->getAsset<MShaderAsset>(RESOLVE_SHADER_PATH);
-    MShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
+    MStandardShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
     if (!shader) return;
 
     const SVector2 res = pipeline->getRenderResolution();

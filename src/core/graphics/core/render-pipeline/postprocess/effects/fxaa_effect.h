@@ -38,7 +38,7 @@ public:
     bool apply(const SPostProcessContext& ctx) override;
 
 private:
-    MShader* shader = nullptr;   // owned by the asset manager
+    MStandardShader* shader = nullptr;   // owned by the asset manager
 };
 
 #endif // FXAA_EFFECT_H

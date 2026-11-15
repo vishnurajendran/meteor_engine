@@ -14,13 +14,13 @@
 
 
 class MSkyboxEntity;
-class MShader;
+class MStandardShader;
 
 class MProceduralSkyboxDrawCall : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MProceduralSkyboxDrawCall)
 public:
-    explicit MProceduralSkyboxDrawCall(MShader* shader);
+    explicit MProceduralSkyboxDrawCall(MStandardShader* shader);
     ~MProceduralSkyboxDrawCall();
 
     // Called by MProceduralSkyboxStage - mirrors MSkyboxDrawCall interface.
@@ -49,7 +49,7 @@ private:
     void ensureCubeReady();
     void uploadUniforms(const SMatrix4& proj, const SMatrix4& rotView) const;
 
-    MShader*     shader     = nullptr;
+    MStandardShader*     shader     = nullptr;
     unsigned int cubeVAO    = 0;
     unsigned int cubeVBO    = 0;
     SVector2     resolution = SVector2(1280, 720);

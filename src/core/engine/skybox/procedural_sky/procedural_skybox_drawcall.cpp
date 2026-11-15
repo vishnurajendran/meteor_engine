@@ -24,7 +24,7 @@ static constexpr float CUBE_VERTS[] = {
      1.0f, -1.0f, -1.0f,   -1.0f, -1.0f,  1.0f,    1.0f, -1.0f,  1.0f,
 };
 
-MProceduralSkyboxDrawCall::MProceduralSkyboxDrawCall(MShader* shader)
+MProceduralSkyboxDrawCall::MProceduralSkyboxDrawCall(MStandardShader* shader)
     : shader(shader) {}
 
 MProceduralSkyboxDrawCall::~MProceduralSkyboxDrawCall()

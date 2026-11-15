@@ -13,7 +13,7 @@
 #include "core/graphics/core/shader/shaderasset.h"
 #include "core/utils/logger.h"
 
-unsigned int MPostProcessEffect::bindFullscreenShader(MShader* shader)
+unsigned int MPostProcessEffect::bindFullscreenShader(MStandardShader* shader)
 {
     if (!shader) return 0;
     shader->bind();
@@ -29,7 +29,7 @@ unsigned int MPostProcessEffect::bindFullscreenShader(MShader* shader)
     return static_cast<unsigned int>(prog);
 }
 
-unsigned int MPostProcessEffect::beginFullscreen(MShader* shader, const SPostProcessContext& ctx)
+unsigned int MPostProcessEffect::beginFullscreen(MStandardShader* shader, const SPostProcessContext& ctx)
 {
     const GLuint progId = bindFullscreenShader(shader);
     if (!progId) return 0;
@@ -51,7 +51,7 @@ void MPostProcessEffect::drawFullscreen(const SPostProcessContext& ctx)
     glUseProgram(0);
 }
 
-MShader* MPostProcessEffect::loadShader(const char* path)
+MStandardShader* MPostProcessEffect::loadShader(const char* path)
 {
     auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                      ->getAsset<MShaderAsset>(path);

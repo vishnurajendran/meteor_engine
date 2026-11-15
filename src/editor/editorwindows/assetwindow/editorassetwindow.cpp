@@ -1807,7 +1807,7 @@ sf::Texture* MEditorAssetWindow::getFileIcon(IAssetManagerSubsystem* am, SAssetD
     {
         auto ext = FileIO::getFileExtension(asset->getPath());
         if (importer->canImport(ext))
-            return am->getAsset<MTextureAsset>(importer->getIconPath())
+            return am->getAsset<MTextureAsset>(importer->getIconPath(asset->getAsset()))
                       ->getTexture()->getCoreTexture();
     }
 
@@ -1840,4 +1840,4 @@ void MEditorAssetWindow::doAssetDragSource(SString key,
 
         ImGui::EndDragDropSource();
     }
-}
+}

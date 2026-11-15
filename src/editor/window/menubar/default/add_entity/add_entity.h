@@ -71,6 +71,39 @@ private:
     static bool registered;
 };
 
+// -- Animation -------------------------------------------------------------------
+class MAddSkeletalMeshItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddSkeletalMeshItem)
+public:
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] SString getPath()     const override { return "Add/3D Object/New Skeletal Mesh"; }
+    void onSelect() override;
+private:
+    static bool registered;
+};
+
+// Sockets and controls must be direct children of a skeletal mesh entity:
+// they are created under the selected one (or at the root, with an
+// inspector warning, if nothing suitable is selected).
+class MAddBoneSocketItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddBoneSocketItem)
+public:
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] SString getPath()     const override { return "Add/Animation/Bone Socket"; }
+    void onSelect() override;
+private:
+    static bool registered;
+};
+
+class MAddBoneControlItem : public MMenubarItem {
+    DEFINE_OBJECT_SUBCLASS(MAddBoneControlItem)
+public:
+    [[nodiscard]] int     getPriority() const override { return PRIORITY_REGULAR + 3; }
+    [[nodiscard]] SString getPath()     const override { return "Add/Animation/Bone Control"; }
+    void onSelect() override;
+private:
+    static bool registered;
+};
 
 REGISTER_SPATIAL_ENTITY_CREATE_MENU(
     MAddPointLightItem,
@@ -208,4 +241,4 @@ REGISTER_SPATIAL_ENTITY_CREATE_MENU(
 
 
 
-#endif //ADD_ENTITY_MENU_H
+#endif //ADD_ENTITY_MENU_H

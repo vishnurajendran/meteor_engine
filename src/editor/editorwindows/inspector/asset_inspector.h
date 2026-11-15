@@ -17,6 +17,9 @@ class MCubemapAsset;
 class MAudioClipAsset;
 class MShaderAsset;
 class MStaticMeshAsset;
+class MSkeletalMeshAsset;
+class MAnimClipAsset;
+struct SModelImportSettings;
 class MMaterialPropertyControl;
 class MAssetReferenceControl;
 class MAudioWaveform;
@@ -41,6 +44,16 @@ private:
     static void drawTextAsset       (MTextAsset*        asset);
     static void drawShaderAsset     (MShaderAsset*      asset);
     static void drawStaticMeshAsset (MStaticMeshAsset*  asset);
+    static void drawSkeletalMeshAsset(MSkeletalMeshAsset* asset);   // asset_inspector_models.cpp
+    static void drawAnimClipAsset   (MAnimClipAsset*    asset);     // asset_inspector_models.cpp
+
+    // Import As / scale / pivot / max influences / sample rate, plus Save &
+    // Reimport. Returns true if the asset was recreated (another importAs) -
+    // the pointer is then stale and the caller must stop drawing it.
+    static bool drawModelImportSettings(MAsset* asset, SModelImportSettings& settings);
+    // "N entities still use this model as the old type - swap them?"
+    static void drawEntitySwapPrompt();
+    static SString pendingSwapAssetId;
     static void drawGenericAsset    (MAsset*            asset);
 
     // Renders the waveform peaks into an ImGui draw list region.

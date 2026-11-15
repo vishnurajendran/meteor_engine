@@ -82,7 +82,7 @@ void MLightingStage::render(IRenderPipeline* const pipeline)
 
     auto lightingAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
                               ->getAsset<MShaderAsset>(lightingShaderPath.c_str());
-    MShader* lightingShader = lightingAsset ? lightingAsset->getShader() : nullptr;
+    MStandardShader* lightingShader = lightingAsset ? lightingAsset->getShader() : nullptr;
 
     auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>();
 

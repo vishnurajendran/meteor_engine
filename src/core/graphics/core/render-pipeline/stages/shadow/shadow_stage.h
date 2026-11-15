@@ -15,7 +15,7 @@
 
 class SShadowBuffer;
 struct SFrustum;
-class MShader;
+class MStandardShader;
 class MLightEntity;
 class MDynamicLight;
 
@@ -61,7 +61,7 @@ private:
     // For mesl-based shaders (directional, spot).
     // cullFrustum — the light's own frustum; items whose bounds are entirely
     // outside it are skipped. nullptr draws every caster.
-    void drawItems(IRenderPipeline* const pipeline, MShader* shader,
+    void drawItems(IRenderPipeline* const pipeline, MStandardShader* shader,
                    unsigned int* rawProg, bool shadowCastersOnly,
                    const SFrustum* cullFrustum = nullptr);
 
@@ -99,7 +99,7 @@ private:
     uint64_t    frameIndex = 1;   // slots start at 0, so a fresh map always looks oldest
 
     SShadowBuffer* shadowBuffer       = nullptr;
-    MShader*       shadowShader       = nullptr;
+    MStandardShader*       shadowShader       = nullptr;
     unsigned int   pointShadowProgram = 0; // inline GLSL, writes linear depth
 };
 

@@ -105,7 +105,7 @@ bool MSpriteEntity::syncMaterial()
     // change is picked up.
     const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MShaderAsset>(blend ? TRANSPARENT_SHADER : SPRITE_SHADER);
-    MShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
+    MStandardShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
     if (!shader) return false;
 
     if (!material)

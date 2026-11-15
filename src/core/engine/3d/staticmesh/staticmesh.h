@@ -8,13 +8,7 @@
 #include <vector>
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
-
-/// Vertex info struct for mesh
-struct SVertex {
-    SVector3 Position;
-    SVector3 Normal;
-    SVector2 TexCoords;
-};
+#include "core/engine/3d/common/vertex.h"
 
 /// Represents a static mesh, in the meteor engine.
 SCRIPT_BIND_CLASS()
@@ -52,4 +46,4 @@ private:
     unsigned int VAO = 0, VBO = 0, EBO = 0;
 };
 
-#endif // STATICMESH_H
+#endif // STATICMESH_H

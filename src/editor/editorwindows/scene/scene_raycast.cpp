@@ -3,6 +3,8 @@
 #include "core/engine/3d/staticmesh/staticmesh.h"
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/staticmesh/staticmeshentity.h"
+#include "core/engine/3d/skeletal/skeletal_mesh.h"
+#include "core/engine/3d/skeletal/skeletal_mesh_entity.h"
 #include "core/engine/scene/scene.h"
 
 namespace SceneRaycast
@@ -48,6 +50,37 @@ static void testEntity(MSpatialEntity* entity,
                     SVector3 v0 = SVector3(world * SVector4(verts[i    ].Position, 1.f));
                     SVector3 v1 = SVector3(world * SVector4(verts[i + 1].Position, 1.f));
                     SVector3 v2 = SVector3(world * SVector4(verts[i + 2].Position, 1.f));
+
+                    float t;
+                    if (rayTriangle(origin, dir, v0, v1, v2, t) && t < best.distance)
+                    {
+                        best.distance = t;
+                        best.point    = origin + dir * t;
+                        best.normal   = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+                        best.hit      = true;
+                    }
+                }
+            }
+        }
+    }
+
+    // Skeletal meshes: tested in bind pose (the skinned pose lives on the GPU).
+    if (auto* ske = dynamic_cast<MSkeletalMeshEntity*>(entity))
+    {
+        if (auto* asset = ske->resolveMeshAsset())
+        {
+            const SMatrix4 world = ske->getTransformMatrix();
+            const SMatrix4 rootOffset = asset->getSkeleton().rootOffset;
+            for (auto* mesh : asset->getMeshes())
+            {
+                if (!mesh) continue;
+                const auto& verts   = mesh->getVertices();
+                const auto& indices = mesh->getIndices();
+                for (size_t i = 0; i + 2 < indices.size(); i += 3)
+                {
+                    const SVector3 v0 = SVector3(world * rootOffset * SVector4(verts[indices[i    ]].Position, 1.f));
+                    const SVector3 v1 = SVector3(world * rootOffset * SVector4(verts[indices[i + 1]].Position, 1.f));
+                    const SVector3 v2 = SVector3(world * rootOffset * SVector4(verts[indices[i + 2]].Position, 1.f));
 
                     float t;
                     if (rayTriangle(origin, dir, v0, v1, v2, t) && t < best.distance)

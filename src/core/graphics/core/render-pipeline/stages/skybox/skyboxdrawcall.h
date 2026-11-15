@@ -18,13 +18,13 @@ private:
     unsigned int skyboxVAO, skyboxVBO;
     TAssetHandle<MCubemapAsset> cubemapTexture;
     static const float skyboxVertices[];
-    MShader* skyboxShader;
+    MStandardShader* skyboxShader;
     bool initialised = false;
 private:
     void initialise();
 
 public:
-    MSkyboxDrawCall(TAssetHandle<MCubemapAsset> texture, MShader* shader);
+    MSkyboxDrawCall(TAssetHandle<MCubemapAsset> texture, MStandardShader* shader);
     void setCubemapAsset(TAssetHandle<MCubemapAsset> texture);
     TAssetHandle<MCubemapAsset> getCubemapAsset() const { return cubemapTexture; }
     void draw() override;

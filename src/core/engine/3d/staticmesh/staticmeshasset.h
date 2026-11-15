@@ -10,20 +10,13 @@
 #include "core/engine/assetmanagement/asset/asset.h"
 #include "core/object/object.h"
 #include "core/utils/glmhelper.h"
+#include "core/engine/3d/model/model_import_settings.h"
 
 class MStaticMesh;
 namespace pugi { class xml_node; }
 struct aiScene;
 struct aiNode;
 struct aiMesh;
-
-// Where a mesh's origin (pivot) is placed on import.
-enum class EMeshPivot : int
-{
-    FileOrigin   = 0,   // as authored - keeps any placement baked into the file
-    Center       = 1,   // centre of the bounding box
-    BottomCenter = 2,   // centre of the bounding box's base - good for props that sit on the ground
-};
 
 /// This Asset holds the reference for static meshes. An asset can
 /// hold multiple static mesh instances.
@@ -33,13 +26,12 @@ class MStaticMeshAsset : public MAsset {
 private:
     std::vector<MStaticMesh*> meshes;
 
-    // Import settings, saved in the asset's .meta under <meshImport>.
-    // Uniform scale baked into the vertex positions at load, so entities can
-    // keep a transform scale of 1 for assets authored in other units.
-    float scaleFactor = 1.0f;
-    // Moves the origin. Files often carry the position the model had in the
-    // artist's scene, which would otherwise offset it from its entity.
-    EMeshPivot pivot = EMeshPivot::FileOrigin;
+    // Import settings, saved in the asset's .meta under <meshImport> (see
+    // model_import_settings.h). scaleFactor is a uniform scale baked into the
+    // vertex positions at load, so entities can keep a transform scale of 1
+    // for assets authored in other units; pivot moves the origin, since files
+    // often carry the position the model had in the artist's scene.
+    SModelImportSettings importSettings;
 
     // Bounds relative to the chosen pivot, before scaleFactor is applied.
     SVector3 sourceBoundsMin = SVector3(0.0f);
@@ -51,15 +43,21 @@ public:
     ~MStaticMeshAsset() override;
 
     // -- Import settings ------------------------------------------------------
-    float getScaleFactor() const { return scaleFactor; }
+    float getScaleFactor() const { return importSettings.scaleFactor; }
     // Takes effect on the next reload (requestReload / Save & Reimport).
-    void  setScaleFactor(float s) { scaleFactor = s > 0.0f ? s : 1.0f; }
-    EMeshPivot getPivot() const { return pivot; }
-    void       setPivot(EMeshPivot p) { pivot = p; }   // takes effect on the next reload
+    void  setScaleFactor(float s) { importSettings.setScaleFactor(s); }
+    EMeshPivot getPivot() const { return importSettings.pivot; }
+    void       setPivot(EMeshPivot p) { importSettings.pivot = p; }   // takes effect on the next reload
+
+    // Every import setting, including importAs. Changing importAs changes the
+    // asset class: save, then reimport through the asset manager
+    // (MAssetManager::reimportAsset), which recreates the asset.
+    const SModelImportSettings& getImportSettings() const { return importSettings; }
+    SModelImportSettings&       getImportSettings()       { return importSettings; }
 
     // Size of the mesh as it would load with the current scale factor -
     // updates live while the factor is edited, before it is reimported.
-    SVector3 getScaledBoundsSize() const { return (sourceBoundsMax - sourceBoundsMin) * scaleFactor; }
+    SVector3 getScaledBoundsSize() const { return (sourceBoundsMax - sourceBoundsMin) * importSettings.scaleFactor; }
 
     void loadImportSettings(const pugi::xml_node& node);
     bool saveImportSettings();

@@ -211,7 +211,7 @@ bool MParticleRendererBase::syncMaterial()
     // Looked up every frame (a map lookup) so a hot-reloaded shader is picked up.
     const auto shaderAsset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
         ->getAsset<MShaderAsset>(PARTICLE_SHADER);
-    MShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
+    MStandardShader* shader = shaderAsset ? shaderAsset->getShader() : nullptr;
     if (!shader) return false;
 
     const MMaterial::ShadingMode shading = lit.get() ? MMaterial::ShadingMode::Lit : MMaterial::ShadingMode::Unlit;

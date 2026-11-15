@@ -1,12 +1,11 @@
 #include "staticmeshentity.h"
 
+#include <cfloat>
+
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
-#include "core/engine/gizmos/gizmos.h"
-#include "core/graphics/core/render-pipeline/render_pipeline_manager_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/graphics/core/render-pipeline/interfaces/render_item_collector.h"
 #include "core/graphics/core/render-pipeline/render_item.h"
-#include "core/graphics/core/render-pipeline/render_queue.h"
-#include "core/graphics/core/render-pipeline/stages/render_stage.h"
 #include "staticmesh.h"
 #include "staticmeshasset.h"
 
@@ -16,16 +15,6 @@ MStaticMeshEntity::MStaticMeshEntity()
 {
     name                = "StaticMeshEntity";
     prevTransformMatrix = SMatrix4(0.f);
-    materialSlots.resize(1);
-    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
-        renderer->getRenderQueue().addToSubmitables(this);
-}
-
-MStaticMeshEntity::~MStaticMeshEntity()
-{
-    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
-        renderer->getRenderQueue().removeFromSubmitables(this);
-    errorMaterialInstance = nullptr;
 }
 
 // -- serialization -----------------------------------------------------------
@@ -35,27 +24,7 @@ void MStaticMeshEntity::onSerialise(pugi::xml_node& node)
     MSpatialEntity::onSerialise(node);
     // DECLARE_FIELDs (meshAsset, castsShadow) are written automatically by
     // SerializedClassBase before this method is called.
-
-    // Write material slots manually since they are a dynamic-length array.
-    // Each slot uses the same reference format as Field<TAssetRef<T>>:
-    // "guid:<id>" when known, otherwise the bare path.
-    //
-    // Format:
-    //   <materialSlots>
-    //       <slot index="0">guid:3d4c5ab2-...</slot>
-    //   </materialSlots>
-    auto slotsNode = node.append_child("materialSlots");
-    for (int i = 0; i < (int)materialSlots.size(); ++i)
-    {
-        auto slotNode = slotsNode.append_child("slot");
-        slotNode.append_attribute("index").set_value(i);
-        const auto& ref = materialSlots[i].assetRef;
-        ref.resolve(); // upgrade path-only refs to a GUID before writing
-        const SString refStr = !ref.getAssetId().empty()
-            ? SString(ASSET_REF_GUID_PREFIX) + ref.getAssetId()
-            : ref.getPath();
-        slotNode.text().set(refStr.c_str());
-    }
+    serialiseMaterialSlots(node);
 }
 
 void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
@@ -63,13 +32,9 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
     MSpatialEntity::onDeserialise(node);
 
     // At this point DECLARE_FIELDs are already loaded by SerializedClassBase.
-    // meshAsset.get() has its id and/or path populated from the <meshAsset>
-    // XML node (if present in the file).
 
     // -- backward compat: old <meshAssetPath> string field -------------------
     // Older scene files wrote a plain path string under <meshAssetPath>.
-    // That DECLARE_FIELD no longer exists, so the node was not auto-loaded.
-    // Check for it and populate meshAsset from the path if needed.
     if (meshAsset.get().isEmpty())
     {
         auto oldNode = node.child("meshAssetPath");
@@ -81,64 +46,37 @@ void MStaticMeshEntity::onDeserialise(const pugi::xml_node& node)
         }
     }
 
-    // Resolve the mesh and resize material slots to match sub-mesh count.
-    // This must happen before reading material slot data from XML.
-    auto* resolvedMesh = meshAsset.get().resolve();
-    if (resolvedMesh)
-    {
-        const int meshCount = (int)resolvedMesh->getMeshes().size();
-        const int oldCount  = (int)materialSlots.size();
-        if (meshCount > oldCount)
-            materialSlots.resize(meshCount);
-        else if (meshCount < oldCount)
-            materialSlots.erase(materialSlots.begin() + meshCount, materialSlots.end());
-    }
-
-    // -- read material slots -------------------------------------------------
-    auto slotsNode = node.child("materialSlots");
-    if (slotsNode)
-    {
-        for (auto slotNode : slotsNode.children("slot"))
-        {
-            int idx = slotNode.attribute("index").as_int(-1);
-            if (idx < 0 || idx >= (int)materialSlots.size()) continue;
-
-            // Legacy format: <slot> has <id> and <path> children.
-            auto idNode   = slotNode.child("id");
-            auto pathNode = slotNode.child("path");
-
-            if (idNode || pathNode)
-            {
-                SString id   = idNode   ? SString(idNode.text().as_string(""))   : SString{};
-                SString path = pathNode ? SString(pathNode.text().as_string("")) : SString{};
-                materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(id, path);
-            }
-            else
-            {
-                // Current format — slot text is a reference string:
-                //   <slot index="0">guid:3d4c5ab2-...</slot>
-                //   <slot index="0">assets/materials/brick.material</slot>   (path — also the oldest format)
-                SString ref = slotNode.text().as_string("");
-                if (IAssetManagerSubsystem::isGuidReference(ref))
-                    materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(SString(ref.str().substr(ASSET_REF_GUID_PREFIX_LEN)));
-                else if (!ref.empty())
-                    materialSlots[idx].assetRef = TAssetRef<MMaterialAsset>(SString{}, ref);
-            }
-        }
-    }
+    // Resize material slots to the sub-mesh count before reading them.
+    if (auto* resolvedMesh = meshAsset.get().resolve())
+        resizeMaterialSlots((int)resolvedMesh->getMeshes().size());
     else
-    {
-        // Legacy format: single <materialAssetPath> string (slot 0 only).
-        auto oldMatNode = node.child("materialAssetPath");
-        if (oldMatNode)
-        {
-            SString matPath = oldMatNode.text().as_string("");
-            if (!matPath.empty() && !materialSlots.empty())
-                materialSlots[0].assetRef = TAssetRef<MMaterialAsset>(SString{}, matPath);
-        }
-    }
+        warnIfWrongAssetType();
 
+    deserialiseMaterialSlots(node);
     calculateBounds();
+}
+
+void MStaticMeshEntity::warnIfWrongAssetType()
+{
+    if (warnedWrongType || meshAsset.get().isEmpty())
+        return;
+
+    auto* am = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
+    if (!am)
+        return;
+
+    const auto& ref = meshAsset.get();
+    MAsset* other = !ref.getAssetId().empty() ? am->getAssetById<MAsset>(ref.getAssetId()).get() : nullptr;
+    if (!other && !ref.getPath().empty())
+        other = am->getAsset<MAsset>(ref.getPath()).get();
+
+    if (other)
+    {
+        warnedWrongType = true;
+        MWARN(SString::format("'{0}': mesh '{1}' is no longer a static mesh (it imports as {2}). "
+                              "Use a Skeletal Mesh entity, or set the model's Import As back to Static Mesh.",
+                              getName(), other->getPath(), SString(other->typeInfo().name)));
+    }
 }
 
 // -- rendering ---------------------------------------------------------------
@@ -148,21 +86,15 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
     if (!isEnabledInHierarchy())
         return;
 
-    // Resolve the mesh once per frame. Avoids repeated map lookups inside
-    // the per-sub-mesh loop.
     auto* meshPtr = meshAsset.get().resolve();
-    if (!meshPtr) return;
+    if (!meshPtr)
+    {
+        warnIfWrongAssetType();
+        return;
+    }
 
     const SMatrix4 current = getTransformMatrix();
     if (current != prevTransformMatrix) { prevTransformMatrix = current; calculateBounds(); }
-
-    // Lazy-load error material once.
-    if (!errorMaterialInstance)
-    {
-        const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
-            ->getAsset<MMaterialAsset>("meteor_assets/engine_assets/materials/error_material.material");
-        if (asset) errorMaterialInstance = asset->getMaterial();
-    }
 
     const auto meshes    = meshPtr->getMeshes();
     const int  drawCount = std::min((int)meshes.size(), (int)materialSlots.size());
@@ -172,8 +104,7 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
         const auto* mesh = meshes[i];
         if (!mesh) continue;
 
-        MMaterial* mat = materialSlots[i].getMaterial();
-        if (!mat) mat = errorMaterialInstance;
+        MMaterial* mat = resolveSlotMaterialOrError(i);
         if (!mat) continue;
 
         SRenderItem item;
@@ -182,23 +113,12 @@ void MStaticMeshEntity::submitRenderItem(IRenderItemCollector* collector)
         item.indexCount  = mesh->getIndexCount();
         item.vertexCount = mesh->getVertexCount();
         item.transform   = current;
-        item.material    = mat;
-        item.bounds      = bounds;
-        item.castsShadow = castsShadow.get();
-        item.sortOrder   = static_cast<int>(mat->isTransparent() ? ERenderStageOrder::RS_Transparent
-                                                                 : ERenderStageOrder::RS_Opaque);
+        fillCommonRenderItem(item, mat);
         collector->submitRenderItem(item);
     }
 }
 
 // -- lifecycle ---------------------------------------------------------------
-
-void MStaticMeshEntity::onExit()
-{
-    MSpatialEntity::onExit();
-    if (auto* renderer = MEngineSubsystemRegistry::getSubsystem<IRenderPipelineManagerSubsystem>())
-        renderer->getRenderQueue().removeFromSubmitables(this);
-}
 
 void MStaticMeshEntity::onUpdate(float dt)
 {
@@ -207,80 +127,17 @@ void MStaticMeshEntity::onUpdate(float dt)
     if (m != prevTransformMatrix) { prevTransformMatrix = m; calculateBounds(); }
 }
 
-void MStaticMeshEntity::onDrawGizmo(SVector2 res)
-{
-    MSpatialEntity::onDrawGizmo(res);
-
-#if METEOR_EDITOR
-    if (!debug_drawBounds)
-        return;
-
-    const auto& bounds = getBounds();
-    const SVector3& extents = {
-        (bounds.max.x - bounds.min.x)/2,
-        (bounds.max.y - bounds.min.y)/2,
-        (bounds.max.z - bounds.min.z)/2
-    };
-
-    MGizmos::drawWireCube(bounds.getCentre(), extents, SColor::yellow(), 2.0f);
-
-#endif
-
-}
-
 // -- mutators ----------------------------------------------------------------
 
 void MStaticMeshEntity::setStaticMeshAsset(TAssetRef<MStaticMeshAsset> asset)
 {
     meshAsset = asset;
+    warnedWrongType = false;
 
     auto* resolved = meshAsset.get().resolve();
-    if (!resolved)
-    {
-        materialSlots.clear();
-        materialSlots.resize(1);
-        return;
-    }
-
-    const int newCount = (int)resolved->getMeshes().size();
-    const int oldCount = (int)materialSlots.size();
-
-    if (newCount > oldCount)
-        for (int i = oldCount; i < newCount; ++i) materialSlots.emplace_back();
-    else
-        materialSlots.erase(materialSlots.begin() + newCount, materialSlots.end());
-
-    calculateBounds();
-}
-
-void MStaticMeshEntity::setMaterialAsset(TAssetRef<MMaterialAsset> asset, int slotId)
-{
-    if (slotId < 0 || slotId >= (int)materialSlots.size())
-    {
-        MERROR(SString::format("MStaticMeshEntity::setMaterialAsset: slotId {0} out of range", slotId));
-        return;
-    }
-    materialSlots[slotId].assetRef = asset;
-}
-
-void MStaticMeshEntity::swapMaterialSlots(int a, int b)
-{
-    if (a < 0 || a >= (int)materialSlots.size()) return;
-    if (b < 0 || b >= (int)materialSlots.size()) return;
-    if (a == b) return;
-    std::swap(materialSlots[a], materialSlots[b]);
-}
-
-TAssetHandle<MMaterialAsset> MStaticMeshEntity::getMaterialAsset(int slotId) const
-{
-    if (slotId < 0 || slotId >= (int)materialSlots.size()) return TAssetHandle<MMaterialAsset>();
-    return materialSlots[slotId].assetRef.getHandle();
-}
-
-MMaterial* MStaticMeshEntity::getMaterialInstance(int slotId) const
-{
-    if (slotId < 0 || slotId >= (int)materialSlots.size()) return nullptr;
-    return materialSlots[slotId].getMaterial();
+    resizeMaterialSlots(resolved ? (int)resolved->getMeshes().size() : 0);
+    if (resolved)
+        calculateBounds();
 }
 
 void MStaticMeshEntity::calculateBounds()
@@ -296,4 +153,4 @@ void MStaticMeshEntity::calculateBounds()
             mn = glm::min(mn, wp); mx = glm::max(mx, wp);
         }
     bounds.min = mn; bounds.max = mx;
-}
+}

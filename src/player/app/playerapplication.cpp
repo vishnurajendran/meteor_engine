@@ -14,6 +14,7 @@
 #include "core/engine/gizmos/gizmos.h"
 #include "core/engine/input/impl_sfml/sfml_input.h"
 #include "core/engine/jobs/job_system.h"
+#include "core/engine/animation/animation_subsystem.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/physics/interface/physics_engine_interface.h"
 #include "core/engine/scripting/lua/lua_scripting_engine.h"
@@ -61,6 +62,10 @@ void MPlayerApplication::registerSubsystems(const std::shared_ptr<MPackagedAsset
     // Init Physics engine
     physicsEngineRef = MEngineSubsystemRegistry::registerSubsystem<IPhysicsEngineSubsystem, MJoltPhysicsEngine>();
 
+    // Animation - pose evaluation and skinning. Driven by the application
+    // between the scene's update and lateUpdate, not ticked.
+    MEngineSubsystemRegistry::registerSubsystem<MAnimationSubsystem>();
+
     // Engine domains - the player's only domain, DOMAIN_0, is the game
     MEngineSubsystemRegistry::registerSubsystem<MEngineDomainSubsystem>();
 
@@ -106,6 +111,10 @@ void MPlayerApplication::run() {
     {
         START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
         sceneManagerRef->update(deltaTime);
+        // Poses and skinning: after every onTick (a playClip there shows this
+        // frame), before onLateTick (followers see this frame's bones).
+        if (auto* animation = MEngineSubsystemRegistry::getSubsystem<MAnimationSubsystem>())
+            animation->update(deltaTime);
         // after every onTick, so followers (cameras) see this frame's poses
         sceneManagerRef->lateUpdate(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
@@ -284,4 +293,4 @@ MApplication* getAppInstance(){
     MLOG("Creating Player Application instance");
     return mnew<MPlayerApplication>();
 }
-#endif
+#endif

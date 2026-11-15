@@ -5,7 +5,6 @@
 #include "ImGuizmo.h"
 #include "SFML/Graphics/RenderTexture.hpp"
 #include "core/utils/glmhelper.h"
-#include "editor/profiling/profiler_stats_displayer.h"
 #include "editor/window/imgui/imguisubwindow.h"
 
 class MSpatialEntity;
@@ -63,7 +62,6 @@ private:
     ImGuizmo::OPERATION transformOperation = ImGuizmo::TRANSLATE;
     ImGuizmo::MODE transformMode = ImGuizmo::LOCAL;
     bool gizmosEnabled = true; // toggled by the eye button
-    bool profilerVisible = false; // toggled by the profiler toolbar button
 
     float cameraYaw = 0.0f;
     float cameraPitch = 0.0f;
@@ -84,8 +82,6 @@ private:
     sf::Texture gizmoOnIcon; // eye-open  icon
     sf::Texture gizmoOffIcon; // eye-closed icon
 
-    // -- Profiler overlay ------------------------------------------------------
-    MProfilerStatsDisplayer profilerDisplayer;
 
     MEditorApplication* editorAppInst;
 };

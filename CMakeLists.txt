@@ -99,7 +99,10 @@ FetchContent_MakeAvailable(glm)
 FetchContent_Declare(
         stb
         GIT_REPOSITORY https://github.com/nothings/stb.git
-        GIT_SHALLOW TRUE
+        # Pinned: stb has no release tags, and a shallow clone of master
+        # breaks the update step (rebase with no shared history) whenever
+        # upstream moves. Bump the hash deliberately to update.
+        GIT_TAG 965c80bc0b138ccf03bfa4a76d7c0a4c8816414a
 )
 FetchContent_MakeAvailable(stb)
 

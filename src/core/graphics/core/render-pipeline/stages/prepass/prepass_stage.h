@@ -8,7 +8,7 @@
 
 #include "core/graphics/core/render-pipeline/stages/render_stage.h"
 
-class MShader;
+class MStandardShader;
 class SDepthBuffer;
 class STextureBuffer;
 struct SRenderItem;
@@ -62,7 +62,7 @@ private:
     unsigned long long attachedNormal  = 0;
     unsigned long long attachedSurface = 0;
 
-    MShader* prepassShader = nullptr;          // owned by MShaderAsset
+    MStandardShader* prepassShader = nullptr;          // owned by MShaderAsset
 };
 
 #endif // PREPASS_STAGE_H

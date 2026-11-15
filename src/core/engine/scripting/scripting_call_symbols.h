@@ -24,6 +24,13 @@ namespace ScriptinCallSymbols
     const SString SCRIPT_FUNC_TRIGGER_STAY    = "onTriggerStay";
     const SString SCRIPT_FUNC_TRIGGER_EXIT    = "onTriggerExit";
 
+    // Animation messages - called on a skeletal mesh entity's own script,
+    // only if the script defines them.
+    //   onPostAnimate(dt)        pose computed, before skinning; the pose API is writable
+    //   onClipFinished(clipName) a non-looping clip reached its end
+    const SString SCRIPT_FUNC_POST_ANIMATE  = "onPostAnimate";
+    const SString SCRIPT_FUNC_CLIP_FINISHED = "onClipFinished";
+
 }
 
 #endif //SCRIPTING_CALL_SYMBOLS_H

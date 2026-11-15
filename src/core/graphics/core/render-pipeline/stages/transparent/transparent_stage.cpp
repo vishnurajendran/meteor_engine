@@ -120,7 +120,7 @@ void MTransparentStage::render(IRenderPipeline* const pipeline)
     for (const SRenderItem* item : sorted)
     {
         MMaterial* material = item->material;
-        MShader*   shader   = material->getShader();
+        MStandardShader*   shader   = material->getShader();
 
         shader->bind();
         GLint progInt = 0;
@@ -220,7 +220,7 @@ void MTransparentStage::render(IRenderPipeline* const pipeline)
 int MTransparentStage::bindMaterialProperties(const SRenderItem& item, unsigned int program) const
 {
     const GLuint prog   = program;
-    MShader*     shader = item.material->getShader();
+    MStandardShader*     shader = item.material->getShader();
 
     int texUnit = MShadowInputs::UNIT_COUNT;
     int highest = -1;

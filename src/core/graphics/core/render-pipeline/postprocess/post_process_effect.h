@@ -12,7 +12,7 @@
 
 class IRenderPipeline;
 class MBufferRegistery;
-class MShader;
+class MStandardShader;
 class SFrameBuffer;
 class SFullscreenQuad;
 struct SViewData;
@@ -85,16 +85,16 @@ protected:
     // Fullscreen helpers for the common case: bind `shader`, set identity
     // transforms, bind ctx.sourceTexture to unit 0 as "_source", and return
     // the GL program id for setting further uniforms. Then drawFullscreen().
-    static unsigned int beginFullscreen(MShader* shader, const SPostProcessContext& ctx);
+    static unsigned int beginFullscreen(MStandardShader* shader, const SPostProcessContext& ctx);
 
     // Binds `shader` with identity transforms (for a fullscreen quad) and
     // returns the program id. For passes that read something other than
     // ctx.sourceTexture (e.g. bloom's mip chain).
-    static unsigned int bindFullscreenShader(MShader* shader);
+    static unsigned int bindFullscreenShader(MStandardShader* shader);
     static void         drawFullscreen(const SPostProcessContext& ctx);
 
     // Loads an engine shader asset; logs and returns nullptr on failure.
-    static MShader* loadShader(const char* path);
+    static MStandardShader* loadShader(const char* path);
 
 private:
     SString typeName;

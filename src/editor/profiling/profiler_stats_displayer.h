@@ -25,7 +25,9 @@ struct SProfilerHistory
     void push(float value);
 };
 
-/// Draws the profiler stats ImGui panel with per-key line graphs.
+/// Draws the profiler stats - per-key times and line graphs, grouped by the
+/// key's category ("Animation.Update" -> Animation) - into the current ImGui
+/// window. Hosted by MEditorProfilerWindow.
 class MProfilerStatsDisplayer : public MObject
 {
     DEFINE_OBJECT_SUBCLASS(MProfilerStatsDisplayer)
@@ -34,8 +36,9 @@ public:
     MProfilerStatsDisplayer()  = default;
     ~MProfilerStatsDisplayer() override = default;
 
-    /// Samples the current profiler times and draws the overlay.
-    void draw(const ImVec2& viewportMin, const ImVec2& viewportSize);
+    /// Samples the current profiler times and draws them, filling the
+    /// available width of the current window.
+    void draw();
 
 private:
     /// Updates internal history ring-buffers from MSimpleProfiler.
@@ -47,7 +50,6 @@ private:
                        ImU32 lineColor) const;
 
     std::map<SString, SProfilerHistory> histories;
-    float lastPanelHeight = 200.0f;  // <-- Track panel layout size dynamically
 };
 
 #endif // PROFILER_STATS_DISPLAYER_H
