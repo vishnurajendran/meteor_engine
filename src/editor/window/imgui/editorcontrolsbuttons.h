@@ -12,9 +12,11 @@ class MEditorControlsButtons : public MObject {
 private:
     static sf::Texture playTexture;
     static sf::Texture stopTexture;
+    static sf::Texture pauseTexture;
 
     static void simulationStartButton();
     static void simulationStopButton();
+    static void simulationPauseButton();
 
 public:
    static void runtimeControls();

@@ -61,6 +61,10 @@ struct SEngineAssetIconPaths
     static constexpr const char* HIGHRES_TEX_ASSET_FOLDER       = "meteor_assets/engine_assets/icons/highres/folder.png";
     static constexpr const char* HIGHRES_TEX_ASSET_FOLDER_EMPTY = "meteor_assets/engine_assets/icons/highres/folder-empty.png";
     static constexpr const char* HIGHRES_TEX_ASSET_DEFAULT      = "meteor_assets/engine_assets/icons/highres/file-default.png";
+    static constexpr const char* HIGHRES_TEX_ASSET_FONT         = "meteor_assets/engine_assets/icons/highres/file-font.png";
+    static constexpr const char* HIGHRES_TEX_ASSET_UI_WIDGET    = "meteor_assets/engine_assets/icons/highres/file-ui-widget.png";
+    static constexpr const char* HIGHRES_TEX_ASSET_UI_STRUCTURE = "meteor_assets/engine_assets/icons/highres/file-rml.png";
+    static constexpr const char* HIGHRES_TEX_ASSET_UI_STYLE     = "meteor_assets/engine_assets/icons/highres/file-rcss.png";
 
     // Gizmo Icons
     static constexpr const char* HIGHRES_TEX_GIZMOS_DIRECTIONAL_LIGHT  = "meteor_assets/engine_assets/icons/highres/sun_light.png";

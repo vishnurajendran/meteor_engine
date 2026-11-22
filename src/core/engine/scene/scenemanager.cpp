@@ -44,7 +44,44 @@ MSceneManager::~MSceneManager()
     closeActiveScene();
 }
 
-bool MSceneManager::loadEmptyScene() {
+bool MSceneManager::loadEmptyScene()
+{
+    pendingLoad      = true;
+    pendingScenePath = SString();
+    return true;
+}
+
+bool MSceneManager::loadScene(const SString& path)
+{
+    if (path.empty())
+        return loadEmptyScene();
+
+    const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MSceneAsset>(path);
+    if (!asset || !asset->isValid())
+    {
+        MERROR(STR("MSceneManager:: loadScene - no valid scene asset at ") + path);
+        return false;
+    }
+    pendingLoad      = true;
+    pendingScenePath = path;
+    return true;
+}
+
+void MSceneManager::processPendingLoad()
+{
+    if (!pendingLoad)
+        return;
+    const SString path = pendingScenePath;
+    // The immediate loads clear the request.
+    if (path.empty())
+        loadEmptySceneImmediate();
+    else
+        loadSceneImmediate(path);
+}
+
+bool MSceneManager::loadEmptySceneImmediate() {
+    pendingLoad = false;
+    pendingScenePath = SString();
     if (activeScene != nullptr)
         closeActiveScene();
     activeScene = mnew<MScene>();
@@ -53,14 +90,14 @@ bool MSceneManager::loadEmptyScene() {
     return true;
 }
 
-bool MSceneManager::loadScene(const SString& path) {
+bool MSceneManager::loadSceneImmediate(const SString& path) {
     if (path.empty()) {
         MLOG(STR("MSceneManager:: Loading Empty Scene"));
-        loadEmptyScene();
+        loadEmptySceneImmediate();
         return false;
     }
 
-    loadEmptyScene();
+    loadEmptySceneImmediate();
     const auto asset = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()->getAsset<MSceneAsset>(path);
     // Was `if(asset)`: that bailed out whenever the scene asset WAS found, and
     // dereferenced a null handle below when it wasn't.

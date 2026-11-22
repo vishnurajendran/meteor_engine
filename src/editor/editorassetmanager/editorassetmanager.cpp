@@ -20,6 +20,8 @@
 #include "core/engine/assetmanagement/source/routed_asset_source.h"
 #include "core/utils/meteor_paths.h"
 #include "core/engine/scripting/interface/script_asset.h"
+#include "core/engine/ui/assets/ui_structure_asset.h"
+#include "core/engine/ui/assets/ui_style_asset.h"
 #include "editor/editor_utils/editor_utility.h"
 #include "core/utils/logger.h"
 #include "core/meteor_utils.h"
@@ -551,10 +553,13 @@ void MEditorAssetManager::openAsset(MAsset* asset)
         }
 
         // Scripts open in VS Code with the project folder as the workspace,
-        // so LuaLS picks up .vscode/settings.json and the engine stubs.
+        // so LuaLS picks up .vscode/settings.json and the engine stubs. UI
+        // documents and stylesheets too, next to their behaviour scripts.
         // Falls back to the OS default handler if VS Code isn't installed.
-        if (dynamic_cast<IScriptAsset*>(asset) != nullptr &&
-            MEditorUtility::openInVsCode(fullPath.str(), PROJECT_PATH().str()))
+        const bool openInCodeEditor = dynamic_cast<IScriptAsset*>(asset) != nullptr
+                                   || dynamic_cast<MUIStructureAsset*>(asset) != nullptr
+                                   || dynamic_cast<MUIStyleAsset*>(asset) != nullptr;
+        if (openInCodeEditor && MEditorUtility::openInVsCode(fullPath.str(), PROJECT_PATH().str()))
             return;
 
         auto cmd = STR("\"") + fullPath + STR("\"");
@@ -688,6 +693,47 @@ SString MEditorAssetManager::createAssetFromTemplate(const SString& templateId, 
     if (!onFileAdded(filePath))
         return {};
     return filePath;
+}
+
+// ---------------------------------------------------------------------------
+// Typed creation
+// ---------------------------------------------------------------------------
+
+bool MEditorAssetManager::writeAndImport(const SString& path, const SString& text)
+{
+    auto* target = writableSource();
+    if (!target)
+        return false;
+
+    if (!target->writeText(path, text))
+    {
+        MERROR(SString::format("EditorAssetManager:: Failed to create file: {0}", path));
+        return false;
+    }
+    // Imported now rather than when the watcher notices, so a creator can
+    // use the asset (and its GUID) straight away.
+    if (!onFileAdded(path, false))
+    {
+        MERROR(SString::format("EditorAssetManager:: Created {0} but it did not import", path));
+        return false;
+    }
+    return true;
+}
+
+SString MEditorAssetManager::createWithCreator(IAssetCreator* creator, const SString& directory, const SString& name)
+{
+    if (!creator)
+        return {};
+
+    const SString path = creator->create(*this, directory, name.empty() ? creator->getDefaultName() : name, nullptr);
+    if (path.empty())
+        return {};
+
+    MLOG(SString::format("EditorAssetManager:: Created {0}: {1}", creator->getDisplayName(), path));
+    buildAssetTree();
+    if (const auto it = assetMap.find(MAssetPath::normalize(path)); it != assetMap.end() && it->second)
+        pingAsset(it->second->getAssetId());
+    return path;
 }
 
 // ---------------------------------------------------------------------------

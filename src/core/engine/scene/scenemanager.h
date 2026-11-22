@@ -34,14 +34,30 @@ public:
     // init() starts with an empty scene. cleanup() closes the active scene;
     // applications close it themselves before the registry cleans up, while
     // every other subsystem (physics, audio, scripting) is still alive.
-    void init() override { loadEmptyScene(); }
+    void init() override { loadEmptySceneImmediate(); }
     void cleanup() override { closeActiveScene(); }
 
+    // -- Scripts: deferred ---------------------------------------------------
+    // Queue a scene change for the start of the next frame
+    // (processPendingLoad), so the scene isn't torn down while its entities
+    // are still ticking. The last request in a frame wins. loadScene returns
+    // false (logged) if no scene asset is at `path`.
     SCRIPT_BIND_FUNC()
-    virtual bool loadEmptyScene();
+    bool loadEmptyScene();
 
     SCRIPT_BIND_FUNC()
-    virtual bool loadScene(const SString& path);
+    bool loadScene(const SString& path);
+
+    // Applies a queued load. The applications call it once per frame, before
+    // physics and the scene update.
+    void processPendingLoad();
+    [[nodiscard]] bool hasPendingLoad() const { return pendingLoad; }
+
+    // -- Engine: immediate ---------------------------------------------------
+    // Close the active scene and open another now. Not safe from inside a
+    // scene update; scripts use loadScene. Cancels a queued load.
+    virtual bool loadEmptySceneImmediate();
+    virtual bool loadSceneImmediate(const SString& path);
 
     virtual bool closeActiveScene();
     virtual void update(float deltaTime);
@@ -68,6 +84,9 @@ public:
 protected:
     MScene* activeScene = nullptr;
     SString currentScenePath;
+
+    bool    pendingLoad = false;
+    SString pendingScenePath;   // empty = an empty scene
 };
 
 #endif //SCENEMANAGER_H

@@ -31,7 +31,7 @@ bool MSceneIO::loadScene(const SString& filePath)
         return false;
     }
 
-    const bool ok = editorSceneManager->loadScene(filePath);
+    const bool ok = editorSceneManager->loadSceneImmediate(filePath);
     if (ok)
         s_currentPath = filePath;
 
@@ -40,7 +40,7 @@ bool MSceneIO::loadScene(const SString& filePath)
 
 bool MSceneIO::newScene()
 {
-    MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->loadEmptyScene();
+    MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->loadEmptySceneImmediate();
     s_currentPath = "";
     MLOG("MSceneIO: new scene.");
     return true;

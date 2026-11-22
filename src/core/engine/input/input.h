@@ -14,6 +14,7 @@
 #include <string>
 
 #include "core/engine/scripting/script_binding_macros.h"
+#include "core/utils/glmhelper.h"
 
 // Key codes mirroring sf::Keyboard::Key (SFML 3.0.x) value-for-value.
 // Conversion to/from sf::Keyboard::Key is a zero-cost static_cast.
@@ -64,10 +65,25 @@ enum class EKeyCode : int
     KeyCount   // sentinel -- must remain last
 };
 
+// Names for the common mouse buttons. The value is the button's id; buttons
+// past these (side buttons: 3, 4) are read by number:
+//   SInput.getMouseButton(EMouseButton.Left)    SInput.getMouseButton(3)
+SCRIPT_BIND_ENUM()
+enum class EMouseButton : int
+{
+    Left   = 0,
+    Middle = 1,
+    Right  = 2,
+};
+
 SCRIPT_BIND_STRUCT()
 struct SInput
 {
 public:
+    // Mouse button ids 0 .. MOUSE_BUTTON_COUNT - 1: the three EMouseButton
+    // names, then the two side buttons (3, 4).
+    static constexpr int MOUSE_BUTTON_COUNT = 5;
+
     // Rising edge -- the key transitioned from up to down this frame.
     SCRIPT_BIND_FUNC_STATIC()
     static bool pressedThisFrame(EKeyCode key);
@@ -90,6 +106,54 @@ public:
 
     SCRIPT_BIND_FUNC_STATIC()
     static bool isAltDown();
+
+    // True while the game UI has the mouse: over a UI element (not a widget's
+    // transparent background) or dragging one. Key and mouse queries keep
+    // working either way - check this to ignore input the UI took.
+    SCRIPT_BIND_FUNC_STATIC()
+    static bool isUIConsumingMouse();
+
+    // True while a text field in the game UI has keyboard focus.
+    SCRIPT_BIND_FUNC_STATIC()
+    static bool isUIConsumingKeyboard();
+
+    // -- Mouse --------------------------------------------------------------
+    // Over the game viewport, in its pixels from the top-left corner (in the
+    // editor, the Scene view's game image). Read once per frame, like keys.
+
+    // Where the pointer is. Keeps its last value while the pointer is
+    // outside the viewport.
+    SCRIPT_BIND_FUNC_STATIC()
+    static SVector2 getMousePos();
+
+    // How far the pointer moved since last frame, in pixels (+x right,
+    // +y down). Zero for the frame the pointer re-enters the viewport.
+    SCRIPT_BIND_FUNC_STATIC()
+    static SVector2 getMouseDelta();
+
+    // Buttons are EMouseButton, like keys are EKeyCode. Buttons past the
+    // named ones are read by id: Lua passes the number (SInput.getMouseButton(3));
+    // C++ casts (static_cast<EMouseButton>(3)). Unknown ids read as up.
+
+    // The button is held. A click shorter than a frame still reads as held
+    // for one frame.
+    SCRIPT_BIND_FUNC_STATIC()
+    static bool getMouseButton(EMouseButton button);
+
+    // Rising edge -- the button went from up to down this frame.
+    SCRIPT_BIND_FUNC_STATIC()
+    static bool mouseButtonPressedThisFrame(EMouseButton button);
+
+    // Falling edge -- the button went from down to up this frame (a
+    // completed click, ending this frame).
+    SCRIPT_BIND_FUNC_STATIC()
+    static bool mouseButtonPressedAndReleased(EMouseButton button);
+
+    // Vertical wheel movement this frame, -1 .. 1: positive = scrolled up
+    // (away from you), 0 = no scroll. Several notches in one frame clamp
+    // to +/-1; touchpads give fractions.
+    SCRIPT_BIND_FUNC_STATIC()
+    static float getMouseScrollDelta();
 
     // Human-readable name for a key code (e.g. EKeyCode::S -> "S").
     SCRIPT_BIND_FUNC_STATIC()

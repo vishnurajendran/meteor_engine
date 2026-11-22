@@ -38,9 +38,14 @@ void MEditorSimulationManagerSubsystem::onSimulationStateChanged(EEditorSimulati
     switch (state)
     {
     case EEditorSimulationState::Stopped:
+        playSessionActive = false;
         onSimulationStopped();
         break;
     case EEditorSimulationState::Simulating:
+        // Resuming from pause keeps the running game - no new snapshot or domain.
+        if (playSessionActive)
+            break;
+        playSessionActive = true;
         onSimulate();
         break;
     case EEditorSimulationState::SimulationPaused:
@@ -72,7 +77,7 @@ void MEditorSimulationManagerSubsystem::createSceneSnapshot()
 void MEditorSimulationManagerSubsystem::loadSnapShotSceneForSimulation()
 {
     sceneManagerInst->closeActiveScene();
-    if (!sceneManagerInst->loadScene(sceneSnapshotPath))
+    if (!sceneManagerInst->loadSceneImmediate(sceneSnapshotPath))
     {
         MERROR("MEditorSimulationManagerSubsystem::Failed loading scene snapshot");
     }
@@ -82,7 +87,7 @@ void MEditorSimulationManagerSubsystem::restoreFromSceneSnapshot()
 {
     MLOG("MEditorSimulationManagerSubsystem::Restoring Snapshot");
     sceneManagerInst->closeActiveScene();
-    if (sceneManagerInst->loadScene(sceneSnapshotPath))
+    if (sceneManagerInst->loadSceneImmediate(sceneSnapshotPath))
     {
         sceneManagerInst->internal_OverrideCurrentScenePath(activeScenePath);
         // delete the snapshot file after load. we don't need it any more.

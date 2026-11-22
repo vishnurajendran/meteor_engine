@@ -14,6 +14,7 @@
 #include "core/engine/assetmanagement/asset/asset_handle.h"
 #include "core/engine/subsystem/subsystem_interface.h"
 #include "core/object/object.h"
+#include "core/utils/delegate.h"
 
 class IDefferedLoadableAsset;
 class IAssetSource;
@@ -93,6 +94,15 @@ public:
     // Every asset path this manager can provide. The editor lists what is
     // loaded (everything); the player lists the whole package, loaded or not.
     [[nodiscard]] virtual std::vector<SString> listAssetPaths() const;
+
+    // -- Events ------------------------------------------------------------------
+    // Main thread. onAssetLoaded fires after an asset is imported: the startup
+    // refresh, a file added in the editor, an on-demand load in the player.
+    // onAssetReloaded fires after reloadAsset() - hot reload, Save & Reimport -
+    // once the asset and its dependents are rebuilt. Systems holding state
+    // derived from assets (UI documents, registered fonts) listen here.
+    static TMulticastDelegate<MAsset*>& onAssetLoaded();
+    static TMulticastDelegate<MAsset*>& onAssetReloaded();
 
 protected:
     // Default: createProjectSource({"assets/"}). The player will override

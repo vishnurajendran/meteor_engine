@@ -30,6 +30,7 @@
 #include "core/profiling/profiler.h"
 #include "core/utils/logger.h"
 #include "editor/profiling/editor_profile_keys.h"
+#include "editor/editorwindows/inspector/font_preview_cache.h"
 
 bool MImGuiWindow::initialiseWindow(const SString& inTitle, SVector2 inSize, int inFps)
 {
@@ -84,6 +85,9 @@ void MImGuiWindow::update(float deltaTime) {
         // If we keep polling, the next ImGui::SFML::ProcessEvent call
         // hits a destroyed context and corrupts the heap.
         if (!coreWindow.isOpen()) break;
+
+        // The Scene view forwards input to the game UI while playing.
+        onEvent.broadcast(*event);
     }
 
     // The close event handler shuts down ImGui and closes coreWindow.
@@ -118,6 +122,8 @@ void MImGuiWindow::drawGUI(const float deltaTime)
 {
     // Layout changes must land between frames, before NewFrame.
     MEditorSubWindowRegistry::beginFrame();
+    // So must new fonts (the font asset preview adds them to the atlas).
+    MFontPreviewCache::processPending();
     ImGui::SFML::Update(coreWindow, deltaClock.restart());
     ImGuizmo::BeginFrame();
 
@@ -263,4 +269,4 @@ void MImGuiWindow::loadFontFile(const SString& pathToFile, float pointSize)
         MWARN("Unable to load font file");
     }
     ImGui::GetIO().FontDefault = font;
-}
+}

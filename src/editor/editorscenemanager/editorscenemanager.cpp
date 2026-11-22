@@ -11,18 +11,18 @@
 #include "editorscenecamera.h"
 
 
-bool MEditorSceneManager::loadEmptyScene()
+bool MEditorSceneManager::loadEmptySceneImmediate()
 {
-    const bool res = MSceneManager::loadEmptyScene();
+    const bool res = MSceneManager::loadEmptySceneImmediate();
     if (res)
         createEditorSceneCamera();
     return res;
 }
 
 
-bool MEditorSceneManager::loadScene(const SString& path)
+bool MEditorSceneManager::loadSceneImmediate(const SString& path)
 {
-    if (!MSceneManager::loadEmptyScene())
+    if (!MSceneManager::loadEmptySceneImmediate())
     {
         MERROR("MEditorSceneManager::loadScene -- failed to create empty scene");
         return false;
@@ -123,6 +123,13 @@ void MEditorSceneManager::createEditorSceneCamera()
     auto* cam = MSpatialEntity::createInstance<MEditorSceneCameraEntity>(EDITOR_CAMERA_NAME);
     // Hide from serializer so it is never written to the scene file.
     cam->setEntityFlags(EEntityFlags::HideInEditor);
+
+    // A scene loaded during Play (a script changing scenes) gets a new editor
+    // camera too. It must stay off, as the one Play started with was: at
+    // priority -9999 it would otherwise outrank every game camera.
+    const auto* app = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+    if (app && (app->isSimulating() || app->isPaused()))
+        cam->setEnabled(false);
 
     editorSceneCamera = cam;
 }

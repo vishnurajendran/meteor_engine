@@ -16,6 +16,10 @@
 #include "core/engine/3d/staticmesh/staticmeshasset.h"
 #include "core/engine/3d/skeletal/anim_clip_asset.h"
 #include "core/engine/3d/skeletal/skeletal_mesh_asset.h"
+#include "core/engine/font/font_asset.h"
+#include "core/engine/ui/assets/ui_structure_asset.h"
+#include "core/engine/ui/assets/ui_style_asset.h"
+#include "core/engine/ui/assets/ui_widget_asset.h"
 #include "core/utils/logger.h"
 #include "editor/editorwindows/inspectordrawer/controls/asset_reference_controls.h"
 #include "editor/editorwindows/inspectordrawer/controls/inspector_field.h"
@@ -67,6 +71,14 @@ void MAssetInspector::draw(MAsset* asset)
         drawSkeletalMeshAsset(skeletal);
     else if (auto* clips = dynamic_cast<MAnimClipAsset*>(asset))
         drawAnimClipAsset(clips);
+    else if (auto* font = dynamic_cast<MFontAsset*>(asset))
+        drawFontAsset(font);
+    else if (auto* widget = dynamic_cast<MUIWidgetAsset*>(asset))
+        drawUIWidgetAsset(widget);
+    else if (auto* structure = dynamic_cast<MUIStructureAsset*>(asset))
+        drawUIStructureAsset(structure);
+    else if (auto* style = dynamic_cast<MUIStyleAsset*>(asset))
+        drawUIStyleAsset(style);
     else
         drawGenericAsset(asset);
 
@@ -734,7 +746,29 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
                     asset->setCompression(static_cast<ETextureCompression>(cur));
             }
 
+            // Type -- UI textures are premultiplied for the UI renderer
+            {
+                static const char* labels[] = { "Default", "UI" };
+                int cur = static_cast<int>(asset->getType());
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::AlignTextToFramePadding();
+                ImGui::TextUnformatted("Type:");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                if (ImGui::Combo("##texType", &cur, labels, IM_ARRAYSIZE(labels)))
+                    asset->setType(static_cast<ETextureType>(cur));
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip(
+                        "Default: materials, sprites, skyboxes.\n"
+                        "UI: images used by game UI (.rml / .rcss). Alpha is\n"
+                        "premultiplied on import, the way the UI renderer blends,\n"
+                        "so transparent edges don't show a dark fringe.");
+            }
+
             // sRGB -- colour textures are decoded to linear on sample
+            if (!asset->isUITexture())
             {
                 bool srgb = asset->isSrgb();
 
@@ -764,7 +798,11 @@ void MAssetInspector::drawTextureAsset(MTextureAsset* asset)
     {
         if (asset->saveImportSettings())
         {
-            if (!asset->requestReload())
+            // Through the manager, so dependents (cubemaps) and listeners
+            // (the UI's texture cache) see the reload too.
+            auto* manager = dynamic_cast<MAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+            const bool ok = manager ? manager->reloadAsset(asset) : asset->requestReload();
+            if (!ok)
                 MWARN("Texture reimport failed for: " + asset->getPath());
         }
         else

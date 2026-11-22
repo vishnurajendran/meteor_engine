@@ -19,7 +19,10 @@ void MEngineDomainSubsystem::cleanup()
 {
     // Top first, the reverse of creation.
     while (!domains.empty())
+    {
+        onDomainRemoving.broadcast(domains.back().get());
         domains.pop_back();
+    }
     MLOG("MEngineDomainSubsystem:: all domains destroyed");
 }
 
@@ -52,6 +55,7 @@ bool MEngineDomainSubsystem::removeTopDomain()
     }
 
     const uint32_t index = domains.back()->getIndex();
+    onDomainRemoving.broadcast(domains.back().get());
     domains.pop_back();
     MLOG(SString::format("MEngineDomainSubsystem:: DOMAIN_{0} removed", SString::fromInt(static_cast<int>(index))));
     return true;

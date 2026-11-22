@@ -11,8 +11,11 @@
 #include "core/engine/camera/viewmanagement.h"
 #include "core/engine/engine_statics.h"
 #include "core/engine/gizmos/gizmos.h"
+#include "core/engine/input/impl_sfml/sfml_input.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/ui/assets/ui_widget_asset.h"
+#include "core/engine/ui/viewport/viewport_subsystem.h"
 #include "core/graphics/core/render-pipeline/stages/composite/composite_stage.h"
 #include "default_engine_icon_paths.h"
 #include "editor/app/editorapplication.h"
@@ -133,6 +136,21 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
     editorAppInst = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
     if (!editorAppInst) return;
 
+    // The game UI's viewport is this window's image.
+    if (auto* ui = MEngineSubsystemRegistry::getSubsystem<MViewportSubsystem>())
+    {
+        if (MViewport* viewport = ui->getMainViewport())
+            viewport->setHost(this);
+        else
+            ui->createViewport(this);
+    }
+    if (MImGuiWindow* window = editorAppInst->getWindow())
+        windowEventSubscription = window->onEvent.add([this](const sf::Event& event)
+        {
+            forwardEventToInput(event);
+            forwardEventToUI(event);
+        });
+
     auto* cam = editorAppInst->getSceneCamera();
     if (cam)
     {
@@ -140,6 +158,13 @@ MEditorSceneViewWindow::MEditorSceneViewWindow(int x, int y) : MImGuiSubWindow(x
         cameraPitch    = euler.x;
         cameraYaw      = -euler.y;
     }
+}
+
+MEditorSceneViewWindow::~MEditorSceneViewWindow()
+{
+    windowEventSubscription.invalidate();
+    if (MViewport* viewport = uiViewport(); viewport && viewport->getHost() == this)
+        viewport->setHost(nullptr);
 }
 
 void MEditorSceneViewWindow::onGui(float deltaTime)
@@ -159,6 +184,8 @@ void MEditorSceneViewWindow::onGui(float deltaTime)
     tickDeltaTimeInfo(deltaTime);
     tickViewportInteraction();
     drawFpsOverlay();
+    updateCursorLock();
+    applyUICursor();
 
     if (!playing)
     {
@@ -201,6 +228,280 @@ void MEditorSceneViewWindow::drawScene(ImVec2 region)
     ImGui::Image(renderTexture, region);
     viewportMin  = ImGui::GetItemRectMin();
     viewportSize = ImGui::GetItemRectSize();
+    sceneImageHovered  = ImGui::IsItemHovered();
+    sceneWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+}
+
+// -- Game UI ---------------------------------------------------------------------------
+
+bool MEditorSceneViewWindow::isPlayActive() const
+{
+    return editorAppInst && (editorAppInst->isSimulating() || editorAppInst->isPaused());
+}
+
+MViewport* MEditorSceneViewWindow::uiViewport() const
+{
+    auto* ui = MEngineSubsystemRegistry::getSubsystem<MViewportSubsystem>();
+    return ui ? ui->getMainViewport() : nullptr;
+}
+
+void MEditorSceneViewWindow::forwardEventToUI(const sf::Event& event)
+{
+    MViewport* viewport = uiViewport();
+    if (!viewport || !viewport->getContext())
+        return;
+
+    if (!isPlayActive())
+    {
+        if (uiPointerInside)
+        {
+            viewport->processMouseLeave();
+            uiPointerInside = false;
+        }
+        return;
+    }
+
+    // Window pixels -> game image pixels. The render texture matches the
+    // image's size, but scale anyway in case they ever differ.
+    const SVector2 origin(viewportMin.x, viewportMin.y);
+    const SVector2 scale(viewportSize.x > 0.0f ? static_cast<float>(renderTexture.getSize().x) / viewportSize.x : 1.0f,
+                         viewportSize.y > 0.0f ? static_cast<float>(renderTexture.getSize().y) / viewportSize.y : 1.0f);
+    auto overImage = [&](sf::Vector2i p)
+    {
+        return sceneImageHovered
+            && static_cast<float>(p.x) >= viewportMin.x && static_cast<float>(p.y) >= viewportMin.y
+            && static_cast<float>(p.x) <  viewportMin.x + viewportSize.x
+            && static_cast<float>(p.y) <  viewportMin.y + viewportSize.y;
+    };
+
+    if (const auto* moved = event.getIf<sf::Event::MouseMoved>())
+    {
+        if (overImage(moved->position))
+        {
+            uiPointerInside = true;
+            viewport->processWindowEvent(event, origin, scale);
+        }
+        else if (uiPointerInside)
+        {
+            uiPointerInside = false;
+            viewport->processMouseLeave();
+        }
+        return;
+    }
+    if (const auto* pressed = event.getIf<sf::Event::MouseButtonPressed>())
+    {
+        if (overImage(pressed->position))
+            viewport->processWindowEvent(event, origin, scale);
+        return;
+    }
+    if (event.is<sf::Event::MouseButtonReleased>())
+    {
+        // Wherever it happens: the viewport only delivers releases of presses it saw.
+        viewport->processWindowEvent(event, origin, scale);
+        return;
+    }
+    if (const auto* wheel = event.getIf<sf::Event::MouseWheelScrolled>())
+    {
+        if (overImage(wheel->position))
+            viewport->processWindowEvent(event, origin, scale);
+        return;
+    }
+    if (event.is<sf::Event::KeyPressed>() || event.is<sf::Event::KeyReleased>() || event.is<sf::Event::TextEntered>())
+    {
+        if (sceneWindowFocused)
+            viewport->processWindowEvent(event, origin, scale);
+        return;
+    }
+    if (event.is<sf::Event::FocusLost>())
+        viewport->releaseAll();
+}
+
+// -- Game mouse input (Play) ----------------------------------------------------------
+
+SVector2 MEditorSceneViewWindow::toGameImagePixels(sf::Vector2i windowPosition) const
+{
+    // The render texture matches the image's size, but scale anyway in case
+    // they ever differ (same mapping as the UI's).
+    const float scaleX = viewportSize.x > 0.0f ? static_cast<float>(renderTexture.getSize().x) / viewportSize.x : 1.0f;
+    const float scaleY = viewportSize.y > 0.0f ? static_cast<float>(renderTexture.getSize().y) / viewportSize.y : 1.0f;
+    return SVector2((static_cast<float>(windowPosition.x) - viewportMin.x) * scaleX,
+                    (static_cast<float>(windowPosition.y) - viewportMin.y) * scaleY);
+}
+
+bool MEditorSceneViewWindow::isOverGameImage(sf::Vector2i p) const
+{
+    return sceneImageHovered
+        && static_cast<float>(p.x) >= viewportMin.x && static_cast<float>(p.y) >= viewportMin.y
+        && static_cast<float>(p.x) <  viewportMin.x + viewportSize.x
+        && static_cast<float>(p.y) <  viewportMin.y + viewportSize.y;
+}
+
+void MEditorSceneViewWindow::releaseGameMouse()
+{
+    auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>();
+    if (!input)
+        return;
+    for (int button = 0; button < SInput::MOUSE_BUTTON_COUNT; ++button)
+        if (gameMouseButtons & (1u << button))
+            input->onMouseButton(button, false);
+    gameMouseButtons = 0;
+    if (gamePointerInside)
+        input->onMouseLeft();
+    gamePointerInside = false;
+}
+
+void MEditorSceneViewWindow::applyCursor(bool visible, ECursorState state)
+{
+    uiCursorVisible = visible;
+    uiCursorState   = state;
+}
+
+bool MEditorSceneViewWindow::isCursorLockActive() const
+{
+    return isPlayActive()
+        && uiCursorState == ECursorState::Locked
+        && sceneWindowFocused
+        && viewportSize.x > 0.0f && viewportSize.y > 0.0f;
+}
+
+void MEditorSceneViewWindow::updateCursorLock()
+{
+    auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>();
+    if (!input)
+        return;
+
+    const SVector2 imageCenter(static_cast<float>(renderTexture.getSize().x) * 0.5f,
+                               static_cast<float>(renderTexture.getSize().y) * 0.5f);
+    const bool locked = isCursorLockActive();
+    if (locked)
+    {
+        if (MImGuiWindow* window = editorAppInst ? editorAppInst->getWindow() : nullptr)
+            window->setCursorPosition(sf::Vector2i(static_cast<int>(viewportMin.x + viewportSize.x * 0.5f),
+                                                   static_cast<int>(viewportMin.y + viewportSize.y * 0.5f)));
+    }
+    input->setMouseLocked(locked, imageCenter);
+}
+
+void MEditorSceneViewWindow::forwardEventToInput(const sf::Event& event)
+{
+    auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>();
+    if (!input)
+        return;
+
+    // Scripts only run while playing; stopping lets go of anything held.
+    if (!isPlayActive())
+    {
+        releaseGameMouse();
+        return;
+    }
+
+    if (const auto* raw = event.getIf<sf::Event::MouseMovedRaw>())
+    {
+        if (isCursorLockActive())
+            input->onMouseRawMoved(SVector2(static_cast<float>(raw->delta.x), static_cast<float>(raw->delta.y)));
+        return;
+    }
+    if (const auto* key = event.getIf<sf::Event::KeyPressed>())
+    {
+        // The way out of a locked cursor in the editor, to reach Stop:
+        // unlock and show it. A script locks it again if it wants to.
+        if (key->code == sf::Keyboard::Key::Escape && isCursorLockActive())
+            if (MViewport* viewport = uiViewport())
+                viewport->resetCursor();
+        return;
+    }
+
+    if (const auto* moved = event.getIf<sf::Event::MouseMoved>())
+    {
+        // A drag that started on the image keeps reporting outside it.
+        if (isOverGameImage(moved->position) || gameMouseButtons != 0)
+        {
+            gamePointerInside = true;
+            input->onMouseMoved(toGameImagePixels(moved->position));
+        }
+        else if (gamePointerInside)
+        {
+            gamePointerInside = false;
+            input->onMouseLeft();
+        }
+        return;
+    }
+    if (const auto* pressed = event.getIf<sf::Event::MouseButtonPressed>())
+    {
+        const int button = MSfmlInputSubsystem::toMouseButtonId(pressed->button);
+        if (button < 0 || !isOverGameImage(pressed->position))
+            return;
+        gamePointerInside = true;
+        gameMouseButtons |= 1u << button;
+        input->onMouseMoved(toGameImagePixels(pressed->position));
+        input->onMouseButton(button, true);
+        return;
+    }
+    if (const auto* released = event.getIf<sf::Event::MouseButtonReleased>())
+    {
+        // Wherever it happens, for presses the game saw.
+        const int button = MSfmlInputSubsystem::toMouseButtonId(released->button);
+        if (button < 0 || !(gameMouseButtons & (1u << button)))
+            return;
+        gameMouseButtons &= ~(1u << button);
+        input->onMouseMoved(toGameImagePixels(released->position));
+        input->onMouseButton(button, false);
+        return;
+    }
+    if (const auto* wheel = event.getIf<sf::Event::MouseWheelScrolled>())
+    {
+        if (wheel->wheel == sf::Mouse::Wheel::Vertical && isOverGameImage(wheel->position))
+            input->onMouseScrolled(wheel->delta);
+        return;
+    }
+    if (event.is<sf::Event::FocusLost>())
+        releaseGameMouse();
+}
+
+void MEditorSceneViewWindow::applyUICursor() const
+{
+    if (!isPlayActive())
+        return;
+    if (isCursorLockActive())
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+        return;
+    }
+    if (!sceneImageHovered)
+        return;
+
+    if (!uiCursorVisible)
+    {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+        return;
+    }
+    if (uiCursorShape == "pointer")
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+    else if (uiCursorShape == "text")
+        ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+    else if (uiCursorShape == "move")
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+    else if (uiCursorShape == "not-allowed")
+        ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+    else if (uiCursorShape == "ew-resize" || uiCursorShape == "col-resize")
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+    else if (uiCursorShape == "ns-resize" || uiCursorShape == "row-resize")
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+}
+
+void MEditorSceneViewWindow::drawUIDebuggerToggle(float iconH)
+{
+    auto* ui = MEngineSubsystemRegistry::getSubsystem<MViewportSubsystem>();
+    if (!ui || !isPlayActive())
+        return;
+
+    ImGui::SameLine(0, OVL_PAD);
+    overlayDivider(iconH);
+    const bool visible = ui->isDebuggerVisible();
+    if (overlayTextButton(visible ? "UI Debugger On" : "UI Debugger", "UI Debugger", visible))
+        ui->setDebuggerVisible(!visible);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("RmlUi's debugger over the game UI: element inspector, event log, outlines.");
 }
 
 void MEditorSceneViewWindow::handleDragDropBehaviour()
@@ -232,6 +533,13 @@ void MEditorSceneViewWindow::handleDragDropBehaviour()
                 // .comp → composition instance. Selected by the spawner.
                 if (MSpatialEntity* entity = MAssetDropSpawner::spawn(droppedId))
                     entity->setWorldPosition(hit.point);
+            }
+            else if (const auto widget = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>()
+                                             ->getAssetById<MUIWidgetAsset>(droppedId))
+            {
+                // UI isn't placed in the scene; say how it is used instead.
+                MWARN(SString::format("UI widgets are created from scripts, not placed in the scene: "
+                                      "MUIWidget.create(\"{0}\"):addToViewport(0)", widget.toRefString()));
             }
         }
         ImGui::EndDragDropTarget();
@@ -579,6 +887,9 @@ void MEditorSceneViewWindow::drawToolbar(bool playMode)
                 MCompositeStage::debugView = static_cast<EBufferDebugView>(cur);
             ImGui::PopStyleColor(3);
         }
+
+        // -- Play only: RmlUi debugger -----------------------------------
+        drawUIDebuggerToggle(iconH);
 
         // -- Edit-mode only: camera speed (right-aligned) ---------------
         if (!playMode)

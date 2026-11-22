@@ -19,6 +19,10 @@ class MShaderAsset;
 class MStaticMeshAsset;
 class MSkeletalMeshAsset;
 class MAnimClipAsset;
+class MFontAsset;
+class MUIWidgetAsset;
+class MUIStructureAsset;
+class MUIStyleAsset;
 struct SModelImportSettings;
 class MMaterialPropertyControl;
 class MAssetReferenceControl;
@@ -46,6 +50,10 @@ private:
     static void drawStaticMeshAsset (MStaticMeshAsset*  asset);
     static void drawSkeletalMeshAsset(MSkeletalMeshAsset* asset);   // asset_inspector_models.cpp
     static void drawAnimClipAsset   (MAnimClipAsset*    asset);     // asset_inspector_models.cpp
+    static void drawFontAsset       (MFontAsset*        asset);     // asset_inspector_ui.cpp
+    static void drawUIWidgetAsset   (MUIWidgetAsset*    asset);     // asset_inspector_ui.cpp
+    static void drawUIStructureAsset(MUIStructureAsset* asset);     // asset_inspector_ui.cpp
+    static void drawUIStyleAsset    (MUIStyleAsset*     asset);     // asset_inspector_ui.cpp
 
     // Import As / scale / pivot / max influences / sample rate, plus Save &
     // Reimport. Returns true if the asset was recreated (another importAs) -

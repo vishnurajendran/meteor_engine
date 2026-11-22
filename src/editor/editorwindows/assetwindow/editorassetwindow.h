@@ -27,6 +27,8 @@ enum class EAssetSortMode
     DateModified
 };
 
+class IAssetCreator;
+
 class MEditorAssetWindow : public MImGuiSubWindow
 {
 public:
@@ -99,6 +101,8 @@ private:
     void drawCreateMenuItems(const SString& targetDir);
     // Arms the create dialog for a template.
     void beginCreateFromTemplate(const SString& templateId, const SString& targetDir);
+    // Arms the create dialog for an asset creator (asset_creator.h).
+    void beginCreateFromCreator(IAssetCreator* creator, const SString& targetDir);
     // All asset paths under `root` with the given extension (no dot), sorted.
     static void collectAssetPaths(SAssetDirectoryNode* root, const std::string& extension,
                                   std::vector<SString>& out);
@@ -157,6 +161,7 @@ private:
     // -- Create-asset dialog state ---------------------------------------------
     bool                          pendingCreatePopup = false;
     SString                       createTemplateId;
+    IAssetCreator*                createCreator = nullptr;   // set instead of createTemplateId
     SString                       createTargetDir;
     char                          createNameBuffer[256] = {};
     std::map<SString, std::string> createParamValues;
@@ -165,4 +170,4 @@ private:
     size_t sourcesRowIdx;
 };
 
-#endif // EDITORASSETWINDOW_H
+#endif // EDITORASSETWINDOW_H

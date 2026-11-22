@@ -67,6 +67,12 @@ public:
     // the name clashes. Clashes are never resolved silently.
     static std::vector<MLuaScriptAsset*> find(const SString& fullName);
 
+    // Loads every .lua asset the asset manager can list, so each one is
+    // indexed. The editor loads all assets at startup; a published game loads
+    // them on first use, and import() names a script only by its full name -
+    // so on a miss, import() calls this and looks again.
+    static void indexAllScripts();
+
     // Every loaded script, importable or not, sorted by path - what the
     // script refresh compiles.
     static std::vector<MLuaScriptAsset*> getAllScripts();

@@ -70,11 +70,68 @@ IScriptInstance* MLuaScriptContext::createInstance(MLuaScriptAsset* asset, MSpat
         return nullptr;
     }
 
+    if (isWidgetBehaviourClass(scriptClass->cls))
+    {
+        MERROR(SString::format("Script '{0}' was not started on '{1}': it extends WidgetBehaviour, so it can only "
+                               "be a UI widget's behaviour (set it in a .muia)", displayName(asset), owner->getName()));
+        return nullptr;
+    }
+
     // The instance is { __entity = owner } with the class as its metatable,
     // and is passed as 'self' to every lifecycle call.
     auto* instance = mnew<MLuaScriptInstance>(vm, scriptClass->cls, scriptClass->env, owner, this);
     liveInstances.insert(instance);
     return instance;
+}
+
+IScriptInstance* MLuaScriptContext::createWidgetInstance(MLuaScriptAsset* asset, const MUIWidget& owner)
+{
+    if (!asset)
+        return nullptr;
+
+    SString error;
+    const SLuaClass* scriptClass = getOrLoadClass(asset, error);
+    if (!scriptClass)
+    {
+        MERROR(SString::format("Widget behaviour '{0}' was not started: {1}", asset->getPath(), error));
+        return nullptr;
+    }
+
+    if (!isWidgetBehaviourClass(scriptClass->cls))
+    {
+        // Plain concatenation: SString::format would read "{ ... }" as a placeholder.
+        MERROR(SString("Script '") + displayName(asset) + "' is a widget's behaviour but does not extend "
+               "WidgetBehaviour - declare it with CLASS(\"Name\", WidgetBehaviour) { ... }");
+        return nullptr;
+    }
+
+    // { __widget = owner }, the class as its metatable - the same shape as an
+    // entity instance, so everything else about scripts works unchanged.
+    auto* instance = mnew<MLuaScriptInstance>(vm, scriptClass->cls, scriptClass->env, owner, this);
+    liveInstances.insert(instance);
+    return instance;
+}
+
+bool MLuaScriptContext::isWidgetBehaviourClass(const sol::table& cls)
+{
+    const sol::object widgetBase = vm["WidgetBehaviour"];
+    if (widgetBase.get_type() != sol::type::table || !cls.valid())
+        return false;
+
+    // class -> parent -> ... the same walk Behaviour's cast does.
+    const void* target = widgetBase.pointer();
+    sol::object level = cls;
+    for (int depth = 0; depth < 64 && level.get_type() == sol::type::table; ++depth)
+    {
+        if (level.pointer() == target)
+            return true;
+        const sol::table current = level;
+        const sol::object meta = current[sol::metatable_key];
+        if (meta.get_type() != sol::type::table)
+            return false;
+        level = meta.as<sol::table>().raw_get<sol::object>("__index");
+    }
+    return false;
 }
 
 void MLuaScriptContext::releaseInstance(MLuaScriptInstance* instance)
@@ -577,7 +634,13 @@ void MLuaScriptContext::registerImport()
         const std::string where = lua_tostring(L, -1);
         lua_pop(L, 1);
 
-        const auto scripts = MLuaScriptRegistry::find(fullName);
+        auto scripts = MLuaScriptRegistry::find(fullName);
+        if (scripts.empty())
+        {
+            // Not loaded yet (a published game loads assets on first use).
+            MLuaScriptRegistry::indexAllScripts();
+            scripts = MLuaScriptRegistry::find(fullName);
+        }
         if (scripts.empty())
             throw std::runtime_error(where + "import: no script declares '" + fullName + "'");
 

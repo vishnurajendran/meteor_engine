@@ -20,6 +20,8 @@
 #include "core/engine/animation/animation_subsystem.h"
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/ui/render/ui_render_stage.h"
+#include "core/engine/ui/viewport/viewport_subsystem.h"
 #include "core/graphics/core/render-pipeline/render_queue.h"
 #include "editor/editorassetmanager/editorassetmanager.h"
 #include "editor/editorrenderstages/gizmos/gizmo_stage.h"
@@ -54,6 +56,10 @@ void MEditorApplication::run() {
     startFrame();
     window->clear();
 
+    // A scene change a script asked for last frame - before anything ticks.
+    if (sceneManagerRef)
+        sceneManagerRef->processPendingLoad();
+
     const bool canTickPhysics = physicsEngineRef && physicsEngineRef->canTick();
     const bool canSimulate = simulationState == EEditorSimulationState::Simulating;
 
@@ -79,6 +85,11 @@ void MEditorApplication::run() {
         sceneManagerRef->lateUpdate(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
     }
+
+    // Game UI: onWidgetTick (after onLateTick, so a HUD shows this frame's
+    // final values), then layout. Input reached it at the end of last frame.
+    if (auto* ui = MEngineSubsystemRegistry::getSubsystem<MViewportSubsystem>())
+        ui->update(deltaTime);
 
     // While a publish runs, nothing may change the project: file watcher
     // events wait (they are handled once it finishes), and so do script
@@ -180,6 +191,10 @@ void MEditorApplication::registerSubsystems()
 
     // Init Scripting Engine
     MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();
+
+    // Game UI - widgets hold script instances, so after scripting. Its viewport
+    // is the Scene view, created with that window; RmlUi starts on first use.
+    MEngineSubsystemRegistry::registerSubsystem<MViewportSubsystem>();
 
     // Editor Simulation Manager, we will register as the concrete class for now. in the future, if
     // we need to explose APIs for this system, then wire that through an interface.
@@ -308,7 +323,7 @@ void MEditorApplication::initialise() {
         return;
 
     MVERBOSE(SString::format("[MEditorApplication]::Loading scene {0}", startScene));
-    sceneManagerRef->loadScene(startScene);
+    sceneManagerRef->loadSceneImmediate(startScene);
 
 }
 
@@ -384,6 +399,7 @@ void MEditorApplication::loadPrerequisites()
     assetManagerRef->refresh();
     pipelineManager->init(); // manual init
     pipelineManager->getPipeline()->addStage<MGizmoStage>();
+    pipelineManager->getPipeline()->addStage<MUIRenderStage>();   // game UI during Play, over gizmos
 
     // setup scene manager
     // Registering runs init(), which opens an empty scene.
@@ -447,6 +463,11 @@ void MEditorApplication::startSimulation()
 {
     if (isSimulating())
         return;
+    if (isPaused())
+    {
+        resumeSimulation();
+        return;
+    }
 
     // Every way into Play goes through here, not just the button.
     SString reason;
@@ -470,10 +491,27 @@ void MEditorApplication::stopSimulation()
 
 void MEditorApplication::pauseSimulation()
 {
-    if (isPaused())
+    // Only a running game can pause.
+    if (simulationState != EEditorSimulationState::Simulating)
         return;
     simulationState = EEditorSimulationState::SimulationPaused;
     notifySimulationStateChange();
+}
+
+void MEditorApplication::resumeSimulation()
+{
+    if (simulationState != EEditorSimulationState::SimulationPaused)
+        return;
+    simulationState = EEditorSimulationState::Simulating;
+    notifySimulationStateChange();
+}
+
+void MEditorApplication::pause(const bool& pause)
+{
+    if (pause)
+        pauseSimulation();
+    else
+        resumeSimulation();
 }
 
 void MEditorApplication::exit()

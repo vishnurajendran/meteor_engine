@@ -32,7 +32,8 @@ public:
     void cleanup() override;
     bool isRunning() const override;
 
-    void pause(const bool& pause) override {}; // no API support for this func here
+    // Scripts (e.g. a pause menu) pause and resume Play. Ignored when stopped.
+    void pause(const bool& pause) override;
 
     [[nodiscard]] bool isPaused()  const override  { return simulationState == SimulationPaused; };
     [[nodiscard]] bool isPlaying() const override  { return simulationState == Simulating;       };
@@ -51,6 +52,10 @@ public:
     // blocked then. outReason says why, for the Play button's tooltip.
     [[nodiscard]] bool canStartSimulation(SString& outReason) const;
     void pauseSimulation();
+    // Back to Simulating from SimulationPaused, keeping the running game.
+    void resumeSimulation();
+
+    [[nodiscard]] MImGuiWindow* getWindow() const { return window.get(); }
 
     // Fired whenever Play / Pause / Stop changes the simulation state.
     TMulticastDelegate<EEditorSimulationState> onSimulationStateChanged;
@@ -94,4 +99,4 @@ private:
     SScopedCallbackDelegateHandle instanceReplacedSubscription;
 };
 
-#endif
+#endif
