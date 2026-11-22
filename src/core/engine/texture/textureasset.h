@@ -42,6 +42,19 @@ enum class ETextureCompression
     DXT5    // BC3 - RGBA with alpha, good compression (~4:1)
 };
 
+// What the texture is for. Decides how its colour is stored and blended.
+enum class ETextureType
+{
+    // Material, sprite and skybox textures: straight alpha, sRGB-decoded on
+    // sample when `srgb` is on.
+    Default,
+    // Game UI (RmlUi): alpha is premultiplied into the colour at import, which
+    // is what the UI renderer blends with (ONE, ONE_MINUS_SRC_ALPHA). Stored
+    // as plain RGBA8 holding sRGB-encoded values - the UI draws onto the final,
+    // already-encoded image, so nothing is decoded. `srgb` is ignored.
+    UI
+};
+
 // ── MTextureAsset ─────────────────────────────────────────────────────────────
 
 SCRIPT_BIND_CLASS()
@@ -61,6 +74,7 @@ private:
     // are decoded to linear by the GPU on sample. Turn off for data textures
     // (normal maps, masks, roughness) so their values are read as-is.
     bool                srgb        = true;
+    ETextureType        type        = ETextureType::Default;
 
 public:
     MTextureAsset();
@@ -79,6 +93,8 @@ public:
     int                 getMaxImportSize() const { return maxImportSize; }
     ETextureCompression getCompression()   const { return compression; }
     bool                isSrgb()           const { return srgb; }
+    ETextureType        getType()          const { return type; }
+    bool                isUITexture()      const { return type == ETextureType::UI; }
 
     void setFilterMin(ETextureFilterMin f)     { filterMin = f; }
     void setFilterMag(ETextureFilterMag f)     { filterMag = f; }
@@ -87,6 +103,7 @@ public:
     void setMaxImportSize(int s)               { maxImportSize = s; }
     void setCompression(ETextureCompression c) { compression = c; }
     void setSrgb(bool s)                       { srgb = s; }
+    void setType(ETextureType t)               { type = t; }
 
     // ── Colour-space aware binding ────────────────────────────────────────
     // sRGB textures are stored as SRGB8_ALPHA8 with decoding switched OFF, so
@@ -108,4 +125,4 @@ private:
     bool usesSrgbStorage() const;
 };
 
-#endif //TEXTUREASSET_H
+#endif //TEXTUREASSET_H

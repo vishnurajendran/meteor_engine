@@ -5,6 +5,7 @@
 
 #include "core/engine/input/input_subsystem_interface.h"
 #include "core/engine/subsystem/subsystem_registry.h"
+#include "core/engine/ui/ui_viewport_api.h"
 
 // -- Queries: forwarded to the input subsystem --------------------------------
 
@@ -31,6 +32,44 @@ bool SInput::isDown(EKeyCode key)
     return input && input->isDown(key);
 }
 
+// -- Mouse ---------------------------------------------------------------------
+
+SVector2 SInput::getMousePos()
+{
+    const auto* input = inputSubsystem();
+    return input ? input->getMousePos() : SVector2(0.0f);
+}
+
+SVector2 SInput::getMouseDelta()
+{
+    const auto* input = inputSubsystem();
+    return input ? input->getMouseDelta() : SVector2(0.0f);
+}
+
+bool SInput::getMouseButton(EMouseButton button)
+{
+    const auto* input = inputSubsystem();
+    return input && input->isMouseButtonDown(static_cast<int>(button));
+}
+
+bool SInput::mouseButtonPressedThisFrame(EMouseButton button)
+{
+    const auto* input = inputSubsystem();
+    return input && input->mouseButtonPressedThisFrame(static_cast<int>(button));
+}
+
+bool SInput::mouseButtonPressedAndReleased(EMouseButton button)
+{
+    const auto* input = inputSubsystem();
+    return input && input->mouseButtonPressedAndReleased(static_cast<int>(button));
+}
+
+float SInput::getMouseScrollDelta()
+{
+    const auto* input = inputSubsystem();
+    return input ? input->getMouseScrollDelta() : 0.0f;
+}
+
 // -- Modifier helpers --------------------------------------------------------
 
 bool SInput::isCtrlDown()
@@ -46,6 +85,18 @@ bool SInput::isShiftDown()
 bool SInput::isAltDown()
 {
     return isDown(EKeyCode::LAlt) || isDown(EKeyCode::RAlt);
+}
+
+// -- Game UI -----------------------------------------------------------------
+
+bool SInput::isUIConsumingMouse()
+{
+    return SViewport::isUIConsumingMouse();
+}
+
+bool SInput::isUIConsumingKeyboard()
+{
+    return SViewport::isUIConsumingKeyboard();
 }
 
 // -- Key name table ----------------------------------------------------------

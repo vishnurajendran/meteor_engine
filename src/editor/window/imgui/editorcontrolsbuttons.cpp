@@ -11,6 +11,7 @@
 
 sf::Texture MEditorControlsButtons::playTexture;
 sf::Texture MEditorControlsButtons::stopTexture;
+sf::Texture MEditorControlsButtons::pauseTexture;
 
 void MEditorControlsButtons::simulationStartButton()
 {
@@ -62,10 +63,40 @@ void MEditorControlsButtons::simulationStopButton()
     }
 }
 
+void MEditorControlsButtons::simulationPauseButton()
+{
+    static bool pauseTried = false;
+    if (!pauseTried)
+    {
+        pauseTried = true;
+        loadEngineTexture(pauseTexture, SEngineAssetIconPaths::LOWRES_TEX_BTTN_PAUSE);
+    }
+
+    auto* editorApp = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
+    if (!editorApp)
+        return;
+
+    // Highlighted while paused; click again to resume.
+    const bool paused = editorApp->isPaused();
+    if (paused)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+    if (ImGui::ImageButton("##MTR_SIM_PAUSE_BTTN", pauseTexture, ImVec2(pauseTexture.getSize().x, pauseTexture.getSize().y)))
+        editorApp->pause(!paused);
+    if (paused)
+        ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip(paused ? "Resume" : "Pause");
+}
+
 void MEditorControlsButtons::runtimeControls() {
     auto* editorApp = dynamic_cast<MEditorApplication*>(MApplication::getAppInstance());
-    if (!editorApp->isSimulating())
+    // Paused is still Play: Stop and Resume, never a second Play.
+    if (!editorApp->isSimulating() && !editorApp->isPaused())
         simulationStartButton();
     else
+    {
         simulationStopButton();
+        ImGui::SameLine();
+        simulationPauseButton();
+    }
 }

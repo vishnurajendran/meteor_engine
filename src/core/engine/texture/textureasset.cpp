@@ -91,6 +91,16 @@ static ETextureCompression stringToCompression(const char* s)
     return ETextureCompression::None;
 }
 
+static const char* typeToString(ETextureType t)
+{
+    return t == ETextureType::UI ? "ui" : "default";
+}
+
+static ETextureType stringToType(const char* s)
+{
+    return SString(s) == "ui" ? ETextureType::UI : ETextureType::Default;
+}
+
 // -- GL enum helpers -----------------------------------------------------------
 
 static GLenum toGLFilterMin(ETextureFilterMin f)
@@ -218,8 +228,10 @@ bool MTextureAsset::loadWithSettings()
         return false;
     }
 
+    // UI textures always take the CPU path: their alpha is premultiplied there.
     bool needsProcessing = (maxImportSize > 0)
-                        || (compression != ETextureCompression::None);
+                        || (compression != ETextureCompression::None)
+                        || (type == ETextureType::UI);
 
     if (!needsProcessing)
     {
@@ -253,6 +265,23 @@ bool MTextureAsset::loadWithSettings()
             unsigned int newH = std::max(1u, (unsigned int)(sz.y * scale));
             img = resizeImage(img, newW, newH);
         }
+    }
+
+    // -- Premultiply (UI) ---------------------------------------------------
+    // RmlUi blends with premultiplied alpha. Multiplying the stored sRGB values
+    // by alpha matches its own loader and keeps transparent edges from showing
+    // the dark fringe straight alpha would give.
+    if (type == ETextureType::UI)
+    {
+        const auto sz = img.getSize();
+        std::vector<std::uint8_t> pixels(img.getPixelsPtr(), img.getPixelsPtr() + sz.x * sz.y * 4);
+        for (size_t i = 0; i + 3 < pixels.size(); i += 4)
+        {
+            const unsigned a = pixels[i + 3];
+            for (size_t c = 0; c < 3; ++c)
+                pixels[i + c] = static_cast<std::uint8_t>((pixels[i + c] * a + 127) / 255);
+        }
+        img = sf::Image(sz, pixels.data());
     }
 
     // Upload to sf::Texture (GPU as RGBA8, or SRGB8_ALPHA8 for colour textures)
@@ -330,7 +359,8 @@ bool MTextureAsset::usesSrgbStorage() const
 {
     // Without EXT_texture_sRGB_decode we could not keep the UI showing raw
     // values, so fall back to plain RGBA8 (no decode, the old behaviour).
-    return srgb && GLEW_EXT_texture_sRGB_decode;
+    // UI textures hold raw sRGB values the UI draws as-is: plain RGBA8.
+    return srgb && type != ETextureType::UI && GLEW_EXT_texture_sRGB_decode;
 }
 
 void MTextureAsset::bindForRendering(unsigned int textureUnit)
@@ -370,6 +400,7 @@ void MTextureAsset::loadImportSettings(const pugi::xml_node& node)
     if (auto n = node.child("maxSize"))     maxImportSize = n.text().as_int(0);
     if (auto n = node.child("compression")) compression = stringToCompression(n.text().as_string());
     if (auto n = node.child("srgb"))        srgb        = n.text().as_bool(true);
+    if (auto n = node.child("type"))        type        = stringToType(n.text().as_string());
 }
 
 bool MTextureAsset::saveImportSettings()
@@ -403,6 +434,7 @@ bool MTextureAsset::saveImportSettings()
     settings.append_child("maxSize").text().set(maxImportSize);
     settings.append_child("compression").text().set(compressionToString(compression));
     settings.append_child("srgb").text().set(srgb);
+    settings.append_child("type").text().set(typeToString(type));
 
     return target->writeMeta(path, doc);
-}
+}

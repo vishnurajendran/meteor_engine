@@ -37,6 +37,7 @@ class IScriptInstance;
 class MLuaScriptAsset;
 class MLuaScriptInstance;
 class MSpatialEntity;
+class MUIWidget;
 
 class MLuaScriptContext
 {
@@ -51,6 +52,10 @@ public:
     // Compiles the script's class if needed and returns an instance for the
     // entity, or nullptr (with the error logged).
     IScriptInstance* createInstance(MLuaScriptAsset* asset, MSpatialEntity* owner);
+    // The same for a UI widget: the instance is { __widget = owner }. The
+    // script must extend WidgetBehaviour (WidgetBehaviour.lua); an entity
+    // script must not, and each is refused with an error in the other role.
+    IScriptInstance* createWidgetInstance(MLuaScriptAsset* asset, const MUIWidget& owner);
     void releaseInstance(MLuaScriptInstance* instance);
 
     // ---- script refresh ----------------------------------------------------
@@ -101,6 +106,9 @@ private:
 
     // full name if the script has one, otherwise its path - for messages
     static SString displayName(MLuaScriptAsset* asset);
+
+    // True if the class is WidgetBehaviour or extends it.
+    [[nodiscard]] bool isWidgetBehaviourClass(const sol::table& cls);
 
     SString debugName;
 

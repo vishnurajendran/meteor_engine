@@ -18,6 +18,9 @@
 #include "core/engine/physics/impl/engine/jolt_physics_engine.h"
 #include "core/engine/physics/interface/physics_engine_interface.h"
 #include "core/engine/scripting/lua/lua_scripting_engine.h"
+#include "core/engine/ui/render/ui_render_stage.h"
+#include "core/engine/ui/viewport/viewport_subsystem.h"
+#include "core/engine/ui/viewport/window_viewport_host.h"
 #include "core/engine/subsystem/subsystem_registry.h"
 #include "core/engine/scene/scenemanager.h"
 #include "core/package/packaged_asset_manager.h"
@@ -72,6 +75,10 @@ void MPlayerApplication::registerSubsystems(const std::shared_ptr<MPackagedAsset
     // Init Scripting Engine
     MEngineSubsystemRegistry::registerSubsystem<IScriptingEngineSubsystem, MLuaScriptingEngineSubsystem>();
 
+    // Game UI - widgets hold script instances, so after scripting; before the
+    // scene manager, so widgets outlive scene loads.
+    MEngineSubsystemRegistry::registerSubsystem<MViewportSubsystem>();
+
     // Scenes - last, since entities use the subsystems above. Registering
     // runs init(), which opens an empty scene.
     sceneManagerRef = MEngineSubsystemRegistry::registerSubsystem<MSceneManager>();
@@ -89,8 +96,21 @@ void MPlayerApplication::run() {
     startFrame();
     window->clear();
 
+    // OS events first: the UI gets input before gameplay, so the
+    // SInput.isUIConsuming* flags are current when scripts read them.
+    window->pollEvents();
+    if (!window->isOpen())
+        return;
+
     // Keyboard state for this frame, before physics and scene updates so
     // scripts see it. (The editor polls from its ImGui window instead.)
+    // A scene change a script asked for last frame - before anything ticks.
+    if (sceneManagerRef)
+        sceneManagerRef->processPendingLoad();
+
+    // Cursor lock first, so the poll below latches the locked position.
+    if (uiViewportHost)
+        uiViewportHost->update();
     if (auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>())
     {
         if (window->hasFocus())
@@ -99,10 +119,14 @@ void MPlayerApplication::run() {
             input->releaseAll();
     }
 
+    // Paused: no physics, no entity ticks. Animation keeps evaluating (its
+    // clocks stop on their own) and the UI keeps running, so a pause menu works.
+    const bool paused = isPaused();
+
     const bool canTickPhysics = physicsEngineRef && physicsEngineRef->canTick();
     // tick physics.
     START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
-    if (canTickPhysics)
+    if (canTickPhysics && !paused)
         tickPhysics(deltaTime);
     STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_PHYSICS)
 
@@ -110,15 +134,22 @@ void MPlayerApplication::run() {
     if (sceneManagerRef)
     {
         START_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
-        sceneManagerRef->update(deltaTime);
+        if (!paused)
+            sceneManagerRef->update(deltaTime);
         // Poses and skinning: after every onTick (a playClip there shows this
         // frame), before onLateTick (followers see this frame's bones).
         if (auto* animation = MEngineSubsystemRegistry::getSubsystem<MAnimationSubsystem>())
             animation->update(deltaTime);
         // after every onTick, so followers (cameras) see this frame's poses
-        sceneManagerRef->lateUpdate(deltaTime);
+        if (!paused)
+            sceneManagerRef->lateUpdate(deltaTime);
         STOP_PROFILING_SAMPLE(DefaultProfileKeys::APPLICATION_SCENE_UPDATE)
     }
+
+    // Game UI: onWidgetTick after every onLateTick (a HUD shows this frame's
+    // final values), then layout. Drawn by the pipeline's last stage.
+    if (auto* ui = MEngineSubsystemRegistry::getSubsystem<MViewportSubsystem>())
+        ui->update(deltaTime);
 
     window->update(deltaTime);
 }
@@ -176,6 +207,13 @@ void MPlayerApplication::cleanup() {
     MLOG(STR("[Cleanup] Scene closed"));
 
     MLOG(STR("[Cleanup] Asset manager cleaned"));
+
+    // The UI's viewport outlives the window (the subsystem goes later):
+    // detach it from the window before the window goes.
+    windowEventSubscription.invalidate();
+    if (uiViewport)
+        uiViewport->setHost(nullptr);
+    uiViewport = nullptr;
 
     MLOG(STR("[Cleanup] Closing window"));
     if (window != nullptr)
@@ -247,10 +285,70 @@ void MPlayerApplication::initialise() {
 
     pipelineManager->init();
     pipelineManager->setRenderTarget(window->getRenderBuffer());
+    pipelineManager->getPipeline()->addStage<MUIRenderStage>();   // game UI, last
+    createUIViewport();
+    subscribeMouseInput();
 
     loadStartupScene(package.get());
 
     MVERBOSE(STR("Player Initialised"));
+}
+
+void MPlayerApplication::createUIViewport()
+{
+    auto* ui = MEngineSubsystemRegistry::getSubsystem<MViewportSubsystem>();
+    if (!ui || !window)
+        return;
+
+    uiViewportHost = std::make_unique<MWindowViewportHost>(window.get());
+    uiViewport     = ui->createViewport(uiViewportHost.get());
+
+    // Window events reach the UI as they are polled (start of the frame).
+    windowEventSubscription = window->onEvent.add([this](const sf::Event& event)
+    {
+        if (uiViewport)
+            uiViewport->processWindowEvent(event);
+    });
+}
+
+void MPlayerApplication::subscribeMouseInput()
+{
+    if (!window)
+        return;
+
+    // The game viewport is the whole window, so window pixels are viewport
+    // pixels. Latched by input->poll() in run(), after the events.
+    mouseInputSubscription = window->onEvent.add([](const sf::Event& event)
+    {
+        auto* input = MEngineSubsystemRegistry::getSubsystem<IInputSubsystem>();
+        if (!input)
+            return;
+
+        auto toViewport = [](sf::Vector2i p) { return SVector2(static_cast<float>(p.x), static_cast<float>(p.y)); };
+
+        if (const auto* moved = event.getIf<sf::Event::MouseMoved>())
+            input->onMouseMoved(toViewport(moved->position));
+        else if (const auto* raw = event.getIf<sf::Event::MouseMovedRaw>())
+            input->onMouseRawMoved(SVector2(static_cast<float>(raw->delta.x), static_cast<float>(raw->delta.y)));
+        else if (const auto* pressed = event.getIf<sf::Event::MouseButtonPressed>())
+        {
+            input->onMouseMoved(toViewport(pressed->position));
+            input->onMouseButton(MSfmlInputSubsystem::toMouseButtonId(pressed->button), true);
+        }
+        else if (const auto* released = event.getIf<sf::Event::MouseButtonReleased>())
+        {
+            input->onMouseMoved(toViewport(released->position));
+            input->onMouseButton(MSfmlInputSubsystem::toMouseButtonId(released->button), false);
+        }
+        else if (const auto* wheel = event.getIf<sf::Event::MouseWheelScrolled>())
+        {
+            if (wheel->wheel == sf::Mouse::Wheel::Vertical)
+                input->onMouseScrolled(wheel->delta);
+        }
+        else if (event.is<sf::Event::MouseLeft>())
+            input->onMouseLeft();
+        // Focus loss: run() calls releaseAll() while the window is unfocused.
+    });
 }
 
 void MPlayerApplication::loadStartupScene(const MPackagedAssetManager* package)
@@ -278,7 +376,7 @@ void MPlayerApplication::loadStartupScene(const MPackagedAssetManager* package)
 
     MLOG(STR("MPlayerApplication:: loading startup scene ") + scenePath);
     if (sceneManagerRef)
-        sceneManagerRef->loadScene(scenePath);
+        sceneManagerRef->loadSceneImmediate(scenePath);
 }
 
 bool MPlayerApplication::isRunning() const {

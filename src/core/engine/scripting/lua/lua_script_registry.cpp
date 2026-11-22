@@ -12,6 +12,9 @@
 #include <string_view>
 
 #include "lua_script_asset.h"
+#include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "core/engine/subsystem/subsystem_registry.h"
+#include "core/utils/fileio.h"
 #include "core/utils/logger.h"
 
 std::unordered_map<SString, std::vector<MLuaScriptAsset*>> MLuaScriptRegistry::scriptsByName;
@@ -509,6 +512,18 @@ void MLuaScriptRegistry::removeEntry(MLuaScriptAsset* asset)
             scriptsByName.erase(listIt);
     }
     nameByScript.erase(it);
+}
+
+void MLuaScriptRegistry::indexAllScripts()
+{
+    auto* manager = dynamic_cast<MAssetManager*>(MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>());
+    if (!manager)
+        return;
+    // Loading a script reads its source and registers it (loadSource);
+    // already-loaded ones are just looked up.
+    for (const SString& path : manager->listAssetPaths())
+        if (FileIO::getFileExtension(path).toLower() == "lua")
+            manager->getAsset<MLuaScriptAsset>(path);
 }
 
 void MLuaScriptRegistry::registerScript(MLuaScriptAsset* asset)

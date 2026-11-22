@@ -31,7 +31,9 @@ enum ERenderStageOrder
     RS_Transparent   = 4500,    // forward-lit transparents, blended into BUFFER_SCENE
     RS_PostProcessing = 6000,
 
-    RS_UserInterface = 7000,    // game UI - after post so it isn't bloomed/tonemapped
+    RS_UserInterface = 7000,    // reserved for UI drawn into the HDR scene (world-space panels, later).
+                                // Screen-space game UI (MUIRenderStage) draws after composite instead,
+                                // at RS_Composite + 600, onto the final sRGB image.
 
     RS_Composite     = 8000,    // encode BUFFER_SCENE to sRGB into the render target
 };
@@ -50,4 +52,4 @@ public:
     virtual void postRender(IRenderPipeline* const pipeline) = 0;
 };
 
-#endif // RENDER_STAGE_H
+#endif // RENDER_STAGE_H

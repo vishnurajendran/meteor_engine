@@ -16,7 +16,7 @@ MSceneAsset::MSceneAsset(const SString& path) : MAsset(path){
 
 bool MSceneAsset::openAsset()
 {
-    return MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->loadScene(path);
+    return MEngineSubsystemRegistry::getSubsystem<MSceneManager>()->loadSceneImmediate(path);
 }
 
 bool MSceneAsset::loadFromSource() {

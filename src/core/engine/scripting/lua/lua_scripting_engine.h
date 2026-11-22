@@ -26,6 +26,7 @@ public:
     void cleanup() override;
 
     IScriptInstance* createScriptInstance(IScriptAsset* asset, MSpatialEntity* owner) override;
+    IScriptInstance* createWidgetScriptInstance(IScriptAsset* asset, const MUIWidget& owner) override;
     void releaseScriptInstance(IScriptInstance* scriptInstance) override;
 };
 

@@ -6,9 +6,11 @@
 #include "core/engine/scripting/interface/script_instance.h"
 #include "core/object/object.h"
 #include "core/object/object_class_macros.h"
+#include "core/utils/logger.h"
 #include "sol/sol.hpp"
 
 class MLuaScriptContext;
+class MUIWidget;
 
 class MLuaScriptInstance : public MObject, public IScriptInstance
 {
@@ -20,6 +22,10 @@ public:
     // the class, which is shared by every entity using the script.
     MLuaScriptInstance(sol::state& vm, const sol::table& scriptClass, const sol::environment& classEnv,
                        MSpatialEntity* owner, MLuaScriptContext* context);
+
+    // A UI widget's behaviour: { __widget = owner }. getOwner() is nullptr.
+    MLuaScriptInstance(sol::state& vm, const sol::table& scriptClass, const sol::environment& classEnv,
+                       const MUIWidget& widgetOwner, MLuaScriptContext* context);
     ~MLuaScriptInstance() override = default;
 
     bool isValid() const override { return valid; }
@@ -34,6 +40,29 @@ public:
     [[nodiscard]] bool hasFunc(const SString& funcName) const override;
     void sendCollisionMessage(const SString& funcName, const SCollisionData& data) override;
     void sendTriggerMessage(const SString& funcName, const SOverlapData& data) override;
+
+    // Calls self:funcName(args...) if the script defines it, with any Lua-
+    // convertible arguments (usertypes included). Returns false when it does
+    // not define it or the instance is invalid. Errors are logged with
+    // `who` (an entity or widget name), never thrown.
+    template <typename... Args>
+    bool callMethod(const SString& funcName, const SString& who, Args&&... args)
+    {
+        if (!valid || !instanceTable.valid())
+            return false;
+        const sol::object member = instanceTable[funcName.c_str()];
+        if (member.get_type() != sol::type::function)
+            return false;
+
+        const sol::protected_function func = member;
+        const sol::protected_function_result result = func(instanceTable, std::forward<Args>(args)...);
+        if (!result.valid())
+        {
+            const sol::error err = result;
+            MERROR(funcName + " on '" + who + "': " + SString(err.what()));
+        }
+        return true;
+    }
 
     template<typename T>
     void setEnvVarTyped(const SString& name, T value)
@@ -67,4 +96,4 @@ private:
     bool valid = false;
 };
 
-#endif //LUA_SCRIPT_INSTANCE_H
+#endif //LUA_SCRIPT_INSTANCE_H

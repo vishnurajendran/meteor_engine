@@ -3,6 +3,7 @@
 #include "core/engine/scripting/bindings/log_bindings.h"
 #include "core/engine/scripting/bindings/math_bindings.h"
 #include "core/engine/scripting/bindings/asset_bindings.h"
+#include "core/engine/scripting/bindings/ui_bindings.h"
 #include "script_access_bingings.h"
 
 void MLuaEngineBindings::BindEngineAPI(sol::state& vm)
@@ -21,4 +22,7 @@ void MLuaEngineBindings::BindEngineAPI(sol::state& vm)
 
     // Script access (getScript/hasScript on MSpatialEntity)
     MeteorBindings::registerScriptAccessBindings(vm);
-}
+
+    // UI: MUIWidget.create from a path, widget:getBehaviour()
+    MeteorBindings::registerUIBindings(vm);
+}

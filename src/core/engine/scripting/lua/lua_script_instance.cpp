@@ -1,5 +1,6 @@
 // lua_script_instance.cpp
 #include "lua_script_instance.h"
+#include "core/engine/ui/widget/ui_widget.h"
 #include "core/utils/logger.h"
 #include <string>
 
@@ -55,6 +56,20 @@ MLuaScriptInstance::MLuaScriptInstance(sol::state& vm, const sol::table& scriptC
     // one class per file) - an instance is just a table pointing at it.
     instanceTable = vm.create_table();
     instanceTable["__entity"] = owner;
+    instanceTable[sol::metatable_key] = classTable;
+    valid = true;
+}
+
+MLuaScriptInstance::MLuaScriptInstance(sol::state& vm, const sol::table& scriptClass,
+                                       const sol::environment& classEnv, const MUIWidget& widgetOwner,
+                                       MLuaScriptContext* context)
+    : env(classEnv), classTable(scriptClass), owner(nullptr), context(context)
+{
+    instanceTable = vm.create_table();
+    // self.widget is what scripts use; __widget mirrors __entity for the engine.
+    // Copies of the handle - it resolves on every call.
+    instanceTable["__widget"] = widgetOwner;
+    instanceTable["widget"]   = widgetOwner;
     instanceTable[sol::metatable_key] = classTable;
     valid = true;
 }
@@ -216,4 +231,4 @@ void MLuaScriptInstance::setEnvVar(const SString& name, const SDynValue& value)
         return;
     sol::state_view vview = env.lua_state();
     env[name.c_str()] = DynValueToSolObject(value, vview);
-}
+}

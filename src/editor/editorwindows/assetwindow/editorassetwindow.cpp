@@ -1498,6 +1498,52 @@ void MEditorAssetWindow::drawCreateMenuItems(const SString& targetDir)
         for (int i = 0; i < opened; ++i)
             ImGui::EndMenu();
     }
+
+    // Asset creators (asset_creator.h) - e.g. UI Widget, which makes a folder
+    // of several assets. Same menu-path rules as templates.
+    for (IAssetCreator* creator : MAssetCreatorRegistry::getMenuCreators())
+    {
+        std::vector<SString> segments;
+        for (const auto& seg : creator->getMenuPath().split("/"))
+            if (!seg.empty()) segments.push_back(seg);
+        if (segments.empty())
+            segments.push_back(creator->getDisplayName());
+
+        int  opened  = 0;
+        bool visible = true;
+        for (size_t i = 0; i + 1 < segments.size(); ++i)
+        {
+            if (!ImGui::BeginMenu(segments[i].c_str())) { visible = false; break; }
+            ++opened;
+        }
+
+        if (visible)
+        {
+            ImGui::PushID(creator);
+            if (ImGui::MenuItem(segments.back().c_str()))
+                beginCreateFromCreator(creator, targetDir);
+            ImGui::PopID();
+        }
+
+        for (int i = 0; i < opened; ++i)
+            ImGui::EndMenu();
+    }
+}
+
+void MEditorAssetWindow::beginCreateFromCreator(IAssetCreator* creator, const SString& targetDir)
+{
+    if (!creator)
+        return;
+
+    createTemplateId.clear();
+    createCreator   = creator;
+    createTargetDir = targetDir;
+    createError.clear();
+    createParamValues.clear();
+
+    std::strncpy(createNameBuffer, creator->getDefaultName().c_str(), sizeof(createNameBuffer) - 1);
+    createNameBuffer[sizeof(createNameBuffer) - 1] = '\0';
+    pendingCreatePopup = true;
 }
 
 void MEditorAssetWindow::beginCreateFromTemplate(const SString& templateId, const SString& targetDir)
@@ -1510,6 +1556,7 @@ void MEditorAssetWindow::beginCreateFromTemplate(const SString& templateId, cons
     if (!tmpl) return;
 
     createTemplateId = templateId;
+    createCreator    = nullptr;
     createTargetDir  = targetDir;
     createError.clear();
     createParamValues.clear();
@@ -1583,17 +1630,18 @@ void MEditorAssetWindow::drawCreateAssetPopup()
 
     auto* am       = MEngineSubsystemRegistry::getSubsystem<IAssetManagerSubsystem>();
     auto* editorAM = dynamic_cast<MEditorAssetManager*>(am);
-    const SAssetTemplate* tmpl = editorAM ? editorAM->getTemplateRegistry().find(createTemplateId) : nullptr;
-    if (!tmpl)
+    const SAssetTemplate* tmpl = editorAM && !createCreator ? editorAM->getTemplateRegistry().find(createTemplateId) : nullptr;
+    if (!editorAM || (!tmpl && !createCreator))
     {
         ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
         return;
     }
+    const SString displayName = tmpl ? tmpl->displayName : createCreator->getDisplayName();
 
     // -- Header ----------------------------------------------------------------
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9f, 0.75f, 0.3f, 1.f));
-    ImGui::Text("New %s", tmpl->displayName.c_str());
+    ImGui::Text("New %s", displayName.c_str());
     ImGui::PopStyleColor();
     ImGui::Separator();
     ImGui::Spacing();
@@ -1609,9 +1657,10 @@ void MEditorAssetWindow::drawCreateAssetPopup()
     bool enterPressed = ImGui::InputText("##ca_name", createNameBuffer, sizeof(createNameBuffer),
                                          ImGuiInputTextFlags_EnterReturnsTrue);
 
-    // -- Template parameters -----------------------------------------------------
+    // -- Template parameters (creators have none in the dialog) -----------------
     bool missingRequired = false;
-    for (const auto& param : tmpl->params)
+    static const std::vector<STemplateParam> noParams;
+    for (const auto& param : tmpl ? tmpl->params : noParams)
     {
         ImGui::PushID(param.key.c_str());
         std::string& value = createParamValues[param.key];
@@ -1707,8 +1756,9 @@ void MEditorAssetWindow::drawCreateAssetPopup()
 
         // On success the manager registers the asset and pings it; the
         // browser navigates to it and selects it next frame.
-        const SString created = editorAM->createAssetFromTemplate(
-            createTemplateId, createTargetDir, SString(createNameBuffer), params);
+        const SString created = createCreator
+            ? editorAM->createWithCreator(createCreator, createTargetDir, SString(createNameBuffer))
+            : editorAM->createAssetFromTemplate(createTemplateId, createTargetDir, SString(createNameBuffer), params);
 
         if (created.empty())
         {

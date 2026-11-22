@@ -35,6 +35,7 @@ private:
     SString activeScenePath = "";
     SString sceneSnapshotPath = "";
     bool    runtimeDomainPushed = false;   // only remove a domain we added
+    bool    playSessionActive   = false;   // between Play and Stop, paused or not
 };
 
 #endif //SIMULATION_MANAGER_H

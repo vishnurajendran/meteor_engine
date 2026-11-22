@@ -210,6 +210,7 @@ bool MAssetManager::loadAsset(SString path) {
             assetMapByAssetId[attrib.value()] = asset;
         }
 
+        onAssetLoaded().broadcast(asset);
         return true;
     }
     MWARN(STR("No compatible importer found for " + path.str()));
@@ -266,7 +267,21 @@ bool MAssetManager::reloadAsset(MAsset* asset)
         MLOG(STR("AssetManager:: Rebuilding dependent ") + dependent->getPath());
         dependent->deferredAssetLoad(true);
     }
+
+    onAssetReloaded().broadcast(asset);
     return ok;
+}
+
+TMulticastDelegate<MAsset*>& MAssetManager::onAssetLoaded()
+{
+    static TMulticastDelegate<MAsset*> event;
+    return event;
+}
+
+TMulticastDelegate<MAsset*>& MAssetManager::onAssetReloaded()
+{
+    static TMulticastDelegate<MAsset*> event;
+    return event;
 }
 
 MAsset* MAssetManager::reimportAsset(const SString& rawPath)

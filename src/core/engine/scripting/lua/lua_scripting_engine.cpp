@@ -47,6 +47,29 @@ IScriptInstance* MLuaScriptingEngineSubsystem::createScriptInstance(IScriptAsset
     return domain->getScriptContext().createInstance(luaAsset, owner);
 }
 
+IScriptInstance* MLuaScriptingEngineSubsystem::createWidgetScriptInstance(IScriptAsset* asset, const MUIWidget& owner)
+{
+    if (!asset)
+        return nullptr;
+
+    auto* luaAsset = dynamic_cast<MLuaScriptAsset*>(asset);
+    if (!luaAsset)
+    {
+        MERROR("MLuaScriptingEngineSubsystem::createWidgetScriptInstance: asset is not a Lua script");
+        return nullptr;
+    }
+
+    auto* domains = MEngineSubsystemRegistry::getSubsystem<MEngineDomainSubsystem>();
+    auto* domain  = domains ? domains->getCurrentActiveDomain() : nullptr;
+    if (!domain)
+    {
+        MERROR("MLuaScriptingEngineSubsystem::createWidgetScriptInstance: no active engine domain");
+        return nullptr;
+    }
+
+    return domain->getScriptContext().createWidgetInstance(luaAsset, owner);
+}
+
 void MLuaScriptingEngineSubsystem::releaseScriptInstance(IScriptInstance* scriptInstance)
 {
     auto* instance = dynamic_cast<MLuaScriptInstance*>(scriptInstance);

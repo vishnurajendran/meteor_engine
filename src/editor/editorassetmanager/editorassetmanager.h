@@ -12,6 +12,7 @@
 #include <set>
 #include <map>
 #include "core/engine/assetmanagement/assetmanager/assetmanager.h"
+#include "asset_creator.h"
 #include "asset_template_registry.h"
 #include "editor_asset_directory_node.h"
 #include "asset_watcher_thread.h"
@@ -86,6 +87,38 @@ public:
     SString createAssetFromTemplate(const SString& templateId, const SString& directory,
                                     const SString& name,
                                     const std::map<SString, SString>& params = {});
+
+    // -- Typed creation (asset_creator.h) ---------------------------------------
+    // Runs the creator registered for T. The handle resolves by GUID, so the
+    // next creator can reference the new asset straight away.
+    template <typename T>
+    TAssetHandle<T> createAsset(const SString& directory, const SString& name,
+                                const SAssetInitialisationData& data = SAssetInitialisationData{})
+    {
+        IAssetCreator* creator = MAssetCreatorRegistry::find(T::staticTypeInfo().hash);
+        if (!creator)
+        {
+            MERROR(SString("EditorAssetManager:: no asset creator is registered for ") + T::staticTypeInfo().name);
+            return {};
+        }
+        const SString path = creator->create(*this, directory, name, &data);
+        return path.empty() ? TAssetHandle<T>() : getAsset<T>(path);
+    }
+
+    // The Create menu's entry point for creators: defaults, then the new
+    // asset is selected in the browser. Returns its path, or empty.
+    SString createWithCreator(IAssetCreator* creator, const SString& directory, const SString& name);
+
+    // For creators: a free path "<directory>/<baseName><extension>"
+    // (baseName_1, ... if taken). Works for folders with an empty extension.
+    SString makeUniqueAssetPath(const SString& directory, const SString& baseName, const SString& extension)
+    {
+        return makeUniquePath(directory, baseName, extension);
+    }
+
+    // For creators: writes a new text file through the asset source and
+    // imports it now. False (logged) if either fails.
+    bool writeAndImport(const SString& path, const SString& text);
 
     // Legacy wrappers around createAssetFromTemplate().
     bool createShaderAsset(const SString& directory, const SString& name,

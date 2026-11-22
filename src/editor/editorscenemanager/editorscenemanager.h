@@ -13,8 +13,8 @@ public:
     MEditorSceneManager() = default;
     ~MEditorSceneManager() override = default;
 
-    bool loadEmptyScene() override;
-    bool loadScene(const SString& path) override;
+    bool loadEmptySceneImmediate() override;
+    bool loadSceneImmediate(const SString& path) override;
     bool saveCurrentScene(const SString& pathOverride="");
     bool closeActiveScene() override;
     void update(float deltaTime) override;

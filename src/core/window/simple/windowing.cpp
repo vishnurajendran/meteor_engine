@@ -3,6 +3,7 @@
 //
 
 #include "windowing.h"
+#include "SFML/Window/Mouse.hpp"
 #include <windows.h>
 #include <GL/glew.h>
 #include <winuser.h>
@@ -116,16 +117,10 @@ void MWindow::update(float deltaTime) {
 
     const sf::Time frameTime = sf::seconds(1.f / targetFPS);
 
-    // poll event loop
-    std::optional<sf::Event> event;
-    while (event = coreWindow.pollEvent())
-    {
-        handleWindowEvents(event);
-
-        // The close handler may have shut down the window. Stop polling
-        // so we do not touch a closed RenderWindow on the next iteration.
-        if (!coreWindow.isOpen()) break;
-    }
+    // poll event loop, unless the application already did this frame
+    if (!eventsPolled)
+        pollEvents();
+    eventsPolled = false;
 
     if (!coreWindow.isOpen())
         return;
@@ -148,6 +143,50 @@ void MWindow::update(float deltaTime) {
         sf::sleep(sleepTime);  // Sleep to limit the framerate
     }
     clock.restart();
+}
+
+void MWindow::pollEvents()
+{
+    eventsPolled = true;
+    std::optional<sf::Event> event;
+    while ((event = coreWindow.pollEvent()))
+    {
+        handleWindowEvents(event);
+
+        // The close handler may have shut down the window. Stop polling
+        // so we do not touch a closed RenderWindow on the next iteration.
+        if (!coreWindow.isOpen()) break;
+
+        onEvent.broadcast(*event);
+    }
+}
+
+void MWindow::setCursorVisible(bool visible)
+{
+    coreWindow.setMouseCursorVisible(visible);
+}
+
+void MWindow::setCursorGrabbed(bool grabbed)
+{
+    coreWindow.setMouseCursorGrabbed(grabbed);
+}
+
+void MWindow::setCursorPosition(sf::Vector2i windowPosition)
+{
+    sf::Mouse::setPosition(windowPosition, coreWindow);
+}
+
+void MWindow::setSystemCursor(sf::Cursor::Type type)
+{
+    if (systemCursor && systemCursorType == type)
+        return;
+    // The window only keeps a reference: the cursor must stay alive while set.
+    auto cursor = sf::Cursor::createFromSystem(type);
+    if (!cursor)
+        return;
+    systemCursor     = std::move(cursor);
+    systemCursorType = type;
+    coreWindow.setMouseCursor(*systemCursor);
 }
 
 void MWindow::handleWindowEvents(const std::optional<sf::Event>& event)

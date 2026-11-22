@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "core/engine/subsystem/subsystem_interface.h"
+#include "core/utils/delegate.h"
 #include "engine_domain.h"
 
 class MEngineDomainSubsystem : public IEngineSubSystem
@@ -40,6 +41,11 @@ public:
     // Destroys the top domain. Returns false when only DOMAIN_0 is left -
     // the default domain lives as long as the subsystem.
     bool removeTopDomain();
+
+    // Fired just before a domain is destroyed (Stop in the editor, shutdown),
+    // while its script context still exists, so systems holding script
+    // instances from it (UI widgets) can call their cleanup hooks first.
+    TMulticastDelegate<MEngineDomain*> onDomainRemoving;
 
 private:
     std::vector<std::unique_ptr<MEngineDomain>> domains;

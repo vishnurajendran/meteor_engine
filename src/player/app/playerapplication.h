@@ -7,6 +7,8 @@
 #define METEOR_ENGINE_PLAYERAPPLICATION_H
 #include <memory>
 
+#include "core/utils/delegate.h"
+
 #include "core/application/application.h"
 #include "core/object/objectpointer.h"
 #include "core/window/simple/windowing.h"
@@ -14,6 +16,8 @@
 
 class IPhysicsEngineSubsystem;
 class MPackagedAssetManager;
+class MViewport;
+class MWindowViewportHost;
 enum EPlayerApplicationState
 {
     Playing,
@@ -39,6 +43,10 @@ private:
     // Published game: the manifest's startup scene. Development: the
     // project's .mtproj startup scene.
     void loadStartupScene(const MPackagedAssetManager* package);
+    // The game UI's viewport: the window, its input and cursor.
+    void createUIViewport();
+    // Window mouse events -> the input subsystem (SInput's mouse queries).
+    void subscribeMouseInput();
 
 public:
     MPlayerApplication();
@@ -56,5 +64,10 @@ private:
     IPhysicsEngineSubsystem* physicsEngineRef = nullptr;
     float physicsAccumulator = 0.0f;
     MSceneManager* sceneManagerRef = nullptr;
+
+    std::unique_ptr<MWindowViewportHost> uiViewportHost;
+    MViewport* uiViewport = nullptr;
+    SScopedCallbackDelegateHandle windowEventSubscription;
+    SScopedCallbackDelegateHandle mouseInputSubscription;
 };
 #endif //METEOR_ENGINE_PLAYERAPPLICATION_H
