@@ -3,83 +3,56 @@
 //
 
 #include "logger.h"
-#include <sstream>
 
-// ---- Platform-specific stack trace capture --------------------------------
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <vector>
+
+#include "spdlog/sinks/stdout_color_sinks.h"
+
+#include "core/engine/logging/logging_subsystem.h"
+
+// ---- Bootstrap state -----------------------------------------------------
 //
-// backtrace() on POSIX gives mangled symbol names. If you want readable
-// output, add demangling via abi::__cxa_demangle() from <cxxabi.h>.
-//
-// On Windows, CaptureStackBackTrace returns raw addresses. Full symbol
-// resolution requires linking dbghelp.lib and calling SymInitialize /
-// SymFromAddr. The stub below gives frame addresses as a starting point.
+// Used until an MLoggingSubsystem is active, and again after it is cleaned up.
 
-#if defined(__linux__) || defined(__APPLE__)
-#include <execinfo.h>
+struct SLoggerBootstrap
+{
+    static constexpr size_t MAX_BACKLOG = 10000;
 
-SString MLogger::captureStackTrace() {
-    constexpr int MAX_FRAMES = 32;
-    void* frames[MAX_FRAMES];
-    int count = backtrace(frames, MAX_FRAMES);
-    char** symbols = backtrace_symbols(frames, count);
-    if (!symbols) return SString("");
+    std::atomic<MLoggingSubsystem*> activeSubsystem{ nullptr };
 
-    std::ostringstream oss;
-    // Skip first 3 frames (captureStackTrace, error, notify internals)
-    for (int i = 3; i < count; ++i) {
-        oss << "  " << symbols[i] << "\n";
-    }
-    free(symbols);
-    return SString(oss.str());
-}
+    std::mutex               mutex;              // guards everything below
+    std::vector<SLogMessage> backlog;            // replayed into the log file
+    bool                     keepBacklog = true; // only until the first subsystem starts
+    SString                  lastMessage;
 
-#elif defined(_WIN32)
-#include <windows.h>
+    TMulticastDelegate<const SLogMessage&> logEvent;
+    spdlog::sink_ptr consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+};
 
-SString MLogger::captureStackTrace() {
-    constexpr int MAX_FRAMES = 32;
-    void* frames[MAX_FRAMES];
-    USHORT count = CaptureStackBackTrace(3, MAX_FRAMES, frames, nullptr);
-
-    std::ostringstream oss;
-    for (USHORT i = 0; i < count; ++i) {
-        oss << "  [" << i << "] 0x" << frames[i] << "\n";
-    }
-    return SString(oss.str());
-}
-
-#else
-
-SString MLogger::captureStackTrace() {
-    return SString("[stack trace unavailable on this platform]");
-}
-
-#endif
-
-// ---- Construct-on-first-use statics --------------------------------------
-
-TMulticastDelegate<const SLogMessage&>& MLogger::onLog() {
-    static TMulticastDelegate<const SLogMessage&> event;
-    return event;
-}
-
-SString& MLogger::getLastMsg() {
-    static SString lastMsg = "";
-    return lastMsg;
+SLoggerBootstrap& MLogger::bootstrap()
+{
+    // Never destroyed: code may log during static destruction.
+    static SLoggerBootstrap* state = new SLoggerBootstrap();
+    return *state;
 }
 
 // ---- Logging functions ---------------------------------------------------
 
-void MLogger::log(SString msg, SLogLocation loc) {
-    getLastMsg() = msg;
-    spdlog::info(msg.str());
-
+SLogMessage MLogger::makeMessage(const char* tag, const SString& text, const SLogLocation& loc)
+{
     SLogMessage lm;
-    lm.tag       = STR("LOG");
-    lm.text      = msg;
+    lm.tag       = SString(tag);
+    lm.text      = text;
     lm.location  = loc;
     lm.timestamp = std::chrono::system_clock::now();
-    notify(lm);
+    return lm;
+}
+
+void MLogger::log(SString msg, SLogLocation loc) {
+    dispatch(makeMessage("LOG", msg, loc));
 }
 
 void MLogger::verbose(SString msg, SLogLocation loc) {
@@ -89,36 +62,77 @@ void MLogger::verbose(SString msg, SLogLocation loc) {
 }
 
 void MLogger::warn(SString warning, SLogLocation loc) {
-    getLastMsg() = warning;
-    spdlog::warn(warning.str());
-
-    SLogMessage lm;
-    lm.tag       = STR("WRN");
-    lm.text      = warning;
-    lm.location  = loc;
-    lm.timestamp = std::chrono::system_clock::now();
-    notify(lm);
+    dispatch(makeMessage("WRN", warning, loc));
 }
 
 void MLogger::error(SString error, SLogLocation loc) {
-    getLastMsg() = error;
-    spdlog::error(error.str());
-
-    SLogMessage lm;
-    lm.tag        = STR("ERR");
-    lm.text       = error;
-    lm.location   = loc;
-    lm.stackTrace = captureStackTrace();
-    lm.timestamp  = std::chrono::system_clock::now();
-    notify(lm);
+    SLogMessage lm = makeMessage("ERR", error, loc);
+    lm.stackTrace  = MLoggingSubsystem::captureStackTrace();
+    dispatch(lm);
 }
 
-// ---- Subscription --------------------------------------------------------
+void MLogger::dispatch(const SLogMessage& msg)
+{
+    SLoggerBootstrap& state = bootstrap();
+    if (MLoggingSubsystem* subsystem = state.activeSubsystem.load())
+    {
+        subsystem->write(msg);
+        return;
+    }
+
+    {
+        std::unique_lock<std::mutex> lock(state.mutex);
+        // The subsystem may have started while we waited for the lock.
+        if (MLoggingSubsystem* subsystem = state.activeSubsystem.load())
+        {
+            lock.unlock();
+            subsystem->write(msg);
+            return;
+        }
+        state.lastMessage = msg.text;
+        if (state.keepBacklog && state.backlog.size() < SLoggerBootstrap::MAX_BACKLOG)
+            state.backlog.push_back(msg);
+    }
+
+    MLoggingSubsystem::writeToSink(*state.consoleSink, msg);
+    state.logEvent.broadcast(msg);
+}
+
+// ---- Subsystem hookup ----------------------------------------------------
+
+void MLogger::setActiveSubsystem(MLoggingSubsystem* subsystem)
+{
+    SLoggerBootstrap& state = bootstrap();
+    std::lock_guard<std::mutex> lock(state.mutex);
+
+    if (subsystem)
+    {
+        // Under the lock, so no message lands in the file ahead of the backlog.
+        subsystem->writeBacklog(state.backlog);
+        state.backlog.clear();
+        state.backlog.shrink_to_fit();
+        state.keepBacklog = false;
+    }
+    else if (MLoggingSubsystem* previous = state.activeSubsystem.load())
+    {
+        state.lastMessage = previous->getLastMessage();
+    }
+
+    state.activeSubsystem.store(subsystem);
+}
+
+// ---- Queries -------------------------------------------------------------
+
+TMulticastDelegate<const SLogMessage&>& MLogger::onLog() {
+    if (MLoggingSubsystem* subsystem = bootstrap().activeSubsystem.load())
+        return subsystem->onLog();
+    return bootstrap().logEvent;
+}
 
 SString MLogger::getLastMessage() {
-    return getLastMsg();
-}
-
-void MLogger::notify(const SLogMessage& msg) {
-    onLog().broadcast(msg);
+    SLoggerBootstrap& state = bootstrap();
+    if (MLoggingSubsystem* subsystem = state.activeSubsystem.load())
+        return subsystem->getLastMessage();
+    std::lock_guard<std::mutex> lock(state.mutex);
+    return state.lastMessage;
 }

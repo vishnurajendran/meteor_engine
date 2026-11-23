@@ -2,8 +2,9 @@
 // memory_management_subsystem.h
 //
 // Default IMemoryManagementSubsystem: owns an MPoolAllocator and publishes it
-// to mnew / MObject::operator delete. Registered first by
-// MEngineSubsystemRegistry::init(), so it is cleaned up last.
+// to mnew / MObject::operator delete. Registered by
+// MEngineSubsystemRegistry::init() right after the logging subsystem, so
+// it is cleaned up second to last.
 //
 
 #ifndef METEOR_ENGINE_MEMORY_MANAGEMENT_SUBSYSTEM_H

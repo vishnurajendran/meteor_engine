@@ -1,5 +1,6 @@
 #include "subsystem_registry.h"
 
+#include "core/engine/logging/logging_subsystem.h"
 #include "core/memory/memory_management_subsystem.h"
 #include "core/utils/logger.h"
 
@@ -10,9 +11,14 @@ void MEngineSubsystemRegistry::init()
 {
     MLOG("MEngineSubsystemRegistry:: Initialising registry");
 
-    // Memory first: every MObject created through mnew<T>() after this point
+    // Logging first, so it is cleaned up last and records every other
+    // subsystem's shutdown. Messages logged before this point are written
+    // into the log file when it opens.
+    registerSubsystem<MLoggingSubsystem>();
+
+    // Memory next: every MObject created through mnew<T>() after this point
     // comes from its pool, and since cleanup runs newest-first, memory is
-    // cleaned up last.
+    // cleaned up just before logging.
     registerSubsystem<IMemoryManagementSubsystem, MMemoryManagementSubsystem>();
 }
 

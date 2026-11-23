@@ -35,14 +35,25 @@ struct SLogMessage {
 #define MERROR(msg) MLogger::error(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
 #define MVERBOSE(msg) MLogger::verbose(msg, SLogLocation{__FILE__, __LINE__, __FUNCTION__})
 
+class MLoggingSubsystem;
+
+// Bootstrap state used while no MLoggingSubsystem is active. Defined in logger.cpp.
+struct SLoggerBootstrap;
+
+// Front end for logging. The work is done by MLoggingSubsystem
+// (core/engine/logging/logging_subsystem.h) once it is registered.
+//
+// Before the subsystem is registered (static init, path setup, application
+// construction) and after it is cleaned up, messages go straight to the
+// console. Messages from before registration are also kept (up to 10000) and
+// written to the log file when the subsystem starts.
 class MLogger {
 private:
-    // Construct-on-first-use accessors to avoid static initialization order
-    // issues when MObject (or any other static-init code) logs before main().
-    static SString& getLastMsg();
+    // Construct-on-first-use, so logging from static-init code is safe.
+    static SLoggerBootstrap& bootstrap();
 
-    static void notify(const SLogMessage& msg);
-    static SString captureStackTrace();
+    static SLogMessage makeMessage(const char* tag, const SString& text, const SLogLocation& loc);
+    static void dispatch(const SLogMessage& msg);
 public:
     static void log(SString msg,      SLogLocation loc = {});
     static void verbose(SString msg,   SLogLocation loc = {});
@@ -51,10 +62,15 @@ public:
 
     // Fired for every log/warn/error, on the thread that logged it - which
     // may be a worker thread (asset watcher, audio decoding, splash screen).
-    // Construct-on-first-use, like the rest of this class's statics.
+    // While the logging subsystem is active this is the subsystem's event;
+    // subscribe after MEngineSubsystemRegistry::init().
     static TMulticastDelegate<const SLogMessage&>& onLog();
 
     static SString getLastMessage();
+
+    // Called by MLoggingSubsystem::init() / cleanup(). Activating writes the
+    // messages logged so far into the subsystem's log file.
+    static void setActiveSubsystem(MLoggingSubsystem* subsystem);
 };
 
 #endif //METEOR_ENGINE_LOGGER_H
